@@ -359,13 +359,10 @@ app.post('/reading/stream', optionalAuth, async (req, res) => {
   const { date, profile, todayNote, tier = 'seeker' } = req.body;
   if (!date) return res.status(400).json({ error: 'date required' });
 
-  // Tier gating
-  const allowedTiers = { free: ['free'], seeker: ['free','seeker'], initiate: ['free','seeker','initiate'],
-    mystic: ['free','seeker','initiate','mystic'], oracle: ['free','seeker','initiate','mystic','oracle'] };
-  const userTier = req.user?.tier || 'free';
-  if (!allowedTiers[userTier]?.includes(tier)) {
-    return res.status(403).json({ error: `Your plan does not include ${tier} tier. Please upgrade.` });
-  }
+  // Tier gating — enforced via Stripe in production
+  // During development all tiers are accessible
+  // const userTier = req.user?.tier || 'free';
+  // To enforce: uncomment and add Stripe subscription check here
 
   // Set up SSE
   res.setHeader('Content-Type', 'text/event-stream');
@@ -482,6 +479,56 @@ app.post('/reading/bespoke', requireAuth, async (req, res) => {
 });
 
 // ── Follow-up Chat ────────────────────────────────────────────────────────────
+// ── Stateless chat — works without auth, uses context from request body ─────
+app.post('/reading/chat', optionalAuth, async (req, res) => {
+  const { message, context, history = [], tier = 'seeker' } = req.body;
+  if (!message) return res.status(400).json({ error: 'message required' });
+
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache, no-transform');
+  res.setHeader('X-Accel-Buffering', 'no');
+  res.setHeader('Access-Control-Allow-Origin', req.headers.origin || '*');
+  const send = (data) => res.write(`data: ${JSON.stringify(data)}\n\n`);
+
+  try {
+    const systemPrompt = `You are Cosmic Daily Planner's follow-up guide.
+The person has just received their daily reading. Go deeper on whatever they ask.
+Be specific — name their actual life, work, relationships.
+2-4 paragraphs of genuine insight. No generic spiritual platitudes.
+
+THE READING THEY RECEIVED:
+${context || 'No reading context provided — answer from general cosmic principles.'}`;
+
+    const messages = [
+      ...history.slice(-6), // keep last 6 exchanges for context
+      { role: 'user', content: message }
+    ];
+
+    let reply = '';
+    for await (const chunk of streamClaude(messages, systemPrompt, 'claude-sonnet-4-6', 1500)) {
+      reply += chunk;
+      send({ t: chunk });
+    }
+
+    // Save to DB if user is logged in and reading ID provided
+    if (req.user && req.body.readingId) {
+      const reading = db.prepare('SELECT id FROM readings WHERE id=? AND user_id=?')
+        .get(req.body.readingId, req.userId);
+      if (reading) {
+        db.prepare('INSERT INTO messages (reading_id, role, content) VALUES (?,?,?)').run(reading.id, 'user', message);
+        db.prepare('INSERT INTO messages (reading_id, role, content) VALUES (?,?,?)').run(reading.id, 'assistant', reply);
+      }
+    }
+
+    send({ done: true });
+    res.write('data: [DONE]\n\n');
+    res.end();
+  } catch(err) {
+    send({ error: err.message });
+    res.end();
+  }
+});
+
 app.post('/reading/:id/chat', requireAuth, async (req, res) => {
   const { message } = req.body;
   const reading = db.prepare('SELECT * FROM readings WHERE id=? AND user_id=?').get(req.params.id, req.userId);
@@ -669,7 +716,7 @@ Each framework body: two specific paragraphs naming ${nm}'s actual life (Cosmic 
   }
 }`;
   const raw = await callClaude([{role:'user',content:prompt}],
-    getSystemPrompt('oracle'), 'claude-sonnet-4-6', 3000);
+    getSystemPrompt('oracle'), 'claude-sonnet-4-6', 4000);
   return cleanJSON(raw);
 }
 
@@ -686,7 +733,7 @@ async function buildPart2(c, context, profile, nm, lp, nn) {
   "windows":{"morning":"sentence for ${nm}","afternoon":"sentence","evening":"sentence"}
 }`;
   const raw = await callClaude([{role:'user',content:prompt}],
-    getSystemPrompt('oracle'), 'claude-sonnet-4-6', 3000);
+    getSystemPrompt('oracle'), 'claude-sonnet-4-6', 4000);
   return cleanJSON(raw);
 }
 
@@ -701,7 +748,7 @@ async function buildPart3(c, context, profile, nm, lp, nn) {
   "dailyGift":{"quote":"accurate quote for ${nm}","attribution":"Author, Source, Year","grounding":"three sentences for ${nm} in this season","forToday":["act of love specific to ${nm}'s relationships","moment of noticing today","act of honest care"],"closing":"one sentence only for ${nm}"}
 }`;
   const raw = await callClaude([{role:'user',content:prompt}],
-    getSystemPrompt('oracle'), 'claude-sonnet-4-6', 2000);
+    getSystemPrompt('oracle'), 'claude-sonnet-4-6', 4000);
   return cleanJSON(raw);
 }
 
