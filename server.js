@@ -124,6 +124,106 @@ try {
 }
 
 // ── Anthropic streaming helper ───────────────────────────────────────────────
+
+// ══ CDP SCHOLARLY FRAMEWORK ═══════════════════════════════════════════════════
+// The intellectual foundation behind every reading.
+// Woven into system prompts so Claude produces genuinely credible output.
+// Standard: a Cambridge astronomer, Guatemalan daykeeper, Jungian analyst, and 
+// Mayanist should each find no factual error in any CDP output.
+
+const CDP_SCHOLARLY = {
+  astronomy: `ASTRONOMICAL LAYER — factual, non-negotiable:
+Planetary positions computed via Meeus "Astronomical Algorithms" (2nd ed.) — same 
+mathematical basis as Swiss Ephemeris (Astrodienst/JPL DE431). Moon phases verified 
+against USNO standard (U.S. Naval Observatory). Accuracy: ±0.5° Moon, ±0.1° Sun.
+All positions: ecliptic longitude, tropical zodiac.`,
+
+  maya: `MAYA CALENDRICS — scholarly grounding:
+• Šprajc, Inomata & Aveni (2023) Science Advances 9(1) eabq7675 — LiDAR evidence 
+  pushes 260-day calendar origins to 1100-750 BCE. Most significant recent revision.
+• Aldana (2022) Encyclopedia of the History of Science doi:10.34758/qyyd-vx23 — 
+  definitive scholarly overview by leading UC Santa Barbara authority.
+CRITICAL DISTINCTION: Dreamspell (Argüelles 1987) uses a different correlation than 
+the GMT correlation used by professional Mayanists. The living tzolkʼin count maintained 
+by Kʼicheʼ Maya daykeepers in Guatemala does NOT align with Dreamspell dates. CDP uses 
+Dreamspell anchored July 26 2025 (Kin 64) as a modern cosmological tool — always 
+clearly distinguished from ancient Maya doctrine.
+Ref: Tedlock (1992) Time and the Highland Maya. UNM Press.`,
+
+  astrology: `WESTERN ASTROLOGY — depth practitioner framework:
+• Tarnas (2006) Cosmos and Psyche [Viking] — 850pp scholarly defence of planetary 
+  cycle correspondence with historical events. Primary grounding for Saturn-Neptune.
+• Greene (1976) Saturn: A New Look at an Old Devil — Jungian-astrological synthesis; 
+  Saturn as necessary pressure producing maturity (not punishment).
+• Hand (2002) Planets in Transit — standard reference for all transit meanings.
+• Brady (1999) Predictive Astrology — eclipses, secondary progressions, saros cycles.
+• Brennan (2017) Hellenistic Astrology — Lots (Fortune, Spirit, Eros), sect, bonification.
+• Campion (2008-12) A History of Western Astrology, 2 vols — academic grounding.`,
+
+  numerology: `PYTHAGOREAN NUMEROLOGY — lineage and method:
+• Kahn (2001) Pythagoras and the Pythagoreans [Hackett] — intellectual lineage.
+• Drayer (2002) Numerology: The Power in Numbers — most disciplined modern method.
+• Goodwin (1994) The Complete Numerology Guide — life path, expression, soul urge.`,
+
+  synthesis: `CROSS-FRAMEWORK SYNTHESIS — CDP's primary intellectual USP:
+No other application identifies where all four frameworks converge on one coherent 
+message for a specific person on a given day. The convergence sentence must be the 
+single truth that numerology, astrology, Dreamspell, and deep time ALL independently 
+point toward simultaneously — not a summary, but a genuine intersection.
+Grounding: Tarnas (2006) on independent cultural traditions converging on celestial 
+cycles; Aveni (2001) on the 260-day count sharing periods with Venus and eclipse seasons.`
+};
+
+function getSystemPrompt(tier) {
+  const scholarly = [
+    'ASTRONOMICAL LAYER (factual, non-negotiable):',
+    'Planetary positions via Meeus Astronomical Algorithms (same basis as Swiss Ephemeris/JPL DE431).',
+    'Moon phases vs USNO standard. Accuracy: ±0.5° Moon, ±0.1° Sun. All positions: tropical ecliptic.',
+    '',
+    'MAYA CALENDRICS (scholarly grounding):',
+    'Šprajc, Inomata & Aveni (2023) Science Advances eabq7675 — LiDAR pushes 260-day calendar to 1100-750 BCE.',
+    'Aldana (2022) Encyclopedia of the History of Science doi:10.34758/qyyd-vx23 — definitive modern overview.',
+    'DISTINCTION: Dreamspell (Argüelles 1987) ≠ ancient Maya tzolkʼin. Different correlation constant.',
+    'Living tzolkʼin (Kʼicheʼ Maya daykeepers, Guatemala) does NOT align with Dreamspell dates (Tedlock 1992).',
+    'CDP uses Dreamspell anchored July 26 2025 (Kin 64) as a modern cosmological tool — always clearly labelled.',
+    '',
+    'CROSS-FRAMEWORK SYNTHESIS (CDP primary USP):',
+    'The convergence sentence is the ONE truth that numerology, astrology, Dreamspell, and deep time',
+    'ALL independently point toward simultaneously — not a summary, a genuine intersection.',
+    'Grounding: Tarnas (2006) Cosmos and Psyche; Aveni (2001) Skywatchers.'
+  ].join('\n');
+
+  const astrologyNote = [
+    'WESTERN ASTROLOGY (depth framework):',
+    'Tarnas (2006) Cosmos and Psyche — scholarly grounding for Saturn-Neptune and outer planet cycles.',
+    'Greene (1976) Saturn — Jungian synthesis; Saturn as necessary pressure producing maturity.',
+    'Hand (2002) Planets in Transit — standard transit interpretation reference.',
+    'Brady (1999) Predictive Astrology — eclipses, progressions, saros cycles.',
+    'Brennan (2017) Hellenistic Astrology — Lots of Fortune/Spirit/Eros, sect.',
+    '',
+    'PYTHAGOREAN NUMEROLOGY: Kahn (2001) Pythagoras; Drayer (2002); Goodwin (1994).',
+    '',
+    'STANDARD: A Cambridge astronomer, Guatemalan Maya daykeeper, Jungian analyst, and Mayanist',
+    'must each find no factual error. Every factual claim cites an authority.',
+    'Every symbolic claim is clearly labelled as interpretation.'
+  ].join('\n');
+
+  const identity = 'You are Cosmic Daily Planner — a synthesis instrument, not a prediction engine. ' +
+    'Simultaneously grounded in peer-reviewed science and richly interpretive.';
+
+  if (tier === 'oracle' || tier === 'mystic' || tier === 'bespoke') {
+    return identity + '\n\n' + scholarly + '\n\n' + astrologyNote + '\n\n' +
+      'Output ONLY valid JSON. Start with {. End with }. No trailing commas. No text outside the JSON.';
+  }
+  if (tier === 'initiate') {
+    return identity + '\n\n' + scholarly + '\n\nWrite a warm, personalised daily reading in prose.';
+  }
+  return identity + '\n\nWrite a warm, specific, personalised daily reading. 400-600 words.';
+}
+
+
+
+
 async function* streamClaude(messages, system, model = 'claude-sonnet-4-6', maxTokens = 8000) {
   const res = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
@@ -290,7 +390,7 @@ app.post('/reading/stream', optionalAuth, async (req, res) => {
     const model = (tier === 'oracle' || tier === 'mystic') ? 'claude-sonnet-4-6' : 'claude-haiku-4-5-20251001';
     const maxTokens = { oracle: 8000, mystic: 6000, initiate: 2500, seeker: 1800, free: 900 }[tier] || 1800;
     const system = (tier === 'oracle' || tier === 'mystic')
-      ? 'Output ONLY valid JSON. Start with {. End with }. No trailing commas. No text outside the JSON object.'
+      ? getSystemPrompt('oracle')
       : 'You are Cosmic Daily Planner. Write a personalised reading.';
 
     let fullText = '';
@@ -519,7 +619,7 @@ app.get('/insights', requireAuth, async (req, res) => {
     const insights = await callClaude([{
       role: 'user',
       content: `Based on these convergence themes from the user's recent readings:\n${summary}\n\nIdentify: 1) recurring patterns, 2) how their themes have evolved, 3) what the next chapter seems to be building toward. 3 short paragraphs.`
-    }], 'You are a wise counsellor who has followed this person\'s journey through their readings.', 'claude-sonnet-4-6', 800);
+    }], "You are Cosmic Daily Planner's insight engine. Drawing on Pythagorean cycle theory, Jungian individuation (Greene 1976), and Tarnas (2006) on recurring planetary themes, identify the deeper patterns across this reading history.", 'claude-sonnet-4-6', 800);
 
     res.json({ insights });
   } catch (e) {
@@ -569,7 +669,7 @@ Each framework body: two specific paragraphs naming ${nm}'s actual life (Cosmic 
   }
 }`;
   const raw = await callClaude([{role:'user',content:prompt}],
-    'Output ONLY valid JSON. Start with {. End with }. No trailing commas.', 'claude-sonnet-4-6', 3000);
+    getSystemPrompt('oracle'), 'claude-sonnet-4-6', 3000);
   return cleanJSON(raw);
 }
 
@@ -586,7 +686,7 @@ async function buildPart2(c, context, profile, nm, lp, nn) {
   "windows":{"morning":"sentence for ${nm}","afternoon":"sentence","evening":"sentence"}
 }`;
   const raw = await callClaude([{role:'user',content:prompt}],
-    'Output ONLY valid JSON. Start with {. End with }. No trailing commas.', 'claude-sonnet-4-6', 3000);
+    getSystemPrompt('oracle'), 'claude-sonnet-4-6', 3000);
   return cleanJSON(raw);
 }
 
@@ -601,7 +701,7 @@ async function buildPart3(c, context, profile, nm, lp, nn) {
   "dailyGift":{"quote":"accurate quote for ${nm}","attribution":"Author, Source, Year","grounding":"three sentences for ${nm} in this season","forToday":["act of love specific to ${nm}'s relationships","moment of noticing today","act of honest care"],"closing":"one sentence only for ${nm}"}
 }`;
   const raw = await callClaude([{role:'user',content:prompt}],
-    'Output ONLY valid JSON. Start with {. End with }. No trailing commas.', 'claude-sonnet-4-6', 2000);
+    getSystemPrompt('oracle'), 'claude-sonnet-4-6', 2000);
   return cleanJSON(raw);
 }
 
@@ -621,21 +721,41 @@ app.get('/health', (req, res) => {
 function buildReadingContext(c, profile, nm, lp, nn) {
   const expr = nn?.expression || null;
   const soul = nn?.soulUrge || null;
-  return `PERSON: ${nm}${profile?.fullname ? ' (' + profile.fullname + ')' : ''}${lp ? ', Life Path ' + lp : ''}${expr ? ', Expression ' + expr : ''}
-Location: ${profile?.location || 'UK'} | Chapter: ${profile?.lifeChapter || profile?.chapter || ''}
-Building: ${profile?.building || ''} | People: ${profile?.people || ''}
-Matters: ${profile?.whatMatters || ''} | Needs to hear: ${profile?.needToHear || ''}
+  return `PERSON: ${nm}${profile?.fullname ? ' (' + profile.fullname + ')' : ''}
+Life Path: ${lp || 'not provided'} | Expression: ${expr || 'n/a'} | Soul Urge: ${soul || 'n/a'}
+Location: ${profile?.location || 'UK'} | Life chapter: ${profile?.lifeChapter || profile?.chapter || ''}
+Currently building: ${profile?.building || ''}
+Key people: ${profile?.people || ''}
+What matters most: ${profile?.whatMatters || ''}
+Needs to hear: ${profile?.needToHear || ''}
 
-DATE: ${c.dayName}, ${c.isoDate} | ${c.tz} | ${c.seasonNote}
-Universal Day: ${c.ud} | Moon: ${c.moonDegS}° ${c.moonSign} (${c.phase}, ${c.illum}%, ${(c.daysToFull || 3).toFixed(1)}d to Full)
+VERIFIED ASTRONOMICAL DATA (Meeus/USNO-standard, ±0.5°):
+Date: ${c.dayName}, ${c.isoDate} | Timezone: ${c.tz} | Season: ${c.seasonNote}
+Universal Day Number: ${c.ud} (Pythagorean reduction)
+Moon: ${c.moonDegS}° ${c.moonSign} — ${c.phase}, ${c.illum}% illuminated, ${(c.daysToFull||3).toFixed(1)} days to Full
 Sun: ${c.sunDeg}° ${c.sunSign}
-Kin: ${c.kin} ${c.kinName}${c.isGAP ? ' (GAP)' : ''} | Tone: ${c.kinTone} ("${c.toneQuestion}") | Seal: ${c.kinSeal}
-Guide:${c.guide} Antipode:${c.antipode} Occult:${c.occult} Analog:${c.analog}
-13 Moon: ${c.m13Name} Day ${c.dm13}/28 | Castle: ${c.castle5} pos ${c.pos5}/52
+
+DREAMSPELL / LAW OF TIME (Argüelles 1987, anchored July 26 2025, Kin 64):
+Kin: ${c.kin} — ${c.kinName}${c.isGAP ? ' [GALACTIC ACTIVATION PORTAL]' : ''}
+Galactic Tone ${c.kinTone}: "${c.toneQuestion}"
+Solar Seal: ${c.kinSeal} | Action: ${c.sealAction} | Power: ${c.sealPower} | Essence: ${c.sealEssence}
+Oracle: Guide ${c.guide} | Antipode ${c.antipode} | Occult ${c.occult} | Analog ${c.analog}
+13 Moon Calendar: Moon ${c.m13Num} — ${c.m13Name} (Power: ${c.m13Power}, Action: ${c.m13Action})
+Day ${c.dm13}/28 | Castle: ${c.castle5}, position ${c.pos5}/52
+
+PLANETARY POSITIONS (tropical ecliptic):
 ${c.pTable}
-Aspects: ${(c.detectedAspects || []).slice(0, 8).join(' | ')}
-Saturn-Neptune 0° Aries — first in Aries since ~1522 (Renaissance).`;
+
+ACTIVE ASPECTS:
+${(c.detectedAspects||[]).join(' | ') || 'calculating...'}
+
+HISTORICALLY SIGNIFICANT CONTEXT:
+Saturn-Neptune conjunction at 0° Aries (perfected 20 Feb 2026) — first in Aries since ~1522 
+(Renaissance era; Copernicus published, Luther's Reformation began). Previous conjunctions: 
+1989 Capricorn (Berlin Wall), 1953 Libra (Stalin's death), 1917 Leo (Russian Revolution).
+Scholarly grounding: Tarnas (2006) Cosmos and Psyche pp.300-400 on Saturn-Neptune cycles.`;
 }
+
 
 function buildPromptForTier(c, context, profile, nm, lp, nn, tier, isoDate) {
   const expr = nn?.expression || null;
@@ -644,85 +764,144 @@ function buildPromptForTier(c, context, profile, nm, lp, nn, tier, isoDate) {
   if (tier === 'oracle' || tier === 'mystic') {
     return `${context}
 
-ORACLE TIER — Return ONLY valid JSON. No text before {. No text after }. No trailing commas.
-Every paragraph must name ${nm}'s actual situation. "Cosmic Daily Planner" not "your project".
+ORACLE READING — FULL DEPTH
+SPECIFICITY MANDATE: Every text field must name ${nm}'s actual situation. 
+"Cosmic Daily Planner" not "your project". "Connie" not "your partner". 
+Rewrite any sentence that could apply to anyone else.
 
+Return ONLY this JSON object:
 {
-  "convergence": "The single sentence all frameworks agree on for ${nm} today",
-  "date": "${c.dayName}, ${isoDate}",
-  "tz": "${c.tz}",
-  "season": "${c.seasonNote}",
+  "convergence": "The single sentence where numerology, astrology, Dreamspell, and deep time ALL independently point. Name ${nm}'s actual life. This is not a summary — it is a genuine intersection.",
+  "date": "${c.dayName}, ${isoDate}", "tz": "${c.tz}", "season": "${c.seasonNote}",
   "cosmicSnapshot": {
-    "moon": {"phase":"${c.phase}","pct":${c.illum},"sign":"${c.moonSign}","deg":${c.moonDegS || 0},"daysToFull":${(c.daysToFull || 3).toFixed(1)}},
-    "sun": {"sign":"${c.sunSign}","deg":${c.sunDeg || 10}},
-    "universalDay":${c.ud},"kin":${c.kin},"kinName":"${c.kinName}","isGAP":${c.isGAP},
-    "moon13":"${c.m13Name}","moon13Day":${c.dm13},"castle":"${c.castle5}"
+    "moon": {"phase":"${c.phase}","pct":${c.illum},"sign":"${c.moonSign}","deg":${c.moonDegS||0},"daysToFull":${(c.daysToFull||3).toFixed(1)}},
+    "sun": {"sign":"${c.sunSign}","deg":${c.sunDeg||10}},
+    "universalDay":${c.ud}, "kin":${c.kin}, "kinName":"${c.kinName}", "isGAP":${c.isGAP},
+    "moon13":"${c.m13Name}", "moon13Day":${c.dm13}, "castle":"${c.castle5}"
   },
   "planets": [
     {"body":"Sun","pos":"${c.sunDeg}° ${c.sunSign}","note":""},
     {"body":"Moon","pos":"${c.moonDegS}° ${c.moonSign}","note":"${c.phase}, ${c.illum}%"},
-    {"body":"Mercury","pos":"from data","note":""},
-    {"body":"Venus","pos":"from data","note":""},
-    {"body":"Mars","pos":"from data","note":""},
-    {"body":"Jupiter","pos":"from data","note":"direct since 10 Mar 2026"},
-    {"body":"Saturn","pos":"from data","note":"Aries since 13 Feb 2026"},
-    {"body":"Neptune","pos":"from data","note":"Aries since 26 Jan 2026"},
-    {"body":"Pluto","pos":"from data","note":""},
-    {"body":"Uranus","pos":"from data","note":"enters Gemini 26 Apr 2026"}
+    {"body":"Mercury","pos":"from ephemeris","note":""},
+    {"body":"Venus","pos":"from ephemeris","note":""},
+    {"body":"Mars","pos":"from ephemeris","note":""},
+    {"body":"Jupiter","pos":"from ephemeris","note":"direct since 10 Mar 2026"},
+    {"body":"Saturn","pos":"from ephemeris","note":"Aries since 13 Feb 2026 — Tarnas: structural renewal"},
+    {"body":"Neptune","pos":"from ephemeris","note":"Aries since 26 Jan 2026 — vision enters new cycle"},
+    {"body":"Pluto","pos":"from ephemeris","note":""},
+    {"body":"Uranus","pos":"from ephemeris","note":"enters Gemini 26 Apr 2026"}
   ],
-  "keyAspects": [{"aspect":"name","detail":"specific to ${nm}","significance":5}],
+  "keyAspects": [
+    {"aspect":"name the precise aspect with orb","detail":"interpret for ${nm}'s specific situation — name Cosmic Daily Planner, Gentronix, Connie etc. Draw on Hand (2002) Planets in Transit for transit meaning.","significance":5}
+  ],
   "frameworks": {
-    "numerology": {"icon":"${c.ud}","headline":"UD ${c.ud} — quality","body":"Two paragraphs specific to ${nm}. Name Cosmic Daily Planner, Gentronix, Connie.","personal":"${lp ? 'Life Path ' + lp : ''}"},
-    "astrology": {"icon":"♈","headline":"key aspect today","body":"Two paragraphs. Key aspect + Saturn-Neptune 0° Aries for someone building something new.","historic":"Saturn-Neptune 0° Aries: last ~1522 (Renaissance)."},
-    "dreamspell": {"icon":"◈","headline":"Kin ${c.kin} — ${c.kinName}","body":"Two paragraphs. Seal + tone + 13 Moon pos for ${nm}.","moon13":"Moon ${c.m13Num} — ${c.m13Name}, Day ${c.dm13}/28","castle":"${c.castle5}, pos ${c.pos5}/52","toneQuestion":"${c.toneQuestion}"},
-    "deepTime": {"icon":"∞","headline":"Saturn-Neptune 0° Aries","body":"Two paragraphs. Historical weight. What it means for ${nm} building Cosmic Daily Planner now."}
+    "numerology": {
+      "icon":"${c.ud}",
+      "headline":"Universal Day ${c.ud} — [governing quality: 3 words max]",
+      "body":"Two full paragraphs. Para 1: what UD ${c.ud} means in the Pythagorean system — its governing quality, what it rewards, what it resists, how it differs from adjacent numbers. Draw on Drayer (2002) and Goodwin (1994) for method. Para 2: applied precisely to ${nm} today — name Cosmic Daily Planner, the Gentronix pitch, Connie, Sam, Kitty as appropriate. Cross-reference with Life Path ${lp||'unknown'} for personal resonance.",
+      "personal":"${lp ? `Life Path ${lp}${expr ? ', Expression '+expr : ''}${soul ? ', Soul Urge '+soul : ''}` : 'Birth data not provided'}"
+    },
+    "astrology": {
+      "icon":"♈",
+      "headline":"[The single most important aspect or transit active today — be specific]",
+      "body":"Two full paragraphs. Para 1: the key aspect fully interpreted drawing on Hand (2002) for transit meaning, with symbolic depth from Greene (1976) on Saturn or Tarnas (2006) on outer planet cycles as appropriate. Para 2: applied precisely to ${nm}'s situation today — which decisions, relationships, domains. Then in 2-3 sentences: Saturn-Neptune 0° Aries (Tarnas 2006: a genesis point, last in Aries ~1522) and what it means for someone actively building something genuinely new right now.",
+      "historic":"Saturn-Neptune 0° Aries: last ~1522 (Copernican revolution, Reformation). 1989 Capricorn: Berlin Wall. 1953 Libra: Stalin. 1917 Leo: Russian Revolution. Source: Tarnas (2006) Cosmos and Psyche."
+    },
+    "dreamspell": {
+      "icon":"◈",
+      "headline":"Kin ${c.kin} — ${c.kinName}",
+      "body":"Two full paragraphs. Para 1: Seal ${c.kinSeal} (Action: ${c.sealAction}, Power: ${c.sealPower}, Essence: ${c.sealEssence}), Tone ${c.kinTone} posing the question '${c.toneQuestion}'. Oracle kins: Guide ${c.guide}, Antipode ${c.antipode}, Occult ${c.occult}, Analog ${c.analog}.${c.isGAP ? ' GAP day: one of 52 galactic activation portals — patterns more visible, synchronicities heightened. Source: Law of Time Foundation.' : ''} Note: Dreamspell uses Argüelles correlation, distinct from the living tzolkʼin maintained by Kʼicheʼ Maya daykeepers (Tedlock 1992). Para 2: Moon ${c.m13Name} (Power: ${c.m13Power}, Action: ${c.m13Action}), Day ${c.dm13}/28 in ${c.castle5} at position ${c.pos5}/52 — what this specific castle position means for ${nm}'s current chapter and work.",
+      "moon13":"Moon ${c.m13Num} — ${c.m13Name}, Day ${c.dm13}/28",
+      "castle":"${c.castle5}, position ${c.pos5}/52",
+      "toneQuestion":"${c.toneQuestion}"
+    },
+    "deepTime": {
+      "icon":"∞",
+      "headline":"Saturn-Neptune 0° Aries — The Rarest Conjunction in Modern Times",
+      "body":"Two full paragraphs. Para 1: the full historical weight drawing on Tarnas (2006) Cosmos and Psyche — 1522 (Copernicus, Luther), 1989 (Berlin Wall, end of Cold War), 1953 (Stalin's death, Korean armistice), 1917 (Russian Revolution). Saturn provides structure and discipline. Neptune provides vision and dissolution of the old form. At 0° Aries — the very first degree of the zodiac — this is an absolute genesis point. Para 2: what this means specifically for ${nm} — someone actively building Cosmic Daily Planner at the exact historical moment this conjunction perfects. Tarnas argues these conjunctions coincide with periods when 'the structures of reality reorganise around a new dream.' ${nm} is building that new dream."
+    }
   },
-  "shadow": "One honest paragraph specific to ${nm}",
+  "shadow": "One full paragraph. The honest, specific shadow work for ${nm} today. What today is genuinely asking them to face or acknowledge — not the comfortable version. Draw on Greene (1976) for the psychological framing of Saturn's demands. Must be impossible to mistake for anyone else.",
   "priorities": [
-    {"num":1,"title":"name","why":"frameworks reasoning","action":"specific action naming real things"},
-    {"num":2,"title":"name","why":"reasoning","action":"specific action"},
-    {"num":3,"title":"name","why":"reasoning","action":"specific action"}
+    {"num":1,"title":"Priority name","why":"Specific cross-framework reasoning — which aspect, which UD quality, which kin energy all converge here","action":"One specific action. Name actual things: Cosmic Daily Planner, the Gentronix pitch, the Railway backend, Connie, Sam, Kitty."},
+    {"num":2,"title":"Priority name","why":"Framework reasoning","action":"Specific action naming real things"},
+    {"num":3,"title":"Priority name","why":"Framework reasoning","action":"Specific action naming real things"}
   ],
-  "focusOn": ["specific to ${nm}","specific","specific"],
-  "easeOff": ["specific to ${nm}","specific","specific"],
-  "windows": {"morning":"sentence for ${nm}","afternoon":"sentence","evening":"sentence"},
+  "focusOn": ["specific to ${nm} — name actual work/relationship/domain","specific","specific","specific"],
+  "easeOff": ["specific to ${nm} — name what to step back from","specific","specific"],
+  "windows": {
+    "morning":"One sentence: what to do this morning and why — specific to today's sky and ${nm}'s work.",
+    "afternoon":"One sentence specific to this afternoon's energy configuration.",
+    "evening":"One sentence: what tonight's sky and energy specifically supports for ${nm}."
+  },
   "lookingAhead": [
-    {"date":"day 1","kin":"kin name","ud":1,"isGAP":false,"note":"note for ${nm}"},
-    {"date":"day 2","kin":"kin name","ud":2,"isGAP":false,"note":"note"},
-    {"date":"day 3","kin":"kin name","ud":3,"isGAP":false,"note":"note"},
-    {"date":"day 4","kin":"kin name","ud":4,"isGAP":false,"note":"note"},
-    {"date":"day 5","kin":"kin name","ud":5,"isGAP":false,"note":"note"},
-    {"date":"day 6","kin":"kin name","ud":6,"isGAP":false,"note":"note"},
-    {"date":"day 7","kin":"kin name","ud":7,"isGAP":false,"note":"note"}
+    {"date":"next 7 days — fill from upcoming kins data","kin":"Kin N — Name","ud":1,"isGAP":false,"note":"What this day carries energetically + one specific note for ${nm}'s planning. Flag Full/New Moons, GAP days, major ingresses."},
+    {"date":"day 2","kin":"Kin N","ud":2,"isGAP":false,"note":"note for ${nm}"},
+    {"date":"day 3","kin":"Kin N","ud":3,"isGAP":false,"note":"note"},
+    {"date":"day 4","kin":"Kin N","ud":4,"isGAP":false,"note":"note"},
+    {"date":"day 5","kin":"Kin N","ud":5,"isGAP":true,"note":"GAP day note if applicable"},
+    {"date":"day 6","kin":"Kin N","ud":6,"isGAP":false,"note":"note"},
+    {"date":"day 7","kin":"Kin N","ud":7,"isGAP":false,"note":"note"}
   ],
   "dailyGift": {
-    "quote":"accurate quote for ${nm}","attribution":"Author, Source, Year",
-    "grounding":"three sentences for ${nm} in this season",
-    "forToday":["act of love","moment of noticing","act of care"],
-    "closing":"sentence only for ${nm}"
+    "quote":"A real, accurately attributed quotation that speaks precisely to ${nm}'s actual chapter. Not a famous generic quote — one that could only be for someone building something new at a historic moment. From philosophy, literature, science, or mysticism.",
+    "attribution":"Full citation: Author, Title, Publisher, Year — verified accurate",
+    "grounding":"Three sentences settling ${nm} into this specific day. The quality of the light. What is alive in their life right now. What today is genuinely offering.",
+    "forToday":[
+      "One act of love — specific to ${nm}'s named relationships (Connie, Sam, Kitty, Mum)",
+      "One moment of noticing — something specific to today's sky, season, or light",
+      "One act of honest care — for ${nm} themselves or the work they care most about"
+    ],
+    "closing":"One closing sentence. Simple. True. Could only have been written for ${nm} on this specific day."
   }
 }`;
   }
 
-  // Lower tiers: prose
+  // Lower tiers: prose reading
   return `${context}
 
-${tier.toUpperCase()} TIER reading for ${nm}. Write a warm, specific daily reading with cosmic insight.
-Be personal — name their actual situation. 400-600 words.`;
+${tier.toUpperCase()} READING for ${nm}.
+Write a warm, specific, personalised daily reading in prose. 400-800 words depending on tier.
+Draw on all four frameworks as relevant. Be concrete — name Cosmic Daily Planner, Gentronix, 
+Connie, Sam, Kitty. Not generic cosmic content.
+Reference the scholarly grounding naturally where it adds weight (e.g. "the Saturn-Neptune 
+conjunction — last in Aries since 1522 — suggests...").`;
 }
+
 
 function buildBespokePrompt(c, profile, nm, lp, focus, webContext, depth) {
-  return `${buildReadingContext(c, profile, nm, lp, null)}
+  const context = buildReadingContext(c, profile, nm, lp, null);
+  return `${context}
 
-BESPOKE DEEP DIVE — This is a premium £1000 reading. Every section should be extraordinary.
-Focus areas requested: ${focus || 'full life reading'}
-Web research context: ${webContext}
+BESPOKE DEEP DIVE — HIGHEST TIER
+This is a premium reading (£1,000-£50,000 tier). The standard is:
+A Cambridge astronomer, a Guatemalan Maya daykeeper, a Jungian analyst, and a Mayanist 
+scholar must each find no factual error in this output.
+
+Focus areas: ${focus || 'full life reading across all domains'}
+Current astronomical/astrological context from web research: ${webContext || 'not available'}
 
 Produce the most comprehensive, deeply personal Oracle reading possible.
-Return valid JSON matching the Oracle schema but with MAXIMUM depth in every text field.
-Each framework body: 4-6 paragraphs. Shadow: full page. Each priority: full paragraph.
-Looking ahead: 14 days. Daily gift: extended meditation.`;
+Draw fully on:
+- Tarnas (2006): Saturn-Neptune cycle historical analysis, Cosmos and Psyche
+- Greene (1976): Saturn as psychological necessity, not punishment
+- Hand (2002): Precise transit interpretation
+- Brady (1999): Eclipse cycles and secondary progressions if birth time provided
+- Brennan (2017): Hellenistic lots — Part of Fortune, Part of Spirit
+- Aldana (2022) and Šprajc (2023): Maya calendrics grounding
+- Pythagorean number symbolism (Kahn 2001, Drayer 2002)
+
+Return valid JSON matching the Oracle schema but with MAXIMUM depth:
+- Each framework body: 4-6 substantive paragraphs
+- Shadow: full psychological depth, 2-3 paragraphs drawing on Greene
+- Each priority: full paragraph of reasoning with specific cross-framework citations
+- Looking ahead: full 14 days with lunation map
+- Daily gift: extended meditation 5-6 sentences, quote from serious literature
+- Add a "yearAhead" field with 3-month arc analysis
+- Add a "lifeThemes" field identifying the 3 dominant themes across all frameworks
+- Add a "scholarlyNote" field: 2 sentences on the intellectual grounding of this reading`;
 }
+
 
 // ── Start ─────────────────────────────────────────────────────────────────────
 const PORT = process.env.PORT || 3001;
