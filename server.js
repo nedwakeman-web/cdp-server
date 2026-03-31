@@ -569,7 +569,7 @@ Each framework body: two specific paragraphs naming ${nm}'s actual life (Cosmic 
   }
 }`;
   const raw = await callClaude([{role:'user',content:prompt}],
-    'Output ONLY valid JSON. Start with {. End with }. No trailing commas.', 'claude-sonnet-4-6', 1500);
+    'Output ONLY valid JSON. Start with {. End with }. No trailing commas.', 'claude-sonnet-4-6', 2500);
   return cleanJSON(raw);
 }
 
@@ -586,7 +586,7 @@ async function buildPart2(c, context, profile, nm, lp, nn) {
   "windows":{"morning":"sentence for ${nm}","afternoon":"sentence","evening":"sentence"}
 }`;
   const raw = await callClaude([{role:'user',content:prompt}],
-    'Output ONLY valid JSON. Start with {. End with }. No trailing commas.', 'claude-sonnet-4-6', 1200);
+    'Output ONLY valid JSON. Start with {. End with }. No trailing commas.', 'claude-sonnet-4-6', 1800);
   return cleanJSON(raw);
 }
 
@@ -601,7 +601,7 @@ async function buildPart3(c, context, profile, nm, lp, nn) {
   "dailyGift":{"quote":"accurate quote for ${nm}","attribution":"Author, Source, Year","grounding":"three sentences for ${nm} in this season","forToday":["act of love specific to ${nm}'s relationships","moment of noticing today","act of honest care"],"closing":"one sentence only for ${nm}"}
 }`;
   const raw = await callClaude([{role:'user',content:prompt}],
-    'Output ONLY valid JSON. Start with {. End with }. No trailing commas.', 'claude-sonnet-4-6', 900);
+    'Output ONLY valid JSON. Start with {. End with }. No trailing commas.', 'claude-sonnet-4-6', 1500);
   return cleanJSON(raw);
 }
 
