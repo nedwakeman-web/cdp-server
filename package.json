@@ -1,21 +1,19 @@
 {
-  "name": "cosmic-daily-planner-api",
+  "name": "cosmic-daily-planner",
   "version": "1.0.0",
-  "description": "Production API for Cosmic Daily Planner",
+  "description": "Cosmic Daily Planner — personalised daily reading synthesising numerology, astronomy, Dreamspell, and Western astrology",
   "main": "server.js",
-  "type": "module",
   "scripts": {
-    "start": "node server.cjs",
-    "dev": "node --watch server.js"
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "engines": {
+    "node": ">=18.0.0"
   },
   "dependencies": {
-    "express": "^4.18.2",
-    "cors": "^2.8.5",
-    "stripe": "^14.0.0",
-    "better-sqlite3": "^9.4.3",
-    "bcryptjs": "^2.4.3",
-    "jsonwebtoken": "^9.0.2",
-    "nodemailer": "^6.9.8",
-    "dotenv": "^16.4.1"
-  }
+    "express": "^4.18.2"
+  },
+  "keywords": [],
+  "license": "UNLICENSED",
+  "private": true
 }
