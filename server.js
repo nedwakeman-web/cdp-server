@@ -213,7 +213,7 @@ function getSystemPrompt(tier) {
 
   if (tier === 'oracle' || tier === 'mystic' || tier === 'bespoke') {
     return identity + '\n\n' + scholarly + '\n\n' + astrologyNote + '\n\n' +
-      'Output ONLY valid JSON. Start with {. End with }. No trailing commas. No text outside the JSON.\n\nBIRTH DATA: If birth time and place are provided, use natal house positions throughout. Name the house each transit activates. If no birth time, interpret transits universally but note this.\n\nCHECK-IN: If a check-in note is present, respond to it directly in the reading — it is what the person brought to the session.';
+      'Output ONLY valid JSON. Start with {. End with }. No trailing commas. No text outside the JSON.';
   }
   if (tier === 'initiate') {
     return identity + '\n\n' + scholarly + '\n\nWrite a warm, personalised daily reading in prose.';
@@ -381,8 +381,7 @@ app.post('/reading/stream', optionalAuth, async (req, res) => {
     const nn = profile?.fullname ? nameNum(profile.fullname) : null;
     const nm = profile?.nickname || profile?.name || 'You';
 
-    const profileWithNote = {...profile, _todayNote: todayNote||''};
-    const context = buildReadingContext(c, profileWithNote, nm, lp, nn);
+    const context = buildReadingContext(c, profile, nm, lp, nn);
     const prompt = buildPromptForTier(c, context, profile, nm, lp, nn, tier, date);
 
     const model = (tier === 'oracle' || tier === 'mystic') ? 'claude-sonnet-4-6' : 'claude-haiku-4-5-20251001';
@@ -492,13 +491,13 @@ app.post('/reading/chat', optionalAuth, async (req, res) => {
   const send = (data) => res.write(`data: ${JSON.stringify(data)}\n\n`);
 
   try {
-    const { historyContext } = req.body;
-    const systemPrompt = 'You are Cosmic Daily Planner\'s follow-up guide. ' +
-      'The person has just received their daily reading. Go deeper on whatever they ask. ' +
-      'Be specific — name their actual life, work, relationships. ' +
-      '2-4 paragraphs of genuine insight. Draw on the scholarly framework. No generic platitudes.' +
-      (historyContext ? '\n\nTHEIR READING HISTORY (for pattern awareness):\n' + historyContext : '') +
-      '\n\nTHEIR READING TODAY:\n' + (context || 'No reading context — answer from general cosmic principles.');
+    const systemPrompt = `You are Cosmic Daily Planner's follow-up guide.
+The person has just received their daily reading. Go deeper on whatever they ask.
+Be specific — name their actual life, work, relationships.
+2-4 paragraphs of genuine insight. No generic spiritual platitudes.
+
+THE READING THEY RECEIVED:
+${context || 'No reading context provided — answer from general cosmic principles.'}`;
 
     const messages = [
       ...history.slice(-6), // keep last 6 exchanges for context
@@ -678,7 +677,7 @@ app.get('/insights', requireAuth, async (req, res) => {
 
 // ── Parallel reading parts (called simultaneously from client) ───────────────
 async function getPartBody(req, res, partFn) {
-  const { date, profile, todayNote } = req.body;
+  const { date, profile } = req.body;
   if (!date) return res.status(400).json({ error: 'date required' });
   try {
     const c = fullCosmic(date);
@@ -686,8 +685,7 @@ async function getPartBody(req, res, partFn) {
     const lp = lifePath(profile?.dob || '');
     const nn = profile?.fullname ? nameNum(profile.fullname) : null;
     const nm = profile?.nickname || profile?.name || 'You';
-    const profileWithNote = {...profile, _todayNote: todayNote||''};
-    const context = buildReadingContext(c, profileWithNote, nm, lp, nn);
+    const context = buildReadingContext(c, profile, nm, lp, nn);
     const raw = await partFn(c, context, profile, nm, lp, nn);
     res.setHeader('Access-Control-Allow-Origin', req.headers.origin || '*');
     res.json(raw);
@@ -705,7 +703,7 @@ async function buildPart1(c, context, profile, nm, lp, nn) {
   const expr = nn?.expression || null;
   const soul = nn?.soulUrge || null;
   const prompt = context + `\n\nReturn ONLY JSON with convergence, date, tz, season, cosmicSnapshot, and frameworks fields.
-Each framework body: two specific paragraphs naming ${nm}'s actual life (${nm}'s actual projects and people — use ONLY names from their profile).
+Each framework body: two specific paragraphs naming ${nm}'s actual life (Cosmic Daily Planner, Connie, Gentronix).
 {
   "convergence":"single sentence all frameworks agree on for ${nm} today",
   "date":"${c.dayName}, ${c.isoDate}","tz":"${c.tz}","season":"${c.seasonNote}",
@@ -729,7 +727,7 @@ async function buildPart2(c, context, profile, nm, lp, nn) {
   "planets":[{"body":"Sun","pos":"${c.sunDeg}° ${c.sunSign}","note":""},{"body":"Moon","pos":"${c.moonDegS}° ${c.moonSign}","note":"${c.phase}"},{"body":"Mercury","pos":"from data","note":""},{"body":"Venus","pos":"from data","note":""},{"body":"Mars","pos":"from data","note":""},{"body":"Jupiter","pos":"from data","note":"direct since 10 Mar 2026"},{"body":"Saturn","pos":"from data","note":"Aries since 13 Feb 2026"},{"body":"Neptune","pos":"from data","note":"Aries since 26 Jan 2026"},{"body":"Pluto","pos":"from data","note":""},{"body":"Uranus","pos":"from data","note":"enters Gemini 26 Apr 2026"}],
   "keyAspects":[${aspects.map(a=>`{"aspect":"${a}","detail":"interpreted specifically for ${nm}","significance":4}`).join(',')}],
   "shadow":"one honest paragraph what today asks ${nm} to face — specific, not generic",
-  "priorities":[{"num":1,"title":"name","why":"frameworks reasoning","action":"action naming ${nm}'s actual projects/people (from profile)"},{"num":2,"title":"name","why":"reasoning","action":"action"},{"num":3,"title":"name","why":"reasoning","action":"action"}],
+  "priorities":[{"num":1,"title":"name","why":"frameworks reasoning","action":"action naming Cosmic Daily Planner/Connie/Gentronix"},{"num":2,"title":"name","why":"reasoning","action":"action"},{"num":3,"title":"name","why":"reasoning","action":"action"}],
   "focusOn":["specific to ${nm}","specific","specific"],
   "easeOff":["specific to ${nm}","specific","specific"],
   "windows":{"morning":"sentence for ${nm}","afternoon":"sentence","evening":"sentence"}
@@ -756,10 +754,6 @@ async function buildPart3(c, context, profile, nm, lp, nn) {
 
 
 // ── Health check ──────────────────────────────────────────────────────────────
-app.get('/version', (req, res) => {
-  res.json({ version: '2.0', features: ['birth-data', 'checkin', 'history', 'scholarly-framework'] });
-});
-
 app.get('/health', (req, res) => {
   res.json({
     ok: true,
@@ -774,29 +768,13 @@ app.get('/health', (req, res) => {
 function buildReadingContext(c, profile, nm, lp, nn) {
   const expr = nn?.expression || null;
   const soul = nn?.soulUrge || null;
-  const hasBirthTime = profile?.tob && profile.tob !== 'unknown';
-  const hasBirthPlace = profile?.pob && profile.pob.trim().length > 0;
-  const hasNatal = hasBirthTime && hasBirthPlace;
-  const todayNote = profile?._todayNote || '';
-
   return `PERSON: ${nm}${profile?.fullname ? ' (' + profile.fullname + ')' : ''}
 Life Path: ${lp || 'not provided'} | Expression: ${expr || 'n/a'} | Soul Urge: ${soul || 'n/a'}
-Date of birth: ${profile?.dob || 'not provided'}${hasBirthTime ? ' | Time: ' + profile.tob : ' | Birth time: unknown (no Ascendant)'}
-${hasBirthPlace ? 'Place of birth: ' + profile.pob : 'Birth place: not provided'}
-${hasNatal ? '[NATAL CHART AVAILABLE — use house positions and Ascendant in interpretation]' : '[No natal chart — transit interpretations are universal, not house-specific]'}
-
-Location now: ${profile?.location || 'UK'}
-Life chapter: ${profile?.lifeChapter || profile?.chapter || ''}
+Location: ${profile?.location || 'UK'} | Life chapter: ${profile?.lifeChapter || profile?.chapter || ''}
 Currently building: ${profile?.building || ''}
-Navigating: ${profile?.navigating || ''}
 Key people: ${profile?.people || ''}
 What matters most: ${profile?.whatMatters || ''}
 Needs to hear: ${profile?.needToHear || ''}
-${profile?.pattern ? 'Pattern to watch: ' + profile.pattern : ''}
-${profile?.intuition ? 'Intuition/sense: ' + profile.intuition : ''}
-${todayNote ? `
-TODAY'S CHECK-IN (how they are arriving): "${todayNote}"
-[This is what ${nm} wrote moments before opening their reading. Respond to this directly.]` : ''}
 
 VERIFIED ASTRONOMICAL DATA (Meeus/USNO-standard, ±0.5°):
 Date: ${c.dayName}, ${c.isoDate} | Timezone: ${c.tz} | Season: ${c.seasonNote}
@@ -806,18 +784,23 @@ Sun: ${c.sunDeg}° ${c.sunSign}
 
 DREAMSPELL / LAW OF TIME (Argüelles 1987, anchored July 26 2025, Kin 64):
 Kin: ${c.kin} — ${c.kinName}${c.isGAP ? ' [GALACTIC ACTIVATION PORTAL]' : ''}
-Tone ${c.kinTone}: "${c.toneQuestion}" | Seal: ${c.kinSeal}
-Action: ${c.sealAction} | Power: ${c.sealPower} | Essence: ${c.sealEssence}
+Galactic Tone ${c.kinTone}: "${c.toneQuestion}"
+Solar Seal: ${c.kinSeal} | Action: ${c.sealAction} | Power: ${c.sealPower} | Essence: ${c.sealEssence}
 Oracle: Guide ${c.guide} | Antipode ${c.antipode} | Occult ${c.occult} | Analog ${c.analog}
-13 Moon: ${c.m13Num} — ${c.m13Name} (Power: ${c.m13Power}, Action: ${c.m13Action}), Day ${c.dm13}/28
-Castle: ${c.castle5}, position ${c.pos5}/52
+13 Moon Calendar: Moon ${c.m13Num} — ${c.m13Name} (Power: ${c.m13Power}, Action: ${c.m13Action})
+Day ${c.dm13}/28 | Castle: ${c.castle5}, position ${c.pos5}/52
 
 PLANETARY POSITIONS (tropical ecliptic):
 ${c.pTable}
 
-ACTIVE ASPECTS: ${(c.detectedAspects||[]).join(' | ') || 'none detected'}
+ACTIVE ASPECTS:
+${(c.detectedAspects||[]).join(' | ') || 'calculating...'}
 
-HISTORICALLY SIGNIFICANT: Saturn-Neptune 0° Aries (20 Feb 2026) — first in Aries since ~1522.`;
+HISTORICALLY SIGNIFICANT CONTEXT:
+Saturn-Neptune conjunction at 0° Aries (perfected 20 Feb 2026) — first in Aries since ~1522 
+(Renaissance era; Copernicus published, Luther's Reformation began). Previous conjunctions: 
+1989 Capricorn (Berlin Wall), 1953 Libra (Stalin's death), 1917 Leo (Russian Revolution).
+Scholarly grounding: Tarnas (2006) Cosmos and Psyche pp.300-400 on Saturn-Neptune cycles.`;
 }
 
 
@@ -829,15 +812,9 @@ function buildPromptForTier(c, context, profile, nm, lp, nn, tier, isoDate) {
     return `${context}
 
 ORACLE READING — FULL DEPTH
-CRITICAL PERSONALISATION RULE:
-Use ONLY names, projects, and relationships that appear in the PERSON section above.
-NEVER use names from previous users or example readings (e.g.  the person named in the profile, the user's company, Sam, Kitty were used in development — do NOT use them unless they appear in THIS user's profile).
-If the profile has no people listed, use "the people close to you" not invented names.
-If the profile has no projects listed, use "your work" not invented project names.
-Every text field must name ${nm}'s actual situation from their profile. 
-Use ONLY the names, projects, and relationships from the profile data above.
-NEVER invent names or details. If profile data is sparse, ask for more rather than guessing.
-Rewrite any sentence that uses a name not found in the profile.
+SPECIFICITY MANDATE: Every text field must name ${nm}'s actual situation. 
+"Cosmic Daily Planner" not "your project". "Connie" not "your partner". 
+Rewrite any sentence that could apply to anyone else.
 
 Return ONLY this JSON object:
 {
@@ -862,19 +839,19 @@ Return ONLY this JSON object:
     {"body":"Uranus","pos":"from ephemeris","note":"enters Gemini 26 Apr 2026"}
   ],
   "keyAspects": [
-    {"aspect":"name the precise aspect with orb","detail":"interpret for ${nm}'s specific situation — name Cosmic Daily Planner, ${profile?.building?.split(',')[0]||'your main project'}, the names from ${nm}'s profile. Draw on Hand (2002) Planets in Transit for transit meaning.","significance":5}
+    {"aspect":"name the precise aspect with orb","detail":"interpret for ${nm}'s specific situation — name Cosmic Daily Planner, Gentronix, Connie etc. Draw on Hand (2002) Planets in Transit for transit meaning.","significance":5}
   ],
   "frameworks": {
     "numerology": {
       "icon":"${c.ud}",
       "headline":"Universal Day ${c.ud} — [governing quality: 3 words max]",
-      "body":"Two full paragraphs. Para 1: what UD ${c.ud} means in the Pythagorean system — its governing quality, what it rewards, what it resists, how it differs from adjacent numbers. Draw on Drayer (2002) and Goodwin (1994) for method. Para 2: applied precisely to ${nm} today — name ONLY the names and projects in ${nm}'s profile above. Cross-reference with Life Path ${lp||'unknown'} for personal resonance.",
+      "body":"Two full paragraphs. Para 1: what UD ${c.ud} means in the Pythagorean system — its governing quality, what it rewards, what it resists, how it differs from adjacent numbers. Draw on Drayer (2002) and Goodwin (1994) for method. Para 2: applied precisely to ${nm} today — name Cosmic Daily Planner, the Gentronix pitch, Connie, Sam, Kitty as appropriate. Cross-reference with Life Path ${lp||'unknown'} for personal resonance.",
       "personal":"${lp ? `Life Path ${lp}${expr ? ', Expression '+expr : ''}${soul ? ', Soul Urge '+soul : ''}` : 'Birth data not provided'}"
     },
     "astrology": {
       "icon":"♈",
-      "headline":"[Most important aspect today — include natal house if birth data available]",
-      "body":"Two full paragraphs. If birth time and place are known, open with the natal house this transit activates and what that house governs for ${nm} specifically. Para 1: the key aspect fully interpreted drawing on Hand (2002) for transit meaning, with symbolic depth from Greene (1976) on Saturn or Tarnas (2006) on outer planet cycles as appropriate. Para 2: applied precisely to ${nm}'s situation today — which decisions, relationships, domains. Then in 2-3 sentences: Saturn-Neptune 0° Aries (Tarnas 2006: a genesis point, last in Aries ~1522) and what it means for someone actively building something genuinely new right now.",
+      "headline":"[The single most important aspect or transit active today — be specific]",
+      "body":"Two full paragraphs. Para 1: the key aspect fully interpreted drawing on Hand (2002) for transit meaning, with symbolic depth from Greene (1976) on Saturn or Tarnas (2006) on outer planet cycles as appropriate. Para 2: applied precisely to ${nm}'s situation today — which decisions, relationships, domains. Then in 2-3 sentences: Saturn-Neptune 0° Aries (Tarnas 2006: a genesis point, last in Aries ~1522) and what it means for someone actively building something genuinely new right now.",
       "historic":"Saturn-Neptune 0° Aries: last ~1522 (Copernican revolution, Reformation). 1989 Capricorn: Berlin Wall. 1953 Libra: Stalin. 1917 Leo: Russian Revolution. Source: Tarnas (2006) Cosmos and Psyche."
     },
     "dreamspell": {
@@ -893,7 +870,7 @@ Return ONLY this JSON object:
   },
   "shadow": "One full paragraph. The honest, specific shadow work for ${nm} today. What today is genuinely asking them to face or acknowledge — not the comfortable version. Draw on Greene (1976) for the psychological framing of Saturn's demands. Must be impossible to mistake for anyone else.",
   "priorities": [
-    {"num":1,"title":"Priority name","why":"Specific cross-framework reasoning — which aspect, which UD quality, which kin energy all converge here","action":"One specific action. Name actual things: Cosmic Daily Planner, the ${profile?.building?.split(',')[0]||'your main project'} pitch, the Railway backend, the people named in ${nm}'s profile."},
+    {"num":1,"title":"Priority name","why":"Specific cross-framework reasoning — which aspect, which UD quality, which kin energy all converge here","action":"One specific action. Name actual things: Cosmic Daily Planner, the Gentronix pitch, the Railway backend, Connie, Sam, Kitty."},
     {"num":2,"title":"Priority name","why":"Framework reasoning","action":"Specific action naming real things"},
     {"num":3,"title":"Priority name","why":"Framework reasoning","action":"Specific action naming real things"}
   ],
@@ -918,7 +895,7 @@ Return ONLY this JSON object:
     "attribution":"Full citation: Author, Title, Publisher, Year — verified accurate",
     "grounding":"Three sentences settling ${nm} into this specific day. The quality of the light. What is alive in their life right now. What today is genuinely offering.",
     "forToday":[
-      "One act of love — specific to ${nm}'s named relationships (the people named in ${nm}'s profile)",
+      "One act of love — specific to ${nm}'s named relationships (Connie, Sam, Kitty, Mum)",
       "One moment of noticing — something specific to today's sky, season, or light",
       "One act of honest care — for ${nm} themselves or the work they care most about"
     ],
@@ -932,8 +909,8 @@ Return ONLY this JSON object:
 
 ${tier.toUpperCase()} READING for ${nm}.
 Write a warm, specific, personalised daily reading in prose. 400-800 words depending on tier.
-Draw on all four frameworks as relevant. Be concrete — name Cosmic Daily Planner, ${profile?.building?.split(',')[0]||'your main project'}, 
-the people named in ${nm}'s profile. Not generic cosmic content.
+Draw on all four frameworks as relevant. Be concrete — name Cosmic Daily Planner, Gentronix, 
+Connie, Sam, Kitty. Not generic cosmic content.
 Reference the scholarly grounding naturally where it adds weight (e.g. "the Saturn-Neptune 
 conjunction — last in Aries since 1522 — suggests...").`;
 }
