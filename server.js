@@ -831,7 +831,7 @@ function buildPromptForTier(c, context, profile, nm, lp, nn, tier, isoDate) {
 ORACLE READING — FULL DEPTH
 CRITICAL PERSONALISATION RULE:
 Use ONLY names, projects, and relationships that appear in the PERSON section above.
-NEVER use names from previous users or example readings (e.g. Ned, Connie, Gentronix, Sam, Kitty were used in development — do NOT use them unless they appear in THIS user's profile).
+NEVER use names from previous users or example readings (e.g.  the person named in the profile, the user's company, Sam, Kitty were used in development — do NOT use them unless they appear in THIS user's profile).
 If the profile has no people listed, use "the people close to you" not invented names.
 If the profile has no projects listed, use "your work" not invented project names.
 Every text field must name ${nm}'s actual situation from their profile. 
