@@ -756,6 +756,10 @@ async function buildPart3(c, context, profile, nm, lp, nn) {
 
 
 // ── Health check ──────────────────────────────────────────────────────────────
+app.get('/version', (req, res) => {
+  res.json({ version: '2.0', features: ['birth-data', 'checkin', 'history', 'scholarly-framework'] });
+});
+
 app.get('/health', (req, res) => {
   res.json({
     ok: true,
