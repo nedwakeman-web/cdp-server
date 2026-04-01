@@ -1,0 +1,3381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Cosmic Daily Planner</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500&family=IM+Fell+English:ital@0;1&family=Cinzel:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy:#0D1E33;
+  --navy-mid:#132845;
+  --navy-light:#1a3356;
+  --gold:#C9A050;
+  --gold-pale:#e8c97a;
+  --teal:#81CDB6;
+  --teal-dark:#5aab94;
+  --cream:#f5efe6;
+  --cream-dim:#ede5d8;
+  --text-main:#d8cebd;
+  --text-dim:#8fa0b8;
+  --text-bright:#f0e8d5;
+  --ruby:#c47a6e;
+  --violet:#8b7fc4;
+  --amber:#d4904a;
+  --rose:#d49ab0;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{min-height:100vh;background:var(--navy);color:var(--text-main);font-family:'Cormorant Garamond',Georgia,serif;font-size:17px;line-height:1.7;-webkit-text-size-adjust:100%}
+a{color:var(--teal);text-decoration:none}
+a:hover{color:var(--gold)}
+
+/* ═══ SCREENS ═══ */
+.screen{display:none;min-height:100vh;padding:0 0 60px}
+.screen.active{display:block}
+
+/* ═══ WELCOME ═══ */
+#welcome{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  min-height:100vh;padding:40px 24px;text-align:center;
+  background:radial-gradient(ellipse at 50% 30%,#1a3356 0%,#0D1E33 70%);
+}
+.welcome-moon{font-size:2.8rem;margin-bottom:24px;animation:moonpulse 4s ease-in-out infinite}
+@keyframes moonpulse{0%,100%{opacity:.6;transform:scale(1)}50%{opacity:1;transform:scale(1.08)}}
+.welcome-title{
+  font-family:'Cinzel',serif;font-size:clamp(1.4rem,5vw,2.2rem);font-weight:400;
+  letter-spacing:.18em;color:var(--gold);margin-bottom:8px;text-transform:uppercase;
+}
+.welcome-sub{font-size:1rem;color:var(--text-dim);letter-spacing:.08em;margin-bottom:40px;font-style:italic}
+.welcome-desc{max-width:520px;font-size:1.05rem;color:var(--text-main);line-height:1.9;margin-bottom:44px}
+.welcome-desc em{color:var(--teal);font-style:normal}
+.btn-primary{
+  display:inline-block;padding:14px 40px;background:transparent;border:1px solid var(--gold);
+  color:var(--gold);font-family:'Cinzel',serif;font-size:.8rem;letter-spacing:.2em;text-transform:uppercase;
+  cursor:pointer;transition:all .3s;font-weight:400;
+}
+.btn-primary:hover{background:rgba(201,160,80,.12);box-shadow:0 0 24px rgba(201,160,80,.2)}
+.btn-secondary{
+  display:inline-block;padding:10px 28px;background:transparent;border:1px solid var(--teal);
+  color:var(--teal);font-family:'Cinzel',serif;font-size:.7rem;letter-spacing:.2em;text-transform:uppercase;
+  cursor:pointer;transition:all .3s;
+}
+.btn-secondary:hover{background:rgba(129,205,182,.1)}
+.divider-dot{color:var(--gold);opacity:.4;margin:20px auto;letter-spacing:8px;text-align:center}
+
+/* ═══ ONBOARDING ═══ */
+#onboarding{background:var(--navy);padding:0}
+.onboard-page{display:none;padding:40px 24px;max-width:600px;margin:0 auto}
+.onboard-page.active{display:block}
+.onboard-step{font-family:'Cinzel',serif;font-size:.65rem;letter-spacing:.25em;color:var(--teal);text-transform:uppercase;margin-bottom:6px}
+.onboard-title{font-family:'Cormorant Garamond',serif;font-size:1.8rem;font-weight:300;color:var(--gold);margin-bottom:8px;line-height:1.3}
+.onboard-sub{font-size:.92rem;color:var(--text-dim);margin-bottom:32px;font-style:italic}
+label{display:block;font-size:.78rem;letter-spacing:.1em;color:var(--teal);text-transform:uppercase;margin-bottom:6px;margin-top:20px}
+label:first-of-type{margin-top:0}
+input[type=text],input[type=time],select,textarea{
+  width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(129,205,182,.2);
+  color:var(--text-bright);padding:12px 14px;font-family:'Cormorant Garamond',serif;font-size:1rem;
+  border-radius:2px;outline:none;transition:border-color .2s;
+  -webkit-appearance:none;appearance:none;
+}
+input[type=text]:focus,input[type=time]:focus,select:focus,textarea:focus{border-color:var(--teal)}
+select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%2381CDB6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:36px}
+textarea{min-height:80px;resize:vertical;line-height:1.6}
+.date-row{display:grid;grid-template-columns:1fr 1.6fr 1.2fr;gap:8px}
+.help-text{font-size:.82rem;color:var(--text-dim);margin-top:6px;font-style:italic}
+.checkbox-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+.cb-item{display:flex;align-items:center;gap:10px;padding:10px 14px;border:1px solid rgba(129,205,182,.15);cursor:pointer;transition:border-color .2s}
+.cb-item:hover{border-color:rgba(129,205,182,.4)}
+.cb-item input[type=checkbox]{width:auto;accent-color:var(--teal)}
+.cb-item span{font-size:.88rem;color:var(--text-main)}
+.expand-section{border:1px solid rgba(129,205,182,.15);margin-top:24px;overflow:hidden;transition:all .3s}
+.expand-header{display:flex;justify-content:space-between;align-items:center;padding:14px 18px;cursor:pointer;background:rgba(129,205,182,.04)}
+.expand-header:hover{background:rgba(129,205,182,.08)}
+.expand-icon{color:var(--teal);font-size:.9rem;transition:transform .3s}
+.expand-content{padding:0 18px;max-height:0;overflow:hidden;transition:max-height .4s ease}
+.expand-content.open{max-height:600px;padding:18px 18px}
+.expand-unlock-text{font-size:.82rem;color:var(--teal);font-style:italic;margin-bottom:12px}
+.tier-grid{display:grid;grid-template-columns:1fr;gap:8px;margin-top:8px}
+.tier-option{display:flex;align-items:center;gap:12px;padding:12px 16px;border:1px solid rgba(201,160,80,.2);cursor:pointer;transition:all .2s}
+.tier-option:hover{border-color:var(--gold);background:rgba(201,160,80,.06)}
+.tier-option input[type=radio]{accent-color:var(--gold)}
+.tier-symbol{font-size:1.2rem;width:24px;text-align:center}
+.tier-info{flex:1}
+.tier-name{font-family:'Cinzel',serif;font-size:.75rem;letter-spacing:.15em;color:var(--gold)}
+.tier-desc{font-size:.8rem;color:var(--text-dim);margin-top:2px}
+.tier-badge{font-size:.65rem;color:var(--teal);border:1px solid var(--teal);padding:2px 8px;letter-spacing:.1em}
+.nav-row{display:flex;justify-content:space-between;align-items:center;margin-top:32px;gap:12px}
+.nav-back{background:none;border:1px solid rgba(255,255,255,.15);color:var(--text-dim);padding:10px 20px;cursor:pointer;font-family:'Cormorant Garamond',serif;font-size:.9rem;transition:all .2s}
+.nav-back:hover{border-color:var(--text-dim)}
+.nav-fwd{flex:1;text-align:right}
+
+/* ═══ READING SCREEN ═══ */
+#reading{background:var(--navy)}
+.reading-header{
+  background:linear-gradient(180deg,#132845 0%,var(--navy) 100%);
+  padding:28px 20px 20px;text-align:center;border-bottom:1px solid rgba(201,160,80,.15);
+}
+.reading-title{font-family:'Cinzel',serif;font-size:.65rem;letter-spacing:.3em;color:var(--gold);text-transform:uppercase;margin-bottom:4px}
+.reading-name{font-family:'Cormorant Garamond',serif;font-size:1.5rem;font-weight:300;color:var(--text-bright)}
+.reading-date{font-size:.82rem;color:var(--text-dim);margin-top:2px;font-style:italic}
+
+/* Cosmic bar */
+.cosmic-bar{
+  display:grid;grid-template-columns:repeat(4,1fr);gap:1px;
+  background:rgba(201,160,80,.12);border-bottom:1px solid rgba(201,160,80,.1);
+}
+.cosmic-cell{
+  background:rgba(13,30,51,.9);padding:14px 8px;text-align:center;
+}
+.cosmic-cell-icon{font-size:1.3rem;margin-bottom:2px}
+.cosmic-cell-label{font-size:.55rem;letter-spacing:.15em;color:var(--text-dim);text-transform:uppercase}
+.cosmic-cell-value{font-size:.88rem;color:var(--gold);font-family:'Cinzel',serif;margin-top:2px;line-height:1.2}
+.cosmic-cell-sub{font-size:.65rem;color:var(--text-dim);font-style:italic}
+
+/* ═══ NUMEROLOGY SECTION ═══ */
+.section-wrap{padding:24px 16px;max-width:720px;margin:0 auto}
+.section-title{
+  font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.3em;color:var(--teal);
+  text-transform:uppercase;margin-bottom:16px;display:flex;align-items:center;gap:10px;
+}
+.section-title::after{content:'';flex:1;height:1px;background:rgba(129,205,182,.2)}
+
+/* Universal Day Number hero */
+.udn-hero{
+  text-align:center;padding:28px 20px;margin-bottom:20px;
+  background:linear-gradient(135deg,rgba(19,40,69,.8),rgba(13,30,51,.95));
+  border:1px solid rgba(201,160,80,.2);position:relative;overflow:hidden;
+}
+.udn-hero::before{
+  content:'';position:absolute;top:-60px;left:50%;transform:translateX(-50%);
+  width:200px;height:200px;background:radial-gradient(circle,rgba(201,160,80,.08) 0%,transparent 70%);
+  border-radius:50%;pointer-events:none;
+}
+.udn-number{font-family:'IM Fell English',serif;font-size:5rem;color:var(--gold);line-height:1;font-style:italic}
+.udn-number.master-11{color:var(--violet)!important;text-shadow:0 0 30px rgba(139,127,196,.4)}
+.udn-number.master-22{color:var(--gold)!important;text-shadow:0 0 30px rgba(201,160,80,.4)}
+.udn-number.master-33{color:#81cdb6!important;text-shadow:0 0 30px rgba(129,205,182,.4)}
+.udn-number.master-44{color:#e8a87c!important;text-shadow:0 0 30px rgba(232,168,124,.4)}
+.udn-master-badge{font-size:.6rem;letter-spacing:.2em;color:var(--violet);border:1px solid var(--violet);padding:3px 10px;text-transform:uppercase;display:inline-block;margin-bottom:6px;background:rgba(139,127,196,.08)}
+.udn-label{font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.25em;color:var(--text-dim);text-transform:uppercase;margin-bottom:4px}
+.udn-essence{font-size:1.3rem;color:var(--text-bright);font-style:italic;margin-bottom:8px}
+.udn-meaning{font-size:.9rem;color:var(--text-main);max-width:400px;margin:0 auto}
+
+/* Three energies strip */
+.energies-strip{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:20px}
+.energy-card{
+  padding:16px 12px;text-align:center;
+  background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);
+  transition:border-color .2s;
+}
+.energy-card:hover{border-color:rgba(129,205,182,.3)}
+.energy-period{font-size:.6rem;letter-spacing:.15em;color:var(--text-dim);text-transform:uppercase;margin-bottom:6px}
+.energy-time{font-size:.7rem;color:var(--teal);margin-bottom:8px}
+.energy-number{font-family:'IM Fell English',serif;font-size:2.2rem;color:var(--text-bright);line-height:1;font-style:italic}
+.energy-keyword{font-size:.8rem;color:var(--gold);margin-top:6px}
+.energy-action{font-size:.78rem;color:var(--text-dim);font-style:italic;margin-top:4px}
+
+/* Framework trinty (Day/Month/Year) */
+.num-trinity{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:20px}
+.trinity-card{padding:14px 10px;text-align:center;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08)}
+.trinity-label{font-size:.55rem;letter-spacing:.15em;color:var(--text-dim);text-transform:uppercase;margin-bottom:4px}
+.trinity-num{font-family:'IM Fell English',serif;font-size:2rem;color:var(--teal);font-style:italic;line-height:1;margin-bottom:4px}
+.trinity-word{font-size:.8rem;color:var(--text-main)}
+
+/* Personal numbers */
+.personal-nums{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:8px}
+.pnum-card{padding:14px 12px;background:rgba(255,255,255,.03);border:1px solid rgba(201,160,80,.15)}
+.pnum-row{display:flex;justify-content:space-between;align-items:baseline}
+.pnum-label{font-size:.7rem;color:var(--text-dim);letter-spacing:.05em}
+.pnum-value{font-family:'IM Fell English',serif;font-size:1.6rem;color:var(--gold);font-style:italic}
+.pnum-word{font-size:.78rem;color:var(--text-main);font-style:italic;margin-top:2px}
+
+/* ═══ MOON SECTION ═══ */
+.moon-card{
+  padding:20px;margin-bottom:20px;
+  background:linear-gradient(135deg,rgba(19,40,69,.7),rgba(13,30,51,.9));
+  border:1px solid rgba(129,205,182,.2);
+  display:flex;align-items:center;gap:20px;
+}
+.moon-icon{font-size:3.5rem;flex-shrink:0}
+.moon-info{flex:1}
+.moon-phase-name{font-family:'Cinzel',serif;font-size:1rem;letter-spacing:.1em;color:var(--teal);margin-bottom:4px}
+.moon-sign{font-size:.85rem;color:var(--gold);margin-bottom:6px}
+.moon-meaning{font-size:.9rem;color:var(--text-main);line-height:1.6}
+.moon-special{
+  display:inline-block;padding:4px 14px;font-size:.65rem;letter-spacing:.2em;text-transform:uppercase;
+  font-family:'Cinzel',serif;margin-bottom:8px;border-radius:2px;
+}
+.moon-special.black{background:rgba(139,127,196,.2);border:1px solid var(--violet);color:var(--violet)}
+.moon-special.shiva{background:rgba(129,205,182,.15);border:1px solid var(--teal);color:var(--teal)}
+.moon-days{font-size:.78rem;color:var(--text-dim);font-style:italic;margin-top:4px}
+
+/* ═══ NATAL CHART CARD ═══ */
+.natal-card{
+  padding:20px;margin-bottom:20px;
+  background:rgba(255,255,255,.03);border:1px solid rgba(201,160,80,.2);
+}
+.natal-headline{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.natal-title{font-family:'Cinzel',serif;font-size:.7rem;letter-spacing:.2em;color:var(--gold);text-transform:uppercase}
+.natal-link{font-size:.72rem;color:var(--teal);letter-spacing:.05em}
+.natal-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px}
+.natal-cell{text-align:center}
+.natal-cell-label{font-size:.6rem;letter-spacing:.12em;color:var(--text-dim);text-transform:uppercase;margin-bottom:3px}
+.natal-cell-value{font-size:.95rem;color:var(--text-bright)}
+.natal-cell-deg{font-size:.72rem;color:var(--gold)}
+.natal-lp-row{display:flex;gap:12px;flex-wrap:wrap;margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,.08)}
+.natal-lp-item{flex:1;min-width:80px;text-align:center}
+.natal-lp-label{font-size:.6rem;letter-spacing:.1em;color:var(--text-dim);text-transform:uppercase;margin-bottom:2px}
+.natal-lp-num{font-family:'IM Fell English',serif;font-size:1.5rem;color:var(--gold);font-style:italic}
+.natal-lp-word{font-size:.72rem;color:var(--text-main);font-style:italic}
+
+/* ═══ DREAMSPELL CARD ═══ */
+.kin-card{
+  padding:18px 20px;margin-bottom:20px;
+  background:rgba(255,255,255,.03);border:1px solid rgba(139,127,196,.25);
+}
+.kin-row{display:flex;align-items:center;gap:16px}
+.kin-glyph{font-size:2.5rem;flex-shrink:0}
+.kin-info{flex:1}
+.kin-name{font-family:'Cinzel',serif;font-size:.9rem;color:var(--violet);letter-spacing:.08em}
+.kin-num{font-size:.78rem;color:var(--text-dim);margin-top:2px}
+.kin-meaning{font-size:.88rem;color:var(--text-main);margin-top:6px;line-height:1.5}
+.gap-badge{
+  display:inline-block;padding:3px 12px;font-size:.6rem;letter-spacing:.2em;
+  text-transform:uppercase;font-family:'Cinzel',serif;margin-top:6px;
+  background:rgba(212,160,74,.15);border:1px solid var(--amber);color:var(--amber);
+}
+.wavespell-info{font-size:.78rem;color:var(--text-dim);font-style:italic;margin-top:6px}
+
+/* ═══ READING OUTPUT ═══ */
+.reading-output-wrap{
+  padding:24px 16px 0;max-width:720px;margin:0 auto;
+}
+.reading-card{
+  background:linear-gradient(180deg,rgba(19,40,69,.6),rgba(13,30,51,.8));
+  border:1px solid rgba(201,160,80,.15);padding:28px 24px;margin-bottom:16px;
+}
+.reading-card-title{
+  font-family:'Cinzel',serif;font-size:.62rem;letter-spacing:.25em;color:var(--gold);
+  text-transform:uppercase;margin-bottom:16px;padding-bottom:10px;
+  border-bottom:1px solid rgba(201,160,80,.15);
+}
+.reading-text{font-size:.95rem;color:var(--text-main);line-height:1.85}
+.reading-text p{margin-bottom:14px}
+.reading-text p:last-child{margin-bottom:0}
+.reading-text strong{color:var(--text-bright);font-weight:500}
+.reading-text em{color:var(--teal);font-style:italic}
+.convergence-hero{
+  font-family:'IM Fell English',serif;font-size:1.2rem;font-style:italic;
+  color:var(--gold);text-align:center;line-height:1.6;margin-bottom:20px;padding:16px;
+  border-top:1px solid rgba(201,160,80,.2);border-bottom:1px solid rgba(201,160,80,.2);
+}
+.priority-cards{display:grid;gap:12px;margin-bottom:12px}
+.priority-card{
+  padding:16px 18px;background:rgba(255,255,255,.03);border-left:3px solid var(--teal);
+}
+.priority-num{font-family:'Cinzel',serif;font-size:.6rem;color:var(--teal);letter-spacing:.2em;text-transform:uppercase;margin-bottom:4px}
+.priority-title{font-size:1rem;color:var(--text-bright);margin-bottom:6px;font-weight:500}
+.priority-body{font-size:.88rem;color:var(--text-main);line-height:1.6}
+.priority-action{font-size:.8rem;color:var(--teal);font-style:italic;margin-top:6px}
+.focus-ease-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+.focus-card,.ease-card{padding:16px;border:1px solid rgba(255,255,255,.1)}
+.focus-card{border-color:rgba(129,205,182,.25)}
+.ease-card{border-color:rgba(201,160,80,.2)}
+.fe-label{font-size:.6rem;letter-spacing:.2em;text-transform:uppercase;margin-bottom:6px}
+.fe-label.focus{color:var(--teal)}
+.fe-label.ease{color:var(--gold)}
+.fe-content{font-size:.88rem;color:var(--text-main);line-height:1.5}
+.windows-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
+.window-card{padding:14px 10px;text-align:center;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08)}
+.window-period{font-size:.6rem;letter-spacing:.12em;color:var(--text-dim);text-transform:uppercase;margin-bottom:4px}
+.window-time{font-size:.72rem;color:var(--teal);margin-bottom:6px}
+.window-quality{font-size:.88rem;color:var(--text-bright);margin-bottom:4px}
+.window-tip{font-size:.78rem;color:var(--text-dim);font-style:italic;line-height:1.4}
+.gift-quote{
+  border-left:2px solid var(--gold);padding:16px 20px;margin:16px 0;
+  background:rgba(201,160,80,.05);
+}
+.gift-quote p{font-style:italic;color:var(--text-bright);line-height:1.7;font-size:.95rem}
+
+/* ═══ LOADING STATES — PIPELINE VIEW ═══ */
+.loading-wrap{padding:36px 20px 20px;max-width:520px;margin:0 auto}
+.loading-moon-orb{
+  width:56px;height:56px;border-radius:50%;margin:0 auto 28px;
+  background:radial-gradient(circle at 35% 35%,rgba(201,160,80,.25),rgba(13,30,51,.9));
+  border:1px solid rgba(201,160,80,.25);
+  animation:orb-spin 4s ease-in-out infinite;
+  box-shadow:0 0 32px rgba(201,160,80,.12);
+  display:flex;align-items:center;justify-content:center;
+  font-size:1.4rem;
+}
+@keyframes orb-spin{
+  0%,100%{box-shadow:0 0 32px rgba(201,160,80,.12),inset 0 0 16px rgba(129,205,182,.05)}
+  50%{box-shadow:0 0 52px rgba(201,160,80,.22),inset 0 0 24px rgba(129,205,182,.15)}
+}
+/* Stage pipeline */
+.loading-stages{display:flex;flex-direction:column;gap:0;position:relative}
+.loading-stages::before{
+  content:'';position:absolute;left:15px;top:20px;bottom:20px;width:1px;
+  background:linear-gradient(180deg,rgba(129,205,182,.15) 0%,rgba(201,160,80,.15) 100%);
+}
+.loading-stage{
+  display:flex;align-items:flex-start;gap:14px;padding:10px 0;
+  opacity:.28;transition:opacity .5s ease,transform .4s ease;
+  transform:translateX(0);
+}
+.loading-stage.active{opacity:1;transform:translateX(4px)}
+.loading-stage.done{opacity:.55}
+.loading-stage.done .stage-dot{background:var(--teal);border-color:var(--teal)}
+.loading-stage.active .stage-dot{
+  background:var(--gold);border-color:var(--gold);
+  box-shadow:0 0 10px rgba(201,160,80,.5);
+  animation:dot-pulse .8s ease-in-out infinite;
+}
+@keyframes dot-pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.3)}}
+.stage-dot{
+  width:10px;height:10px;border-radius:50%;flex-shrink:0;margin-top:6px;
+  background:transparent;border:1px solid rgba(255,255,255,.2);transition:all .4s;
+}
+.stage-text{flex:1}
+.stage-label{font-family:'Cinzel',serif;font-size:.65rem;letter-spacing:.15em;color:var(--text-dim);text-transform:uppercase;transition:color .4s}
+.loading-stage.active .stage-label{color:var(--gold)}
+.loading-stage.done .stage-label{color:var(--teal)}
+.stage-desc{font-size:.78rem;color:var(--text-dim);font-style:italic;margin-top:2px;line-height:1.4}
+.loading-stage.active .stage-desc{color:var(--text-main)}
+.progress-bar{height:1px;background:rgba(255,255,255,.08);margin:24px 0 0;overflow:hidden}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--teal),var(--gold));width:0;transition:width .6s ease}
+
+/* ═══ BOTTOM BAR — centred actions ═══ */
+.bottom-bar{
+  position:fixed;bottom:0;left:0;right:0;
+  background:rgba(13,30,51,.97);border-top:1px solid rgba(201,160,80,.15);
+  backdrop-filter:blur(12px);padding:10px 16px;
+  display:flex;gap:8px;justify-content:center;align-items:center;z-index:100;
+}
+.bottom-btn{
+  display:flex;align-items:center;gap:6px;padding:9px 16px;
+  background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);
+  color:var(--text-dim);cursor:pointer;font-size:.7rem;letter-spacing:.1em;font-family:'Cinzel',serif;
+  transition:all .2s;white-space:nowrap;
+}
+.bottom-btn:hover{border-color:var(--teal);color:var(--teal);background:rgba(129,205,182,.06)}
+.bottom-btn.gold{border-color:rgba(201,160,80,.25);color:var(--gold)}
+.bottom-btn.gold:hover{border-color:var(--gold);background:rgba(201,160,80,.08)}
+
+/* ═══ FEEDBACK WIDGET ═══ */
+.feedback-widget{
+  max-width:520px;margin:0 auto;padding:24px 16px 80px;
+}
+.feedback-inner{
+  border:1px solid rgba(255,255,255,.08);padding:20px;
+  background:rgba(255,255,255,.02);
+}
+.feedback-title{font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.2em;color:var(--text-dim);text-transform:uppercase;margin-bottom:14px;text-align:center}
+.stars-row{display:flex;justify-content:center;gap:8px;margin-bottom:14px}
+.star-btn{
+  font-size:1.6rem;background:none;border:none;cursor:pointer;
+  color:rgba(255,255,255,.15);transition:all .2s;padding:2px;line-height:1;
+}
+.star-btn:hover,.star-btn.on{color:var(--gold);filter:drop-shadow(0 0 4px rgba(201,160,80,.5))}
+.feedback-textarea{
+  width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);
+  color:var(--text-main);padding:10px 12px;font-family:'Cormorant Garamond',serif;font-size:.9rem;
+  outline:none;resize:none;min-height:60px;border-radius:2px;
+}
+.feedback-textarea:focus{border-color:rgba(129,205,182,.3)}
+.feedback-submit{
+  display:block;width:100%;margin-top:10px;padding:10px;
+  background:transparent;border:1px solid rgba(129,205,182,.3);
+  color:var(--teal);font-family:'Cinzel',serif;font-size:.65rem;letter-spacing:.2em;text-transform:uppercase;
+  cursor:pointer;transition:all .2s;
+}
+.feedback-submit:hover{background:rgba(129,205,182,.08);border-color:var(--teal)}
+.feedback-thankyou{text-align:center;font-style:italic;color:var(--teal);font-size:.9rem;padding:12px 0;display:none}
+
+/* Oracle chat */
+.oracle-chat-wrap{
+  max-width:720px;margin:0 auto;padding:16px;
+}
+.oracle-input-row{display:flex;gap:8px;margin-bottom:8px}
+.oracle-input{
+  flex:1;background:rgba(255,255,255,.04);border:1px solid rgba(129,205,182,.2);
+  color:var(--text-bright);padding:12px 14px;font-family:'Cormorant Garamond',serif;font-size:.95rem;
+  outline:none;border-radius:2px;
+}
+.oracle-input:focus{border-color:var(--teal)}
+.oracle-send{
+  padding:12px 20px;background:rgba(129,205,182,.1);border:1px solid var(--teal);
+  color:var(--teal);cursor:pointer;font-family:'Cinzel',serif;font-size:.65rem;letter-spacing:.15em;text-transform:uppercase;
+  transition:all .2s;
+}
+.oracle-send:hover{background:rgba(129,205,182,.2)}
+.oracle-messages{display:flex;flex-direction:column;gap:12px;margin-top:12px}
+.oracle-msg{padding:14px 16px;font-size:.9rem;line-height:1.65}
+.oracle-msg.user{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);color:var(--text-dim);align-self:flex-end;max-width:80%}
+.oracle-msg.ai{background:rgba(19,40,69,.7);border-left:2px solid var(--teal);color:var(--text-main)}
+
+/* Planet grid */
+.planet-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-bottom:8px}
+.planet-cell{padding:10px 8px;text-align:center;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07)}
+.planet-symbol{font-size:1.2rem;line-height:1;margin-bottom:2px}
+.planet-name{font-size:.52rem;letter-spacing:.08em;color:var(--text-dim);text-transform:uppercase;margin-bottom:3px}
+.planet-pos{font-size:.8rem;color:var(--gold);font-family:'Cinzel',serif}
+.planet-note{font-size:.58rem;color:var(--text-dim);font-style:italic;margin-top:2px;line-height:1.3}
+@media(max-width:480px){.planet-grid{grid-template-columns:repeat(3,1fr)}}
+
+/* Section-aware rich reading layout */
+.convergence-block{
+  font-family:'IM Fell English',serif;font-size:1.12rem;font-style:italic;
+  color:var(--gold);text-align:center;line-height:1.75;
+  padding:22px 24px;margin-bottom:20px;
+  border-top:1px solid rgba(201,160,80,.25);border-bottom:1px solid rgba(201,160,80,.25);
+  background:rgba(201,160,80,.04);
+}
+.reading-section-label{font-family:'Cinzel',serif;font-size:.58rem;letter-spacing:.25em;color:var(--teal);text-transform:uppercase;margin:20px 0 10px;padding-bottom:8px;border-bottom:1px solid rgba(129,205,182,.15)}
+.priority-block{padding:16px 18px;background:rgba(255,255,255,.03);border-left:3px solid var(--teal);margin-bottom:10px}
+.priority-block-num{font-family:'Cinzel',serif;font-size:.55rem;color:var(--teal);letter-spacing:.2em;text-transform:uppercase;margin-bottom:4px}
+.priority-block-title{font-size:.95rem;color:var(--text-bright);margin-bottom:6px;font-weight:500}
+.priority-block-body{font-size:.88rem;color:var(--text-main);line-height:1.65}
+.priority-block-action{font-size:.8rem;color:var(--teal);font-style:italic;margin-top:7px;padding-top:7px;border-top:1px solid rgba(129,205,182,.12)}
+.focus-ease-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
+.focus-col{padding:14px;border:1px solid rgba(129,205,182,.2);background:rgba(129,205,182,.04)}
+.ease-col{padding:14px;border:1px solid rgba(201,160,80,.2);background:rgba(201,160,80,.03)}
+.fe-col-label{font-family:'Cinzel',serif;font-size:.58rem;letter-spacing:.18em;text-transform:uppercase;margin-bottom:8px}
+.focus-col .fe-col-label{color:var(--teal)}
+.ease-col .fe-col-label{color:var(--gold)}
+.fe-col-body{font-size:.85rem;color:var(--text-main);line-height:1.6}
+.windows-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
+.window-block{padding:14px 12px;text-align:center;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08)}
+.window-block-period{font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.12em;color:var(--text-dim);text-transform:uppercase;margin-bottom:4px}
+.window-block-time{font-size:.68rem;color:var(--teal);margin-bottom:6px}
+.window-block-body{font-size:.83rem;color:var(--text-main);line-height:1.5}
+.shadow-block{border-left:2px solid var(--violet);padding:14px 18px;background:rgba(139,127,196,.06);margin-bottom:16px}
+.shadow-block p{font-size:.9rem;color:var(--text-main);line-height:1.75;font-style:italic}
+.gift-block{padding:18px 22px;background:linear-gradient(135deg,rgba(201,160,80,.06),rgba(13,30,51,.8));border:1px solid rgba(201,160,80,.2);margin-bottom:16px}
+.gift-quote{font-family:'IM Fell English',serif;font-size:1rem;font-style:italic;color:var(--gold);margin-bottom:10px;line-height:1.65}
+.gift-block p{font-size:.9rem;color:var(--text-main);line-height:1.75}
+.week-ahead-block{margin-bottom:16px}
+.week-row{display:flex;gap:14px;padding:12px 0;border-bottom:1px solid rgba(255,255,255,.06);align-items:flex-start}
+.week-row:last-child{border-bottom:none}
+.week-row-date{flex-shrink:0;width:76px}
+.week-row-date-label{font-family:'Cinzel',serif;font-size:.6rem;color:var(--gold);letter-spacing:.1em;text-transform:uppercase}
+.week-row-date-udn{font-family:'IM Fell English',serif;font-size:.95rem;color:var(--teal);font-style:italic;line-height:1.2}
+.week-row-kin{font-size:.62rem;color:var(--text-dim);font-style:italic;margin-top:1px}
+.week-row-body{flex:1;font-size:.85rem;color:var(--text-main);line-height:1.55}
+.week-row.gap-day{background:rgba(212,160,74,.06);border-left:2px solid var(--amber);padding-left:10px;margin-left:-10px}
+.reading-prose{font-size:.92rem;color:var(--text-main);line-height:1.8;margin-bottom:14px}
+.reading-prose p{margin-bottom:10px}
+.reading-prose p:last-child{margin-bottom:0}
+.reading-prose strong{color:var(--text-bright);font-weight:500}
+.reading-prose em{color:var(--teal)}
+@media(max-width:480px){.focus-ease-grid,.windows-grid{grid-template-columns:1fr}}
+
+/* Suggested questions chips */
+.suggested-qs{display:flex;flex-wrap:wrap;gap:8px;padding:12px 0 14px;border-bottom:1px solid rgba(255,255,255,.06);margin-bottom:14px}
+.sq-chip{padding:8px 14px;border:1px solid rgba(129,205,182,.3);background:rgba(129,205,182,.05);color:var(--teal);font-size:.72rem;cursor:pointer;font-family:'Cinzel',serif;letter-spacing:.05em;transition:all .2s}
+.sq-chip:hover{background:rgba(129,205,182,.15);border-color:var(--teal);transform:translateY(-1px)}
+.oracle-header{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:10px;padding-top:4px}
+
+/* History */
+.history-item{padding:12px 14px;border:1px solid rgba(255,255,255,.07);background:rgba(255,255,255,.02);margin-bottom:8px;cursor:pointer;transition:all .2s}
+.history-item:hover{border-color:rgba(201,160,80,.3);background:rgba(201,160,80,.03)}
+.history-item-date{font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.15em;color:var(--gold);text-transform:uppercase;margin-bottom:4px}
+.history-item-convergence{font-size:.84rem;color:var(--text-main);font-style:italic;line-height:1.5}
+.history-item-meta{font-size:.62rem;color:var(--text-dim);margin-top:4px}
+/* Daily card overlay */
+#daily-card-overlay{
+  position:fixed;inset:0;z-index:500;
+  background:rgba(0,0,0,.7);
+  display:flex;align-items:flex-start;justify-content:center;
+  padding:20px;overflow-y:auto;
+  backdrop-filter:blur(4px);
+}
+.bottom-bar{display:flex;flex-wrap:wrap;gap:6px;justify-content:center}
+
+/* Week ahead */
+.week-card{padding:16px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);margin-bottom:8px}
+.week-day{display:flex;gap:12px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.06)}
+.week-day:last-child{border-bottom:none}
+.week-day-name{font-family:'Cinzel',serif;font-size:.65rem;letter-spacing:.15em;color:var(--gold);width:36px;flex-shrink:0;text-transform:uppercase}
+.week-day-num{font-family:'IM Fell English',serif;font-size:1.1rem;color:var(--teal);width:20px;flex-shrink:0;font-style:italic;text-align:center}
+.week-day-text{font-size:.85rem;color:var(--text-main);flex:1;line-height:1.45}
+
+/* Scholarly refs */
+.ref-strip{font-size:.68rem;color:var(--text-dim);border-top:1px solid rgba(255,255,255,.06);padding-top:12px;margin-top:12px;line-height:1.7;font-style:italic}
+.ref-strip a{color:rgba(129,205,182,.6);font-size:.65rem}
+
+/* ═══ MONTHLY CALENDAR ═══ */
+.cal-screen{max-width:720px;margin:0 auto;padding:20px 12px 100px}
+.cal-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;padding:0 4px}
+.cal-nav-btn{background:none;border:1px solid rgba(255,255,255,.12);color:var(--text-dim);padding:8px 16px;cursor:pointer;font-family:'Cinzel',serif;font-size:.65rem;letter-spacing:.15em;transition:all .2s}
+.cal-nav-btn:hover{border-color:var(--teal);color:var(--teal)}
+.cal-month-title{font-family:'Cinzel',serif;font-size:1rem;letter-spacing:.15em;color:var(--gold);text-align:center}
+.cal-legend{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;font-size:.65rem;color:var(--text-dim)}
+.cal-legend span{display:flex;align-items:center;gap:4px}
+.cal-legend .dot{width:8px;height:8px;border-radius:50%;display:inline-block}
+.cal-dow{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-bottom:4px}
+.cal-dow-label{text-align:center;font-family:'Cinzel',serif;font-size:.55rem;letter-spacing:.1em;color:var(--text-dim);padding:4px 0;text-transform:uppercase}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
+.cal-day{
+  background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);
+  padding:6px 4px 8px;min-height:68px;cursor:pointer;transition:all .2s;position:relative;
+  display:flex;flex-direction:column;align-items:center;
+}
+.cal-day:hover{border-color:rgba(129,205,182,.4);background:rgba(129,205,182,.06)}
+.cal-day.empty{background:transparent;border-color:transparent;cursor:default}
+.cal-day.today{border-color:var(--teal)!important;background:rgba(129,205,182,.08)!important}
+.cal-day.selected{border-color:var(--gold)!important;background:rgba(201,160,80,.1)!important}
+.cal-day.master11{background:rgba(139,127,196,.12);border-color:rgba(139,127,196,.3)}
+.cal-day.master22{background:rgba(201,160,80,.1);border-color:rgba(201,160,80,.3)}
+.cal-day.master33{background:rgba(212,160,74,.1);border-color:rgba(212,160,74,.3)}
+.cal-day.master44{background:rgba(201,80,80,.08);border-color:rgba(201,80,80,.25)}
+.cal-day-num{font-family:'IM Fell English',serif;font-size:1rem;color:var(--text-bright);font-style:italic;line-height:1}
+.cal-day-udn{font-size:.6rem;font-family:'Cinzel',serif;color:var(--gold);margin-top:2px}
+.cal-day-udn.master{color:var(--violet)}
+.cal-day-moon{font-size:.85rem;margin-top:3px;line-height:1}
+.cal-badges{display:flex;flex-wrap:wrap;gap:2px;justify-content:center;margin-top:3px}
+.cal-badge{font-size:.5rem;letter-spacing:.06em;padding:1px 4px;border-radius:1px;font-family:'Cinzel',serif;text-transform:uppercase;line-height:1.4}
+.cal-badge.gap{background:rgba(212,160,74,.2);color:var(--amber);border:1px solid rgba(212,160,74,.3)}
+.cal-badge.bm{background:rgba(139,127,196,.2);color:var(--violet);border:1px solid rgba(139,127,196,.3)}
+.cal-badge.sm{background:rgba(129,205,182,.15);color:var(--teal);border:1px solid rgba(129,205,182,.25)}
+.cal-badge.fm{background:rgba(255,255,200,.15);color:#e8e070;border:1px solid rgba(255,255,200,.25)}
+.cal-badge.nm{background:rgba(50,80,140,.3);color:var(--text-dim);border:1px solid rgba(100,130,200,.2)}
+/* Day detail panel */
+.cal-detail{
+  margin-top:16px;padding:20px;background:linear-gradient(135deg,rgba(19,40,69,.9),rgba(13,30,51,.95));
+  border:1px solid rgba(201,160,80,.2);display:none;
+}
+.cal-detail.visible{display:block}
+.cal-detail-date{font-family:'Cinzel',serif;font-size:.65rem;letter-spacing:.2em;color:var(--gold);text-transform:uppercase;margin-bottom:12px}
+.cal-detail-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:14px}
+.cal-detail-item{background:rgba(255,255,255,.03);padding:10px 12px;border:1px solid rgba(255,255,255,.07)}
+.cal-detail-label{font-size:.55rem;letter-spacing:.12em;color:var(--text-dim);text-transform:uppercase;margin-bottom:4px}
+.cal-detail-value{font-size:.92rem;color:var(--text-bright)}
+.cal-detail-sub{font-size:.75rem;color:var(--text-dim);font-style:italic;margin-top:2px}
+.cal-read-btn{display:block;width:100%;padding:10px;background:transparent;border:1px solid var(--teal);color:var(--teal);font-family:'Cinzel',serif;font-size:.65rem;letter-spacing:.2em;text-transform:uppercase;cursor:pointer;margin-top:12px;transition:all .2s}
+.cal-read-btn:hover{background:rgba(129,205,182,.1)}
+@media(max-width:480px){
+  .cal-day{min-height:54px;padding:4px 2px 6px}
+  .cal-day-num{font-size:.85rem}
+  .cal-badges{gap:1px}
+  .cal-badge{font-size:.45rem;padding:1px 3px}
+  .cal-detail-grid{grid-template-columns:1fr}
+}
+/* streaming cursor */
+.stream-cursor{animation:blink .7s step-end infinite;color:var(--teal);font-weight:300}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+/* print overrides feedback */
+
+/* Print */
+@media print{
+  body{background:#fff;color:#222}
+  .bottom-bar,.oracle-chat-wrap,.feedback-bar{display:none}
+  .reading-card{border:1px solid #ddd;padding:16px}
+}
+
+/* Mobile */
+@media(max-width:480px){
+  .energies-strip,.num-trinity,.windows-row{grid-template-columns:1fr}
+  .personal-nums,.focus-ease-row{grid-template-columns:1fr}
+  .natal-grid{grid-template-columns:repeat(2,1fr)}
+  .cosmic-bar{grid-template-columns:repeat(2,1fr)}
+  .udn-number{font-size:4rem}
+}
+</style>
+</head>
+<body>
+
+<!-- ═══════════ WELCOME ═══════════ -->
+<div id="welcome-screen" class="screen active">
+<div id="welcome">
+  <div class="welcome-moon">☽</div>
+  <div class="welcome-title">Cosmic Daily Planner</div>
+  <div class="welcome-sub">A personal guide to each day</div>
+  <div class="divider-dot">· · ·</div>
+  <div class="welcome-desc">
+    Each day, four ancient frameworks converge on a single message for you —
+    <em>numerology</em>, <em>astronomy & astrology</em>, <em>Dreamspell</em>, and the living rhythm of the <em>lunar cycle</em>.
+    Not generic cosmic content. A reading built for your life, your chapter, your day.
+  </div>
+  <button class="btn-primary" onclick="showOnboarding()">Begin your reading →</button>
+  <div style="margin-top:20px">
+    <button class="btn-secondary" onclick="loadExistingProfile()">Return — I have a profile</button>
+  </div>
+  <div style="margin-top:40px;font-size:.72rem;color:var(--text-dim);max-width:420px;text-align:center;line-height:1.7">
+    Grounded in peer-reviewed astronomy (Šprajc et al. 2023, <em>Science Advances</em>; Aldana 2022) · 
+    Psychological astrology (Greene, Tarnas, Brady) · Pythagorean numerology (Drayer, Goodwin) · 
+    Dreamspell / Law of Time (Argüelles)
+  </div>
+</div>
+</div>
+
+<!-- ═══════════ ONBOARDING ═══════════ -->
+<div id="onboarding-screen" class="screen">
+<div class="onboard-page active" id="ob-page-1">
+  <div style="padding-top:24px">
+    <div class="onboard-step">Who you are · 1 of 3</div>
+    <div class="onboard-title">Your cosmic signature</div>
+    <div class="onboard-sub">Your birth name, date, and place are the three anchors of all four frameworks.</div>
+  </div>
+
+  <label>Full birth name — exactly as registered</label>
+  <input type="text" id="birth-name" placeholder="e.g. Edward James Wakeman" autocomplete="off">
+  <div class="help-text">Used for Pythagorean numerology — Life Path, Expression, Soul Urge numbers</div>
+
+  <label style="margin-top:16px">Preferred name — what you go by</label>
+  <input type="text" id="pref-name" placeholder="e.g. Ned">
+
+  <label style="margin-top:16px">Date of birth</label>
+  <div class="date-row">
+    <select id="dob-d"><option value="">Day</option></select>
+    <select id="dob-m">
+      <option value="">Month</option>
+      <option value="1">January</option><option value="2">February</option>
+      <option value="3">March</option><option value="4">April</option>
+      <option value="5">May</option><option value="6">June</option>
+      <option value="7">July</option><option value="8">August</option>
+      <option value="9">September</option><option value="10">October</option>
+      <option value="11">November</option><option value="12">December</option>
+    </select>
+    <select id="dob-y"><option value="">Year</option></select>
+  </div>
+
+  <label style="margin-top:16px">Time of birth — for Rising sign</label>
+  <input type="time" id="dob-time" placeholder="HH:MM">
+  <div class="help-text">Leave blank if unknown — Rising sign omitted from reading</div>
+
+  <label style="margin-top:16px">Place of birth — for natal chart</label>
+  <input type="text" id="birth-place" placeholder="e.g. London, England">
+
+  <label style="margin-top:16px">Where you live now — for moon timing</label>
+  <input type="text" id="live-place" placeholder="e.g. Holmes Chapel, Cheshire">
+
+  <label style="margin-top:16px">Timezone</label>
+  <select id="timezone">
+    <option value="0">UK — London (GMT/BST)</option>
+    <option value="1">Europe Central — Paris/Berlin</option>
+    <option value="2">Europe East — Athens/Helsinki</option>
+    <option value="-5">US East — New York</option>
+    <option value="-6">US Central — Chicago</option>
+    <option value="-7">US Mountain — Denver</option>
+    <option value="-8">US West — Los Angeles</option>
+  </select>
+
+  <div class="nav-row">
+    <button class="btn-secondary" onclick="goToWelcome()">← Back</button>
+    <div class="nav-fwd"><button class="btn-primary" onclick="goToPage2()">Continue →</button></div>
+  </div>
+</div>
+
+<div class="onboard-page" id="ob-page-2">
+  <div style="padding-top:24px">
+    <div class="onboard-step">Your life · 2 of 3</div>
+    <div class="onboard-title">Your chapter right now</div>
+    <div class="onboard-sub">Honest answers transform a generic reading into something that speaks directly to you.</div>
+  </div>
+
+  <label>What life chapter are you in?</label>
+  <textarea id="life-chapter" placeholder="e.g. Building two biotech companies while raising teenagers and seeking deeper meaning in midlife..."></textarea>
+
+  <label style="margin-top:14px">What are you most focused on or working through?</label>
+  <textarea id="life-focus" placeholder="e.g. Raising investment, navigating a health challenge, a relationship at a turning point..."></textarea>
+
+  <label style="margin-top:14px">What matters most to you right now?</label>
+  <textarea id="life-values" placeholder="e.g. My family, integrity in my work, staying grounded amid pressure..."></textarea>
+
+  <div class="expand-section" style="margin-top:20px">
+    <div class="expand-header" onclick="toggleExpand('expand-2a')">
+      <div>
+        <div style="font-size:.7rem;letter-spacing:.15em;color:var(--teal);text-transform:uppercase">✦ Go deeper — 3 more questions</div>
+        <div style="font-size:.78rem;color:var(--text-dim);margin-top:2px;font-style:italic">Unlocks: specific references to what you're building, your key relationships, and what you most need to hear</div>
+      </div>
+      <div class="expand-icon" id="expand-2a-icon">▸</div>
+    </div>
+    <div class="expand-content" id="expand-2a">
+      <label>What are you building, creating, or working toward?</label>
+      <textarea id="life-building" placeholder=""></textarea>
+      <label style="margin-top:14px">Who are the people who matter most right now?</label>
+      <textarea id="life-people" placeholder=""></textarea>
+      <label style="margin-top:14px">What do you most need to hear from someone who really knows you?</label>
+      <textarea id="life-hear" placeholder=""></textarea>
+    </div>
+  </div>
+
+  <div class="expand-section" style="margin-top:12px">
+    <div class="expand-header" onclick="toggleExpand('expand-2b')">
+      <div>
+        <div style="font-size:.7rem;letter-spacing:.15em;color:var(--teal);text-transform:uppercase">◈ Go even deeper — 3 final questions</div>
+        <div style="font-size:.78rem;color:var(--text-dim);margin-top:2px;font-style:italic">Unlocks: pattern recognition, body wisdom, and what living well looks like for you specifically</div>
+      </div>
+      <div class="expand-icon" id="expand-2b-icon">▸</div>
+    </div>
+    <div class="expand-content" id="expand-2b">
+      <label>What recurring theme or pattern keeps showing up?</label>
+      <textarea id="life-pattern" placeholder=""></textarea>
+      <label style="margin-top:14px">What does your body or gut tell you that your mind keeps overriding?</label>
+      <textarea id="life-gut" placeholder=""></textarea>
+      <label style="margin-top:14px">What would living well look like for you right now — concretely?</label>
+      <textarea id="life-wellbeing" placeholder=""></textarea>
+    </div>
+  </div>
+
+  <div class="nav-row">
+    <button class="nav-back" onclick="goToPage1()">← Back</button>
+    <div class="nav-fwd"><button class="btn-primary" onclick="goToPage3()">Continue →</button></div>
+  </div>
+</div>
+
+<div class="onboard-page" id="ob-page-3">
+  <div style="padding-top:24px">
+    <div class="onboard-step">Daily guidance · 3 of 3</div>
+    <div class="onboard-title">Your focus areas & reading</div>
+    <div class="onboard-sub">Which areas would you like daily guidance on?</div>
+  </div>
+
+  <div class="checkbox-grid" id="focus-areas">
+    <label class="cb-item"><input type="checkbox" value="Work & purpose" checked><span>Work & purpose</span></label>
+    <label class="cb-item"><input type="checkbox" value="Family"><span>Family</span></label>
+    <label class="cb-item"><input type="checkbox" value="Relationships"><span>Relationships</span></label>
+    <label class="cb-item"><input type="checkbox" value="Health"><span>Health & body</span></label>
+    <label class="cb-item"><input type="checkbox" value="Creativity"><span>Creativity</span></label>
+    <label class="cb-item"><input type="checkbox" value="Inner life"><span>Inner life</span></label>
+    <label class="cb-item"><input type="checkbox" value="Money"><span>Money</span></label>
+    <label class="cb-item"><input type="checkbox" value="Rest"><span>Rest & renewal</span></label>
+  </div>
+
+  <label style="margin-top:20px">When are you at your best?</label>
+  <select id="chrono">
+    <option value="morning">Morning — sharpest early</option>
+    <option value="evening">Evening — come alive later</option>
+    <option value="mixed">Mixed — it varies</option>
+  </select>
+
+  <label style="margin-top:20px">Reading date</label>
+  <div class="date-row">
+    <select id="read-d"><option value="">Day</option></select>
+    <select id="read-m">
+      <option value="">Month</option>
+      <option value="1">January</option><option value="2">February</option>
+      <option value="3">March</option><option value="4">April</option>
+      <option value="5">May</option><option value="6">June</option>
+      <option value="7">July</option><option value="8">August</option>
+      <option value="9">September</option><option value="10">October</option>
+      <option value="11">November</option><option value="12">December</option>
+    </select>
+    <select id="read-y">
+      <option value="2026">2026</option>
+      <option value="2025">2025</option>
+      <option value="2027">2027</option>
+    </select>
+  </div>
+
+  <label style="margin-top:20px">Reading depth</label>
+  <div class="tier-grid" id="tier-select">
+    <label class="tier-option">
+      <input type="radio" name="tier" value="FREE" checked>
+      <span class="tier-symbol">☽</span>
+      <span class="tier-info">
+        <span class="tier-name">FREE — Daily Card</span>
+        <span class="tier-desc" style="display:block">Day number, moon phase, Kin, one convergence insight</span>
+      </span>
+      <span class="tier-badge">FREE</span>
+    </label>
+    <label class="tier-option">
+      <input type="radio" name="tier" value="SEEKER">
+      <span class="tier-symbol">✦</span>
+      <span class="tier-info">
+        <span class="tier-name">SEEKER — Full Reading</span>
+        <span class="tier-desc" style="display:block">All four frameworks · 3 priorities · Focus/ease · Day windows · Reflection</span>
+      </span>
+      <span class="tier-badge">BETA</span>
+    </label>
+    <label class="tier-option">
+      <input type="radio" name="tier" value="INITIATE">
+      <span class="tier-symbol">◈</span>
+      <span class="tier-info">
+        <span class="tier-name">INITIATE — Week Ahead</span>
+        <span class="tier-desc" style="display:block">Full reading + week-by-week numerology arc + lunation map</span>
+      </span>
+      <span class="tier-badge">BETA</span>
+    </label>
+    <label class="tier-option">
+      <input type="radio" name="tier" value="MYSTIC">
+      <span class="tier-symbol">▪</span>
+      <span class="tier-info">
+        <span class="tier-name">MYSTIC — Month Depth</span>
+        <span class="tier-desc" style="display:block">Full reading + monthly lunation map + natal transit overlays + shadow work</span>
+      </span>
+      <span class="tier-badge">BETA</span>
+    </label>
+    <label class="tier-option">
+      <input type="radio" name="tier" value="ORACLE">
+      <span class="tier-symbol">◎</span>
+      <span class="tier-info">
+        <span class="tier-name">ORACLE — Full Year Arc</span>
+        <span class="tier-desc" style="display:block">Everything in Mystic + yearly arc + Hellenistic lots + GAP mapping + progressions</span>
+      </span>
+      <span class="tier-badge">BETA</span>
+    </label>
+  </div>
+
+  <div style="margin-top:10px;font-size:.75rem;color:var(--teal);font-style:italic;text-align:center">✦ All tiers free during beta</div>
+
+  <div style="margin-top:16px;padding:14px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06)">
+    <label style="margin:0">Anything on your mind today? — optional</label>
+    <textarea id="checkin" placeholder="A question, a feeling, a hope, a concern..." style="margin-top:8px;min-height:60px"></textarea>
+  </div>
+
+  <div class="nav-row">
+    <button class="nav-back" onclick="goToPage2()">← Back</button>
+    <div class="nav-fwd"><button class="btn-primary" id="generate-btn" onclick="generateReading()">Open my reading →</button></div>
+  </div>
+
+  <div style="margin-top:24px;font-size:.72rem;color:var(--text-dim);text-align:center">Your readings are generated fresh each day and stored privately in your browser.</div>
+</div>
+</div>
+
+<!-- ═══════════ READING SCREEN ═══════════ -->
+<div id="reading-screen" class="screen">
+
+<div class="reading-header">
+  <div class="reading-title">Cosmic Daily Planner</div>
+  <div class="reading-name" id="r-name">—</div>
+  <div class="reading-date" id="r-date">—</div>
+  <div style="margin-top:8px">
+    <button onclick="openCalendar()" style="background:none;border:1px solid rgba(201,160,80,.3);color:var(--gold);font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.15em;padding:5px 14px;cursor:pointer;transition:all .2s" onmouseover="this.style.background='rgba(201,160,80,.1)'" onmouseout="this.style.background='none'">◈ Monthly Calendar</button>
+  </div>
+</div>
+
+<!-- Cosmic snapshot bar -->
+<div class="cosmic-bar">
+  <div class="cosmic-cell">
+    <div class="cosmic-cell-icon" id="r-moon-icon">🌙</div>
+    <div class="cosmic-cell-label">Moon</div>
+    <div class="cosmic-cell-value" id="r-moon-phase">—</div>
+    <div class="cosmic-cell-sub" id="r-moon-sign">—</div>
+  </div>
+  <div class="cosmic-cell">
+    <div class="cosmic-cell-icon">№</div>
+    <div class="cosmic-cell-label">Universal Day</div>
+    <div class="cosmic-cell-value" id="r-udn" style="font-size:1.5rem">—</div>
+    <div class="cosmic-cell-sub" id="r-udn-word">—</div>
+  </div>
+  <div class="cosmic-cell">
+    <div class="cosmic-cell-icon">☀</div>
+    <div class="cosmic-cell-label">Sun in</div>
+    <div class="cosmic-cell-value" id="r-sun">—</div>
+    <div class="cosmic-cell-sub" id="r-sun-deg">—</div>
+  </div>
+  <div class="cosmic-cell">
+    <div class="cosmic-cell-icon">✦</div>
+    <div class="cosmic-cell-label">Dreamspell</div>
+    <div class="cosmic-cell-value" id="r-kin-short">—</div>
+    <div class="cosmic-cell-sub" id="r-kin-tone">—</div>
+  </div>
+</div>
+
+<!-- Main reading body -->
+<div id="reading-body">
+  <div class="loading-wrap" id="reading-loading">
+    <div class="loading-moon-orb">☽</div>
+    <div class="loading-stages" id="loading-stages">
+      <div class="loading-stage" id="stage-0">
+        <div class="stage-dot"></div>
+        <div class="stage-text">
+          <div class="stage-label">Consulting the sky</div>
+          <div class="stage-desc">Planetary positions · moon phase · solar arc</div>
+        </div>
+      </div>
+      <div class="loading-stage" id="stage-1">
+        <div class="stage-dot"></div>
+        <div class="stage-text">
+          <div class="stage-label">Reading the lunar tide</div>
+          <div class="stage-desc">Phase · Black Moon · Shiva Moon · moon sign</div>
+        </div>
+      </div>
+      <div class="loading-stage" id="stage-2">
+        <div class="stage-dot"></div>
+        <div class="stage-text">
+          <div class="stage-label">Running the numbers</div>
+          <div class="stage-desc">Universal Day · Personal Day · Life Path · year arc</div>
+        </div>
+      </div>
+      <div class="loading-stage" id="stage-3">
+        <div class="stage-dot"></div>
+        <div class="stage-text">
+          <div class="stage-label">Entering the Dreamspell</div>
+          <div class="stage-desc">Today's Kin · wavespell · Galactic Activation Portal</div>
+        </div>
+      </div>
+      <div class="loading-stage" id="stage-4">
+        <div class="stage-dot"></div>
+        <div class="stage-text">
+          <div class="stage-label">Reading the natal chart</div>
+          <div class="stage-desc">Sun · Moon · Life Path · transit overlays</div>
+        </div>
+      </div>
+      <div class="loading-stage" id="stage-5">
+        <div class="stage-dot"></div>
+        <div class="stage-text">
+          <div class="stage-label">Aligning the frameworks</div>
+          <div class="stage-desc">Finding where all four streams converge</div>
+        </div>
+      </div>
+      <div class="loading-stage" id="stage-6">
+        <div class="stage-dot"></div>
+        <div class="stage-text">
+          <div class="stage-label">The oracle is composing</div>
+          <div class="stage-desc">Writing your reading — this takes a moment</div>
+        </div>
+      </div>
+    </div>
+    <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+  </div>
+  <div id="reading-content" style="display:none"></div>
+</div>
+
+<!-- Oracle chat + suggested questions -->
+<div class="oracle-chat-wrap" id="oracle-section" style="display:none">
+  <div class="oracle-header">
+    <div class="section-title" style="margin:0">◎ Ask your oracle</div>
+    <div style="font-size:.7rem;color:var(--text-dim);font-style:italic">Go deeper on any aspect of today</div>
+  </div>
+
+  <!-- Suggested questions chips -->
+  <div class="suggested-qs" id="suggested-qs"></div>
+
+  <div id="oracle-messages" class="oracle-messages"></div>
+  <div class="oracle-input-row">
+    <input class="oracle-input" id="oracle-input" placeholder="Ask anything about your reading — or your day…" onkeydown="if(event.key==='Enter')sendOracle()">
+    <button class="oracle-send" onclick="sendOracle()">Ask ↑</button>
+  </div>
+</div>
+
+<div class="feedback-widget">
+  <div class="feedback-inner" id="feedback-box">
+    <div class="feedback-title">Share your experience — shapes what this becomes</div>
+    <div class="stars-row" id="stars-row">
+      <button class="star-btn" data-val="1" onclick="setStar(1)">★</button>
+      <button class="star-btn" data-val="2" onclick="setStar(2)">★</button>
+      <button class="star-btn" data-val="3" onclick="setStar(3)">★</button>
+      <button class="star-btn" data-val="4" onclick="setStar(4)">★</button>
+      <button class="star-btn" data-val="5" onclick="setStar(5)">★</button>
+    </div>
+    <textarea class="feedback-textarea" id="feedback-text" placeholder="What worked? What could be deeper, different, or better?" rows="2" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();submitFeedback();}"></textarea>
+    <button class="feedback-submit" onclick="submitFeedback()">Send feedback</button>
+    <div class="feedback-thankyou" id="feedback-thanks">Thank you — this goes directly to the person building it. ✦</div>
+  </div>
+</div>
+
+<!-- Bottom bar — centred -->
+<div class="bottom-bar">
+  <button class="bottom-btn" onclick="editProfile()">✦ Edit profile</button>
+  <button class="bottom-btn gold" onclick="saveAsPDF()">⎙ Save PDF</button>
+  <button class="bottom-btn" onclick="downloadDailyCard()">◈ Daily card</button>
+  <button class="bottom-btn" onclick="showHistory()">⊙ History</button>
+  <button class="bottom-btn" onclick="toggleOracle()">◎ Oracle</button>
+</div>
+
+<!-- History panel (slide up) -->
+<div id="history-panel" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:200;background:var(--bg-card);border-top:1px solid rgba(201,160,80,.25);max-height:70vh;overflow-y:auto;padding:20px 20px 100px">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+    <div style="font-family:'Cinzel',serif;font-size:.7rem;letter-spacing:.2em;color:var(--gold);text-transform:uppercase">Reading History</div>
+    <button onclick="document.getElementById('history-panel').style.display='none'" style="background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:1.2rem">✕</button>
+  </div>
+  <div id="history-list"></div>
+  <div style="margin-top:16px;font-size:.7rem;color:var(--text-dim);text-align:center">Readings saved locally in your browser · Max 30 days</div>
+</div>
+
+</div><!-- end reading-screen -->
+
+<!-- ═══════════ CALENDAR SCREEN ═══════════ -->
+<div id="calendar-screen" class="screen">
+<div class="reading-header">
+  <div class="reading-title">Cosmic Daily Planner</div>
+  <div class="reading-name" id="cal-header-name">Monthly Overview</div>
+  <div class="reading-date" id="cal-header-sub">Plan your days, months, and year</div>
+</div>
+<div class="cal-screen">
+  <div class="cal-nav">
+    <button class="cal-nav-btn" onclick="calPrevMonth()">← Prev</button>
+    <div class="cal-month-title" id="cal-title">—</div>
+    <button class="cal-nav-btn" onclick="calNextMonth()">Next →</button>
+  </div>
+  <div class="cal-legend">
+    <span><span class="dot" style="background:var(--gold)"></span> Master number</span>
+    <span><span class="dot" style="background:var(--violet)"></span> 11 — Illumination</span>
+    <span><span class="dot" style="background:#e8e070"></span> Full Moon</span>
+    <span><span class="dot" style="background:var(--teal)"></span> New Moon</span>
+    <span style="color:var(--amber)">★ Portal</span>
+    <span style="color:var(--violet)">● Black Moon</span>
+    <span style="color:var(--teal)">◈ Shiva Moon</span>
+  </div>
+  <div class="cal-dow">
+    <div class="cal-dow-label">Mon</div><div class="cal-dow-label">Tue</div>
+    <div class="cal-dow-label">Wed</div><div class="cal-dow-label">Thu</div>
+    <div class="cal-dow-label">Fri</div><div class="cal-dow-label">Sat</div>
+    <div class="cal-dow-label">Sun</div>
+  </div>
+  <div class="cal-grid" id="cal-grid"></div>
+  <div class="cal-detail" id="cal-detail"></div>
+</div>
+<div class="bottom-bar">
+  <button class="bottom-btn" onclick="editProfile()">✦ Edit profile</button>
+  <button class="bottom-btn gold" onclick="showScreen('reading')">← Reading</button>
+  <button class="bottom-btn" onclick="saveAsPDF()">⎙ Save PDF</button>
+</div>
+</div>
+<script>
+// ════════════════════════════════════════
+// NUMBER MEANINGS — Pythagorean tradition
+// Source: Drayer 2002, Goodwin 1994, Kahn 2001
+// ════════════════════════════════════════
+const NUM = {
+  1:{essence:'New Beginnings',keyword:'Initiation & Will',shadow:'Isolation or arrogance',morning:'Plant one clear intention',afternoon:'Assert your direction with conviction',evening:'Honour your independence — what are you starting?',body:'Fire. Yang. The head.'},
+  2:{essence:'Harmony & Partnership',keyword:'Receptivity & Balance',shadow:'Indecision or over-sensitivity',morning:'Listen more than you speak',afternoon:'Seek alignment with someone close',evening:'Rest into trust — what needs harmonising?',body:'Water. Yin. The nervous system.'},
+  3:{essence:'Creativity & Expression',keyword:'Joy, Communication & Marketing',shadow:'Scattered energy or superficiality',morning:'Speak or write what is alive in you',afternoon:'Create — ideal for social connections and marketing',evening:'Celebrate what has been expressed',body:'Fire and Air. The throat.'},
+  4:{essence:'Foundation & Order',keyword:'Hard Work, Honesty & Integrity',shadow:'Rigidity or over-work',morning:'Prioritise the one task that builds your foundation',afternoon:'Work steadily — method over speed, honesty above all',evening:'Assess what has been built; honour the process',body:'Earth. The skeletal structure.'},
+  5:{essence:'Freedom & Change',keyword:'Learning, Relationships & Social Engagements',shadow:'Restlessness or excess',morning:'Welcome the unexpected; stay curious',afternoon:'Move, explore, focus on learning and relationships',evening:'Integrate the lesson that change brought today',body:'Air and Fire. The lungs.'},
+  6:{essence:'Love & Responsibility',keyword:'Art, Family Time & Kindness',shadow:'Martyrdom or controlling through care',morning:'Ask: who needs my love or support today?',afternoon:'Good day for art, family, and acts of kindness',evening:'Rest in appreciation for those who anchor you',body:'Venus. The heart and kidneys.'},
+  7:{essence:'Wisdom & Introspection',keyword:'Depth, Karmic Energy & Solitude',shadow:'Withdrawal or over-intellectualising',morning:'Begin in quiet — let the inner voice speak first',afternoon:'Intense karmic day; great for creativity and solitude',evening:'Trust what your deeper self has revealed',body:'The brain, the nervous system.'},
+  8:{essence:'Power & Abundance',keyword:'Business, Structure & Financial Matters',shadow:'Control, greed, or burnout',morning:'Set one bold goal with practical steps',afternoon:'Lead, negotiate, structure — excellent for business and finance',evening:'Assess: where is energy returning, where is it leaking?',body:'Saturn. The adrenals and spine.'},
+  9:{essence:'Completion & Compassion',keyword:'Magical, Blissful & Peaceful',shadow:'Bitterness or inability to release',morning:'What is ready to be completed or released?',afternoon:'A peaceful, magical day — enjoy loved ones, special meetings',evening:'Honour what is ending; make space for what comes next',body:'Mars and Neptune. The blood.'},
+  11:{essence:'Illumination',keyword:'Magical Energy & Special Moments',shadow:'Anxiety or nervous sensitivity',morning:'Pay attention to synchronicities at first light',afternoon:'Magical energy — opportunities for special moments; creative endeavours',evening:'Ground the vision: journal, breathe, sleep with intention',body:'The pineal gland. Ultra-sensitivity.',master:true},
+  22:{essence:'Master Builder',keyword:'Intense Fast-Paced Work & Transformation',shadow:'Overwhelm or paralysis',morning:'Hold the large vision while taking one grounded step',afternoon:'Intense, fast-paced energy for work projects and transformative experiences',evening:'Rest: the greatest builder knows when to stop',body:'The integrated body-mind.',master:true},
+  33:{essence:'Master Teacher',keyword:'Creativity, Intuition & Balance',shadow:'Martyrdom at the cost of self',morning:'Focus on creativity and intuition',afternoon:'Balance between challenge and opportunity; teach or guide',evening:'Be taught by your own day',body:'The entire energy body.',master:true},
+  44:{essence:'Excellence & Structure',keyword:'Work, Business & Special Projects',shadow:'Perfectionism or rigidity',morning:'Similar to 8 but amplified — structure a special project',afternoon:'Emphasises work and business; potential for excellence and bringing projects to fruition',evening:'Review what has been built with honest eyes',body:'Saturn amplified. The bones.',master:true}
+};
+
+const MONTH_NUM={1:'New cycles begin here — the year opens its door',2:'A month of sensitivity and careful attunement',3:'Expression, creativity, and social connection flourish',4:'Build with patience — this month rewards consistent effort',5:'Change and freedom press forward — expect the unexpected',6:'Harmony, home, and heart are the themes this month',7:'A reflective month — go inward, research, seek truth',8:'Power, ambition, and material achievement are activated',9:'A month of completion, release, and wide compassion',10:'Reduces to 1 — a new cycle emerges',11:'An illuminated month — heightened intuition and sensitivity',12:'Reduces to 3 — creative expression and joyful connection'};
+const YEAR_ESSENCE={1:'Global initiation — new structures are seeded',2:'Collective partnership — the world seeks cooperation',3:'A year of shared creativity and cultural expression',4:'The world builds its foundations with disciplined effort',5:'Freedom, upheaval, and rapid change define this year',6:'A year of love, responsibility, and healing of home',7:'Collective wisdom-seeking — a year of depth and revelation',8:'Power and material forces are tested and reconfigured',9:'A year of global completion — what no longer serves falls away'};
+
+// ════════════════════════════════════════
+// NUMEROLOGY ENGINE
+// ════════════════════════════════════════
+function reduceNum(n, keepMaster=true){
+  if(keepMaster && (n===11||n===22||n===33)) return n;
+  while(n>9){
+    if(keepMaster && (n===11||n===22||n===33)) break;
+    let s=0, tmp=n;
+    while(tmp>0){s+=tmp%10;tmp=Math.floor(tmp/10);}
+    n=s;
+    if(keepMaster && (n===11||n===22||n===33)) break;
+  }
+  return n;
+}
+
+function getLifePath(d,m,y){
+  // Reduce day, month, year separately first (standard method)
+  const rd=reduceNum(d);
+  const rm=reduceNum(m);
+  const ry=reduceNum(y);
+  return reduceNum(rd+rm+ry);
+}
+
+function getExpression(fullName){
+  const PYTH={a:1,b:2,c:3,d:4,e:5,f:6,g:7,h:8,i:9,j:1,k:2,l:3,m:4,n:5,o:6,p:7,q:8,r:9,s:1,t:2,u:3,v:4,w:5,x:6,y:7,z:8};
+  let s=0;
+  for(const c of fullName.toLowerCase().replace(/[^a-z]/g,'')){s+=PYTH[c]||0;}
+  return reduceNum(s);
+}
+
+function getSoulUrge(fullName){
+  const PYTH={a:1,e:5,i:9,o:6,u:3};
+  let s=0;
+  for(const c of fullName.toLowerCase()){s+=PYTH[c]||0;}
+  return reduceNum(s);
+}
+
+function getPersonalityNum(fullName){
+  const PYTH={b:2,c:3,d:4,f:6,g:7,h:8,j:1,k:2,l:3,m:4,n:5,p:7,q:8,r:9,s:1,t:2,v:4,w:5,x:6,y:7,z:8};
+  let s=0;
+  for(const c of fullName.toLowerCase().replace(/[^a-z]/g,'')){
+    if(['a','e','i','o','u'].includes(c)) continue;
+    s+=PYTH[c]||0;
+  }
+  return reduceNum(s);
+}
+
+function getUniversalDay(date){
+  return reduceNum(date.getDate()+(date.getMonth()+1)+date.getFullYear());
+}
+function getDayVib(date){return reduceNum(date.getDate());}
+function getMonthVib(date){return reduceNum(date.getMonth()+1);}
+function getYearVib(date){return reduceNum(date.getFullYear());}
+
+function getPersonalYear(dob, readDate){
+  // Personal Year = reduced (birth day + birth month + reading year)
+  return reduceNum(dob.getDate()+(dob.getMonth()+1)+readDate.getFullYear());
+}
+function getPersonalMonth(personalYear, readDate){
+  return reduceNum(personalYear+(readDate.getMonth()+1));
+}
+function getPersonalDay(personalMonth, readDate){
+  return reduceNum(personalMonth+readDate.getDate());
+}
+
+// Three energies of the day
+// Morning: Universal Day Number (collective field)
+// Afternoon: Personal Day Number (your individual path)
+// Evening: Personal Month Number (the month's undertow)
+function getThreeEnergies(udn, pd, pm){
+  return [
+    {period:'Morning', time:'dawn to noon', num:udn, meaning:'Universal field — the collective frequency everyone shares today'},
+    {period:'Afternoon', time:'noon to dusk', num:pd, meaning:'Personal path — your individual note within the day'},
+    {period:'Evening', time:'dusk to midnight', num:pm, meaning:'Monthly undercurrent — the deeper tide this whole month carries'}
+  ];
+}
+
+// ════════════════════════════════════════
+// MOON ENGINE
+// Sources: USNO, NASA Moon Phases
+// Reference: Jan 29 2025 12:36 UTC = New Moon
+// ════════════════════════════════════════
+const LUNAR_CYCLE=29.53058867;
+const REF_NEW_MOON=new Date('2025-01-29T12:36:00Z');
+
+function getLunarAge(date){
+  const ms=date.getTime()-REF_NEW_MOON.getTime();
+  const days=ms/86400000;
+  return((days%LUNAR_CYCLE)+LUNAR_CYCLE)%LUNAR_CYCLE;
+}
+
+const MOON_PHASES=[
+  {name:'New Moon',emoji:'🌑',range:[0,1.85],energy:'Deep reset and new intentions — the veil between worlds is thin. A potent moment for planting seeds.',sign_mod:0},
+  {name:'Waxing Crescent',emoji:'🌒',range:[1.85,7.38],energy:'Tender beginnings gather momentum. Lean into what you set in motion at the New Moon.',sign_mod:1},
+  {name:'First Quarter',emoji:'🌓',range:[7.38,9.22],energy:'A turning point — take decisive action on the intentions you planted.',sign_mod:2},
+  {name:'Waxing Gibbous',emoji:'🌔',range:[9.22,14.77],energy:'Refinement and preparation. You are close to the crest — adjust, polish, persist.',sign_mod:3},
+  {name:'Full Moon',emoji:'🌕',range:[14.77,16.61],energy:'Peak illumination — emotions amplify, results become visible, and what has been hidden surfaces.',sign_mod:4},
+  {name:'Waning Gibbous',emoji:'🌖',range:[16.61,22.15],energy:'Integration and gratitude. Begin to release what the full moon revealed as unnecessary.',sign_mod:5},
+  {name:'Last Quarter',emoji:'🌗',range:[22.15,23.99],energy:'Release, forgiveness, and letting go. The cycle prepares to renew.',sign_mod:6},
+  {name:'Waning Crescent',emoji:'🌘',range:[23.99,29.53],energy:'Rest, retreat, and deep listening. Surrender is the practice. New energy gathers beneath.',sign_mod:7}
+];
+
+function getMoonPhaseData(age){
+  for(const p of MOON_PHASES){
+    if(age>=p.range[0]&&age<p.range[1]) return p;
+  }
+  return MOON_PHASES[0];
+}
+
+function getDaysToNewMoon(age){return LUNAR_CYCLE-age;}
+function getDaysSinceNewMoon(age){return age;}
+
+// BLACK MOON = ~2 days before New Moon (toNew 0.6–2.6 days)
+// Source: Sonia Indigo 2025 Planner — Jan 27-28 before Jan 29 New Moon
+function isBlackMoon(age){
+  const toNew=getDaysToNewMoon(age);
+  return toNew>=0.6&&toNew<=2.6;
+}
+
+// SHIVA MOON = 2 days after New Moon — blissful, plans into action
+// Source: Sonia Indigo 2025 Planner — Jan 31 after Jan 29 New Moon
+function isShivaMoon(age){
+  return age>=1&&age<=2.5;
+}
+
+// New Moon = age < 1 day OR toNew < 0.6 (final approach)
+function isNewMoon(age){
+  const toNew=getDaysToNewMoon(age);
+  return age<1||toNew<0.6;
+}
+
+// Approximate moon zodiac sign
+// Moon moves ~13.176°/day; zodiac sign = 30° per sign
+// Reference: Jan 29 2025 12:36 UTC = New Moon in Aquarius (approx 9°)
+const ZODIAC_SIGNS=['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces'];
+const ZODIAC_EMOJIS=['♈','♉','♊','♋','♌','♍','♎','♏','♐','♑','♒','♓'];
+const ZODIAC_GLYPHS=['🐏','🐂','👥','🦀','🦁','♍','⚖','🦂','🏹','🐐','🌊','🐟'];
+// Moon qualities per sign
+const MOON_SIGN_QUALITY={
+  'Aries':'Bold and impulsive emotional energy — act first, reflect later',
+  'Taurus':'Grounded, sensual, and seeking comfort — the body speaks',
+  'Gemini':'Curious, chatty, and mentally restless — ideas abound',
+  'Cancer':'Deep feeling, nurturing, and tender — honour your roots',
+  'Leo':'Warm, dramatic, and generous — let your light be seen',
+  'Virgo':'Analytical, careful, and health-conscious — refine and discern',
+  'Libra':'Seeking beauty, balance, and connection — relationships matter',
+  'Scorpio':'Intense, intuitive, and transformative — go beneath the surface',
+  'Sagittarius':'Expansive, optimistic, and truth-seeking — think big',
+  'Capricorn':'Disciplined, ambitious, and structured — build with intention',
+  'Aquarius':'Innovative, detached, and humanitarian — think for yourself',
+  'Pisces':'Dreamy, compassionate, and porous — honour your sensitivity'
+};
+
+function getMoonSign(date){
+  // Reference Moon longitude at Jan 29 2025 12:36 UTC ≈ 309° (Aquarius 9°)
+  const refLong=309;
+  const refTime=REF_NEW_MOON.getTime();
+  const daysDiff=(date.getTime()-refTime)/86400000;
+  const longNow=(refLong+daysDiff*13.176)%360;
+  const signIdx=Math.floor(((longNow%360)+360)%360/30);
+  return {name:ZODIAC_SIGNS[signIdx],emoji:ZODIAC_EMOJIS[signIdx],quality:MOON_SIGN_QUALITY[ZODIAC_SIGNS[signIdx]]};
+}
+
+// ════════════════════════════════════════
+// SUN SIGN ENGINE
+// ════════════════════════════════════════
+function getSunSign(date){
+  const m=date.getMonth()+1, d=date.getDate();
+  if((m==3&&d>=21)||(m==4&&d<=19)) return {sign:'Aries',deg:Math.min(d+(m==3?-21:9),29)+1,emoji:'♈'};
+  if((m==4&&d>=20)||(m==5&&d<=20)) return {sign:'Taurus',deg:Math.min(d+(m==4?-20:10),29)+1,emoji:'♉'};
+  if((m==5&&d>=21)||(m==6&&d<=20)) return {sign:'Gemini',deg:Math.min(d+(m==5?-21:9),29)+1,emoji:'♊'};
+  if((m==6&&d>=21)||(m==7&&d<=22)) return {sign:'Cancer',deg:Math.min(d+(m==6?-21:9),29)+1,emoji:'♋'};
+  if((m==7&&d>=23)||(m==8&&d<=22)) return {sign:'Leo',deg:Math.min(d+(m==7?-23:7),29)+1,emoji:'♌'};
+  if((m==8&&d>=23)||(m==9&&d<=22)) return {sign:'Virgo',deg:Math.min(d+(m==8?-23:7),29)+1,emoji:'♍'};
+  if((m==9&&d>=23)||(m==10&&d<=22)) return {sign:'Libra',deg:Math.min(d+(m==9?-23:7),29)+1,emoji:'♎'};
+  if((m==10&&d>=23)||(m==11&&d<=21)) return {sign:'Scorpio',deg:Math.min(d+(m==10?-23:7),29)+1,emoji:'♏'};
+  if((m==11&&d>=22)||(m==12&&d<=21)) return {sign:'Sagittarius',deg:Math.min(d+(m==11?-22:8),29)+1,emoji:'♐'};
+  if((m==12&&d>=22)||(m==1&&d<=19)) return {sign:'Capricorn',deg:Math.min(d+(m==12?-22:8),29)+1,emoji:'♑'};
+  if((m==1&&d>=20)||(m==2&&d<=18)) return {sign:'Aquarius',deg:Math.min(d+(m==1?-20:10),29)+1,emoji:'♒'};
+  return {sign:'Pisces',deg:Math.min(d+(m==2?-19:9),29)+1,emoji:'♓'};
+}
+
+// Natal sun sign — accurate (solar longitude by calendar date)
+function getNatalSunSign(dob){return getSunSign(dob);}
+
+// Natal moon sign — approximate only
+// The Moon moves ~13.2°/day. Over decades the accumulated error from a simple
+// linear model is too large to give a reliable single sign.
+// We return the computed sign BUT flag it as approximate ±2 signs.
+// For precision: Swiss Ephemeris at astro.com (free natal chart tool)
+// Reference: Hand (2002) Planets in Transit; astro.com uses JPL DE431
+function getNatalMoonSign(dob){
+  // Use the same getMoonSign engine but acknowledge the limitation
+  const computed = getMoonSign(dob);
+  return {
+    ...computed,
+    approximate: true,
+    note: 'Approximate — verify at astro.com for precision'
+  };
+}
+
+// ════════════════════════════════════════
+// DREAMSPELL ENGINE
+// Source: Argüelles (1987) The Mayan Factor — modern 20th-century system
+// Clearly distinct from ancient K'iche' Maya count (Aldana 2022; Tedlock 1992)
+// CRITICAL: Dreamspell SKIPS the Gregorian leap day (Feb 29).
+// The 13-Moon calendar has 365 uniform days; leap day = 'Day Out of Time' (not counted).
+// Source: lawoftime.org; Argüelles 1987
+// Anchor: July 8, 2024 = Kin 1 (Red Magnetic Dragon)
+// VERIFIED against Sonia Indigo 2025 Planner portal days:
+//   Jan 7 2025 = Kin 184 Yellow Lunar Seed ✓
+//   Jan 12 2025 = Kin 189 Red Resonant Moon ✓
+//   Feb 2 2025 = Kin 210 White Lunar Dog ✓
+//   Feb 3 2025 = Kin 211 Blue Electric Monkey ✓
+//   Mar 3 2025 = Kin 239 Blue Overtone Storm ✓
+//   Oct 2 2025 = Kin 192 Yellow Planetary Human ✓
+//   Oct 28 2025 = Kin 218 White Planetary Mirror ✓
+// ════════════════════════════════════════
+const DS_ANCHOR=new Date(Date.UTC(2024,6,8)); // July 8, 2024 = Kin 1
+
+function countLeapDaysBetween(d1, d2){
+  // Count Feb 29 occurrences strictly between d1 and d2
+  const start=d1<d2?d1:d2;
+  const end=d1<d2?d2:d1;
+  let count=0;
+  for(let y=start.getFullYear();y<=end.getFullYear();y++){
+    if((y%4===0&&y%100!==0)||y%400===0){
+      const feb29=new Date(Date.UTC(y,1,29));
+      if(feb29>start&&feb29<end) count++;
+    }
+  }
+  return d1<=d2?count:-count;
+}
+
+const DS_TONES=['Magnetic','Lunar','Electric','Self-Existing','Overtone','Rhythmic','Resonant','Galactic','Solar','Planetary','Spectral','Crystal','Cosmic'];
+const DS_TONE_INTENT=['Unite','Polarise','Activate','Define','Empower','Organise','Channel','Harmonise','Pulse','Perfect','Release','Dedicate','Transcend'];
+const DS_SIGNS=['Dragon','Wind','Night','Seed','Serpent','Worldbridger','Hand','Star','Moon','Dog','Monkey','Human','Skywalker','Wizard','Eagle','Warrior','Earth','Mirror','Storm','Sun'];
+const DS_COLORS=['Red','White','Blue','Yellow','Red','White','Blue','Yellow','Red','White','Blue','Yellow','Red','White','Blue','Yellow','Red','White','Blue','Yellow'];
+const DS_SIGN_POWER=['Nurtures','Communicates','Dreams','Targets','Survives','Equalises','Knows','Beautifies','Purifies','Loves','Plays','Free Wills','Explores','Enchants','Sees','Questions','Navigates','Reflects','Generates','Illuminates'];
+const DS_SIGN_ACTION=['Birth','Breath','Abundance','Flowering','Life Force','Death','Accomplishment','Art','Flow','Heart','Magic','Wisdom','Space','Timelessness','Vision','Intelligence','Navigation','Order','Self-Generation','Fire'];
+const DS_SIGN_MEANING=[
+  'Primal force, nurturing, the womb of creation',
+  'Spirit, wind, communication, the voice of truth',
+  'Dreaming, abundance, the subconscious temple',
+  'Targeting, flowering, awareness, the seed of potential',
+  'Serpent power, vitality, the kundalini force',
+  'Death and rebirth, equalising, the great portal',
+  'Healing knowledge, the open hand, accomplishment',
+  'Elegance, art, the star that shines',
+  'Cosmic water, purification, emotional flow',
+  'Unconditional love, loyalty, the faithful heart',
+  'Divine play, illusion, the trickster magic',
+  'Free will, wisdom, the influence of humanity',
+  'Space explorer, prophet, the cosmic adventurer',
+  'Timelessness, jaguar night, shamanic enchantment',
+  'Higher mind, vision, the far-seeing eagle',
+  'Intelligence, questioning, the fearless warrior',
+  'Synchronic navigation, earth connection',
+  'Refinement through reflection, hall of mirrors',
+  'Catalysing, self-generation, the storm that renews',
+  'Solar fire, enlightenment, universal fire'
+];
+
+// GAP days — 52 Galactic Activation Portals in the 260-day Tzolkin
+// VERIFIED from Sonia Indigo 2025 Planner portal days cross-referenced with corrected Kin engine
+// All 52 unique Kins confirmed: Jan 2025 through Dec 2025
+const GAP_KINS=new Set([1,20,22,39,43,50,51,58,64,69,72,77,85,88,93,96,106,107,108,109,110,111,112,113,114,115,146,147,148,149,150,151,152,153,154,155,165,168,173,176,184,189,192,197,203,210,211,218,222,239,241,260]);
+
+function getDreamspellKin(date){
+  const calDays=Math.floor((date.getTime()-DS_ANCHOR.getTime())/86400000);
+  const leapDays=countLeapDaysBetween(DS_ANCHOR,date);
+  const dsDays=calDays-leapDays; // Dreamspell days (leap day excluded)
+  return((dsDays%260)+260)%260+1;
+}
+
+function getDreamspellData(date){
+  const kin=getDreamspellKin(date);
+  const toneIdx=((kin-1)%13);
+  const signIdx=((kin-1)%20);
+  const tone=DS_TONES[toneIdx];
+  const sign=DS_SIGNS[signIdx];
+  const color=DS_COLORS[signIdx];
+  const isGAP=GAP_KINS.has(kin);
+  // Wavespell: every 13 days
+  const wsKin=Math.floor((kin-1)/13)*13+1;
+  const wsSign=DS_SIGNS[(wsKin-1)%20];
+  const wsColor=DS_COLORS[(wsKin-1)%20];
+  return{
+    kin, tone, sign, color, isGAP,
+    toneIntent:DS_TONE_INTENT[toneIdx],
+    signPower:DS_SIGN_POWER[signIdx],
+    signAction:DS_SIGN_ACTION[signIdx],
+    signMeaning:DS_SIGN_MEANING[signIdx],
+    wavespell:`${wsColor} ${wsSign} Wavespell`,
+    tonePos:toneIdx+1,
+    fullName:`${tone} ${color} ${sign}`,
+    shortName:`${color} ${tone} ${sign}`,
+  };
+}
+
+// Days to key moon moments for week lookahead
+function getNextFullMoon(fromDate){
+  const age=getLunarAge(fromDate);
+  const daysToFull=age<14.77?(14.77-age):(LUNAR_CYCLE-age+14.77);
+  const d=new Date(fromDate.getTime()+daysToFull*86400000);
+  return d;
+}
+function getNextNewMoon(fromDate){
+  const age=getLunarAge(fromDate);
+  const daysToNew=LUNAR_CYCLE-age;
+  return new Date(fromDate.getTime()+daysToNew*86400000);
+}
+
+// ════════════════════════════════════════
+// ASTRO.COM NATAL CHART LINK
+// ════════════════════════════════════════
+function getAstroComLink(dob, birthTime, birthPlace){
+  // Direct link to natal chart entry form
+  let base='https://www.astro.com/cgi/ade.cgi?action=entry';
+  return base;
+}
+
+// ════════════════════════════════════════
+// PLANETARY POSITIONS (approximate)
+// For precise data: JPL Horizons https://ssd.jpl.nasa.gov/horizons/
+// These are simplified tropical longitudes for context
+// ════════════════════════════════════════
+function getApproxPlanetaryPositions(date){
+  // Solar longitude (Sun sign) we already have
+  // For other planets, provide a simplified note
+  // True precision requires Swiss Ephemeris integration
+  const sun=getSunSign(date);
+  const moonSign=getMoonSign(date);
+  // Known transits for 2026 context:
+  const positions=[
+    {planet:'☀ Sun', sign:sun.sign, note:''},
+    {planet:'☽ Moon', sign:moonSign.name, note:''},
+    {planet:'♀ Venus', sign:'Aries', note:'direct'},  // approximate for Apr 2026
+    {planet:'♂ Mars', sign:'Gemini', note:''},
+    {planet:'♃ Jupiter', sign:'Gemini', note:''},
+    {planet:'♄ Saturn', sign:'Pisces', note:''},
+    {planet:'♅ Uranus', sign:'Taurus', note:''},
+    {planet:'♆ Neptune', sign:'Pisces/Aries', note:'♄-♆ cnj forming'},
+    {planet:'♇ Pluto', sign:'Aquarius', note:''},
+  ];
+  return positions;
+}
+
+// ════════════════════════════════════════
+// APPROXIMATE RISING SIGN
+// Method: solar arc approximation
+// At sunrise, ASC ≈ Sun sign. ASC advances ~1 sign per 2 hours.
+// ════════════════════════════════════════
+function approxRising(natalSunSign, birthTime){
+  if(!birthTime) return {sign:'Unknown',note:'Enter birth time for Rising sign'};
+  const parts=birthTime.split(':');
+  const hour=parseInt(parts[0])||0;
+  const sunIdx=ZODIAC_SIGNS.indexOf(natalSunSign);
+  // Sunrise approximately 6am. ASC = Sun sign at 6am, advances 1 sign every ~2hrs
+  const hrsSinceSunrise=((hour-6)+24)%24;
+  const signsAdv=Math.floor(hrsSinceSunrise/2);
+  const risingIdx=(sunIdx+signsAdv)%12;
+  return {
+    sign:ZODIAC_SIGNS[risingIdx]+' '+ZODIAC_EMOJIS[risingIdx],
+    note:'Approximate ±1-2 signs · based on birth time'
+  };
+}
+
+// ════════════════════════════════════════
+// APPROXIMATE PLANETARY POSITIONS 2026
+// Based on known ephemeris data for 2026
+// For precision: JPL Horizons ssd.jpl.nasa.gov
+// ════════════════════════════════════════
+function getPlanetaryPositions2026(date){
+  const m=date.getMonth()+1; // 1-12
+  const d=date.getDate();
+  const sun=getSunSign(date);
+
+  // Mercury: fast-moving — rough approximation by month
+  let mercury='Aries';
+  if(m===1||m===2) mercury='Capricorn/Aquarius';
+  else if(m===3) mercury='Pisces→Aries';
+  else if(m===4&&d<15) mercury='Aries';
+  else if(m===4) mercury='Taurus';
+  else if(m===5) mercury='Taurus/Gemini';
+  else if(m===6) mercury='Gemini/Cancer';
+  else if(m>=7&&m<=8) mercury='Leo→Virgo';
+  else mercury='Virgo/Libra';
+
+  // Venus: slower — approximate
+  let venus='Aries';
+  if(m<=3) venus='Pisces/Aries';
+  else if(m===4||m===5) venus='Aries/Taurus';
+  else if(m===6) venus='Taurus/Gemini';
+  else if(m>=7) venus='Cancer/Leo';
+
+  // Mars: ~6-7 weeks per sign
+  let mars='Gemini';
+  if(m===1||m===2) mars='Cancer/Gemini';
+  else if(m===3) mars='Gemini/Cancer';
+  else if(m===4||m===5) mars='Cancer/Leo';
+  else if(m>=6) mars='Leo/Virgo';
+
+  // Outer planets move slowly — semi-fixed for 2026
+  const jupiter=m<=6?'Cancer':'Leo';
+  const saturn='Aries';
+  const neptune='Aries'; // entered Jan 26 2026
+  const pluto='Aquarius';
+  const uranus=m<5?'Taurus':'Gemini'; // ingress Apr 26 2026
+
+  return [
+    {symbol:'☀',name:'Sun',pos:sun.sign,note:`~${sun.deg}°`},
+    {symbol:'☽',name:'Moon',pos:getMoonSign(date).name,note:'~13°/day'},
+    {symbol:'☿',name:'Mercury',pos:mercury,note:'Personal planet'},
+    {symbol:'♀',name:'Venus',pos:venus,note:'Personal planet'},
+    {symbol:'♂',name:'Mars',pos:mars,note:'Personal planet'},
+    {symbol:'♃',name:'Jupiter',pos:jupiter,note:'2025-2026'},
+    {symbol:'♄',name:'Saturn',pos:saturn,note:'Since Feb 2026'},
+    {symbol:'♅',name:'Uranus',pos:uranus,note:m<5?'28°':'0°'},
+    {symbol:'♆',name:'Neptune',pos:neptune,note:'Since Jan 2026'},
+    {symbol:'♇',name:'Pluto',pos:pluto,note:'~5° 2024-2044'},
+  ];
+}
+
+// ════════════════════════════════════════
+// STATE
+// ════════════════════════════════════════
+let profile={}, cosmicData={}, readingText='', oracleHistory=[];
+
+// ════════════════════════════════════════
+// INIT
+// ════════════════════════════════════════
+window.addEventListener('DOMContentLoaded',()=>{
+  populateDateDropdowns();
+  setTodayAsDefault();
+  loadSavedProfile();
+});
+
+function populateDateDropdowns(){
+  // DOB day
+  const dobD=document.getElementById('dob-d');
+  for(let i=1;i<=31;i++) dobD.insertAdjacentHTML('beforeend',`<option value="${i}">${i}</option>`);
+  // DOB year — 1920 to current year (covers all living adults and children)
+  const dobY=document.getElementById('dob-y');
+  const thisYear=new Date().getFullYear();
+  for(let y=thisYear;y>=1920;y--) dobY.insertAdjacentHTML('beforeend',`<option value="${y}">${y}</option>`);
+  // Read day
+  const readD=document.getElementById('read-d');
+  for(let i=1;i<=31;i++) readD.insertAdjacentHTML('beforeend',`<option value="${i}">${i}</option>`);
+  // Read year — 2020 to 2030
+  const readY=document.getElementById('read-y');
+  for(let y=2030;y>=2020;y--) readY.insertAdjacentHTML('beforeend',`<option value="${y}"${y===thisYear?' selected':''}>${y}</option>`);
+}
+
+function setTodayAsDefault(){
+  const now=new Date();
+  const d=document.getElementById('read-d');
+  const m=document.getElementById('read-m');
+  const y=document.getElementById('read-y');
+  if(d) d.value=now.getDate();
+  if(m) m.value=now.getMonth()+1;
+  if(y) y.value=now.getFullYear();
+}
+
+function loadSavedProfile(){
+  try{
+    const saved=localStorage.getItem('cdp_profile');
+    if(saved){
+      const p=JSON.parse(saved);
+      if(p.birthName) document.getElementById('birth-name').value=p.birthName||'';
+      if(p.prefName) document.getElementById('pref-name').value=p.prefName||'';
+      if(p.dobD) document.getElementById('dob-d').value=p.dobD;
+      if(p.dobM) document.getElementById('dob-m').value=p.dobM;
+      if(p.dobY) document.getElementById('dob-y').value=p.dobY;
+      if(p.dobTime) document.getElementById('dob-time').value=p.dobTime||'';
+      if(p.birthPlace) document.getElementById('birth-place').value=p.birthPlace||'';
+      if(p.livePlace) document.getElementById('live-place').value=p.livePlace||'';
+      if(p.chapter) document.getElementById('life-chapter').value=p.chapter||'';
+      if(p.focus) document.getElementById('life-focus').value=p.focus||'';
+      if(p.values) document.getElementById('life-values').value=p.values||'';
+      if(p.building) document.getElementById('life-building').value=p.building||'';
+      if(p.people) document.getElementById('life-people').value=p.people||'';
+      if(p.hear) document.getElementById('life-hear').value=p.hear||'';
+      if(p.pattern) document.getElementById('life-pattern').value=p.pattern||'';
+      if(p.gut) document.getElementById('life-gut').value=p.gut||'';
+      if(p.wellbeing) document.getElementById('life-wellbeing').value=p.wellbeing||'';
+    }
+  }catch(e){}
+}
+
+// ════════════════════════════════════════
+// NAVIGATION
+// ════════════════════════════════════════
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id+'-screen').classList.add('active');
+  window.scrollTo(0,0);
+}
+function showOnboarding(){showScreen('onboarding');}
+function goToWelcome(){showScreen('welcome');}
+function editProfile(){showScreen('onboarding');}
+
+function goToPage2(){
+  if(!validatePage1()) return;
+  showPage('ob-page-2');
+}
+function goToPage1(){showPage('ob-page-1');}
+function goToPage3(){showPage('ob-page-3');}
+function goToPage2from3(){showPage('ob-page-2');}
+
+function showPage(id){
+  document.querySelectorAll('.onboard-page').forEach(p=>p.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0,0);
+}
+
+function validatePage1(){
+  const n=document.getElementById('birth-name').value.trim();
+  const d=document.getElementById('dob-d').value;
+  const m=document.getElementById('dob-m').value;
+  const y=document.getElementById('dob-y').value;
+  if(!n){alert('Please enter your full birth name for numerology.');return false;}
+  if(!d||!m||!y){alert('Please enter your complete date of birth.');return false;}
+  return true;
+}
+
+function toggleExpand(id){
+  const content=document.getElementById(id);
+  const icon=document.getElementById(id+'-icon');
+  const isOpen=content.classList.contains('open');
+  content.classList.toggle('open');
+  if(icon) icon.textContent=isOpen?'▸':'▾';
+}
+
+function loadExistingProfile(){
+  try{
+    const saved=localStorage.getItem('cdp_profile');
+    if(saved){
+      const p=JSON.parse(saved);
+      if(p.birthName){
+        showScreen('onboarding');
+        setTimeout(()=>showPage('ob-page-3'),50);
+        return;
+      }
+    }
+  }catch(e){}
+  showScreen('onboarding');
+}
+
+// ════════════════════════════════════════
+// GATHER PROFILE & COMPUTE COSMIC DATA
+// ════════════════════════════════════════
+function gatherProfile(){
+  const dobD=parseInt(document.getElementById('dob-d').value)||1;
+  const dobM=parseInt(document.getElementById('dob-m').value)||1;
+  const dobY=parseInt(document.getElementById('dob-y').value)||1970;
+  // Use UTC to avoid local timezone shifting the date (important for UK BST)
+  const dob=new Date(Date.UTC(dobY,dobM-1,dobD));
+  const readD=parseInt(document.getElementById('read-d').value)||new Date().getDate();
+  const readM=parseInt(document.getElementById('read-m').value)||(new Date().getMonth()+1);
+  const readY=parseInt(document.getElementById('read-y').value)||new Date().getFullYear();
+  const readDate=new Date(Date.UTC(readY,readM-1,readD));
+
+  // Focus areas
+  const focusEls=document.querySelectorAll('#focus-areas input:checked');
+  const focusAreas=Array.from(focusEls).map(e=>e.value);
+
+  const p={
+    birthName:document.getElementById('birth-name').value.trim(),
+    prefName:document.getElementById('pref-name').value.trim()||document.getElementById('birth-name').value.split(' ')[0],
+    dobD, dobM, dobY, dob, readDate,
+    dobTime:document.getElementById('dob-time').value||'',
+    birthPlace:document.getElementById('birth-place').value.trim()||'',
+    livePlace:document.getElementById('live-place').value.trim()||'',
+    chapter:document.getElementById('life-chapter').value.trim()||'',
+    focus:document.getElementById('life-focus').value.trim()||'',
+    values:document.getElementById('life-values').value.trim()||'',
+    building:document.getElementById('life-building').value.trim()||'',
+    people:document.getElementById('life-people').value.trim()||'',
+    hear:document.getElementById('life-hear').value.trim()||'',
+    pattern:document.getElementById('life-pattern').value.trim()||'',
+    gut:document.getElementById('life-gut').value.trim()||'',
+    wellbeing:document.getElementById('life-wellbeing').value.trim()||'',
+    focusAreas, chrono:document.getElementById('chrono').value,
+    tier:document.querySelector('input[name=tier]:checked')?.value||'FREE',
+    checkin:document.getElementById('checkin').value.trim()||'',
+  };
+
+  // Save to localStorage (profile persists)
+  try{localStorage.setItem('cdp_profile',JSON.stringify(p));}catch(e){}
+  return p;
+}
+
+function computeCosmicData(p){
+  const {dob, readDate, birthName} = p;
+
+  // Numerology
+  const udn=getUniversalDay(readDate);
+  const dayVib=getDayVib(readDate);
+  const monthVib=getMonthVib(readDate);
+  const yearVib=getYearVib(readDate);
+  const lp=getLifePath(p.dobD,p.dobM,p.dobY);
+  const expr=birthName?getExpression(birthName):null;
+  const soulUrge=birthName?getSoulUrge(birthName):null;
+  const personality=birthName?getPersonalityNum(birthName):null;
+  const py=getPersonalYear(dob,readDate);
+  const pm=getPersonalMonth(py,readDate);
+  const pd=getPersonalDay(pm,readDate);
+  const threeEnergies=getThreeEnergies(udn,pd,pm);
+
+  // Moon
+  const lunarAge=getLunarAge(readDate);
+  const moonPhase=getMoonPhaseData(lunarAge);
+  const moonSign=getMoonSign(readDate);
+  const blackMoon=isBlackMoon(lunarAge);
+  const shivaMoon=isShivaMoon(lunarAge);
+  const daysToNew=getDaysToNewMoon(lunarAge);
+  const daysSinceNew=getDaysSinceNewMoon(lunarAge);
+  const nextFull=getNextFullMoon(readDate);
+  const nextNew=getNextNewMoon(readDate);
+
+  // Sun
+  const sunData=getSunSign(readDate);
+
+  // Natal
+  const natalSun=getNatalSunSign(dob);
+  const natalMoon=getNatalMoonSign(dob);
+
+  // Dreamspell
+  const ds=getDreamspellData(readDate);
+
+  // Planetary
+  const planets=getApproxPlanetaryPositions(readDate);
+
+  // Week ahead
+  const weekDays=[];
+  const DAYS=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const MONTHS_SHORT=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  for(let i=0;i<7;i++){
+    const d=new Date(readDate.getTime()+i*86400000);
+    const wudn=getUniversalDay(d);
+    const wpm=getPersonalMonth(getPersonalYear(dob,d),d);
+    const wpd=getPersonalDay(wpm,d);
+    const wAge=getLunarAge(d);
+    const wPhase=getMoonPhaseData(wAge);
+    const wDs=getDreamspellData(d);
+    weekDays.push({
+      label:DAYS[d.getDay()],
+      date:`${d.getDate()} ${MONTHS_SHORT[d.getMonth()]}`,
+      udn:wudn, pd:wpd,
+      moonPhase:wPhase.name,moonEmoji:wPhase.emoji,
+      kin:wDs.kin,kinName:wDs.shortName,
+      isGAP:wDs.isGAP,
+      isBlack:isBlackMoon(wAge),isShiva:isShivaMoon(wAge),
+      isFull:wPhase.name==='Full Moon',isNew:wPhase.name==='New Moon'
+    });
+  }
+
+  return{
+    udn,dayVib,monthVib,yearVib,
+    lp,expr,soulUrge,personality,
+    py,pm,pd,threeEnergies,
+    lunarAge,moonPhase,moonSign,blackMoon,shivaMoon,
+    daysToNew,daysSinceNew,nextFull,nextNew,
+    sunData,natalSun,natalMoon,ds,planets,weekDays,
+    astroComLink:getAstroComLink(dob,p.dobTime,p.birthPlace),
+    readDate
+  };
+}
+
+// ════════════════════════════════════════
+// BUILD PROMPT — full rich personal context
+// The depth of the reading depends entirely on the richness of this packet
+// ════════════════════════════════════════
+function buildPrompt(p, cd){
+  const MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const MONTHS_S=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const DAYS=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const dateStr=`${DAYS[cd.readDate.getDay()]} ${cd.readDate.getDate()} ${MONTHS[cd.readDate.getMonth()]} ${cd.readDate.getFullYear()}`;
+  const age=p.dobD?Math.floor((cd.readDate-p.dob)/31557600000):null;
+  const location=p.livePlace?`${p.livePlace}, UK`:'';
+
+  // ── MOON STATUS ──────────────────────────────────
+  const daysToFull=Math.round(Math.max(0,(cd.nextFull-cd.readDate)/86400000)*10)/10;
+  const daysToNew=Math.round(cd.daysToNew*10)/10;
+  let moonStatus;
+  if(cd.blackMoon){
+    moonStatus=`★★★ BLACK MOON — ${Math.round(cd.daysToNew*10)/10} days before the New Moon. This is the most contractive, liminal phase of the lunar cycle. The emotional field is tender and complex. Dreams carry significance. Solitude serves better than socialising. Couples should give each other space. Avoid major confrontations or decisions. Nurture the inner life. This phase should heavily colour the entire reading.`;
+  } else if(cd.shivaMoon){
+    moonStatus=`★★★ SHIVA MOON — ${Math.round(cd.daysSinceNew*10)/10} days after the New Moon. The most blissful, receptive phase of the cycle. Peaceful energy, things flow easily. Excellent for couples, for starting new ventures, for taking action on intentions. Energy is light and supportive. This phase should be celebrated throughout the reading.`;
+  } else {
+    const phases={
+      'New Moon':'intentions, heightened emotions, new beginnings',
+      'Waxing Crescent':'gentle growth, tender beginnings',
+      'First Quarter':'dynamic energy, action, growth',
+      'Waxing Gibbous':'building, refining, nearly at the crest',
+      'Full Moon':'peak revelation, emotional intensity, release rituals',
+      'Waning Gibbous':'integration, sharing, teaching',
+      'Last Quarter':'completion, release, letting go',
+      'Waning Crescent':'rest, surrender, preparation'
+    };
+    const moonGuidance=phases[cd.moonPhase.name]||cd.moonPhase.guidance||'';
+    moonStatus=`${cd.moonPhase.emoji} ${cd.moonPhase.name} in ${cd.moonSign.name} (${Math.round(cd.lunarAge*10)/10} days old — ${moonGuidance}). Days to Full Moon: ~${daysToFull}. Days to New Moon: ~${daysToNew}.`;
+  }
+
+  // ── GAP DAY ──────────────────────────────────────
+  const gapNote=cd.ds.isGAP
+    ?`\n★★★ GALACTIC ACTIVATION PORTAL — Kin ${cd.ds.kin} is one of 52 heightened-energy days in the 260-day Tzolkin. The veil between ordinary and non-ordinary time thins. Synchronicities cluster and intensify. The portal amplifies whatever passes through it today — clarity, courage, creativity. Weight this heavily throughout the reading.`
+    :'';
+
+  // ── THREE ENERGIES ────────────────────────────────
+  const te=cd.threeEnergies||[];
+  const threeEnergies=te.length?te.map(e=>`${e.period} (${e.time}): ${e.num} — ${(NUM[e.num]||NUM[1]).essence} · ${(NUM[e.num]||NUM[1]).keyword}`).join('\n'):'';
+
+  // ── WEEK AHEAD DATA ───────────────────────────────
+  const weekStr=cd.weekDays?cd.weekDays.map(w=>`  ${w.label} ${w.date}: UDN ${w.udn} (${(NUM[w.udn]||NUM[1]).essence})${NUM[w.udn]?.master?' ★MASTER':''} | Kin ${w.kin} ${w.kinName}${w.isGAP?' ★GAP':''}${w.isBlack?' 🌑BlackMoon':''}${w.isShiva?' ✨ShivaMoon':''}${w.isFull?' 🌕FullMoon':''}`).join('\n'):'';
+
+  // ── FULL COSMIC DATA PACKET ───────────────────────
+  const cosmic=`DATE: ${dateStr} (${location})
+BST/UTC offset: +1 (British Summer Time)
+
+PERSON: ${p.prefName}${p.birthName&&p.birthName!==p.prefName?' | Birth name: '+p.birthName:''}${age?' | Age: '+age:''}${p.dobD?' | DOB: '+p.dobD+'/'+p.dobM+'/'+p.dobY:''}${p.birthPlace?' | Born in: '+p.birthPlace:''}${p.dobTime?' | Birth time: '+p.dobTime+' (Rising: '+approxRising(cd.natalSun.sign,p.dobTime).sign+')':''}
+
+NUMEROLOGY:
+Universal Day: ${cd.udn}${NUM[cd.udn]?.master?' ★★★ MASTER NUMBER — '+NUM[cd.udn].essence:'  — '+NUM[cd.udn]?.essence||''}
+Day Vibration: ${cd.dayVib} | Month Vibration: ${cd.monthVib} | Year Vibration: ${cd.yearVib}
+${threeEnergies?'THREE ENERGIES OF THE DAY:\n'+threeEnergies:''}
+${p.birthName?`NATAL NUMEROLOGY:
+  Life Path: ${cd.lp}${NUM[cd.lp]?.master?' ★ MASTER':''} (${(NUM[cd.lp]||NUM[1]).essence})
+  Expression: ${cd.expr||'—'} (${cd.expr?(NUM[cd.expr]||NUM[1]).essence:'—'})
+  Soul Urge: ${cd.soulUrge||'—'} (${cd.soulUrge?(NUM[cd.soulUrge]||NUM[1]).essence:'—'})
+  Personality: ${cd.personality||'—'} (${cd.personality?(NUM[cd.personality]||NUM[1]).essence:'—'})
+  Personal Year: ${cd.py} (${(NUM[cd.py]||NUM[1]).essence})
+  Personal Month: ${cd.pm} (${(NUM[cd.pm]||NUM[1]).essence})
+  Personal Day: ${cd.pd} (${(NUM[cd.pd]||NUM[1]).essence})`:''}
+
+LUNAR:
+${moonStatus}
+Moon sign quality: ${cd.moonSign.quality||''}${gapNote}
+
+SOLAR & NATAL:
+Sun: ${cd.sunData.sign} ~${cd.sunData.deg}° (${Math.round((cd.readDate-new Date(cd.readDate.getFullYear(),2,20))/86400000)} days past Vernal Equinox)
+Natal Sun: ${cd.natalSun.sign} ${cd.natalSun.emoji}
+Natal Moon: ${cd.natalMoon.name} ${cd.natalMoon.emoji} (approximate — verify for precision)
+
+2026 TRANSITS (approximate — these are the key sky stories this year):
+• Saturn 2° Aries conjunct Neptune 1° Aries — HISTORIC conjunction, last in Aries ~1522 (Magellan's circumnavigation, Reformation, Copernican revolution). Structure meeting vision. Build the impossible thing.
+• Jupiter in Cancer — emotional abundance, home, family, protection
+• Pluto 5° Aquarius — collective/digital transformation
+• Uranus 28° Taurus → enters Gemini April 26 2026 — disruption of ideas, communication, local networks
+• Mars in Gemini (approximate — fast-moving)
+• Mercury post-retrograde shadow clears ~April 7 2026
+
+DREAMSPELL (Argüelles 1987 — modern 20th-century system, distinct from ancient K'iche' Maya count):
+Kin ${cd.ds.kin} — ${cd.ds.fullName}
+Tone ${cd.ds.tonePos}: ${cd.ds.toneIntent} — "${cd.ds.toneIntent}"
+Sign: ${cd.ds.signPower} · ${cd.ds.signAction}
+Meaning: ${cd.ds.signMeaning}
+Wavespell: ${cd.ds.wavespell}
+Year energy: Yellow Resonant Seed (Jul 26 2025–Jul 25 2026) — Kin 124. Dreams into reality, manifestation, Jupiter, Fire.
+
+PERSONAL CONTEXT (reference these specifically throughout — name people and projects directly):${p.chapter?`\nLife chapter: ${p.chapter}`:''}${p.focus?`\nCurrent focus: ${p.focus}`:''}${p.values?`\nCore values: ${p.values}`:''}${p.building?`\nCurrently building: ${p.building}`:''}${p.people?`\nKey people in their life: ${p.people}`:''}${p.hear?`\nWhat they need to hear: ${p.hear}`:''}${p.pattern?`\nPattern to work with or through: ${p.pattern}`:''}${p.gut?`\nGut feeling / what they sense: ${p.gut}`:''}${p.wellbeing?`\nHealth and wellbeing: ${p.wellbeing}`:''}${p.checkin?`\nTODAY'S CHECK-IN (most important — what's on their mind RIGHT NOW): ${p.checkin}`:''}
+Focus areas for guidance: ${p.focusAreas?.join(', ')||'all areas'}
+Chronotype: ${p.chrono||'morning'} person`;
+
+  const weekSection=(p.tier==='INITIATE'||p.tier==='MYSTIC'||p.tier==='ORACLE')&&weekStr
+    ?`\n\nWEEK AHEAD DATA (use this for the WEEK AHEAD section — compute the narrative for each day):\n${weekStr}`:'' ;
+
+  // ── TIER INSTRUCTIONS ─────────────────────────────
+  // These tell the oracle exactly what to write and at what depth
+  const instructions={
+    FREE:`Write a FREE DAILY CARD for ${p.prefName} — this is their "lucky stone in the pocket" for the day. 200-250 words maximum. It should feel beautiful, personal, and worth returning to.
+
+Structure with EXACTLY these section headers on their own lines:
+
+CONVERGENCE
+One luminous sentence — a genuine synthesis of UDN ${cd.udn}, the moon phase, and today's Kin — that speaks directly to ${p.prefName}'s life. Not generic. Could not have been written for anyone else.
+
+COSMIC SNAPSHOT
+Three sentences. One about what UDN ${cd.udn} brings today. One about the moon's message (${moonStatus.split('.')[0]}). One about Kin ${cd.ds.kin} ${cd.ds.fullName}.
+
+YOUR ONE THING
+One specific, concrete action or invitation tied to their actual context. Not a platitude.
+
+DAILY GIFT
+A beautiful closing — warm, grounding, specific to who they are and what they're building. Leave them feeling seen.`,
+
+    SEEKER:`You are writing a SEEKER FULL READING for ${p.prefName}. Write 600-900 words of flowing, deeply personal prose. This should feel like a consultation with the world's finest personal oracle. Every section must reference their actual life, people, and work directly.
+
+EXACT SECTION HEADERS required (on their own lines):
+
+CONVERGENCE
+The soul of the reading in 2-4 sentences — luminous, personal, synthesising all four frameworks. ${p.prefName} should feel it was written only for them.
+
+NUMEROLOGY TODAY
+UDN ${cd.udn}${NUM[cd.udn]?.master?' (MASTER NUMBER!)':''} and how it interacts with Personal Day ${cd.pd} and Personal Month ${cd.pm}. Three energies morning/afternoon/evening with specific guidance for each. How does this align with or challenge Life Path ${cd.lp||'unknown'}? Be specific about what these numbers mean for their actual work, relationships, chapter.
+
+LUNAR GUIDANCE
+${cd.moonPhase.name} in ${cd.moonSign.name} — what this means emotionally and practically for ${p.prefName}. ${cd.blackMoon?'BLACK MOON: make this the primary frame — going within, emotional sensitivity, solitude, dream attention.':''}${cd.shivaMoon?'SHIVA MOON: make this the primary frame — blissful, take action, couples thrive, new starts flourish.':''}
+
+DREAMSPELL & GALACTIC FIELD
+Kin ${cd.ds.kin} ${cd.ds.fullName} — what this Kin brings specifically. The tone (${cd.ds.toneIntent}), the sign power (${cd.ds.signPower}), the wavespell arc. ${cd.ds.isGAP?'GAP DAY — give this substantial weight. The portal is open and amplifying.':('')} Always clearly label as modern Dreamspell system.
+
+THREE PRIORITIES
+Three numbered priorities. Each: bold title, 2-3 sentences of reasoning linking today's cosmic factors to ${p.prefName}'s actual named situation, → specific concrete action.
+
+FOCUS ON
+4-5 specific things to lean into today. Tied to their actual projects and relationships by name.
+
+EASE OFF
+4-5 specific things to back off from. Shadows of today's energy applied to their situation.
+
+REFLECTION
+One penetrating question for ${p.prefName} to sit with. Specific to their chapter and today's energy.
+
+DAILY GIFT
+Quote with full attribution (author, work, year). 2-3 paragraphs of warm synthesis that names their actual situation. End with three invitations using ♡ ◎ ✦ — specific and actionable, not generic.`,
+
+    INITIATE:`You are writing an INITIATE READING for ${p.prefName} — 900-1200 words. All SEEKER sections at greater depth plus:
+
+WEEK AHEAD
+One substantial paragraph per day for the next 7 days. Use the week data provided. For each day: name the UDN and what it means for ${p.prefName}'s actual work/life. Name the Kin and its energy. Flag GAP days, Black Moon days, Shiva Moon days prominently. Make each day feel distinct and useful for planning.
+
+WAVESPELL ARC
+Where is ${p.prefName} in the ${cd.ds.wavespell}? What's the arc of this 13-day cycle? How does it connect to what they're currently building or navigating?`,
+
+    MYSTIC:`You are writing a MYSTIC READING for ${p.prefName} — 1200-1600 words. All SEEKER sections at full depth plus:
+
+MONTHLY LUNATION MAP
+This lunar cycle's arc — from New Moon intentions through Full Moon revelation to the release phase. Tie it directly to ${p.prefName}'s named projects and relationships. What was seeded? What is now coming to fullness or release?
+
+PERSONAL YEAR ARC
+Personal Year ${cd.py} — ${(NUM[cd.py]||NUM[1]).essence}. The full picture of this year for ${p.prefName}. How does Personal Month ${cd.pm} (${(NUM[cd.pm]||NUM[1]).essence}) express within it? What is the year's overarching invitation? What has already happened that makes sense through this lens?
+
+NATAL TRANSIT OVERLAY
+Natal Sun ${cd.natalSun.sign} / Natal Moon ${cd.natalMoon.name} in the current sky. Saturn-Neptune at 0-2° Aries — what does this historic conjunction mean for someone with their natal signature? Jupiter in Cancer on their emotional life. Be specific and personal.
+
+SHADOW THEMES
+The shadow dimension of today's energies for ${p.prefName} specifically — what pattern is being activated? What old story might resurface? What is the growth edge hiding in the difficulty?
+
+GROWTH EDGE
+The specific expansion being called for. Tied to their chart, chapter, today's energies. One concrete step toward becoming more fully who they are.`,
+
+    ORACLE:`You are writing a full ORACLE READING for ${p.prefName} — this is the £50,000 bespoke standard. Write 2000-2500 words of deeply personal, psychologically sophisticated, cosmically grounded prose. Every sentence earned. Nothing generic. Speak directly to who ${p.prefName} is, what they're building, who they love, what they fear, and what they are becoming.
+
+CONVERGENCE
+(Opening — the most important sentences in the reading. One luminous synthesis of all four frameworks speaking directly to ${p.prefName}'s moment. Written as if it could not exist for anyone else.)
+
+NUMEROLOGY TODAY
+(Full depth — UDN, three energies, personal day/month, Life Path resonance or tension. What does today's numerical field say about the specific work ${p.prefName} is doing?)
+
+LUNAR GUIDANCE
+(Full lunar analysis. ${cd.blackMoon?'BLACK MOON: primary frame for everything.':''}${cd.shivaMoon?'SHIVA MOON: primary frame for everything.':''} Moon in ${cd.moonSign.name} — what does this sign quality bring to ${p.prefName}'s emotional and relational life today?)
+
+DREAMSPELL & GALACTIC FIELD
+(Kin ${cd.ds.kin} ${cd.ds.fullName} — full interpretation including Guide, Antipode, Analog energies. The wavespell arc. ${cd.ds.isGAP?'GAP DAY — full portal analysis.':''} Saturn-Neptune Aries as civilisational backdrop — how does today's Kin sit within the larger historical moment?)
+
+KEY ASPECTS
+(5 to 7 key planetary aspects active today. Use ●●●●● dots for significance. Format: ●●●●● Planet degree Sign aspect Planet degree Sign (orb) — then 2-3 sentences of interpretation specific to ${p.prefName}'s life and named projects.)
+
+THREE PRIORITIES
+(Three numbered priorities at full depth — substantial reasoning, historical/astronomical context, direct application to ${p.prefName}'s named situation. → specific concrete action for each.)
+
+FOCUS ON
+(5-6 things to lean into — specific, named, tied to their actual life.)
+
+EASE OFF
+(5-6 shadows to watch — specific, named, psychologically precise.)
+
+MONTHLY LUNATION MAP
+(Full lunar cycle arc — what was seeded at the New Moon, what builds to the Full Moon, what releases. Tied to ${p.prefName}'s named projects and relationships.)
+
+PERSONAL YEAR ARC
+(Personal Year ${cd.py} — full analysis. Where in the 9-year cycle? What years led here? What years lie ahead? How does this year's invitation express through this specific month?)
+
+NATAL TRANSIT OVERLAY
+(How the current sky — Saturn-Neptune, Jupiter in Cancer, Uranus approaching Gemini — activates ${p.prefName}'s natal chart. Specific to Natal Sun ${cd.natalSun.sign} and Natal Moon ${cd.natalMoon.name}. What does this historic moment ask of them specifically?)
+
+SHADOW THEMES
+(The psychological shadow of today — what is being asked to be seen and integrated? Name it precisely. No softening.)
+
+GROWTH EDGE
+(The specific invitation to become more. Not general. Tied to the exact convergence of today's energies and ${p.prefName}'s chapter.)
+
+HELLENISTIC DIMENSION
+(Part of Fortune considerations for Natal Sun ${cd.natalSun.sign}. Sect light. Any Hellenistic dignities or debilities active in today's sky. Reference Brennan 2017.)
+
+MULTI-YEAR ARC
+(The 9-year numerological cycle. Where is ${p.prefName} in it? What years led here? What years lie ahead? How does Personal Year ${cd.py} position them in the larger spiral?)
+
+SYNTHESIS ORACLE
+(The crown jewel — 250-350 words of luminous, direct oracle speech. Speaking to ${p.prefName} as their oracle, naming what every framework confirms, naming what they are in the process of becoming, naming the one thing the entire reading is trying to say. Write this as if you will only say it once. Make it worth receiving.)`
+  };
+
+  return `${cosmic}${weekSection}\n\n─────────────────────────────────────────\nTIER: ${p.tier}\n─────────────────────────────────────────\n\n${instructions[p.tier]||instructions.SEEKER}`;
+}
+
+
+// ════════════════════════════════════════
+// READING HISTORY — localStorage store
+// ════════════════════════════════════════
+function saveToHistory(text, cd, p){
+  try{
+    const history=JSON.parse(localStorage.getItem('cdp_history')||'[]');
+    const MONTHS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    const DAYS=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+    const dateStr=`${DAYS[cd.readDate.getDay()]} ${cd.readDate.getDate()} ${MONTHS[cd.readDate.getMonth()]} ${cd.readDate.getFullYear()}`;
+
+    // Extract convergence sentence for preview
+    const sections=parseReadingSections(text);
+    const convergence=sections.CONVERGENCE||text.substring(0,200);
+
+    history.unshift({
+      date:dateStr,
+      ts:Date.now(),
+      tier:p.tier,
+      udn:cd.udn,
+      moonPhase:cd.moonPhase.name,
+      kin:`Kin ${cd.ds.kin} — ${cd.ds.fullName}`,
+      isGAP:cd.ds.isGAP,
+      convergence:convergence.substring(0,300),
+      fullText:text.substring(0,8000),
+    });
+
+    // Keep max 30
+    const trimmed=history.slice(0,30);
+    localStorage.setItem('cdp_history',JSON.stringify(trimmed));
+  }catch(e){}
+}
+
+function showHistory(){
+  const panel=document.getElementById('history-panel');
+  const list=document.getElementById('history-list');
+  panel.style.display='block';
+
+  try{
+    const history=JSON.parse(localStorage.getItem('cdp_history')||'[]');
+    if(history.length===0){
+      list.innerHTML=`<div style="text-align:center;color:var(--text-dim);font-style:italic;padding:24px">No readings saved yet — generate your first reading to begin your history.</div>`;
+      return;
+    }
+    list.innerHTML=history.map((h,i)=>`
+      <div class="history-item" onclick="loadHistoryReading(${i})">
+        <div class="history-item-date">${h.date} · ${h.tier||'FREE'}</div>
+        <div class="history-item-convergence">${h.convergence||'—'}</div>
+        <div class="history-item-meta">UDN ${h.udn} · ${h.moonPhase} · ${h.kin}${h.isGAP?' · ★ GAP':''}</div>
+      </div>`).join('');
+  }catch(e){
+    list.innerHTML=`<div style="color:var(--text-dim);padding:12px">History unavailable.</div>`;
+  }
+}
+
+function loadHistoryReading(idx){
+  try{
+    const history=JSON.parse(localStorage.getItem('cdp_history')||'[]');
+    const h=history[idx];
+    if(!h) return;
+    document.getElementById('history-panel').style.display='none';
+    const el=document.getElementById('reading-oracle-output')||document.getElementById('reading-content');
+    el.innerHTML=`<div style="padding:12px 0 8px;margin-bottom:16px;border-bottom:1px solid rgba(255,255,255,.08)">
+      <div style="font-family:'Cinzel',serif;font-size:.58rem;letter-spacing:.2em;color:var(--text-dim)">PAST READING · ${h.date}</div>
+    </div>`+markupProse(h.fullText||h.convergence);
+    showScreen('reading');
+  }catch(e){}
+}
+
+// ════════════════════════════════════════
+// SUGGESTED QUESTIONS
+// Generated from the reading content
+// ════════════════════════════════════════
+function renderSuggestedQuestions(text, cd, p){
+  const qs=document.getElementById('suggested-qs');
+  if(!qs) return;
+
+  // Generate context-aware questions
+  const moonQ=cd.blackMoon?'How do I work with the Black Moon energy today?'
+    :cd.shivaMoon?'How do I best use the Shiva Moon opening?'
+    :`What does the ${cd.moonPhase.name} in ${cd.moonSign.name} mean for me?`;
+
+  const gapQ=cd.ds.isGAP?'What is this Galactic Portal opening for me?':null;
+
+  const numQ=`What does Life Path ${cd.lp} + UDN ${cd.udn} mean today?`;
+
+  const shadowQ='What is the shadow work this reading is pointing to?';
+  const deepQ='Go deeper on the convergence — what does it mean for my life right now?';
+  const actionQ='What is the single most important action I can take today?';
+  const weekQ=p.tier==='INITIATE'||p.tier==='MYSTIC'||p.tier==='ORACLE'?'What are the most powerful days this week and why?':null;
+  const satNepQ='What does the Saturn-Neptune conjunction at 0° Aries mean for me personally?';
+
+  const questions=[deepQ, moonQ, numQ, shadowQ, gapQ, weekQ, actionQ, satNepQ].filter(Boolean).slice(0,4);
+
+  qs.innerHTML=questions.map(q=>`<button class="sq-chip" onclick="askSuggestedQ('${q.replace(/'/g,"\\'")}')">${q}</button>`).join('');
+}
+
+function askSuggestedQ(q){
+  const input=document.getElementById('oracle-input');
+  if(input) input.value=q;
+  sendOracle();
+  document.getElementById('oracle-section').scrollIntoView({behavior:'smooth'});
+}
+
+// ════════════════════════════════════════
+// DAILY CARD — screen preview then download
+// Design: quote · morning reflection · for today · personalised reminder
+// Inspired by oracle-test design: dark navy, gold, serif, atmospheric
+// ════════════════════════════════════════
+function downloadDailyCard(){
+  const cd=cosmicData;
+  const p=profile;
+  if(!cd||!p.prefName){alert('Please generate a reading first.');return;}
+
+  // Extract content from reading
+  const sections=readingText?parseReadingSections(readingText):{};
+  const convergence=sections.CONVERGENCE||sections['DAILY GIFT']||'';
+  const gift=sections['DAILY GIFT']||sections.CONVERGENCE||'';
+  const oneThingRaw=sections['YOUR ONE THING']||sections['THREE PRIORITIES']||'';
+  const oneThing=oneThingRaw.split('\n')[0]||'';
+
+  // Build the overlay
+  const MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const DAYS=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const dateStr=`${DAYS[cd.readDate.getDay()]} · ${cd.readDate.getDate()} ${MONTHS[cd.readDate.getMonth()]} ${cd.readDate.getFullYear()}`;
+  const locationStr=p.livePlace||'';
+
+  // Moon and master badges
+  const moonBadge=cd.blackMoon?'● Black Moon — go gently, turn within'
+    :cd.shivaMoon?'◈ Shiva Moon — blissful opening, take action'
+    :`${cd.moonPhase.emoji} ${cd.moonPhase.name} in ${cd.moonSign.name}`;
+  const gapBadge=cd.ds.isGAP?'<span style="color:#c9a050">★ Galactic Activation Portal</span> · ':'';
+  const masterBadge=NUM[cd.udn]?.master?`<span style="color:#8b7fc4">✦ Master Number ${cd.udn}</span> · `:'';
+
+  // Quotes from the gift or a fallback
+  const quoteText=extractQuote(gift)||extractQuote(convergence)||'The cosmos does not shout. It whispers — and today, it is speaking directly to you.';
+  const quoteAttr=extractQuoteAttrib(gift)||extractQuoteAttrib(convergence)||'Cosmic Daily Planner';
+
+  // Reflection paragraph — the convergence or morning content
+  const reflection=stripQuote(convergence)||stripQuote(sections['NUMEROLOGY TODAY'])||stripQuote(gift)||'Today the sky aligns for you.';
+
+  // For today
+  const forToday=oneThing.replace(/^→\s*/,'').replace(/^\d+\.\s*/,'').substring(0,200)||'Show up fully — for your work, your people, yourself.';
+
+  // Personalised reminder — drawn from oracle or gift
+  const reminder=extractReminder(sections)||'';
+
+  const overlayHTML=`
+<div id="daily-card-overlay" onclick="if(event.target.id==='daily-card-overlay')closeDailyCard()">
+  <div style="background:linear-gradient(160deg,#0D1E33 0%,#0a1626 60%,#0D1E33 100%);max-width:480px;width:100%;margin:auto;position:relative;font-family:'Georgia',serif">
+
+    <!-- Header -->
+    <div style="text-align:center;padding:28px 32px 0;border-top:2px solid rgba(201,160,80,.25);border-left:1px solid rgba(201,160,80,.12);border-right:1px solid rgba(201,160,80,.12)">
+      <div style="font-size:.6rem;letter-spacing:.25em;color:rgba(201,160,80,.55);text-transform:uppercase;margin-bottom:6px">Cosmic Daily Planner</div>
+      <div style="font-size:.75rem;letter-spacing:.15em;color:rgba(255,255,255,.45);text-transform:uppercase">${dateStr}</div>
+      ${locationStr?`<div style="font-size:.68rem;color:rgba(255,255,255,.3);margin-top:3px;letter-spacing:.1em;text-transform:uppercase">${locationStr.toUpperCase()}</div>`:''}
+    </div>
+
+    <!-- Atmosphere image placeholder / mountain silhouette -->
+    <div style="background:linear-gradient(180deg,#0a1626 0%,#0d1d35 50%,#0a1626 100%);padding:18px 0 10px">
+      <svg viewBox="0 0 480 80" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;opacity:.35">
+        <path d="M0,80 L0,55 L60,30 L120,50 L180,20 L240,40 L300,15 L360,45 L420,25 L480,50 L480,80 Z" fill="#1a3050"/>
+        <path d="M0,80 L0,65 L40,55 L100,60 L160,45 L220,58 L280,42 L340,60 L400,50 L480,65 L480,80 Z" fill="#0d1e33"/>
+      </svg>
+    </div>
+
+    <!-- Quote block -->
+    <div style="padding:20px 36px;text-align:center;border-left:1px solid rgba(201,160,80,.1);border-right:1px solid rgba(201,160,80,.1)">
+      <div style="font-size:1.15rem;font-style:italic;color:#e8d5a3;line-height:1.65;margin-bottom:10px">"${quoteText.substring(0,220)}"</div>
+      <div style="font-size:.65rem;letter-spacing:.2em;color:rgba(255,255,255,.35);text-transform:uppercase">— ${quoteAttr}</div>
+    </div>
+
+    <!-- Divider -->
+    <div style="text-align:center;padding:4px 0;border-left:1px solid rgba(201,160,80,.1);border-right:1px solid rgba(201,160,80,.1)">
+      <div style="width:60px;height:1px;background:rgba(255,255,255,.12);margin:0 auto"></div>
+    </div>
+
+    <!-- Moon/Kin/UDN strip -->
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;text-align:center;padding:12px 20px;gap:8px;border-left:1px solid rgba(201,160,80,.1);border-right:1px solid rgba(201,160,80,.1)">
+      <div>
+        <div style="font-size:.55rem;letter-spacing:.1em;color:rgba(255,255,255,.3);text-transform:uppercase;margin-bottom:3px">Moon</div>
+        <div style="font-size:.82rem;color:#c9d5e8">${cd.moonPhase.emoji} ${cd.moonPhase.name}</div>
+        <div style="font-size:.65rem;color:rgba(129,205,182,.7)">${cd.moonSign.name}</div>
+      </div>
+      <div>
+        <div style="font-size:.55rem;letter-spacing:.1em;color:rgba(255,255,255,.3);text-transform:uppercase;margin-bottom:3px">Day №</div>
+        <div style="font-size:1.4rem;font-style:italic;color:${NUM[cd.udn]?.master?'#8b7fc4':'#c9a050'};line-height:1">${cd.udn}</div>
+        <div style="font-size:.62rem;color:rgba(255,255,255,.4)">${(NUM[cd.udn]||NUM[1]).essence}</div>
+      </div>
+      <div>
+        <div style="font-size:.55rem;letter-spacing:.1em;color:rgba(255,255,255,.3);text-transform:uppercase;margin-bottom:3px">Dreamspell</div>
+        <div style="font-size:.72rem;color:#c9d5e8">Kin ${cd.ds.kin}</div>
+        <div style="font-size:.62rem;color:rgba(129,205,182,.7)">${cd.ds.fullName.substring(0,20)}</div>
+      </div>
+    </div>
+
+    <!-- Divider -->
+    <div style="text-align:center;padding:6px 0;border-left:1px solid rgba(201,160,80,.1);border-right:1px solid rgba(201,160,80,.1)">
+      <div style="width:60px;height:1px;background:rgba(255,255,255,.12);margin:0 auto"></div>
+    </div>
+
+    <!-- Special flags -->
+    ${(cd.blackMoon||cd.shivaMoon||cd.ds.isGAP||NUM[cd.udn]?.master)?`
+    <div style="text-align:center;padding:8px 20px;border-left:1px solid rgba(201,160,80,.1);border-right:1px solid rgba(201,160,80,.1)">
+      <div style="font-size:.72rem;font-style:italic;line-height:1.9">
+        ${masterBadge}${gapBadge}
+        ${cd.blackMoon?'<span style="color:#8b7fc4">● Black Moon — go gently, nurture your spirit</span>':''}
+        ${cd.shivaMoon?'<span style="color:#81cdb6">◈ Shiva Moon — peaceful, blissful, take action</span>':''}
+      </div>
+    </div>`:''}
+
+    <!-- Morning reflection -->
+    <div style="padding:16px 32px 12px;border-left:1px solid rgba(201,160,80,.1);border-right:1px solid rgba(201,160,80,.1)">
+      <div style="font-size:.55rem;letter-spacing:.2em;color:rgba(201,160,80,.55);text-transform:uppercase;text-align:center;margin-bottom:10px">Morning Reflection</div>
+      <div style="font-size:.88rem;color:rgba(255,255,255,.75);line-height:1.75">${reflection.substring(0,380)}</div>
+    </div>
+
+    <!-- Divider dot -->
+    <div style="text-align:center;padding:6px 0;border-left:1px solid rgba(201,160,80,.1);border-right:1px solid rgba(201,160,80,.1)">
+      <div style="width:5px;height:5px;background:rgba(129,205,182,.5);border-radius:50%;margin:0 auto"></div>
+    </div>
+
+    <!-- For today -->
+    <div style="padding:10px 32px 14px;border-left:1px solid rgba(201,160,80,.1);border-right:1px solid rgba(201,160,80,.1)">
+      <div style="font-size:.55rem;letter-spacing:.2em;color:rgba(201,160,80,.55);text-transform:uppercase;text-align:center;margin-bottom:8px">For Today</div>
+      <div style="font-size:.9rem;color:rgba(255,255,255,.8);line-height:1.65">${forToday.substring(0,200)}</div>
+    </div>
+
+    <!-- Personalised reminder -->
+    ${reminder?`
+    <div style="padding:10px 32px 18px;border-left:1px solid rgba(201,160,80,.1);border-right:1px solid rgba(201,160,80,.1)">
+      <div style="font-size:.82rem;font-style:italic;color:rgba(255,255,255,.45);line-height:1.6;text-align:center">${reminder.substring(0,250)}</div>
+    </div>`:''}
+
+    <!-- Footer -->
+    <div style="text-align:center;padding:14px 20px 22px;border:1px solid rgba(201,160,80,.18);border-top:1px solid rgba(201,160,80,.15)">
+      <div style="font-size:.6rem;letter-spacing:.15em;color:rgba(201,160,80,.35);text-transform:uppercase;margin-bottom:8px">cosmicdailyplanner.com</div>
+      <div style="display:flex;gap:10px;justify-content:center">
+        <button onclick="closeDailyCard()" style="padding:8px 18px;border:1px solid rgba(255,255,255,.15);background:none;color:rgba(255,255,255,.5);font-size:.7rem;cursor:pointer;font-family:Georgia,serif">Close</button>
+        <button onclick="downloadCardAsPNG()" style="padding:8px 20px;border:1px solid rgba(201,160,80,.4);background:rgba(201,160,80,.08);color:rgba(201,160,80,.9);font-size:.7rem;cursor:pointer;font-family:Georgia,serif">⎙ Download PNG</button>
+      </div>
+    </div>
+  </div>
+</div>`;
+
+  // Inject and show
+  const existing=document.getElementById('daily-card-overlay');
+  if(existing) existing.remove();
+  document.body.insertAdjacentHTML('beforeend',overlayHTML);
+  document.body.style.overflow='hidden';
+}
+
+function closeDailyCard(){
+  const el=document.getElementById('daily-card-overlay');
+  if(el) el.remove();
+  document.body.style.overflow='';
+}
+
+function extractQuote(text){
+  if(!text) return '';
+  const m=text.match(/["""]([^"""]{20,200})["""]/);
+  return m?m[1]:'';
+}
+function extractQuoteAttrib(text){
+  if(!text) return '';
+  const m=text.match(/—\s*([^,\n]{3,60})/);
+  return m?m[1].trim():'';
+}
+function stripQuote(text){
+  if(!text) return '';
+  return text.replace(/["""][^"""]*["""]\s*—[^\n]*/g,'').replace(/\n{3,}/g,'\n\n').trim().substring(0,400);
+}
+function extractReminder(sections){
+  // Look for bullet points or — lines in gift/daily gift
+  const src=sections['DAILY GIFT']||sections.REFLECTION||'';
+  const bullets=src.match(/[—\-•♡◎✦]\s*([^\n]{30,200})/g);
+  if(bullets&&bullets.length) return bullets.slice(0,2).join('\n').replace(/^[—\-•♡◎✦]\s*/gm,'').trim();
+  return '';
+}
+
+function downloadCardAsPNG(){
+  const overlay=document.getElementById('daily-card-overlay');
+  if(!overlay) return;
+  const card=overlay.querySelector('div');
+  if(!card){alert('Card not found');return;}
+
+  // Use html2canvas if available, otherwise canvas fallback
+  if(typeof html2canvas!=='undefined'){
+    html2canvas(card,{backgroundColor:'#0D1E33',scale:2,useCORS:true}).then(canvas=>{
+      const cd=cosmicData;
+      const MONTHS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+      const link=document.createElement('a');
+      link.download=`cosmic-daily-${cd.readDate.getDate()}-${MONTHS[cd.readDate.getMonth()]}-${cd.readDate.getFullYear()}.png`;
+      link.href=canvas.toDataURL('image/png',0.92);
+      link.click();
+    });
+  } else {
+    // Canvas fallback
+    downloadCardCanvas();
+  }
+}
+
+function downloadCardCanvas(){
+  const cd=cosmicData;
+  const p=profile;
+  const canvas=document.createElement('canvas');
+  const W=800,H=1200;
+  canvas.width=W;canvas.height=H;
+  const ctx=canvas.getContext('2d');
+
+  const bg=ctx.createLinearGradient(0,0,0,H);
+  bg.addColorStop(0,'#0D1E33');bg.addColorStop(0.5,'#0a1929');bg.addColorStop(1,'#0D1E33');
+  ctx.fillStyle=bg;ctx.fillRect(0,0,W,H);
+  ctx.strokeStyle='rgba(201,160,80,0.3)';ctx.lineWidth=1;
+  ctx.strokeRect(20,20,W-40,H-40);
+
+  const MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const DAYS=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const dateStr=`${DAYS[cd.readDate.getDay()]} · ${cd.readDate.getDate()} ${MONTHS[cd.readDate.getMonth()]} ${cd.readDate.getFullYear()}`;
+
+  ctx.textAlign='center';
+  ctx.font='11px Georgia,serif';ctx.fillStyle='rgba(201,160,80,0.5)';
+  ctx.fillText('COSMIC DAILY PLANNER',W/2,58);
+  ctx.font='12px Georgia,serif';ctx.fillStyle='rgba(255,255,255,0.4)';
+  ctx.fillText(dateStr.toUpperCase(),W/2,80);
+
+  ctx.font='italic 26px Georgia,serif';ctx.fillStyle='#e8d5a3';
+  ctx.fillText(`"${p.prefName}'s Daily Reading"`,W/2,130);
+
+  ctx.font=`italic ${NUM[cd.udn]?.master?'bold ':''}72px Georgia,serif`;
+  ctx.fillStyle=NUM[cd.udn]?.master?'#8b7fc4':'#c9a050';
+  ctx.fillText(String(cd.udn),W/2,230);
+
+  ctx.font='14px Georgia,serif';ctx.fillStyle='rgba(255,255,255,0.55)';
+  ctx.fillText((NUM[cd.udn]||NUM[1]).essence,W/2,258);
+
+  // Save
+  const link=document.createElement('a');
+  link.download=`cosmic-daily-${cd.readDate.getDate()}-${MONTHS[cd.readDate.getMonth()]}-${cd.readDate.getFullYear()}.png`;
+  link.href=canvas.toDataURL('image/png',0.92);
+  link.click();
+}
+
+// ════════════════════════════════════════
+// PIPELINE LOADING — all stages visible, light up in sequence
+// ════════════════════════════════════════
+const STAGE_TIMINGS=[0, 900, 1800, 2700, 3600, 5200, 7000]; // ms to activate each stage
+let stageTimers=[];
+
+function startLoadingPipeline(tier){
+  // Mark all stages as pending (visible but dim)
+  for(let i=0;i<7;i++){
+    const el=document.getElementById('stage-id-'+i)||document.getElementById('stage-'+i);
+    if(el){el.classList.remove('active','done');}
+  }
+  document.getElementById('progress-fill').style.width='0';
+
+  // Activate stages sequentially
+  stageTimers=[];
+  STAGE_TIMINGS.forEach((delay,i)=>{
+    const t=setTimeout(()=>{
+      // Mark previous as done
+      if(i>0){
+        const prev=document.getElementById('stage-'+(i-1));
+        if(prev){prev.classList.remove('active');prev.classList.add('done');}
+      }
+      const el=document.getElementById('stage-'+i);
+      if(el){el.classList.add('active');}
+      // Progress bar
+      const pct=Math.round((i/6)*78)+5;
+      document.getElementById('progress-fill').style.width=pct+'%';
+    },delay);
+    stageTimers.push(t);
+  });
+}
+
+function stopLoading(){
+  stageTimers.forEach(t=>clearTimeout(t));
+  // Mark all done
+  for(let i=0;i<7;i++){
+    const el=document.getElementById('stage-'+i);
+    if(el){el.classList.remove('active');el.classList.add('done');}
+  }
+  document.getElementById('progress-fill').style.width='100%';
+  setTimeout(()=>{
+    document.getElementById('reading-loading').style.display='none';
+    document.getElementById('reading-content').style.display='block';
+    document.getElementById('oracle-section').style.display='block';
+  },500);
+}
+
+// ════════════════════════════════════════
+// ENDPOINT DETECTION
+// Railway: streaming SSE via /api/reading/stream
+// ════════════════════════════════════════
+// ENDPOINT ROUTING
+// Railway = streaming Sonnet (all tiers, no timeout limits)
+// Netlify = fallback only if Railway is unreachable
+// ════════════════════════════════════════
+const RAILWAY_BASE = 'https://cdp-server-production.up.railway.app';
+
+function getStreamEndpoint(){
+  return RAILWAY_BASE + '/api/reading/stream';
+}
+function getFallbackEndpoint(tier){
+  // Oracle chat follow-ups also go through Railway
+  if(RAILWAY_BASE) return RAILWAY_BASE + '/api/reading';
+  return tier==='FREE' ? '/.netlify/functions/daily_message' : '/.netlify/functions/reading';
+}
+
+// ════════════════════════════════════════
+// GENERATE READING — streaming-first
+// ════════════════════════════════════════
+async function generateReading(){
+  if(!validatePage1()) return;
+  profile=gatherProfile();
+  cosmicData=computeCosmicData(profile);
+  oracleHistory=[];
+
+  showScreen('reading');
+  updateCosmicBar();
+  renderStaticSections();
+
+  document.getElementById('reading-loading').style.display='block';
+  document.getElementById('reading-content').style.display='none';
+  document.getElementById('oracle-section').style.display='none';
+  startLoadingPipeline(profile.tier);
+
+  const prompt=buildPrompt(profile,cosmicData);
+  const streamUrl=getStreamEndpoint();
+
+  if(streamUrl){
+    // ── STREAMING PATH (Railway) ────────────────────────────
+    await generateReadingStreaming(prompt, streamUrl);
+  } else {
+    // ── STANDARD PATH (Netlify) ─────────────────────────────
+    await generateReadingStandard(prompt);
+  }
+}
+
+async function generateReadingStreaming(prompt, streamUrl){
+  // Show reading area immediately so tokens appear as they arrive
+  stopLoading();
+  initStreamingReadingArea();
+
+  let accumulated='';
+  const outputEl=document.getElementById('reading-stream-output');
+
+  try{
+    const res=await fetch(streamUrl,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({prompt, tier:profile.tier})
+    });
+
+    if(!res.ok) throw new Error(`HTTP ${res.status}`);
+
+    const reader=res.body.getReader();
+    const decoder=new TextDecoder();
+    let buffer='';
+
+    while(true){
+      const {done, value}=await reader.read();
+      if(done) break;
+
+      buffer+=decoder.decode(value, {stream:true});
+      const lines=buffer.split('\n');
+      buffer=lines.pop();
+
+      for(const line of lines){
+        if(line.startsWith('data: ')){
+          const data=line.slice(6).trim();
+          if(data==='[DONE]') break;
+          try{
+            const parsed=JSON.parse(data);
+            if(parsed.text){
+              accumulated+=parsed.text;
+              outputEl.innerHTML=formatReadingText(accumulated)+'<span class="stream-cursor">▌</span>';
+              outputEl.scrollIntoView({behavior:'smooth',block:'end'});
+            }
+            if(parsed.error){
+              outputEl.innerHTML+=`<p style="color:var(--ruby);margin-top:12px">Oracle error: ${parsed.error}</p>`;
+            }
+          }catch(e){}
+        }
+      }
+    }
+
+    // Remove cursor, finalise
+    outputEl.innerHTML=formatReadingText(accumulated);
+    readingText=accumulated;
+    oracleHistory=[{role:'user',content:prompt},{role:'assistant',content:accumulated}];
+    // Re-render with full visual treatment
+    const streamWrap=document.getElementById('streaming-wrap');
+    if(streamWrap) streamWrap.remove();
+    renderReading(accumulated);
+    saveToHistory(accumulated, cosmicData, profile);
+    renderSuggestedQuestions(accumulated, cosmicData, profile);
+
+  }catch(err){
+    outputEl.innerHTML=`<p style="color:var(--ruby)">Unable to reach the oracle — ${err.message}</p>`;
+  }
+}
+
+function initStreamingReadingArea(){
+  // Show content area with streaming output div
+  document.getElementById('reading-content').style.display='block';
+  document.getElementById('reading-content').insertAdjacentHTML('beforeend',`
+    <div class="reading-output-wrap" id="streaming-wrap">
+      <div class="reading-card">
+        <div class="reading-card-title">Your Reading · ${profile.tier}</div>
+        <div class="reading-text" id="reading-stream-output" style="min-height:120px"></div>
+      </div>
+    </div>`);
+}
+
+async function generateReadingStandard(prompt){
+  const endpoint=getFallbackEndpoint(profile.tier);
+  try{
+    const res=await fetch(endpoint,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({prompt, tier:profile.tier})
+    });
+    if(!res.ok) throw new Error(`HTTP ${res.status} — ${await res.text().catch(()=>'')}`);
+    const text=await res.text();
+    readingText=text;
+    oracleHistory=[{role:'user',content:prompt},{role:'assistant',content:text}];
+    stopLoading();
+    renderReading(text);
+  }catch(err){
+    stopLoading();
+    document.getElementById('reading-content').innerHTML=`
+      <div class="reading-output-wrap">
+        <div class="reading-card">
+          <div class="reading-text">
+            <p style="color:var(--ruby)">Unable to reach the oracle — please check your connection and try again.</p>
+            <p style="font-size:.8rem;color:var(--text-dim);margin-top:8px">${err.message}</p>
+          </div>
+        </div>
+      </div>`;
+  }
+}
+
+// ════════════════════════════════════════
+// UPDATE UI
+// ════════════════════════════════════════
+function updateCosmicBar(){
+  const cd=cosmicData;
+  const MONTH_NAMES=['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const DAY_NAMES=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  document.getElementById('r-name').textContent=profile.prefName||'—';
+  document.getElementById('r-date').textContent=`${DAY_NAMES[cd.readDate.getDay()]}, ${cd.readDate.getDate()} ${MONTH_NAMES[cd.readDate.getMonth()]} ${cd.readDate.getFullYear()}`;
+  document.getElementById('r-moon-icon').textContent=cd.moonPhase.emoji;
+  document.getElementById('r-moon-phase').textContent=cd.moonPhase.name;
+  document.getElementById('r-moon-sign').textContent=cd.moonSign.name;
+  document.getElementById('r-udn').textContent=cd.udn;
+  document.getElementById('r-udn-word').textContent=(NUM[cd.udn]||NUM[1]).essence;
+  document.getElementById('r-sun').textContent=cd.sunData.sign;
+  document.getElementById('r-sun-deg').textContent=`~${cd.sunData.deg}° ${cd.sunData.emoji}`;
+  document.getElementById('r-kin-short').textContent=`Kin ${cd.ds.kin}`;
+  document.getElementById('r-kin-tone').textContent=cd.ds.shortName;
+}
+
+function renderStaticSections(){
+  const cd=cosmicData;
+  const p=profile;
+  const MONTH_NAMES=['January','February','March','April','May','June','July','August','September','October','November','December'];
+  let html='';
+
+  // ── NUMEROLOGY SECTION ──
+  if(p.tier!=='FREE'){
+    html+=`<div class="section-wrap">
+    <div class="section-title">Numerology of the Day</div>`;
+
+    // UDN hero
+    const udnData=NUM[cd.udn]||NUM[1];
+    html+=`<div class="udn-hero">
+      ${udnData.master?`<div class="udn-master-badge">Master Number</div><br>`:''}
+      <div class="udn-label">Universal Day Number</div>
+      <div class="udn-number${NUM[cd.udn]?.master?` master-${cd.udn}`:``}">${cd.udn}</div>
+      <div class="udn-essence">${udnData.essence}</div>
+      <div class="udn-meaning">${udnData.keyword}. Shadow: ${udnData.shadow}.</div>
+    </div>`;
+
+    // Three energies
+    html+=`<div class="energies-strip">`;
+    cd.threeEnergies.forEach(e=>{
+      const nd=NUM[e.num]||NUM[1];
+      html+=`<div class="energy-card">
+        <div class="energy-period">${e.period}</div>
+        <div class="energy-time">${e.time}</div>
+        <div class="energy-number">${e.num}</div>
+        <div class="energy-keyword">${nd.essence}</div>
+        <div class="energy-action">${e.period==='Morning'?nd.morning:e.period==='Afternoon'?nd.afternoon:nd.evening}</div>
+      </div>`;
+    });
+    html+=`</div>`;
+
+    // Day / Month / Year trinity
+    html+=`<div class="num-trinity">
+      <div class="trinity-card">
+        <div class="trinity-label">Day vibration</div>
+        <div class="trinity-num">${cd.dayVib}</div>
+        <div class="trinity-word">${(NUM[cd.dayVib]||NUM[1]).essence}</div>
+      </div>
+      <div class="trinity-card">
+        <div class="trinity-label">Month — ${MONTH_NAMES[cd.readDate.getMonth()]}</div>
+        <div class="trinity-num">${cd.monthVib}</div>
+        <div class="trinity-word">${(NUM[cd.monthVib]||NUM[1]).essence}</div>
+      </div>
+      <div class="trinity-card">
+        <div class="trinity-label">Year — ${cd.readDate.getFullYear()}</div>
+        <div class="trinity-num">${cd.yearVib}</div>
+        <div class="trinity-word">${(NUM[cd.yearVib]||NUM[1]).essence}</div>
+      </div>
+    </div>`;
+
+    // Personal numbers
+    if(p.birthName){
+      html+=`<div class="personal-nums">
+        <div class="pnum-card">
+          <div class="pnum-row">
+            <span class="pnum-label">Life Path</span>
+            <span class="pnum-value">${cd.lp}${NUM[cd.lp]?.master?' ✦':''}</span>
+          </div>
+          <div class="pnum-word">${(NUM[cd.lp]||NUM[1]).essence}</div>
+        </div>
+        <div class="pnum-card">
+          <div class="pnum-row">
+            <span class="pnum-label">Personal Year</span>
+            <span class="pnum-value">${cd.py}</span>
+          </div>
+          <div class="pnum-word">${(NUM[cd.py]||NUM[1]).essence}</div>
+        </div>
+        <div class="pnum-card">
+          <div class="pnum-row">
+            <span class="pnum-label">Personal Month</span>
+            <span class="pnum-value">${cd.pm}</span>
+          </div>
+          <div class="pnum-word">${(NUM[cd.pm]||NUM[1]).essence}</div>
+        </div>
+        <div class="pnum-card">
+          <div class="pnum-row">
+            <span class="pnum-label">Personal Day</span>
+            <span class="pnum-value">${cd.pd}</span>
+          </div>
+          <div class="pnum-word">${(NUM[cd.pd]||NUM[1]).essence}</div>
+        </div>
+      </div>`;
+
+      if(p.tier==='MYSTIC'||p.tier==='ORACLE'){
+        html+=`<div class="personal-nums">
+          <div class="pnum-card">
+            <div class="pnum-row"><span class="pnum-label">Expression</span><span class="pnum-value">${cd.expr}</span></div>
+            <div class="pnum-word">${(NUM[cd.expr]||NUM[1]).essence}</div>
+          </div>
+          <div class="pnum-card">
+            <div class="pnum-row"><span class="pnum-label">Soul Urge</span><span class="pnum-value">${cd.soulUrge}</span></div>
+            <div class="pnum-word">${(NUM[cd.soulUrge]||NUM[1]).essence}</div>
+          </div>
+        </div>`;
+      }
+    }
+    html+=`</div>`; // end section-wrap numerology
+
+    // ── MOON SECTION ──
+    html+=`<div class="section-wrap">
+    <div class="section-title">Lunar Landscape</div>
+    <div class="moon-card">
+      <div class="moon-icon">${cd.moonPhase.emoji}</div>
+      <div class="moon-info">
+        ${cd.blackMoon?`<div class="moon-special black">● Black Moon — ${Math.round(cd.daysToNew*10)/10} days before New Moon</div>`:''}
+        ${cd.shivaMoon?`<div class="moon-special shiva">◈ Shiva Moon — ${Math.round(cd.daysSinceNew*10)/10} days after New Moon</div>`:''}
+        <div class="moon-phase-name">${cd.moonPhase.name} in ${cd.moonSign.name} ${cd.moonSign.emoji}</div>
+        <div class="moon-sign">${cd.moonSign.quality}</div>
+        <div class="moon-meaning">${cd.moonPhase.energy}</div>
+        ${cd.blackMoon?`<div class="moon-days" style="color:var(--violet)">Black Moon: the two days before a New Moon are a liminal threshold — contractive, tender, and requiring care. Avoid force; honour the quiet.</div>`:''}
+        ${cd.shivaMoon?`<div class="moon-days" style="color:var(--teal)">Shiva Moon: the two days after a New Moon carry a blissful, receptive expansion. Seeds awaken; welcome the new.</div>`:''}
+        <div class="moon-days">Next Full Moon: ~${Math.round((getNextFullMoon(cd.readDate)-cd.readDate)/86400000)} days · Next New Moon: ~${Math.round(cd.daysToNew)} days</div>
+      </div>
+    </div>
+    </div>`;
+
+    // ── DREAMSPELL / KIN SECTION ──
+    html+=`<div class="section-wrap">
+    <div class="section-title">Dreamspell · Law of Time</div>
+    <div class="kin-card">
+      <div class="kin-glyph">✦</div>
+      <div class="kin-info">
+        <div class="kin-name">Kin ${cd.ds.kin} — ${cd.ds.fullName}</div>
+        <div class="kin-num">Tone ${cd.ds.tonePos}: "${cd.ds.toneIntent}" · Sign: "${cd.ds.signPower}" — "${cd.ds.signAction}"</div>
+        ${cd.ds.isGAP?`<div class="gap-badge">★ Galactic Activation Portal</div>`:''}
+        <div class="kin-meaning">${cd.ds.signMeaning}</div>
+        <div class="wavespell-info">Wavespell: ${cd.ds.wavespell}</div>
+      </div>
+    </div>
+    <div class="ref-strip">Dreamspell system: Argüelles, J. (1987). <em>The Mayan Factor</em>. Bear & Co. This is a modern 20th-century system, distinct from the ancient K'iche' Maya tzolkʼin count maintained by contemporary Maya daykeepers in Guatemala (Aldana 2022; Tedlock 1992). 
+    Verify Kin: <a href="https://www.tortuga.com/oracle/" target="_blank">tortuga.com/oracle</a> · <a href="https://www.lawoftime.org" target="_blank">lawoftime.org</a></div>
+    </div>`;
+
+    // ── NATAL CHART SECTION ──
+    if(p.birthName&&p.dobD){
+      // Approximate Rising sign from birth time
+      const rising=p.dobTime?approxRising(cd.natalSun.sign,p.dobTime):{sign:'Unknown',note:'Enter birth time above for approximate Rising'};
+      html+=`<div class="section-wrap">
+      <div class="section-title">Natal Signature</div>
+      <div class="natal-card">
+        <div class="natal-headline">
+          <div class="natal-title">Your Cosmic Blueprint</div>
+          <div style="font-size:.65rem;color:var(--text-dim);font-style:italic">Computed in-app · Approximate</div>
+        </div>
+        <div class="natal-grid">
+          <div class="natal-cell">
+            <div class="natal-cell-label">Natal Sun</div>
+            <div class="natal-cell-value">${cd.natalSun.sign} ${cd.natalSun.emoji}</div>
+          </div>
+          <div class="natal-cell">
+            <div class="natal-cell-label">Natal Moon (approx ±2 signs)</div>
+            <div class="natal-cell-value">${cd.natalMoon.name} ${cd.natalMoon.emoji}</div>
+            <div class="natal-cell-deg" style="font-size:.58rem;color:var(--text-dim)">Verify free at astro.com</div>
+          </div>
+          <div class="natal-cell">
+            <div class="natal-cell-label">Rising / Ascendant</div>
+            <div class="natal-cell-value">${rising.sign}</div>
+            ${rising.note?`<div class="natal-cell-deg">${rising.note}</div>`:''}
+          </div>
+        </div>
+        <div class="natal-lp-row">
+          <div class="natal-lp-item">
+            <div class="natal-lp-label">Life Path</div>
+            <div class="natal-lp-num">${cd.lp}${NUM[cd.lp]?.master?' ✦':''}</div>
+            <div class="natal-lp-word">${(NUM[cd.lp]||NUM[1]).essence}</div>
+          </div>
+          <div class="natal-lp-item">
+            <div class="natal-lp-label">Expression</div>
+            <div class="natal-lp-num">${cd.expr||'—'}</div>
+            <div class="natal-lp-word">${cd.expr?(NUM[cd.expr]||NUM[1]).essence:'—'}</div>
+          </div>
+          <div class="natal-lp-item">
+            <div class="natal-lp-label">Soul Urge</div>
+            <div class="natal-lp-num">${cd.soulUrge||'—'}</div>
+            <div class="natal-lp-word">${cd.soulUrge?(NUM[cd.soulUrge]||NUM[1]).essence:'—'}</div>
+          </div>
+          <div class="natal-lp-item">
+            <div class="natal-lp-label">Personality</div>
+            <div class="natal-lp-num">${cd.personality||'—'}</div>
+            <div class="natal-lp-word">${cd.personality?(NUM[cd.personality]||NUM[1]).essence:'—'}</div>
+          </div>
+        </div>
+        <div class="ref-strip" style="margin-top:12px">
+          Natal Moon is approximate (±2 signs). Rising sign computed from birth time using simplified solar arc method — accurate to ±1-2 signs.
+          For precise degree-level chart: Swiss Ephemeris engine at astro.com (free).
+          Interpretation: Greene (1976) <em>Saturn</em>; Tarnas (2006) <em>Cosmos & Psyche</em>; Hand (2002) <em>Planets in Transit</em>; Brennan (2017) <em>Hellenistic Astrology</em>
+        </div>
+      </div>
+      </div>`;
+    }
+
+    // ── PLANETARY POSITIONS ──
+    if(p.tier==='MYSTIC'||p.tier==='ORACLE'||p.tier==='INITIATE'){
+      const planets=getPlanetaryPositions2026(cd.readDate);
+      html+=`<div class="section-wrap">
+      <div class="section-title">Planetary Positions</div>
+      <div class="planet-grid">`;
+      planets.forEach(pl=>{
+        html+=`<div class="planet-cell">
+          <div class="planet-symbol">${pl.symbol}</div>
+          <div class="planet-name">${pl.name}</div>
+          <div class="planet-pos">${pl.pos}</div>
+          <div class="planet-note">${pl.note}</div>
+        </div>`;
+      });
+      html+=`</div>
+      <div class="ref-strip">Approximate positions — for degree-level precision use JPL Horizons (ssd.jpl.nasa.gov) or Swiss Ephemeris (astro.com)</div>
+      </div>`;
+    }
+
+  document.getElementById('reading-content').innerHTML=html+`<div id="reading-oracle-output"></div>`;
+}
+}
+
+function appendRefStrip(parentEl){
+  const div=document.createElement('div');
+  div.className='ref-strip';
+  div.style.paddingBottom='80px';
+  div.innerHTML=`<strong>Sources:</strong> Astronomy: Šprajc et al. (2023) <em>Science Advances</em> doi:10.1126/sciadv.abq7675; USNO; JPL Horizons. Maya calendrics: Aldana (2022) doi:10.34758/qyyd-vx23. Dreamspell: Argüelles (1987) (modern system, distinct from ancient Maya count). Astrology: Greene (1976); Tarnas (2006); Hand (2002); Brady (1999); Brennan (2017). Numerology: Drayer (2002); Goodwin (1994); Kahn (2001). Verify: <a href="https://www.tortuga.com/oracle/" target="_blank">tortuga.com</a> · <a href="https://www.astro.com" target="_blank">astro.com</a> · <a href="https://aa.usno.navy.mil" target="_blank">USNO</a>`;
+  const wrap=document.getElementById('streaming-wrap')||parentEl.closest('.reading-output-wrap');
+  if(wrap) wrap.appendChild(div);
+}
+
+// ════════════════════════════════════════
+// RENDER READING — section-aware visual renderer
+// Parses AI output into distinct visual treatments per section
+// ════════════════════════════════════════
+function renderReading(text){
+  const el=document.getElementById('reading-oracle-output')||document.getElementById('reading-content');
+  const cd=cosmicData;
+
+  if(profile.tier==='FREE'){
+    renderFreeCard(el, text, cd);
+    return;
+  }
+
+  // Parse into sections
+  const sections=parseReadingSections(text);
+  let html=`<div class="reading-output-wrap" style="padding-bottom:80px">`;
+
+  // CONVERGENCE — hero block
+  if(sections.CONVERGENCE){
+    html+=`<div class="convergence-block">${sections.CONVERGENCE}</div>`;
+  }
+
+  // NUMEROLOGY TODAY
+  if(sections['NUMEROLOGY TODAY']){
+    html+=`<div class="reading-section"><div class="reading-section-label">№ Numerology Today</div>
+    <div class="reading-prose">${markupProse(sections['NUMEROLOGY TODAY'])}</div></div>`;
+  }
+
+  // LUNAR GUIDANCE
+  if(sections['LUNAR GUIDANCE']){
+    html+=`<div class="reading-section"><div class="reading-section-label">${cd.moonPhase.emoji} Lunar Guidance</div>
+    <div class="reading-prose">${markupProse(sections['LUNAR GUIDANCE'])}</div></div>`;
+  }
+
+  // DREAMSPELL
+  const dsKey=Object.keys(sections).find(k=>k.includes('DREAMSPELL'));
+  if(dsKey){
+    html+=`<div class="reading-section"><div class="reading-section-label">✦ Dreamspell & Galactic Field</div>
+    <div class="reading-prose">${markupProse(sections[dsKey])}</div></div>`;
+  }
+
+  // COSMIC CONTEXT
+  const ctxKey=Object.keys(sections).find(k=>k.includes('COSMIC CONTEXT')||k.includes('2026'));
+  if(ctxKey){
+    html+=`<div class="reading-section"><div class="reading-section-label">∞ Cosmic Context</div>
+    <div class="reading-prose">${markupProse(sections[ctxKey])}</div></div>`;
+  }
+
+  // SHADOW WORK / SHADOW THEMES
+  const shadowKey=Object.keys(sections).find(k=>k.includes('SHADOW'));
+  if(shadowKey){
+    html+=`<div class="reading-section"><div class="reading-section-label">◎ Shadow & Growth Edge</div>
+    <div class="shadow-block"><div class="reading-prose">${markupProse(sections[shadowKey])}</div></div></div>`;
+  }
+
+  // THREE PRIORITIES
+  const priorKey=Object.keys(sections).find(k=>k.includes('PRIORIT'));
+  if(priorKey){
+    html+=`<div class="reading-section"><div class="reading-section-label">▸ Today's Priorities</div>`;
+    html+=parsePriorities(sections[priorKey]);
+    html+=`</div>`;
+  }
+
+  // FOCUS ON / EASE OFF
+  const focusKey=Object.keys(sections).find(k=>k.includes('FOCUS'));
+  if(focusKey){
+    const {focus,ease}=parseFocusEase(sections[focusKey]);
+    html+=`<div class="focus-ease-grid">
+      <div class="focus-col"><div class="fe-col-label">✓ Focus On</div><div class="fe-col-body">${markupProse(focus)}</div></div>
+      <div class="ease-col"><div class="fe-col-label">↓ Ease Off</div><div class="fe-col-body">${markupProse(ease)}</div></div>
+    </div>`;
+  }
+
+  // BEST WINDOWS / TIME OF DAY
+  const winKey=Object.keys(sections).find(k=>k.includes('WINDOW')||k.includes('BEST'));
+  if(winKey){
+    html+=`<div class="reading-section"><div class="reading-section-label">◑ Best Windows</div>
+    ${parseWindows(sections[winKey], cd)}</div>`;
+  }
+
+  // REFLECTION
+  if(sections.REFLECTION){
+    html+=`<div class="reading-section" style="padding:14px 18px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.02);margin-bottom:16px">
+    <div class="reading-section-label">◈ Reflection</div>
+    <div style="font-style:italic;font-size:.95rem;color:var(--text-bright);line-height:1.7">${sections.REFLECTION}</div></div>`;
+  }
+
+  // WEEK AHEAD
+  const weekKey=Object.keys(sections).find(k=>k.includes('WEEK AHEAD')||k.includes('WEEK'));
+  if(weekKey){
+    html+=`<div class="reading-section"><div class="reading-section-label">▸ The Week Ahead</div>
+    ${parseWeekAhead(sections[weekKey], cd)}</div>`;
+  }
+
+  // Monthly sections (MYSTIC+)
+  const monthlyKey=Object.keys(sections).find(k=>k.includes('MONTHLY')||k.includes('LUNATION'));
+  if(monthlyKey){
+    html+=`<div class="reading-section"><div class="reading-section-label">☽ Monthly Lunation Map</div>
+    <div class="reading-prose">${markupProse(sections[monthlyKey])}</div></div>`;
+  }
+  const yearKey=Object.keys(sections).find(k=>k.includes('YEAR ARC')||k.includes('PERSONAL YEAR'));
+  if(yearKey){
+    html+=`<div class="reading-section"><div class="reading-section-label">∞ Personal Year Arc</div>
+    <div class="reading-prose">${markupProse(sections[yearKey])}</div></div>`;
+  }
+  const natalKey=Object.keys(sections).find(k=>k.includes('NATAL TRANSIT')||k.includes('TRANSIT OVERLAY'));
+  if(natalKey){
+    html+=`<div class="reading-section"><div class="reading-section-label">♅ Natal Transit Overlay</div>
+    <div class="reading-prose">${markupProse(sections[natalKey])}</div></div>`;
+  }
+  const growthKey=Object.keys(sections).find(k=>k.includes('GROWTH EDGE'));
+  if(growthKey){
+    html+=`<div class="reading-section"><div class="reading-section-label">✦ Growth Edge</div>
+    <div class="reading-prose">${markupProse(sections[growthKey])}</div></div>`;
+  }
+
+  // Oracle tier extras
+  ['HELLENISTIC DIMENSION','MULTI-YEAR ARC','GAP MAPPING','ECLIPSE','SYNTHESIS ORACLE'].forEach(key=>{
+    const found=Object.keys(sections).find(k=>k.includes(key.split(' ')[0]));
+    if(found){
+      html+=`<div class="reading-section"><div class="reading-section-label">${found}</div>
+      <div class="reading-prose">${markupProse(sections[found])}</div></div>`;
+    }
+  });
+
+  // DAILY GIFT — pull quote treatment
+  const giftKey=Object.keys(sections).find(k=>k.includes('GIFT')||k.includes('DAILY GIFT'));
+  if(giftKey){
+    html+=`<div class="gift-block"><div class="reading-section-label">♡ Your Daily Gift</div>
+    <div class="reading-prose">${markupProse(sections[giftKey])}</div></div>`;
+  }
+
+  // Anything unparsed — catch-all prose
+  const parsedKeys=new Set(Object.keys(sections));
+  const allText=Object.entries(sections).filter(([k])=>!parsedKeys.has(k)).map(([,v])=>v).join('\n\n');
+
+  html+=`<div class="ref-strip" style="margin-top:16px">
+    Grounded in: Šprajc et al. (2023) <em>Science Advances</em> doi:10.1126/sciadv.abq7675 · Aldana (2022) doi:10.34758/qyyd-vx23 ·
+    Argüelles (1987) Dreamspell (modern system) · Greene (1976) Saturn · Tarnas (2006) Cosmos & Psyche ·
+    Hand (2002) Planets in Transit · Drayer (2002) · Goodwin (1994) · Kahn (2001)
+  </div></div>`;
+
+  el.innerHTML=html;
+  readingText=text;
+  document.getElementById('oracle-section').style.display='block';
+
+  // Save to history
+  saveToHistory(text, cosmicData, profile);
+
+  // Generate suggested questions
+  renderSuggestedQuestions(text, cosmicData, profile);
+}
+
+function renderFreeCard(el, text, cd){
+  const udnData=NUM[cd.udn]||NUM[1];
+  el.innerHTML=`
+  <div class="section-wrap" style="padding-bottom:80px">
+    ${cd.blackMoon?`<div style="padding:10px 14px;background:rgba(139,127,196,.15);border:1px solid var(--violet);margin-bottom:12px;font-size:.82rem;color:var(--violet)">● Black Moon — ${Math.round(cd.daysToNew*10)/10} days before New Moon. A tender threshold. Go gently.</div>`:''}
+    ${cd.shivaMoon?`<div style="padding:10px 14px;background:rgba(129,205,182,.12);border:1px solid var(--teal);margin-bottom:12px;font-size:.82rem;color:var(--teal)">◈ Shiva Moon — ${Math.round(cd.daysSinceNew*10)/10} days after New Moon. A blissful opening. Receive.</div>`:''}
+    ${cd.ds.isGAP?`<div style="padding:10px 14px;background:rgba(212,160,74,.12);border:1px solid var(--amber);margin-bottom:12px;font-size:.82rem;color:var(--amber)">★ Galactic Activation Portal — Kin ${cd.ds.kin}. Energy amplified. Synchronicities heightened.</div>`:''}
+    <div class="udn-hero" style="margin-bottom:16px">
+      ${udnData.master?`<div class="udn-master-badge">Master Number</div><br>`:''}
+      <div class="udn-label">Universal Day</div>
+      <div class="udn-number${NUM[cd.udn]?.master?` master-${cd.udn}`:``}">${cd.udn}</div>
+      <div class="udn-essence">${udnData.essence}</div>
+      <div class="udn-meaning">${udnData.keyword}</div>
+    </div>
+    ${parseReadingForFreeCard(text)}
+    <div class="ref-strip" style="margin-top:16px">
+      Drayer (2002) Numerology · USNO lunar ephemeris · Argüelles (1987) Dreamspell
+    </div>
+  </div>`;
+
+  readingText=text;
+  document.getElementById('oracle-section').style.display='block';
+  saveToHistory(text, cd, profile);
+  renderSuggestedQuestions(text, cd, profile);
+}
+
+function parseReadingForFreeCard(text){
+  // For FREE card, look for CONVERGENCE and render beautifully
+  const sections=parseReadingSections(text);
+  let html='';
+  if(sections.CONVERGENCE){
+    html+=`<div class="convergence-block">${sections.CONVERGENCE}</div>`;
+  }
+  // Rest as prose
+  const rest=Object.entries(sections).filter(([k])=>k!=='CONVERGENCE').map(([,v])=>v).join('\n\n');
+  if(rest.trim()){
+    html+=`<div class="reading-card"><div class="reading-prose">${markupProse(rest)}</div></div>`;
+  } else if(!sections.CONVERGENCE){
+    html+=`<div class="reading-card"><div class="reading-prose">${markupProse(text)}</div></div>`;
+  }
+  return html;
+}
+
+// ── Section parser ────────────────────────────────
+function parseReadingSections(text){
+  const sections={};
+  // Match UPPERCASE section headers (allow spaces, ampersands, numbers)
+  const headerPattern=/^([A-Z][A-Z &\/0-9·—]+)[\s\n]/gm;
+  const matches=[...text.matchAll(headerPattern)];
+
+  if(matches.length===0){
+    sections['READING']=text;
+    return sections;
+  }
+
+  matches.forEach((match,i)=>{
+    const key=match[1].trim();
+    const start=match.index+match[0].length;
+    const end=i+1<matches.length?matches[i+1].index:text.length;
+    sections[key]=text.slice(start,end).trim();
+  });
+
+  // Anything before first header
+  if(matches[0].index>0){
+    const pre=text.slice(0,matches[0].index).trim();
+    if(pre) sections['CONVERGENCE']=sections['CONVERGENCE']||pre;
+  }
+
+  return sections;
+}
+
+// ── Priority parser ───────────────────────────────
+function parsePriorities(text){
+  // Look for numbered priorities: "1 Title" or "Priority 1" patterns
+  const blocks=text.split(/(?=\b(?:1|2|3|Priority [123]|[123]\.)[\s\n])/);
+  if(blocks.length<=1){
+    return `<div class="priority-block"><div class="priority-block-body">${markupProse(text)}</div></div>`;
+  }
+  return blocks.filter(b=>b.trim()).map((block,i)=>{
+    const lines=block.trim().split('\n');
+    const firstLine=lines[0].replace(/^[123\.]+\s*/,'').replace(/^Priority [123]:?\s*/i,'').trim();
+    const body=lines.slice(1).join('\n').trim();
+    const arrowMatch=body.match(/→\s*(.+)$/s);
+    const mainBody=arrowMatch?body.slice(0,arrowMatch.index).trim():body;
+    const action=arrowMatch?arrowMatch[1].trim():'';
+    return `<div class="priority-block">
+      <div class="priority-block-num">Priority ${i+1}</div>
+      ${firstLine?`<div class="priority-block-title">${firstLine}</div>`:''}
+      <div class="priority-block-body">${markupProse(mainBody)}</div>
+      ${action?`<div class="priority-block-action">→ ${action}</div>`:''}
+    </div>`;
+  }).join('');
+}
+
+// ── Focus/Ease parser ─────────────────────────────
+function parseFocusEase(text){
+  const easeIdx=text.search(/ease\s+off|↓\s*ease/i);
+  if(easeIdx>0){
+    return{focus:text.slice(0,easeIdx).replace(/✓?\s*focus\s+on/i,'').trim(),
+           ease:text.slice(easeIdx).replace(/↓?\s*ease\s+off/i,'').trim()};
+  }
+  const half=Math.floor(text.length/2);
+  return{focus:text.slice(0,half),ease:text.slice(half)};
+}
+
+// ── Windows parser ────────────────────────────────
+function parseWindows(text, cd){
+  const chrono=profile.chrono||'morning';
+  const morningLabel=chrono==='evening'?'Late Morning':'Morning';
+  const periods=[
+    {key:/morning|dawn|before\s+noon/i,label:'Morning',time:'Dawn to noon',icon:'☀'},
+    {key:/afternoon|midday|noon\s+to/i,label:'Afternoon',time:'Noon to dusk',icon:'◑'},
+    {key:/evening|dusk|night/i,label:'Evening',time:'Dusk to midnight',icon:'☽'},
+  ];
+  const lines=text.split('\n').filter(l=>l.trim());
+  let html='<div class="windows-grid">';
+  periods.forEach(p=>{
+    const matching=lines.filter(l=>p.key.test(l));
+    const content=matching.join(' ').replace(p.key,'').trim()||text.slice(0,150);
+    html+=`<div class="window-block">
+      <div class="window-block-period">${p.icon} ${p.label}</div>
+      <div class="window-block-time">${p.time}</div>
+      <div class="window-block-body">${content.substring(0,200)}</div>
+    </div>`;
+  });
+  html+='</div>';
+  return html;
+}
+
+// ── Week ahead parser ─────────────────────────────
+function parseWeekAhead(text, cd){
+  const DAYS=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  const MONTHS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  let html='<div class="week-ahead-block">';
+
+  // Try to extract day-by-day entries
+  const dayLines=text.split('\n').filter(l=>l.trim());
+  let currentEntry=null;
+  const entries=[];
+
+  dayLines.forEach(line=>{
+    const dayMatch=line.match(/^(Mon|Tue|Wed|Thu|Fri|Sat|Sun|Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)\s+(\d+[\/.]\d+|\d+\s+\w+)/i);
+    const dateMatch=line.match(/(\d+)[\/.\\](\d+)/);
+    const udnMatch=line.match(/UD\s*(\d+)/i);
+    const kinMatch=line.match(/Kin\s+(\d+)/i);
+
+    if(dayMatch||udnMatch){
+      if(currentEntry) entries.push(currentEntry);
+      currentEntry={label:dayMatch?dayMatch[1].substring(0,3):'',date:dateMatch?`${dateMatch[1]}/${dateMatch[2]}`:'',udn:udnMatch?udnMatch[1]:'',kin:kinMatch?kinMatch[0]:'',body:'',isGAP:line.includes('GAP')};
+    } else if(currentEntry){
+      currentEntry.body+=line+' ';
+    }
+  });
+  if(currentEntry) entries.push(currentEntry);
+
+  if(entries.length>0){
+    entries.forEach(e=>{
+      const isGAP=e.isGAP||e.body.includes('GAP');
+      html+=`<div class="week-row${isGAP?' gap-day':''}">
+        <div class="week-row-date">
+          <div class="week-row-date-label">${e.label} ${e.date}</div>
+          ${e.udn?`<div class="week-row-date-udn">UD ${e.udn}</div>`:''}
+          ${e.kin?`<div class="week-row-kin">${e.kin}</div>`:''}
+          ${isGAP?`<div style="font-size:.55rem;color:var(--amber);margin-top:2px">★ GAP</div>`:''}
+        </div>
+        <div class="week-row-body">${e.body.trim()}</div>
+      </div>`;
+    });
+  } else {
+    // Fallback — render as prose
+    html+=`<div class="reading-prose">${markupProse(text)}</div>`;
+  }
+
+  // Also show computed week data
+  const cd2=cosmicData;
+  if(cd2.weekDays&&cd2.weekDays.length&&entries.length===0){
+    cd2.weekDays.forEach(w=>{
+      html+=`<div class="week-row${w.isGAP?' gap-day':''}">
+        <div class="week-row-date">
+          <div class="week-row-date-label">${w.label} ${w.date}</div>
+          <div class="week-row-date-udn">UD ${w.udn}</div>
+          <div class="week-row-kin">${w.kinName}</div>
+          ${w.isGAP?`<div style="font-size:.55rem;color:var(--amber)">★ GAP</div>`:''}
+        </div>
+        <div class="week-row-body">${w.moonEmoji} ${w.moonPhase}${w.isBlack?' · Black Moon':''}${w.isShiva?' · Shiva Moon':''} · UDN ${w.udn}: ${(NUM[w.udn]||NUM[1]).keyword}</div>
+      </div>`;
+    });
+  }
+
+  html+='</div>';
+  return html;
+}
+
+// ── Prose formatter ───────────────────────────────
+function markupProse(text){
+  if(!text) return '';
+  return '<p>'+text
+    .replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>')
+    .replace(/\*([^*]+)\*/g,'<em>$1</em>')
+    .replace(/→\s*/g,'<span style="color:var(--teal)">→</span> ')
+    .replace(/\n\n+/g,'</p><p>')
+    .replace(/\n/g,' ')
+    +'</p>';
+}
+
+function formatReadingText(text){ return markupProse(text); }
+
+// ════════════════════════════════════════
+// ORACLE CHAT
+// ════════════════════════════════════════
+function toggleOracle(){
+  const s=document.getElementById('oracle-section');
+  s.style.display=s.style.display==='none'?'block':'none';
+  if(s.style.display==='block') document.getElementById('oracle-input').focus();
+}
+
+async function sendOracle(){
+  const input=document.getElementById('oracle-input');
+  const q=input.value.trim();
+  if(!q) return;
+  input.value='';
+
+  const msgs=document.getElementById('oracle-messages');
+  msgs.insertAdjacentHTML('beforeend',`<div class="oracle-msg user">${q}</div>`);
+  const loading=document.createElement('div');
+  loading.className='oracle-msg ai';
+  loading.style.fontStyle='italic';
+  loading.style.color='var(--text-dim)';
+  loading.textContent='The oracle is considering…';
+  msgs.appendChild(loading);
+
+  oracleHistory.push({role:'user',content:q});
+
+  const endpoint=getFallbackEndpoint(profile.tier);
+
+  try{
+    const res=await fetch(endpoint,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        prompt:`You are the Cosmic Daily Planner oracle. The user has just received their ${profile.tier} reading for today. They ask: "${q}"\n\nContext from the reading:\n${readingText.substring(0,800)}\n\nAnswer concisely and with warmth, drawing on the cosmic context for today: Universal Day ${cosmicData.udn} (${(NUM[cosmicData.udn]||NUM[1]).essence}), Moon in ${cosmicData.moonPhase.name} in ${cosmicData.moonSign.name}, Kin ${cosmicData.ds.kin} (${cosmicData.ds.fullName}).`,
+        tier:'SEEKER',
+        history:oracleHistory.slice(-6)
+      })
+    });
+
+    let text;
+    // Railway returns JSON {text:...}, Netlify returns plain text
+    const raw=await res.text();
+    try{ const j=JSON.parse(raw); text=j.text||raw; }catch(e){ text=raw; }
+
+    oracleHistory.push({role:'assistant',content:text});
+    loading.style.fontStyle='normal';
+    loading.style.color='var(--text-main)';
+    loading.innerHTML=formatReadingText(text);
+  }catch(e){
+    loading.textContent='The oracle could not be reached. Please try again.';
+  }
+  msgs.scrollTop=msgs.scrollHeight;
+}
+
+// ════════════════════════════════════════
+// UTILITIES
+// ════════════════════════════════════════
+function saveAsPDF(){window.print();}
+
+// For page navigation (onboarding step 3 back button)
+document.addEventListener('DOMContentLoaded',()=>{
+  // Fix back button from page 3
+  const navRows=document.querySelectorAll('.nav-row');
+  navRows.forEach(row=>{
+    const backs=row.querySelectorAll('.nav-back');
+    backs.forEach(b=>{
+      if(!b.onclick&&b.textContent.includes('Back')){
+        b.onclick=()=>showPage('ob-page-2');
+      }
+    });
+  });
+});
+
+// ════════════════════════════════════════
+// FEEDBACK WIDGET
+// ════════════════════════════════════════
+let feedbackStars=0;
+function setStar(val){
+  feedbackStars=val;
+  document.querySelectorAll('.star-btn').forEach((btn,i)=>{
+    btn.classList.toggle('on',i<val);
+  });
+}
+async function submitFeedback(){
+  const text=document.getElementById('feedback-text').value.trim();
+  if(!feedbackStars&&!text) return;
+  const payload={stars:feedbackStars,text,tier:profile.tier||'',date:new Date().toISOString()};
+  // Store locally (best-effort; email fallback)
+  try{
+    const existing=JSON.parse(localStorage.getItem('cdp_feedback')||'[]');
+    existing.push(payload);
+    localStorage.setItem('cdp_feedback',JSON.stringify(existing));
+  }catch(e){}
+  // Also fire mailto as silent fallback (no window open — just preflight)
+  const subject=encodeURIComponent(`CDP Feedback — ${feedbackStars}★ — ${profile.tier||'unknown'}`);
+  const body=encodeURIComponent(`Stars: ${feedbackStars}/5\nTier: ${profile.tier}\nDate: ${new Date().toLocaleDateString()}\n\n${text}`);
+  // Open mail only if user wrote something substantive
+  if(text.length>10){
+    window.location.href=`mailto:nedwakeman@gmail.com?subject=${subject}&body=${body}`;
+  }
+  document.getElementById('feedback-box').style.opacity='.4';
+  document.getElementById('feedback-thanks').style.display='block';
+}
+
+function getNextFullMoon(d){
+  const age=getLunarAge(d);
+  const daysToFull=age<14.77?(14.77-age):(LUNAR_CYCLE-age+14.77);
+  return new Date(d.getTime()+daysToFull*86400000);
+}
+// ════════════════════════════════════════
+// MONTHLY CALENDAR
+// ════════════════════════════════════════
+let calYear=new Date().getFullYear();
+let calMonth=new Date().getMonth(); // 0-indexed
+let calSelectedDay=null;
+
+function openCalendar(){
+  const now=new Date();
+  calYear=cosmicData.readDate?cosmicData.readDate.getFullYear():now.getFullYear();
+  calMonth=cosmicData.readDate?cosmicData.readDate.getMonth():now.getMonth();
+  document.getElementById('cal-header-name').textContent=profile.prefName?`${profile.prefName}'s Cosmic Calendar`:'Monthly Overview';
+  renderCalendar();
+  showScreen('calendar');
+}
+function calPrevMonth(){if(calMonth===0){calMonth=11;calYear--;}else{calMonth--;}renderCalendar();}
+function calNextMonth(){if(calMonth===11){calMonth=0;calYear++;}else{calMonth++;}renderCalendar();}
+
+function renderCalendar(){
+  const MONTH_NAMES=['January','February','March','April','May','June','July','August','September','October','November','December'];
+  document.getElementById('cal-title').textContent=`${MONTH_NAMES[calMonth]} ${calYear}`;
+  document.getElementById('cal-header-sub').textContent=`Plan by the numbers, moon, and portals`;
+
+  const grid=document.getElementById('cal-grid');
+  grid.innerHTML='';
+
+  // First day of month (adjust so Monday=0)
+  const firstDay=new Date(calYear,calMonth,1).getDay(); // 0=Sun
+  const startOffset=(firstDay===0)?6:firstDay-1; // Mon=0
+  const daysInMonth=new Date(calYear,calMonth+1,0).getDate();
+  const today=new Date();
+
+  // Empty cells before first day
+  for(let i=0;i<startOffset;i++){
+    const empty=document.createElement('div');
+    empty.className='cal-day empty';
+    grid.appendChild(empty);
+  }
+
+  for(let d=1;d<=daysInMonth;d++){
+    const date=new Date(calYear,calMonth,d);
+    const udn=getUniversalDay(date);
+    const lunarAge=getLunarAge(date);
+    const phase=getMoonPhaseData(lunarAge);
+    const ds=getDreamspellData(date);
+    const bm=isBlackMoon(lunarAge);
+    const sm=isShivaMoon(lunarAge);
+    const isToday=(d===today.getDate()&&calMonth===today.getMonth()&&calYear===today.getFullYear());
+    const isMaster=NUM[udn]?.master;
+
+    const cell=document.createElement('div');
+    let cls='cal-day';
+    if(isToday) cls+=' today';
+    if(isMaster){
+      if(udn===11) cls+=' master11';
+      else if(udn===22) cls+=' master22';
+      else if(udn===33) cls+=' master33';
+      else if(udn===44) cls+=' master44';
+    }
+    cell.className=cls;
+    cell.onclick=()=>showCalDetail(d,date,udn,phase,ds,lunarAge,bm,sm);
+
+    // Moon emoji — only show on significant phases
+    const showMoon=(phase.name==='Full Moon'||phase.name==='New Moon'||phase.name==='First Quarter'||phase.name==='Last Quarter');
+
+    cell.innerHTML=`
+      <div class="cal-day-num">${d}</div>
+      <div class="cal-day-udn${isMaster?' master':''}">${udn}</div>
+      ${showMoon?`<div class="cal-day-moon">${phase.emoji}</div>`:''}
+      <div class="cal-badges">
+        ${ds.isGAP?'<span class="cal-badge gap">★P</span>':''}
+        ${bm?'<span class="cal-badge bm">●BM</span>':''}
+        ${sm?'<span class="cal-badge sm">◈SM</span>':''}
+        ${phase.name==='Full Moon'?'<span class="cal-badge fm">FM</span>':''}
+        ${phase.name==='New Moon'?'<span class="cal-badge nm">NM</span>':''}
+      </div>`;
+    grid.appendChild(cell);
+  }
+
+  // Hide detail panel when month changes
+  const det=document.getElementById('cal-detail');
+  det.className='cal-detail';
+}
+
+function showCalDetail(d,date,udn,phase,ds,lunarAge,bm,sm){
+  // Remove selected from all cells, add to this one
+  document.querySelectorAll('.cal-day.selected').forEach(c=>c.classList.remove('selected'));
+  // Find and mark selected cell
+  const cells=document.querySelectorAll('.cal-day:not(.empty)');
+  const firstDay=new Date(calYear,calMonth,1).getDay();
+  const startOffset=(firstDay===0)?6:firstDay-1;
+  const idx=d-1+startOffset; // approximate — find by content
+  document.querySelectorAll('.cal-day:not(.empty)')[d-1]?.classList.add('selected');
+
+  const MONTH_NAMES=['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const DAY_NAMES=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const udnData=NUM[udn]||NUM[1];
+  const moonSign=getMoonSign(date);
+
+  // Personal numbers if profile available
+  let personalNums='';
+  if(profile.dobD){
+    const py=getPersonalYear(new Date(Date.UTC(profile.dobY,profile.dobM-1,profile.dobD)),date);
+    const pm=getPersonalMonth(py,date);
+    const pd=getPersonalDay(pm,date);
+    personalNums=`
+      <div class="cal-detail-item">
+        <div class="cal-detail-label">Your Personal Day</div>
+        <div class="cal-detail-value">${pd}${NUM[pd]?.master?' ✦':''}</div>
+        <div class="cal-detail-sub">${(NUM[pd]||NUM[1]).essence}</div>
+      </div>
+      <div class="cal-detail-item">
+        <div class="cal-detail-label">Personal Month</div>
+        <div class="cal-detail-value">${pm}${NUM[pm]?.master?' ✦':''}</div>
+        <div class="cal-detail-sub">${(NUM[pm]||NUM[1]).essence}</div>
+      </div>`;
+  }
+
+  const moonLabel=bm?`<span style="color:var(--violet)">● Black Moon — go gently</span>`
+    :sm?`<span style="color:var(--teal)">◈ Shiva Moon — take action</span>`
+    :phase.name;
+
+  const det=document.getElementById('cal-detail');
+  det.innerHTML=`
+    <div class="cal-detail-date">${DAY_NAMES[date.getDay()]} · ${d} ${MONTH_NAMES[calMonth]} ${calYear}</div>
+    <div class="cal-detail-grid">
+      <div class="cal-detail-item">
+        <div class="cal-detail-label">Universal Day</div>
+        <div class="cal-detail-value" style="font-family:'IM Fell English',serif;font-size:1.8rem;font-style:italic;color:${NUM[udn]?.master?'var(--violet)':'var(--gold)'}">${udn}${NUM[udn]?.master?' ✦':''}</div>
+        <div class="cal-detail-sub">${udnData.essence}</div>
+      </div>
+      <div class="cal-detail-item">
+        <div class="cal-detail-label">Moon Phase</div>
+        <div class="cal-detail-value">${phase.emoji} ${moonLabel}</div>
+        <div class="cal-detail-sub">${moonSign.name} · ${moonSign.quality.substring(0,45)}…</div>
+      </div>
+      <div class="cal-detail-item">
+        <div class="cal-detail-label">Dreamspell Kin</div>
+        <div class="cal-detail-value">${ds.isGAP?'★ ':''} Kin ${ds.kin}</div>
+        <div class="cal-detail-sub">${ds.fullName}</div>
+      </div>
+      <div class="cal-detail-item">
+        <div class="cal-detail-label">Day Energy</div>
+        <div class="cal-detail-value" style="font-size:.82rem">${udnData.keyword}</div>
+        <div class="cal-detail-sub">${udnData.morning}</div>
+      </div>
+      ${personalNums}
+    </div>
+    ${ds.isGAP?`<div style="padding:8px 12px;background:rgba(212,160,74,.1);border:1px solid rgba(212,160,74,.2);font-size:.78rem;color:var(--amber);margin-bottom:10px">★ Galactic Activation Portal — energy amplified, synchronicities heightened, veil between times is thinner</div>`:''}
+    ${bm?`<div style="padding:8px 12px;background:rgba(139,127,196,.12);border:1px solid rgba(139,127,196,.2);font-size:.78rem;color:var(--violet);margin-bottom:10px">● Black Moon: introspect, nurture spirit, listen to dreams. Avoid confrontation. Solitude serves better than group energy.</div>`:''}
+    ${sm?`<div style="padding:8px 12px;background:rgba(129,205,182,.08);border:1px solid rgba(129,205,182,.2);font-size:.78rem;color:var(--teal);margin-bottom:10px">◈ Shiva Moon: perfect time to act on intentions. Excellent for couples and new beginnings. Energy flows peacefully.</div>`:''}
+    <button class="cal-read-btn" onclick="readThisDay(${date.getFullYear()},${date.getMonth()+1},${d})">Open reading for this day →</button>`;
+  det.className='cal-detail visible';
+  det.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+function readThisDay(y,m,d){
+  // Set the reading date dropdowns and navigate to reading
+  document.getElementById('read-d').value=d;
+  document.getElementById('read-m').value=m;
+  document.getElementById('read-y').value=y;
+  // Check if we have a profile already
+  if(profile.birthName){
+    generateReading();
+  } else {
+    showScreen('onboarding');
+    showPage('ob-page-3');
+  }
+}
+</script>
+</body>
+</html>
