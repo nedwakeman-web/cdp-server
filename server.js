@@ -705,7 +705,7 @@ async function buildPart1(c, context, profile, nm, lp, nn) {
   const expr = nn?.expression || null;
   const soul = nn?.soulUrge || null;
   const prompt = context + `\n\nReturn ONLY JSON with convergence, date, tz, season, cosmicSnapshot, and frameworks fields.
-Each framework body: two specific paragraphs naming ${nm}'s actual life (Cosmic Daily Planner, Connie, Gentronix).
+Each framework body: two specific paragraphs naming ${nm}'s actual life (${nm}'s actual projects and people — use ONLY names from their profile).
 {
   "convergence":"single sentence all frameworks agree on for ${nm} today",
   "date":"${c.dayName}, ${c.isoDate}","tz":"${c.tz}","season":"${c.seasonNote}",
@@ -729,7 +729,7 @@ async function buildPart2(c, context, profile, nm, lp, nn) {
   "planets":[{"body":"Sun","pos":"${c.sunDeg}° ${c.sunSign}","note":""},{"body":"Moon","pos":"${c.moonDegS}° ${c.moonSign}","note":"${c.phase}"},{"body":"Mercury","pos":"from data","note":""},{"body":"Venus","pos":"from data","note":""},{"body":"Mars","pos":"from data","note":""},{"body":"Jupiter","pos":"from data","note":"direct since 10 Mar 2026"},{"body":"Saturn","pos":"from data","note":"Aries since 13 Feb 2026"},{"body":"Neptune","pos":"from data","note":"Aries since 26 Jan 2026"},{"body":"Pluto","pos":"from data","note":""},{"body":"Uranus","pos":"from data","note":"enters Gemini 26 Apr 2026"}],
   "keyAspects":[${aspects.map(a=>`{"aspect":"${a}","detail":"interpreted specifically for ${nm}","significance":4}`).join(',')}],
   "shadow":"one honest paragraph what today asks ${nm} to face — specific, not generic",
-  "priorities":[{"num":1,"title":"name","why":"frameworks reasoning","action":"action naming Cosmic Daily Planner/Connie/Gentronix"},{"num":2,"title":"name","why":"reasoning","action":"action"},{"num":3,"title":"name","why":"reasoning","action":"action"}],
+  "priorities":[{"num":1,"title":"name","why":"frameworks reasoning","action":"action naming ${nm}'s actual projects/people (from profile)"},{"num":2,"title":"name","why":"reasoning","action":"action"},{"num":3,"title":"name","why":"reasoning","action":"action"}],
   "focusOn":["specific to ${nm}","specific","specific"],
   "easeOff":["specific to ${nm}","specific","specific"],
   "windows":{"morning":"sentence for ${nm}","afternoon":"sentence","evening":"sentence"}
@@ -829,9 +829,15 @@ function buildPromptForTier(c, context, profile, nm, lp, nn, tier, isoDate) {
     return `${context}
 
 ORACLE READING — FULL DEPTH
-SPECIFICITY MANDATE: Every text field must name ${nm}'s actual situation. 
-"Cosmic Daily Planner" not "your project". "Connie" not "your partner". 
-Rewrite any sentence that could apply to anyone else.
+CRITICAL PERSONALISATION RULE:
+Use ONLY names, projects, and relationships that appear in the PERSON section above.
+NEVER use names from previous users or example readings (e.g. Ned, Connie, Gentronix, Sam, Kitty were used in development — do NOT use them unless they appear in THIS user's profile).
+If the profile has no people listed, use "the people close to you" not invented names.
+If the profile has no projects listed, use "your work" not invented project names.
+Every text field must name ${nm}'s actual situation from their profile. 
+Use ONLY the names, projects, and relationships from the profile data above.
+NEVER invent names or details. If profile data is sparse, ask for more rather than guessing.
+Rewrite any sentence that uses a name not found in the profile.
 
 Return ONLY this JSON object:
 {
@@ -856,13 +862,13 @@ Return ONLY this JSON object:
     {"body":"Uranus","pos":"from ephemeris","note":"enters Gemini 26 Apr 2026"}
   ],
   "keyAspects": [
-    {"aspect":"name the precise aspect with orb","detail":"interpret for ${nm}'s specific situation — name Cosmic Daily Planner, Gentronix, Connie etc. Draw on Hand (2002) Planets in Transit for transit meaning.","significance":5}
+    {"aspect":"name the precise aspect with orb","detail":"interpret for ${nm}'s specific situation — name Cosmic Daily Planner, ${profile?.building?.split(',')[0]||'your main project'}, the names from ${nm}'s profile. Draw on Hand (2002) Planets in Transit for transit meaning.","significance":5}
   ],
   "frameworks": {
     "numerology": {
       "icon":"${c.ud}",
       "headline":"Universal Day ${c.ud} — [governing quality: 3 words max]",
-      "body":"Two full paragraphs. Para 1: what UD ${c.ud} means in the Pythagorean system — its governing quality, what it rewards, what it resists, how it differs from adjacent numbers. Draw on Drayer (2002) and Goodwin (1994) for method. Para 2: applied precisely to ${nm} today — name Cosmic Daily Planner, the Gentronix pitch, Connie, Sam, Kitty as appropriate. Cross-reference with Life Path ${lp||'unknown'} for personal resonance.",
+      "body":"Two full paragraphs. Para 1: what UD ${c.ud} means in the Pythagorean system — its governing quality, what it rewards, what it resists, how it differs from adjacent numbers. Draw on Drayer (2002) and Goodwin (1994) for method. Para 2: applied precisely to ${nm} today — name ONLY the names and projects in ${nm}'s profile above. Cross-reference with Life Path ${lp||'unknown'} for personal resonance.",
       "personal":"${lp ? `Life Path ${lp}${expr ? ', Expression '+expr : ''}${soul ? ', Soul Urge '+soul : ''}` : 'Birth data not provided'}"
     },
     "astrology": {
@@ -887,7 +893,7 @@ Return ONLY this JSON object:
   },
   "shadow": "One full paragraph. The honest, specific shadow work for ${nm} today. What today is genuinely asking them to face or acknowledge — not the comfortable version. Draw on Greene (1976) for the psychological framing of Saturn's demands. Must be impossible to mistake for anyone else.",
   "priorities": [
-    {"num":1,"title":"Priority name","why":"Specific cross-framework reasoning — which aspect, which UD quality, which kin energy all converge here","action":"One specific action. Name actual things: Cosmic Daily Planner, the Gentronix pitch, the Railway backend, Connie, Sam, Kitty."},
+    {"num":1,"title":"Priority name","why":"Specific cross-framework reasoning — which aspect, which UD quality, which kin energy all converge here","action":"One specific action. Name actual things: Cosmic Daily Planner, the ${profile?.building?.split(',')[0]||'your main project'} pitch, the Railway backend, the people named in ${nm}'s profile."},
     {"num":2,"title":"Priority name","why":"Framework reasoning","action":"Specific action naming real things"},
     {"num":3,"title":"Priority name","why":"Framework reasoning","action":"Specific action naming real things"}
   ],
@@ -912,7 +918,7 @@ Return ONLY this JSON object:
     "attribution":"Full citation: Author, Title, Publisher, Year — verified accurate",
     "grounding":"Three sentences settling ${nm} into this specific day. The quality of the light. What is alive in their life right now. What today is genuinely offering.",
     "forToday":[
-      "One act of love — specific to ${nm}'s named relationships (Connie, Sam, Kitty, Mum)",
+      "One act of love — specific to ${nm}'s named relationships (the people named in ${nm}'s profile)",
       "One moment of noticing — something specific to today's sky, season, or light",
       "One act of honest care — for ${nm} themselves or the work they care most about"
     ],
@@ -926,8 +932,8 @@ Return ONLY this JSON object:
 
 ${tier.toUpperCase()} READING for ${nm}.
 Write a warm, specific, personalised daily reading in prose. 400-800 words depending on tier.
-Draw on all four frameworks as relevant. Be concrete — name Cosmic Daily Planner, Gentronix, 
-Connie, Sam, Kitty. Not generic cosmic content.
+Draw on all four frameworks as relevant. Be concrete — name Cosmic Daily Planner, ${profile?.building?.split(',')[0]||'your main project'}, 
+the people named in ${nm}'s profile. Not generic cosmic content.
 Reference the scholarly grounding naturally where it adds weight (e.g. "the Saturn-Neptune 
 conjunction — last in Aries since 1522 — suggests...").`;
 }
