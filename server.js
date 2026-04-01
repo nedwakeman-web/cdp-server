@@ -213,7 +213,7 @@ function getSystemPrompt(tier) {
 
   if (tier === 'oracle' || tier === 'mystic' || tier === 'bespoke') {
     return identity + '\n\n' + scholarly + '\n\n' + astrologyNote + '\n\n' +
-      'Output ONLY valid JSON. Start with {. End with }. No trailing commas. No text outside the JSON.\n\nBIRTH DATA: If birth time and place are provided, use natal house positions throughout. Name the house each transit activates. If no birth time, interpret transits universally but note this.\n\nCHECK-IN: If a check-in note is present, respond to it directly in the reading — it is what the person brought to the session.';
+      'Output ONLY valid JSON. Start with {. End with }. No trailing commas. No text outside the JSON.';
   }
   if (tier === 'initiate') {
     return identity + '\n\n' + scholarly + '\n\nWrite a warm, personalised daily reading in prose.';
@@ -381,8 +381,7 @@ app.post('/reading/stream', optionalAuth, async (req, res) => {
     const nn = profile?.fullname ? nameNum(profile.fullname) : null;
     const nm = profile?.nickname || profile?.name || 'You';
 
-    const profileWithNote = {...profile, _todayNote: todayNote||''};
-    const context = buildReadingContext(c, profileWithNote, nm, lp, nn);
+    const context = buildReadingContext(c, profile, nm, lp, nn);
     const prompt = buildPromptForTier(c, context, profile, nm, lp, nn, tier, date);
 
     const model = (tier === 'oracle' || tier === 'mystic') ? 'claude-sonnet-4-6' : 'claude-haiku-4-5-20251001';
@@ -492,13 +491,13 @@ app.post('/reading/chat', optionalAuth, async (req, res) => {
   const send = (data) => res.write(`data: ${JSON.stringify(data)}\n\n`);
 
   try {
-    const { historyContext } = req.body;
-    const systemPrompt = 'You are Cosmic Daily Planner\'s follow-up guide. ' +
-      'The person has just received their daily reading. Go deeper on whatever they ask. ' +
-      'Be specific — name their actual life, work, relationships. ' +
-      '2-4 paragraphs of genuine insight. Draw on the scholarly framework. No generic platitudes.' +
-      (historyContext ? '\n\nTHEIR READING HISTORY (for pattern awareness):\n' + historyContext : '') +
-      '\n\nTHEIR READING TODAY:\n' + (context || 'No reading context — answer from general cosmic principles.');
+    const systemPrompt = `You are Cosmic Daily Planner's follow-up guide.
+The person has just received their daily reading. Go deeper on whatever they ask.
+Be specific — name their actual life, work, relationships.
+2-4 paragraphs of genuine insight. No generic spiritual platitudes.
+
+THE READING THEY RECEIVED:
+${context || 'No reading context provided — answer from general cosmic principles.'}`;
 
     const messages = [
       ...history.slice(-6), // keep last 6 exchanges for context
@@ -678,7 +677,7 @@ app.get('/insights', requireAuth, async (req, res) => {
 
 // ── Parallel reading parts (called simultaneously from client) ───────────────
 async function getPartBody(req, res, partFn) {
-  const { date, profile, todayNote } = req.body;
+  const { date, profile } = req.body;
   if (!date) return res.status(400).json({ error: 'date required' });
   try {
     const c = fullCosmic(date);
@@ -686,8 +685,7 @@ async function getPartBody(req, res, partFn) {
     const lp = lifePath(profile?.dob || '');
     const nn = profile?.fullname ? nameNum(profile.fullname) : null;
     const nm = profile?.nickname || profile?.name || 'You';
-    const profileWithNote = {...profile, _todayNote: todayNote||''};
-    const context = buildReadingContext(c, profileWithNote, nm, lp, nn);
+    const context = buildReadingContext(c, profile, nm, lp, nn);
     const raw = await partFn(c, context, profile, nm, lp, nn);
     res.setHeader('Access-Control-Allow-Origin', req.headers.origin || '*');
     res.json(raw);
@@ -770,29 +768,13 @@ app.get('/health', (req, res) => {
 function buildReadingContext(c, profile, nm, lp, nn) {
   const expr = nn?.expression || null;
   const soul = nn?.soulUrge || null;
-  const hasBirthTime = profile?.tob && profile.tob !== 'unknown';
-  const hasBirthPlace = profile?.pob && profile.pob.trim().length > 0;
-  const hasNatal = hasBirthTime && hasBirthPlace;
-  const todayNote = profile?._todayNote || '';
-
   return `PERSON: ${nm}${profile?.fullname ? ' (' + profile.fullname + ')' : ''}
 Life Path: ${lp || 'not provided'} | Expression: ${expr || 'n/a'} | Soul Urge: ${soul || 'n/a'}
-Date of birth: ${profile?.dob || 'not provided'}${hasBirthTime ? ' | Time: ' + profile.tob : ' | Birth time: unknown (no Ascendant)'}
-${hasBirthPlace ? 'Place of birth: ' + profile.pob : 'Birth place: not provided'}
-${hasNatal ? '[NATAL CHART AVAILABLE — use house positions and Ascendant in interpretation]' : '[No natal chart — transit interpretations are universal, not house-specific]'}
-
-Location now: ${profile?.location || 'UK'}
-Life chapter: ${profile?.lifeChapter || profile?.chapter || ''}
+Location: ${profile?.location || 'UK'} | Life chapter: ${profile?.lifeChapter || profile?.chapter || ''}
 Currently building: ${profile?.building || ''}
-Navigating: ${profile?.navigating || ''}
 Key people: ${profile?.people || ''}
 What matters most: ${profile?.whatMatters || ''}
 Needs to hear: ${profile?.needToHear || ''}
-${profile?.pattern ? 'Pattern to watch: ' + profile.pattern : ''}
-${profile?.intuition ? 'Intuition/sense: ' + profile.intuition : ''}
-${todayNote ? `
-TODAY'S CHECK-IN (how they are arriving): "${todayNote}"
-[This is what ${nm} wrote moments before opening their reading. Respond to this directly.]` : ''}
 
 VERIFIED ASTRONOMICAL DATA (Meeus/USNO-standard, ±0.5°):
 Date: ${c.dayName}, ${c.isoDate} | Timezone: ${c.tz} | Season: ${c.seasonNote}
@@ -802,18 +784,23 @@ Sun: ${c.sunDeg}° ${c.sunSign}
 
 DREAMSPELL / LAW OF TIME (Argüelles 1987, anchored July 26 2025, Kin 64):
 Kin: ${c.kin} — ${c.kinName}${c.isGAP ? ' [GALACTIC ACTIVATION PORTAL]' : ''}
-Tone ${c.kinTone}: "${c.toneQuestion}" | Seal: ${c.kinSeal}
-Action: ${c.sealAction} | Power: ${c.sealPower} | Essence: ${c.sealEssence}
+Galactic Tone ${c.kinTone}: "${c.toneQuestion}"
+Solar Seal: ${c.kinSeal} | Action: ${c.sealAction} | Power: ${c.sealPower} | Essence: ${c.sealEssence}
 Oracle: Guide ${c.guide} | Antipode ${c.antipode} | Occult ${c.occult} | Analog ${c.analog}
-13 Moon: ${c.m13Num} — ${c.m13Name} (Power: ${c.m13Power}, Action: ${c.m13Action}), Day ${c.dm13}/28
-Castle: ${c.castle5}, position ${c.pos5}/52
+13 Moon Calendar: Moon ${c.m13Num} — ${c.m13Name} (Power: ${c.m13Power}, Action: ${c.m13Action})
+Day ${c.dm13}/28 | Castle: ${c.castle5}, position ${c.pos5}/52
 
 PLANETARY POSITIONS (tropical ecliptic):
 ${c.pTable}
 
-ACTIVE ASPECTS: ${(c.detectedAspects||[]).join(' | ') || 'none detected'}
+ACTIVE ASPECTS:
+${(c.detectedAspects||[]).join(' | ') || 'calculating...'}
 
-HISTORICALLY SIGNIFICANT: Saturn-Neptune 0° Aries (20 Feb 2026) — first in Aries since ~1522.`;
+HISTORICALLY SIGNIFICANT CONTEXT:
+Saturn-Neptune conjunction at 0° Aries (perfected 20 Feb 2026) — first in Aries since ~1522 
+(Renaissance era; Copernicus published, Luther's Reformation began). Previous conjunctions: 
+1989 Capricorn (Berlin Wall), 1953 Libra (Stalin's death), 1917 Leo (Russian Revolution).
+Scholarly grounding: Tarnas (2006) Cosmos and Psyche pp.300-400 on Saturn-Neptune cycles.`;
 }
 
 
@@ -863,8 +850,8 @@ Return ONLY this JSON object:
     },
     "astrology": {
       "icon":"♈",
-      "headline":"[Most important aspect today — include natal house if birth data available]",
-      "body":"Two full paragraphs. If birth time and place are known, open with the natal house this transit activates and what that house governs for ${nm} specifically. Para 1: the key aspect fully interpreted drawing on Hand (2002) for transit meaning, with symbolic depth from Greene (1976) on Saturn or Tarnas (2006) on outer planet cycles as appropriate. Para 2: applied precisely to ${nm}'s situation today — which decisions, relationships, domains. Then in 2-3 sentences: Saturn-Neptune 0° Aries (Tarnas 2006: a genesis point, last in Aries ~1522) and what it means for someone actively building something genuinely new right now.",
+      "headline":"[The single most important aspect or transit active today — be specific]",
+      "body":"Two full paragraphs. Para 1: the key aspect fully interpreted drawing on Hand (2002) for transit meaning, with symbolic depth from Greene (1976) on Saturn or Tarnas (2006) on outer planet cycles as appropriate. Para 2: applied precisely to ${nm}'s situation today — which decisions, relationships, domains. Then in 2-3 sentences: Saturn-Neptune 0° Aries (Tarnas 2006: a genesis point, last in Aries ~1522) and what it means for someone actively building something genuinely new right now.",
       "historic":"Saturn-Neptune 0° Aries: last ~1522 (Copernican revolution, Reformation). 1989 Capricorn: Berlin Wall. 1953 Libra: Stalin. 1917 Leo: Russian Revolution. Source: Tarnas (2006) Cosmos and Psyche."
     },
     "dreamspell": {
