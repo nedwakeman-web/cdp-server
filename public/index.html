@@ -6,6 +6,7 @@
 <title>Cosmic Daily Planner</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400;1,600&family=EB+Garamond:ital,wght@0,400;0,500;1,400;1,500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" defer></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 :root{
@@ -197,40 +198,86 @@ body.light{--bg:#F5F0E8;--bg2:#EDE6D6;--bg3:#E4DBC8;--bg4:#F8F4EC;
   color:var(--master);border-radius:2px;margin-left:6px;vertical-align:middle}
 
 /* ══ DAILY CARD SCREEN ══ */
-#scard{max-width:500px;margin:0 auto;padding:0 24px 80px}
-.card-wrap{background:var(--bg4);border:1px solid rgba(201,160,80,0.15);border-radius:3px;
-  overflow:hidden;margin-top:24px;position:relative}
-.card-wrap::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;
-  background:linear-gradient(90deg,transparent,var(--gold),transparent)}
-.card-top{text-align:center;padding:28px 28px 0}
-.card-date-line{font-size:9px;letter-spacing:.5em;text-transform:uppercase;color:var(--text3);margin-bottom:4px}
-.card-loc-line{font-size:9px;letter-spacing:.3em;text-transform:uppercase;color:var(--text3);margin-bottom:28px}
-.card-divider{height:1px;background:var(--div);margin:0 28px}
-.card-divider-dot{text-align:center;color:var(--teal);font-size:6px;margin:-4px 0;position:relative;z-index:1}
-.card-quote{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:1.35rem;
-  color:var(--text);line-height:1.65;text-align:center;padding:28px 32px 6px}
-.card-attribution{font-size:9px;letter-spacing:.25em;text-transform:uppercase;
-  color:var(--text3);text-align:center;padding:0 28px 24px}
-.card-section-label{font-size:8px;letter-spacing:.5em;text-transform:uppercase;
-  color:var(--teal);text-align:center;padding:20px 28px 12px}
-.card-reflection{font-size:.9rem;color:var(--text2);line-height:1.85;padding:0 28px 20px;text-align:left}
-.card-for-today-label{font-size:8px;letter-spacing:.5em;text-transform:uppercase;
-  color:var(--teal);text-align:center;padding:20px 28px 10px}
-.card-for-today{font-size:1rem;color:var(--text);line-height:1.75;padding:0 28px 22px;
-  font-family:'Cormorant Garamond',serif;font-weight:400}
-.card-footer{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:.85rem;
-  color:var(--text3);text-align:center;padding:16px 28px 28px;line-height:1.7}
-.card-actions{display:flex;gap:8px;justify-content:center;padding:0 28px 28px;flex-wrap:wrap}
-.card-dl-btn{background:none;border:1px solid var(--gold3);color:var(--gold);
-  font-family:'EB Garamond',serif;font-size:10px;letter-spacing:.25em;text-transform:uppercase;
-  padding:9px 18px;border-radius:2px;cursor:pointer;transition:all .25s}
-.card-dl-btn:hover{background:var(--gold4)}
-.card-time-tabs{display:flex;gap:6px;justify-content:center;padding:20px 28px 0}
+#scard{max-width:520px;margin:0 auto;padding:0 20px 80px}
+.card-time-tabs{display:flex;gap:8px;justify-content:center;padding:24px 0 0}
 .card-tab{background:none;border:1px solid var(--div);color:var(--text3);
-  font-size:9px;letter-spacing:.3em;text-transform:uppercase;padding:6px 14px;
+  font-size:14px;letter-spacing:.2em;text-transform:uppercase;padding:8px 18px;
   border-radius:2px;cursor:pointer;font-family:'EB Garamond',serif;transition:all .2s}
 .card-tab.on{border-color:var(--gold3);color:var(--gold);background:var(--gold4)}
-.card-loading{text-align:center;padding:60px 20px;color:var(--text3);font-size:.9rem;font-style:italic}
+/* The card itself */
+.card-wrap{background:#07111D;border:1px solid rgba(201,160,80,0.2);border-radius:4px;
+  overflow:hidden;margin-top:16px;position:relative}
+.card-wrap::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,transparent,var(--gold),transparent)}
+/* Header */
+.card-header{text-align:center;padding:28px 32px 0}
+.card-date-line{font-size:14px;letter-spacing:.4em;text-transform:uppercase;
+  color:var(--text3);margin-bottom:5px}
+.card-loc-line{font-size:13px;letter-spacing:.25em;text-transform:uppercase;
+  color:var(--text3);margin-bottom:0;opacity:.7}
+/* Mountain silhouette */
+.card-mountain{width:100%;height:120px;display:block;margin-top:-10px;opacity:.65}
+/* Quote */
+.card-quote{font-family:'Cormorant Garamond',serif;font-style:italic;
+  font-size:clamp(1.25rem,4vw,1.55rem);color:var(--text);line-height:1.65;
+  text-align:center;padding:8px 36px 8px}
+.card-attribution{font-size:13px;letter-spacing:.2em;text-transform:uppercase;
+  color:var(--text3);text-align:center;padding:0 32px 22px}
+/* Dividers */
+.card-hr{height:1px;background:rgba(201,160,80,0.15);margin:0 32px}
+.card-hr-dot{text-align:center;color:var(--teal);font-size:8px;line-height:0;
+  margin:0;padding:12px 0}
+/* Section labels */
+.card-label{font-size:13px;letter-spacing:.45em;text-transform:uppercase;
+  color:var(--teal);text-align:center;padding:22px 32px 14px}
+/* Reflection text */
+.card-reflection{font-size:18px;color:var(--text2);line-height:1.9;
+  padding:0 32px 24px;text-align:left}
+/* For Today */
+.card-for-today{font-family:'Cormorant Garamond',serif;font-size:1.35rem;
+  color:var(--text);line-height:1.72;padding:0 32px 26px;font-weight:400}
+/* Numerology strip */
+.card-num-strip{background:rgba(201,160,80,0.06);border-top:1px solid rgba(201,160,80,0.12);
+  border-bottom:1px solid rgba(201,160,80,0.12);padding:16px 32px;display:flex;
+  align-items:center;gap:16px}
+.card-num-circle{width:52px;height:52px;border-radius:50%;border:1px solid rgba(201,160,80,0.4);
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+  font-family:'Cormorant Garamond',serif;font-size:26px;color:var(--gold)}
+.card-num-text{flex:1}
+.card-num-label{font-size:12px;letter-spacing:.2em;text-transform:uppercase;
+  color:var(--text3);margin-bottom:4px}
+.card-num-name{font-family:'Cormorant Garamond',serif;font-size:18px;color:var(--gold);margin-bottom:4px}
+.card-num-meaning{font-size:15px;color:var(--text3);line-height:1.55}
+/* Lunar/Mayan strip */
+.card-lunar{padding:18px 32px;display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.card-lunar-item{background:rgba(129,205,182,0.05);border:1px solid rgba(129,205,182,0.15);
+  border-radius:3px;padding:12px 14px}
+.card-lunar-label{font-size:11px;letter-spacing:.2em;text-transform:uppercase;
+  color:var(--teal);margin-bottom:5px;opacity:.8}
+.card-lunar-val{font-family:'Cormorant Garamond',serif;font-size:16px;color:var(--text);
+  margin-bottom:4px;line-height:1.3}
+.card-lunar-msg{font-size:13px;color:var(--text3);line-height:1.5}
+/* Planet row */
+.card-planets{padding:4px 32px 18px}
+.card-planet-row{display:flex;align-items:baseline;gap:10px;padding:7px 0;
+  border-bottom:1px solid rgba(255,255,255,0.04)}
+.card-planet-row:last-child{border-bottom:none}
+.card-planet-name{font-size:12px;letter-spacing:.15em;text-transform:uppercase;
+  color:var(--text3);min-width:72px}
+.card-planet-pos{font-family:'Cormorant Garamond',serif;font-size:17px;color:var(--gold);
+  min-width:100px}
+.card-planet-note{font-size:14px;color:var(--text3);line-height:1.45;flex:1}
+/* Footer */
+.card-footer{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:16px;
+  color:var(--text3);text-align:center;padding:16px 32px 28px;line-height:1.75;
+  background:rgba(0,0,0,0.15)}
+/* Actions */
+.card-actions{display:flex;gap:10px;justify-content:center;padding:0 28px 32px;flex-wrap:wrap}
+.card-dl-btn{background:none;border:1px solid var(--gold3);color:var(--gold);
+  font-family:'EB Garamond',serif;font-size:14px;letter-spacing:.18em;text-transform:uppercase;
+  padding:11px 22px;border-radius:2px;cursor:pointer;transition:all .25s}
+.card-dl-btn:hover{background:var(--gold4)}
+.card-loading{text-align:center;padding:60px 20px;color:var(--text3);font-size:17px;font-style:italic}
 
 /* ══ CALENDAR SCREEN ══ */
 #sc{max-width:900px;margin:0 auto;padding:0 24px 80px}
@@ -243,23 +290,31 @@ body.light{--bg:#F5F0E8;--bg2:#EDE6D6;--bg3:#E4DBC8;--bg4:#F8F4EC;
 .cal-month{font-family:'Cormorant Garamond',serif;font-size:26px;color:var(--gold);font-weight:300}
 .cal-legend{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin-bottom:16px;font-size:14px;color:var(--text3)}
 .cal-legend span{display:flex;align-items:center;gap:5px}
-.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
 .cal-dow{text-align:center;font-size:13px;letter-spacing:.2em;text-transform:uppercase;
-  color:var(--text3);padding:6px 0;margin-bottom:4px}
-.cal-day{background:var(--bg2);border:1px solid var(--div2);border-radius:2px;
-  padding:8px 6px;min-height:82px;cursor:pointer;transition:all .2s;position:relative}
+  color:var(--text3);padding:8px 0;margin-bottom:4px}
+.cal-day{background:var(--bg2);border:1px solid var(--div2);border-radius:3px;
+  padding:9px 7px;min-height:92px;cursor:pointer;transition:all .2s;position:relative}
 .cal-day:hover{border-color:var(--gold3);background:var(--bg3)}
-.cal-day.today{border-color:var(--gold);background:var(--gold4)}
+.cal-day.today{border-color:var(--gold);background:var(--gold4);box-shadow:0 0 14px rgba(201,160,80,0.15)}
 .cal-day.gap-day{border-left:3px solid var(--teal)}
-.cal-day.master-day{background:linear-gradient(135deg,var(--bg2),rgba(200,160,255,0.08))}
-.cal-day.black-moon{background:linear-gradient(135deg,var(--bg2),rgba(80,0,0,0.2))}
+/* MASTER DAYS — visually dramatic */
+.cal-day.master-day{
+  background:linear-gradient(135deg,#0E1E3A 0%,rgba(200,160,255,0.12) 100%);
+  border:1px solid rgba(200,160,255,0.45);
+  box-shadow:0 0 16px rgba(200,160,255,0.18)}
+.cal-day.master-day .cal-dn{color:var(--master);font-weight:600}
+.cal-day.master-day::after{content:'★';position:absolute;top:5px;left:6px;
+  font-size:11px;color:var(--master);opacity:.7}
+.cal-day.black-moon{background:linear-gradient(135deg,var(--bg2),rgba(80,0,0,0.25))}
 .cal-day.shiva-moon{background:linear-gradient(135deg,var(--bg2),var(--teal3))}
-.cal-dn{font-family:'Cormorant Garamond',serif;font-size:20px;color:var(--text);font-weight:300}
-.cal-moon{font-size:15px;position:absolute;top:5px;right:5px}
-.cal-ud{font-size:12px;color:var(--gold);letter-spacing:.08em}
+.cal-dn{font-family:'Cormorant Garamond',serif;font-size:22px;color:var(--text);
+  font-weight:300;line-height:1}
+.cal-moon{font-size:15px;position:absolute;top:6px;right:7px}
+.cal-ud{font-size:13px;color:var(--gold);letter-spacing:.06em;margin-top:4px}
 .cal-kin-dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-top:4px}
-.cal-badges{display:flex;flex-wrap:wrap;gap:3px;margin-top:4px}
-.cal-mini-badge{font-size:11px;padding:2px 5px;border-radius:1px;letter-spacing:.06em}
+.cal-badges{display:flex;flex-wrap:wrap;gap:3px;margin-top:5px}
+.cal-mini-badge{font-size:11px;padding:2px 5px;border-radius:2px;letter-spacing:.06em;font-weight:600}
 .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:200;
   align-items:center;justify-content:center;padding:20px}
 .modal-overlay.open{display:flex}
@@ -335,7 +390,28 @@ body.light{--bg:#F5F0E8;--bg2:#EDE6D6;--bg3:#E4DBC8;--bg4:#F8F4EC;
   text-transform:uppercase;border-radius:2px;cursor:pointer;transition:all .25s}
 .save-btn:hover{background:var(--gold4)}
 
-/* ══ FEEDBACK MODAL ══ */
+/* ══ TIER INFO MODAL ══ */
+#tierModal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.82);z-index:300;
+  align-items:center;justify-content:center;padding:20px}
+#tierModal.open{display:flex}
+.tier-modal-box{background:var(--bg2);border:1px solid var(--div);border-radius:3px;
+  max-width:500px;width:100%;max-height:88vh;overflow-y:auto;padding:0}
+.tier-modal-header{padding:24px 28px 20px;border-bottom:1px solid var(--div);
+  display:flex;justify-content:space-between;align-items:flex-start}
+.tier-modal-name{font-family:'Cormorant Garamond',serif;font-size:30px;color:var(--gold);font-weight:300}
+.tier-modal-price{font-size:16px;color:var(--text3);margin-top:4px}
+.tier-modal-close{background:none;border:none;color:var(--text3);font-size:22px;cursor:pointer;padding:0}
+.tier-modal-body{padding:20px 28px 24px}
+.tier-feature{display:flex;align-items:flex-start;gap:12px;padding:10px 0;
+  border-bottom:1px solid var(--div2);font-size:16px;color:var(--text2);line-height:1.5}
+.tier-feature:last-child{border-bottom:none}
+.tier-feature-icon{color:var(--teal);font-size:14px;flex-shrink:0;margin-top:2px}
+.tier-feature-locked{color:var(--text3)}
+.tier-feature-locked .tier-feature-icon{color:var(--text3);opacity:.4}
+.tier-upgrade-btn{width:100%;padding:14px;background:none;border:1px solid var(--gold);
+  color:var(--gold);font-family:'EB Garamond',serif;font-size:14px;letter-spacing:.3em;
+  text-transform:uppercase;border-radius:2px;cursor:pointer;transition:all .25s;margin-top:20px}
+.tier-upgrade-btn:hover{background:var(--gold4)}
 #feedbackModal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:300;
   align-items:center;justify-content:center;padding:20px}
 #feedbackModal.open{display:flex}
@@ -452,6 +528,20 @@ body.print-card-mode{background:#0D1E33}
     <div class="profile-title">Your Cosmic Profile</div>
     <div class="profile-sub">Your birth details unlock your Galactic Signature, Life Path,<br>and fully personalised Oracle readings.</div>
   </div>
+  <!-- Profile completion summary (shown when filled) -->
+  <div id="profileSummaryBar" style="display:none;background:var(--bg2);border:1px solid var(--div);
+    border-radius:3px;padding:20px 24px;margin-bottom:16px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+      <div style="font-size:12px;letter-spacing:.3em;text-transform:uppercase;color:var(--teal)">Your Profile</div>
+      <button id="editProfileBtn" onclick="toggleProfileEdit()"
+        style="background:none;border:1px solid var(--div);color:var(--text3);
+        font-family:'EB Garamond',serif;font-size:13px;letter-spacing:.15em;text-transform:uppercase;
+        padding:6px 14px;border-radius:2px;cursor:pointer;transition:all .2s">Edit</button>
+    </div>
+    <div id="profileSummaryContent"></div>
+  </div>
+  <!-- Profile form (hidden when complete, toggle with Edit) -->
+  <div id="profileForm">
   <div class="form-section">
     <div class="form-section-title">Identity</div>
     <div class="form-group">
@@ -503,11 +593,17 @@ body.print-card-mode{background:#0D1E33}
     </div>
   </div>
   <button class="save-btn" onclick="saveAndLoad()">✦ Save &amp; Calculate My Cosmic Signature</button>
+  </div><!-- end profileForm -->
 </div>
 
 <!-- DAY DETAIL MODAL -->
 <div class="modal-overlay" id="dayModal" onclick="if(event.target===this)closeModal()">
   <div class="modal" id="dayModalContent"></div>
+</div>
+
+<!-- TIER INFO MODAL -->
+<div id="tierModal" onclick="if(event.target===this)closeTierModal()">
+  <div class="tier-modal-box" id="tierModalBox"></div>
 </div>
 
 <!-- FEEDBACK MODAL -->
@@ -562,14 +658,19 @@ body.print-card-mode{background:#0D1E33}
 })();
 
 // ══════════════════════════════════════════════════════════
-// API ROUTING — Netlify frontend calls Railway API directly
+// API ROUTING
+// BETA  → calls beta Railway backend
+// LIVE  → calls live Railway backend
+// Railway-hosted → same-origin (empty string)
 // ══════════════════════════════════════════════════════════
+const RAILWAY_BETA = 'https://cdp-server-production.up.railway.app';
+const RAILWAY_LIVE = 'https://cdp-server-production.up.railway.app'; // ← UPDATE with live URL
+
 const API_BASE = (function(){
   const h = window.location.hostname;
-  if (h.includes('netlify') || h.includes('cosmicdailyplanner')) {
-    return 'https://cdp-server-production.up.railway.app';
-  }
-  return ''; // same-origin (Railway serving both)
+  if (h.includes('cosmicdailyplanner-beta') || h.includes('netlify')) return RAILWAY_BETA;
+  if (h === 'cosmicdailyplanner.com' || h === 'www.cosmicdailyplanner.com') return RAILWAY_LIVE;
+  return ''; // same-origin when Railway serves the frontend
 })();
 
 // ══════════════════════════════════════════════════════════
@@ -620,14 +721,189 @@ function showScreen(id, btn) {
   document.getElementById(id).classList.add('on');
   if (btn) btn.classList.add('on');
   if (id === 'sc') renderCalendar();
+  if (id === 'sp') updateProfileSummary();
 }
 
-function toggleTheme() {
+function toggleProfileEdit() {
+  const form = document.getElementById('profileForm');
+  const btn = document.getElementById('editProfileBtn');
+  const isHidden = form.style.display === 'none';
+  form.style.display = isHidden ? 'block' : 'none';
+  btn.textContent = isHidden ? 'Hide Form' : 'Edit';
+}
+
+function updateProfileSummary() {
+  const bar = document.getElementById('profileSummaryBar');
+  const form = document.getElementById('profileForm');
+  const content = document.getElementById('profileSummaryContent');
+  if (!bar || !content) return;
+
+  const isComplete = profile.birthDay && profile.birthYear && profile.name;
+  if (isComplete) {
+    bar.style.display = 'block';
+    form.style.display = 'none'; // hide form, show summary
+    document.getElementById('editProfileBtn').textContent = 'Edit';
+
+    // Build summary
+    const nickname = profile.nickname || profile.name?.split(' ')[0] || '';
+    const loc = profile.location || '';
+    const KIN_SEALS=['Red Dragon','White Wind','Blue Night','Yellow Seed','Red Serpent',
+      'White World-Bridger','Blue Hand','Yellow Star','Red Moon','White Dog',
+      'Blue Monkey','Yellow Human','Red Skywalker','White Wizard','Blue Eagle',
+      'Yellow Warrior','Red Earth','White Mirror','Blue Storm','Yellow Sun'];
+    const KIN_TONES=['Magnetic','Lunar','Electric','Self-Existing','Overtone','Rhythmic',
+      'Resonant','Galactic','Solar','Planetary','Spectral','Crystal','Cosmic'];
+    const anchor = new Date('2026-03-31T12:00:00Z');
+    const bd = new Date(`${profile.birthYear}-${String(profile.birthMonth).padStart(2,'0')}-${String(profile.birthDay).padStart(2,'0')}T12:00:00Z`);
+    const days = Math.round((bd-anchor)/86400000);
+    const kin = ((52-1+days)%260+260)%260+1;
+    const si=(kin-1)%20; const ti=(kin-1)%13;
+    const col=['Red','White','Blue','Yellow'][si%4];
+    const lpRaw=profile.birthDay+profile.birthMonth+String(profile.birthYear).split('').reduce((a,b)=>a+parseInt(b),0);
+    const lp=numReduce(lpRaw);
+    const curYear=new Date().getFullYear();
+    const yRaw=String(curYear).split('').reduce((a,b)=>a+parseInt(b),0);
+    const py=numReduce(profile.birthDay+profile.birthMonth+numReduce(yRaw));
+    const isMasterLP=[11,22,33,44].includes(lp);
+    const isMasterPY=[11,22,33,44].includes(py);
+    const lpD=NUM_DATA[lp]||{n:'—'};
+    const pyD=NUM_DATA[py]||{n:'—'};
+
+    content.innerHTML = `
+      <div style="display:flex;gap:8px;margin-bottom:12px">
+        <div style="font-family:'Cormorant Garamond',serif;font-size:22px;color:var(--gold)">${nickname||'You'}</div>
+        ${loc?`<div style="font-size:15px;color:var(--text3);margin-top:5px">· ${loc}</div>`:''}
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
+        <div style="background:var(--bg3);border:1px solid var(--div2);padding:12px;border-radius:2px">
+          <div style="font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--text3);margin-bottom:4px">Life Path${isMasterLP?' · Master':''}</div>
+          <div style="font-family:'Cormorant Garamond',serif;font-size:28px;color:${isMasterLP?'var(--master)':'var(--gold)'}">${lp}</div>
+          <div style="font-size:14px;color:var(--text3)">${lpD.n}</div>
+        </div>
+        <div style="background:var(--bg3);border:1px solid var(--div2);padding:12px;border-radius:2px">
+          <div style="font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--text3);margin-bottom:4px">Personal Year ${curYear}${isMasterPY?' · Master':''}</div>
+          <div style="font-family:'Cormorant Garamond',serif;font-size:28px;color:${isMasterPY?'var(--master)':'var(--gold)'}">${py}</div>
+          <div style="font-size:14px;color:var(--text3)">${pyD.n}</div>
+        </div>
+        <div style="background:var(--bg3);border:1px solid var(--div2);padding:12px;border-radius:2px">
+          <div style="font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--text3);margin-bottom:4px">Birth Kin</div>
+          <div style="font-family:'Cormorant Garamond',serif;font-size:14px;color:var(--teal);line-height:1.4">Kin ${kin}<br>${col} ${KIN_TONES[ti]} ${KIN_SEALS[si]}</div>
+        </div>
+      </div>
+      ${profile.context?`<div style="margin-top:12px;font-size:15px;color:var(--text3);font-style:italic;line-height:1.6;border-top:1px solid var(--div2);padding-top:10px">"${profile.context}"</div>`:''}`;
+  } else {
+    bar.style.display = 'none';
+    form.style.display = 'block';
+  }
+}
   document.body.classList.toggle('light');
   document.getElementById('thmBtn').textContent = document.body.classList.contains('light') ? '◕' : '◑';
 }
 
-function openFeedback(){ document.getElementById('feedbackModal').classList.add('open'); }
+function closeTierModal(){ document.getElementById('tierModal').classList.remove('open'); }
+
+const TIERS = {
+  free: {
+    name:'Free', price:'Free forever', color:'var(--teal)',
+    desc:'Your daily cosmic snapshot — the lucky stone in your pocket.',
+    features:[
+      {icon:'✓', text:'Universal Day number + meaning', locked:false},
+      {icon:'✓', text:'Today\'s Dreamspell Kin', locked:false},
+      {icon:'✓', text:'Moon phase + lunar cycle position', locked:false},
+      {icon:'✓', text:'One convergence insight', locked:false},
+      {icon:'✗', text:'Personal numerology (Life Path, Personal Day)', locked:true},
+      {icon:'✗', text:'Full Oracle reading with all frameworks', locked:true},
+      {icon:'✗', text:'Weekly forecast', locked:true},
+    ],
+    cta: null
+  },
+  seeker: {
+    name:'Seeker', price:'£9 / month', color:'var(--gold)',
+    desc:'All four frameworks in full. Daily readings that know your chapter.',
+    features:[
+      {icon:'✓', text:'Everything in Free', locked:false},
+      {icon:'✓', text:'Full four-framework daily reading', locked:false},
+      {icon:'✓', text:'Personal numerology — Life Path, Personal Year, Personal Day', locked:false},
+      {icon:'✓', text:'Three energies of the day (Morning · Afternoon · Evening)', locked:false},
+      {icon:'✓', text:'Top 3 priorities with cosmic rationale', locked:false},
+      {icon:'✓', text:'Focus On / Ease Off guidance', locked:false},
+      {icon:'✓', text:'7-day week ahead', locked:false},
+      {icon:'✗', text:'Natal chart integration', locked:true},
+      {icon:'✗', text:'Monthly lunation map', locked:true},
+    ],
+    cta: 'Upgrade to Seeker — £9/month'
+  },
+  initiate: {
+    name:'Initiate', price:'£29 / month', color:'var(--teal)',
+    desc:'Monthly arc readings with Dreamspell wavespell and shadow themes.',
+    features:[
+      {icon:'✓', text:'Everything in Seeker', locked:false},
+      {icon:'✓', text:'Full monthly reading with lunation map', locked:false},
+      {icon:'✓', text:'Week-by-week monthly guidance', locked:false},
+      {icon:'✓', text:'Dreamspell wavespell arc for the month', locked:false},
+      {icon:'✓', text:'Shadow themes and growth edges', locked:false},
+      {icon:'✓', text:'Optional natal chart overlay for transits', locked:false},
+      {icon:'✗', text:'Full yearly reading', locked:true},
+      {icon:'✗', text:'Pinnacles and challenges cycles', locked:true},
+    ],
+    cta: 'Upgrade to Initiate — £29/month'
+  },
+  mystic: {
+    name:'Mystic', price:'£79 / month', color:'var(--master)',
+    desc:'Full yearly arc with natal chart integration and growth-edge work.',
+    features:[
+      {icon:'✓', text:'Everything in Initiate', locked:false},
+      {icon:'✓', text:'Full yearly reading with natal chart', locked:false},
+      {icon:'✓', text:'Personal numerology cycles — pinnacles, challenges', locked:false},
+      {icon:'✓', text:'Galactic signature interpretation', locked:false},
+      {icon:'✓', text:'Major transits specific to your natal positions', locked:false},
+      {icon:'✓', text:'Shadow work prompts and growth edge mapping', locked:false},
+      {icon:'✗', text:'Hellenistic lots (Part of Fortune, Spirit)', locked:true},
+      {icon:'✗', text:'Multi-year arc analysis', locked:true},
+    ],
+    cta: 'Upgrade to Mystic — £79/month'
+  },
+  oracle: {
+    name:'Oracle', price:'£50,000 / year — Bespoke', color:'var(--gold)',
+    desc:'The complete bespoke annual experience. Everything, personalised to the depth of your life.',
+    features:[
+      {icon:'✓', text:'Everything in Mystic', locked:false},
+      {icon:'✓', text:'Hellenistic lots — Part of Fortune, Spirit, Eros', locked:false},
+      {icon:'✓', text:'Full GAP day mapping for the year', locked:false},
+      {icon:'✓', text:'Multi-year arc analysis (3–5 year cycles)', locked:false},
+      {icon:'✓', text:'Secondary progressions and eclipse impact by house', locked:false},
+      {icon:'✓', text:'Custom synthesis narrative in CDP\'s voice', locked:false},
+      {icon:'✓', text:'Print-ready PDF — 80–120 pages', locked:false},
+      {icon:'✓', text:'Annual review call + framed physical edition', locked:false},
+    ],
+    cta: 'Enquire about Oracle — by appointment'
+  }
+};
+
+function showTierModal(tier) {
+  const t = TIERS[tier];
+  if (!t) return;
+  const box = document.getElementById('tierModalBox');
+  const featuresHtml = t.features.map(f => `
+    <div class="tier-feature ${f.locked?'tier-feature-locked':''}">
+      <span class="tier-feature-icon">${f.icon}</span>
+      <span>${f.text}</span>
+    </div>`).join('');
+  box.innerHTML = `
+    <div class="tier-modal-header">
+      <div>
+        <div class="tier-modal-name" style="color:${t.color}">${t.name}</div>
+        <div class="tier-modal-price">${t.price}</div>
+      </div>
+      <button class="tier-modal-close" onclick="closeTierModal()">×</button>
+    </div>
+    <div class="tier-modal-body">
+      <div style="font-size:17px;color:var(--text2);margin-bottom:18px;font-style:italic;line-height:1.6">${t.desc}</div>
+      ${featuresHtml}
+      ${t.cta ? `<button class="tier-upgrade-btn" onclick="closeTierModal()">${t.cta}</button>` : ''}
+    </div>`;
+  document.getElementById('tierModal').classList.add('open');
+}
 function closeFeedback(){ document.getElementById('feedbackModal').classList.remove('open'); }
 function sendFeedback(){
   const txt = document.getElementById('fbText').value.trim();
@@ -757,6 +1033,7 @@ function calcSig() {
 function saveAndLoad() {
   calcSig();
   localStorage.setItem('cdp_profile', JSON.stringify(profile));
+  updateProfileSummary();
   showScreen('sr', document.querySelectorAll('.npill')[0]);
   loadReading(TODAY);
 }
@@ -893,31 +1170,57 @@ function renderHistory() {
   const keys = Object.keys(hist).sort().reverse();
   const cont = document.getElementById('histContent');
   if (keys.length === 0) {
-    cont.innerHTML = '<div class="hist-empty">No readings yet. Your Oracle readings will appear here after your first session.</div>';
+    cont.innerHTML = `<div class="hist-empty">No readings yet. Your Oracle readings will appear here — each one saved automatically with its key numbers, planetary positions, and the message the cosmos had for you that day.</div>`;
     return;
   }
   let html = '<div class="hist-list">';
   keys.forEach(k => {
     const h = hist[k];
-    // Validate date
     const d = new Date(k+'T12:00:00Z');
-    if (isNaN(d.getTime()) || !k.match(/^\d{4}-\d{2}-\d{2}$/)) return; // skip invalid
+    if (isNaN(d.getTime()) || !k.match(/^\d{4}-\d{2}-\d{2}$/)) return;
     const dLabel = d.toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
     const isMaster = [11,22,33,44].includes(h.ud);
+    const synth = h.synthesis || '';
+    const shadow = h.shadow || '';
+    const action = h.action1 || '';
+    const planetsHtml = (h.planets||[]).map(p=>`<span style="color:var(--gold);font-family:'Cormorant Garamond',serif;font-size:15px">${p.n}</span> <span style="color:var(--text3);font-size:14px">${p.d}</span>`).join(' &nbsp;·&nbsp; ');
+
     html += `<div class="hist-item" onclick="loadReadingFromHistory('${k}')">
-      <div>
-        <div class="hist-date">${dLabel}</div>
-        <div style="font-size:9px;color:var(--teal);letter-spacing:.15em;margin-bottom:6px">${h.kin||''}${h.moon?' · '+h.moon:''}</div>
-        <div class="hist-synthesis">${h.synthesis||''}</div>
+      <!-- Date + key numbers header -->
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">
+        <div>
+          <div class="hist-date">${dLabel}</div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:4px">
+            <span style="font-size:13px;color:var(--text3)">${h.moonEmoji||'☽'} ${h.moon||''}</span>
+            ${h.moonSign ? `<span style="font-size:13px;color:var(--text3)">in ${h.moonSign}</span>` : ''}
+            ${h.kin ? `<span style="font-size:13px;color:var(--teal)">${h.kin}</span>` : ''}
+            ${h.isGAP ? `<span style="font-size:11px;color:var(--teal);border:1px solid var(--teal2);padding:1px 6px;border-radius:2px">★ GAP</span>` : ''}
+          </div>
+        </div>
+        <div style="text-align:right;flex-shrink:0">
+          <div class="hist-ud" style="${isMaster?'color:var(--master)':''}">
+            ${h.ud||''}${isMaster?'★':''}
+          </div>
+          <div style="font-size:12px;color:var(--text3)">UD</div>
+          ${h.pd ? `<div style="font-size:13px;color:var(--gold);margin-top:3px">PD ${h.pd}</div>` : ''}
+        </div>
       </div>
-      <div class="hist-meta">
-        <div class="hist-ud" style="${isMaster?'color:var(--master)':''}">${h.ud||''}${isMaster?'★':''}</div>
-        <div class="hist-kin">UD</div>
-      </div>
+      <!-- Synthesis -->
+      ${synth ? `<div class="hist-synthesis" style="font-size:16px;margin-bottom:10px">${synth}</div>` : ''}
+      <!-- Shadow work -->
+      ${shadow ? `<div style="font-size:14px;color:var(--text3);font-style:italic;margin-bottom:8px;
+        border-left:2px solid var(--gold3);padding-left:10px;line-height:1.55;
+        display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">${shadow.replace(/\*/g,'')}</div>` : ''}
+      <!-- Action -->
+      ${action ? `<div style="font-size:15px;color:var(--teal);margin-bottom:8px">→ ${action}</div>` : ''}
+      <!-- Planets -->
+      ${planetsHtml ? `<div style="margin-top:6px;padding-top:8px;border-top:1px solid var(--div2)">${planetsHtml}</div>` : ''}
     </div>`;
   });
   html += '</div>';
-  html += `<div style="text-align:center;margin-top:16px"><button class="hist-clear-btn" onclick="clearHistory()">Clear History</button></div>`;
+  html += `<div style="text-align:center;margin-top:20px">
+    <button class="hist-clear-btn" onclick="clearHistory()">Clear History</button>
+  </div>`;
   cont.innerHTML = html;
 }
 
@@ -947,58 +1250,98 @@ function getTimeMode() {
 function renderCard() {
   const cont = document.getElementById('cardContent');
   if (!currentReading) {
-    cont.innerHTML = `<div style="max-width:500px;margin:0 auto;padding:40px 24px;text-align:center;color:var(--text3)">
-      <div style="font-size:1.5rem;margin-bottom:16px">☽</div>
-      <div style="font-size:.9rem;font-style:italic">Your daily card will appear here after your Oracle reading loads.</div>
-      <button onclick="showScreen('sr',document.querySelectorAll('.npill')[0])" style="margin-top:16px;background:none;border:1px solid var(--gold3);color:var(--gold);padding:8px 18px;border-radius:2px;cursor:pointer;font-family:'EB Garamond',serif;font-size:11px;letter-spacing:.2em;text-transform:uppercase">Open Reading →</button>
+    cont.innerHTML = `<div style="max-width:520px;margin:0 auto;padding:60px 24px;text-align:center;color:var(--text3)">
+      <div style="font-size:2.5rem;margin-bottom:20px;opacity:.5">☽</div>
+      <div style="font-size:18px;font-style:italic;margin-bottom:20px">Your daily card appears here once your Oracle reading loads.</div>
+      <button onclick="showScreen('sr',document.querySelectorAll('.npill')[0]);if(!currentReading)loadReading(TODAY)"
+        style="background:none;border:1px solid var(--gold3);color:var(--gold);padding:10px 22px;border-radius:2px;
+        cursor:pointer;font-family:'EB Garamond',serif;font-size:14px;letter-spacing:.2em;text-transform:uppercase">
+        Open Reading →</button>
     </div>`;
     return;
   }
+
   const r = currentReading.reading || {};
-  const isRaw = !r || r.raw;
   const { planets, moon, kin, num } = currentReading;
   const mode = getTimeMode();
   const dateStr = new Date().toISOString().slice(0,10);
-  const date = new Date(dateStr+'T12:00:00Z');
-  const dayName = date.toLocaleDateString('en-GB',{weekday:'long'}).toUpperCase();
-  const dateLine = date.toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'}).toUpperCase();
-  const locLine = (profile.location || 'Twemlow, Cheshire').toUpperCase();
-  const nickname = profile.nickname || profile.name?.split(' ')[0] || 'Ned';
+  const date = new Date(dateStr + 'T12:00:00Z');
+  const dayName   = date.toLocaleDateString('en-GB', {weekday:'long'}).toUpperCase();
+  const dateLine  = date.toLocaleDateString('en-GB', {day:'numeric', month:'long', year:'numeric'}).toUpperCase();
+  const locLine   = (profile.location || 'Twemlow, Cheshire').toUpperCase();
 
+  // ── CONTENT EXTRACTION (works even with raw/truncated reading) ──
   const tw = r.time_windows || {};
-  // Extract reflection from raw text if needed
-  let reflectionText = mode === 'morning' ? tw.morning : mode === 'afternoon' ? tw.afternoon : tw.evening;
-  if (!reflectionText && isRaw && r.synthesis) {
-    const rawText = r.synthesis;
-    const key = mode === 'morning' ? '"morning"' : mode === 'afternoon' ? '"afternoon"' : '"evening"';
-    const m = rawText.match(new RegExp(key + '\\s*:\\s*\\{[^}]*"guidance"\\s*:\\s*"((?:[^"\\\\]|\\\\.)*)"'));
-    reflectionText = m ? m[1].replace(/\\n/g,' ') : `Today is ${dateStr} — a ${moon?.phase||'lunar'} day with Universal Day energy ${num?.ud||''}. ${(NUM_DATA[num?.ud]||{}).m||''}`;
+  let reflection = mode==='morning' ? tw.morning : mode==='afternoon' ? tw.afternoon : tw.evening;
+  // Fallback: extract from three_energies if time_windows missing
+  if (!reflection) {
+    const te = r.numerology?.three_energies;
+    if (te) reflection = mode==='morning' ? te.morning?.guidance
+      : mode==='afternoon' ? te.afternoon?.guidance : te.evening?.guidance;
+  }
+  // Final fallback: numerology meaning for today
+  if (!reflection) {
+    const udD = NUM_DATA[num?.pd||num?.ud] || {};
+    reflection = udD.m || `Today carries the energy of ${num?.udM?.n||'the cosmos'}.`;
   }
 
-  const timeLabel = mode === 'morning' ? 'MORNING REFLECTION'
-    : mode === 'afternoon' ? 'AFTERNOON REFLECTION'
-    : 'EVENING REFLECTION';
+  const timeLabel = mode==='morning' ? 'MORNING REFLECTION'
+    : mode==='afternoon' ? 'AFTERNOON REFLECTION' : 'EVENING REFLECTION';
+  const timeIcon  = mode==='morning' ? '☀' : mode==='afternoon' ? '◑' : '☽';
 
-  const timeIcon = mode === 'morning' ? '☀' : mode === 'afternoon' ? '◑' : '☽';
-
-  // Get a "for today" action from the top priority
-  const forToday = r.priorities?.[0]?.action || r.daily_gift?.meditation?.split(/[·•\n]/)[0]?.trim() || '';
-
-  // Footer — body reminder
-  const bodyReminder = r.priorities?.[2]?.action || 'Move your body today — even fifteen minutes changes everything.';
-
-  const quote = r.daily_gift?.quote || '';
+  const quote       = r.daily_gift?.quote || '';
   const attribution = r.daily_gift?.attribution || '';
-  const moonEmoji = moon?.emoji || '☽';
-  const moonPhaseTxt = moon ? `${moon.phase} · Day ${moon.cycle} of 29.5` : '';
-  const kinLine = kin?.full || '';
+  const forToday    = r.priorities?.[0]?.action || '';
+  const bodyReminder= r.priorities?.[2]?.action
+    || 'Move your body today — even fifteen minutes changes everything.';
 
-  // Moon alert
-  let moonAlert = '';
-  if (moon?.isBlack) moonAlert = `<div class="moon-badge badge-black" style="display:block;margin:0 28px 0;text-align:center">⚠️ Black Moon — 2 days before New Moon — threshold day, move carefully</div>`;
-  else if (moon?.isShiva) moonAlert = `<div class="moon-badge badge-shiva" style="display:block;margin:0 28px 0;text-align:center">✨ Shiva Moon — 2 days after New Moon — blissful and generative</div>`;
+  // ── NUMEROLOGY ──
+  const displayNum  = num?.pd || num?.ud;
+  const numData     = NUM_DATA[displayNum] || {n:'—', m:''};
+  const numLabel    = num?.pd ? `Personal Day ${displayNum}` : `Universal Day ${displayNum}`;
+  const isMasterNum = [11,22,33,44].includes(displayNum);
 
-  let html = `<div id="cardContent" style="max-width:500px;margin:0 auto;padding:24px 24px 80px">`;
+  // ── MOON ALERT ──
+  let moonAlertHtml = '';
+  if (moon?.isBlack) moonAlertHtml = `<div style="background:rgba(80,0,0,0.35);border:1px solid rgba(200,80,80,0.25);
+    color:#ff9999;font-size:13px;letter-spacing:.15em;text-transform:uppercase;
+    text-align:center;padding:10px 32px;margin:0">⚠️ Black Moon — Threshold Day — Move Carefully</div>`;
+  else if (moon?.isShiva) moonAlertHtml = `<div style="background:rgba(0,60,80,0.3);border:1px solid rgba(80,200,180,0.2);
+    color:var(--teal);font-size:13px;letter-spacing:.15em;text-transform:uppercase;
+    text-align:center;padding:10px 32px;margin:0">✨ Shiva Moon — Auspicious for New Beginnings</div>`;
+
+  // ── KEY PLANETS (3 most relevant) ──
+  const pData = r.planetary_positions || r.key_planets || [];
+  const keyPlanetIdx = [0, 1, 4]; // Sun, Moon, Mars — most action-relevant
+  const keyPlanets = planets ? keyPlanetIdx.map(i => ({
+    planet: planets[i],
+    note: pData[i]?.note || ''
+  })).filter(p => p.planet) : [];
+
+  // ── MAYAN CONNECTION ──
+  const mayanMsg = kin?.isGAP
+    ? `Portal day — the veil between dimensions is thinner. What arrives today carries significance.`
+    : `${kin?.tone} tone asks: ${kin?.tone==='Lunar'?'where do polarities want to resolve?'
+       :kin?.tone==='Magnetic'?'what is your deepest purpose today?'
+       :kin?.tone==='Electric'?'how can you activate and serve?'
+       :kin?.tone==='Resonant'?'what channel are you receiving?'
+       :'what wants to emerge through you?'}`;
+
+  // ── SVG MOUNTAIN (matching Image 2 style) ──
+  const mountainSVG = `<svg class="card-mountain" viewBox="0 0 520 120" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="mtnFade" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#07111D" stop-opacity="0"/>
+        <stop offset="100%" stop-color="#07111D" stop-opacity="1"/>
+      </linearGradient>
+    </defs>
+    <path d="M0,120 L0,85 L40,60 L80,75 L130,30 L175,55 L220,10 L265,45 L310,25 L355,50 L395,35 L440,55 L480,40 L520,60 L520,120 Z" fill="rgba(10,28,50,0.9)"/>
+    <path d="M0,120 L0,100 L60,80 L110,90 L160,60 L210,75 L255,50 L300,65 L345,55 L385,70 L430,58 L470,72 L520,65 L520,120 Z" fill="rgba(8,20,38,0.95)"/>
+    <rect x="0" y="0" width="520" height="120" fill="url(#mtnFade)"/>
+  </svg>`;
+
+  // ── BUILD HTML ──
+  let html = `<div style="max-width:520px;margin:0 auto;padding:20px 0 80px">`;
 
   // Time tabs
   html += `<div class="card-time-tabs">
@@ -1007,60 +1350,135 @@ function renderCard() {
     <button class="card-tab ${mode==='evening'?'on':''}" onclick="cardTimeMode='evening';renderCard()">☽ Evening</button>
   </div>`;
 
-  html += `<div class="card-wrap" id="theCard">
-    <div class="card-top">
-      <div class="card-date-line">${dayName} · ${dateLine}</div>
-      <div class="card-loc-line">${locLine}</div>
-    </div>
-    ${moonAlert}
-    <div class="card-divider"></div>`;
+  html += `<div class="card-wrap" id="theCard">`;
 
+  // ── HEADER ──
+  html += `<div class="card-header">
+    <div class="card-date-line">${dayName} · ${dateLine}</div>
+    <div class="card-loc-line">${locLine}</div>
+  </div>`;
+
+  // ── MOUNTAIN ──
+  html += mountainSVG;
+
+  // ── MOON ALERT ──
+  if (moonAlertHtml) html += moonAlertHtml;
+
+  // ── QUOTE ──
   if (quote) {
     html += `<div class="card-quote">"${quote}"</div>
-    <div class="card-attribution">— ${attribution}</div>
-    <div class="card-divider"></div>`;
+    <div class="card-attribution">— ${attribution}</div>`;
   }
 
-  html += `<div class="card-section-label">${timeIcon} ${timeLabel}</div>
-    <div class="card-reflection">${reflectionText || 'Your reflection for this time of day will appear here once your reading loads.'}</div>`;
+  // ── DIVIDER ──
+  html += `<div class="card-hr"></div>`;
 
+  // ── TIME REFLECTION ──
+  html += `<div class="card-label">${timeIcon} ${timeLabel}</div>
+  <div class="card-reflection">${reflection}</div>`;
+
+  // ── FOR TODAY ──
   if (forToday) {
-    html += `<div class="card-divider"></div>
-    <div class="card-divider-dot">●</div>
-    <div class="card-divider"></div>
-    <div class="card-for-today-label">FOR TODAY</div>
+    html += `<div class="card-hr"></div>
+    <div class="card-hr-dot">●</div>
+    <div class="card-label">FOR TODAY</div>
     <div class="card-for-today">${forToday}</div>`;
   }
 
-  if (moonPhaseTxt || kinLine) {
-    html += `<div class="card-divider" style="margin-top:8px"></div>
-    <div style="display:flex;justify-content:space-between;padding:12px 28px;font-size:9px;color:var(--text3);letter-spacing:.1em">
-      <span>${moonEmoji} ${moonPhaseTxt}</span>
-      <span>UD ${num?.ud||'—'}</span>
+  // ── NUMEROLOGY STRIP ──
+  html += `<div class="card-hr"></div>
+  <div class="card-num-strip">
+    <div class="card-num-circle" style="${isMasterNum?'border-color:var(--master);color:var(--master)':''}">${displayNum||'—'}</div>
+    <div class="card-num-text">
+      <div class="card-num-label">${numLabel}${isMasterNum?' · Master Number':''}</div>
+      <div class="card-num-name" style="${isMasterNum?'color:var(--master)':''}">${numData.n}</div>
+      <div class="card-num-meaning">${numData.m}</div>
     </div>
-    <div class="card-divider"></div>`;
+  </div>`;
+
+  // ── LUNAR + MAYAN ──
+  html += `<div class="card-hr"></div>
+  <div class="card-lunar">
+    <div class="card-lunar-item">
+      <div class="card-lunar-label">Lunar Phase</div>
+      <div class="card-lunar-val">${moon?.emoji||'☽'} ${moon?.phase||'—'}</div>
+      <div class="card-lunar-msg">${planets?.[1]?.sign||''} · Day ${moon?.cycle||'—'} · ${moon?.toNew||'—'}d to New Moon</div>
+    </div>
+    <div class="card-lunar-item">
+      <div class="card-lunar-label">Dreamspell${kin?.isGAP?' · ★ PORTAL':''}</div>
+      <div class="card-lunar-val" style="font-size:14px">${kin?.full||'—'}</div>
+      <div class="card-lunar-msg">${mayanMsg}</div>
+    </div>
+  </div>`;
+
+  // ── KEY PLANETS ──
+  if (keyPlanets.length > 0) {
+    html += `<div class="card-hr"></div>
+    <div class="card-label" style="padding-bottom:10px">Planetary Weather</div>
+    <div class="card-planets">`;
+    keyPlanets.forEach(({planet, note}) => {
+      html += `<div class="card-planet-row">
+        <span class="card-planet-name">${planet.name}</span>
+        <span class="card-planet-pos">${planet.degStr}</span>
+        <span class="card-planet-note">${note||''}</span>
+      </div>`;
+    });
+    html += `</div>`;
   }
 
-  if (bodyReminder) {
-    html += `<div class="card-footer">${bodyReminder}</div>`;
-  }
+  // ── FOOTER ──
+  html += `<div class="card-hr"></div>
+  <div class="card-footer">${bodyReminder}</div>`;
 
-  html += `</div>`; // end card-wrap
-
+  // ── ACTIONS ──
   html += `<div class="card-actions">
     <button class="card-dl-btn" onclick="downloadCard()">⎙ Save Card</button>
     <button class="card-dl-btn" onclick="showScreen('sr',document.querySelectorAll('.npill')[0])">Open Full Reading →</button>
   </div>`;
 
-  html += `</div>`; // end container
-
+  html += `</div></div>`;
   cont.innerHTML = html;
 }
 
-function downloadCard() {
-  document.body.classList.add('print-card-mode');
-  window.print();
-  setTimeout(()=>document.body.classList.remove('print-card-mode'), 1000);
+async function downloadCard() {
+  const el = document.getElementById('theCard');
+  if (!el) return;
+
+  // Show saving indicator
+  const btn = event?.target;
+  const origText = btn?.textContent;
+  if (btn) btn.textContent = 'Saving…';
+
+  try {
+    if (typeof html2canvas !== 'undefined') {
+      // Use html2canvas for full colour/font fidelity
+      const canvas = await html2canvas(el, {
+        backgroundColor: '#07111D',
+        scale: 2.5,
+        useCORS: true,
+        allowTaint: false,
+        logging: false,
+        windowWidth: el.scrollWidth,
+        windowHeight: el.scrollHeight
+      });
+      const link = document.createElement('a');
+      link.download = `cosmic-card-${TODAY}.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    } else {
+      // Fallback: print to PDF
+      document.body.classList.add('print-card-mode');
+      window.print();
+      setTimeout(()=>document.body.classList.remove('print-card-mode'), 1000);
+    }
+  } catch(e) {
+    console.error('Card save error:', e);
+    document.body.classList.add('print-card-mode');
+    window.print();
+    setTimeout(()=>document.body.classList.remove('print-card-mode'), 1000);
+  }
+
+  if (btn && origText) btn.textContent = origText;
 }
 
 // ══════════════════════════════════════════════════════════
@@ -1138,13 +1556,47 @@ function renderReading(data, dateStr) {
     </div>`;
   }
 
-  // Tier row — Oracle active, others show tiers available
+  // ── PROFILE SUMMARY BAR (shows if profile is filled) ──
+  if (profile.birthDay && profile.birthYear && num?.lp) {
+    const lpD = NUM_DATA[num.lp] || {n:'—'};
+    const pyD = NUM_DATA[num.py] || {n:'—'};
+    const isMasterLP = [11,22,33,44].includes(num.lp);
+    const isMasterPY = [11,22,33,44].includes(num.py);
+    html += `<div style="background:rgba(201,160,80,0.05);border:1px solid rgba(201,160,80,0.14);
+      border-radius:3px;padding:12px 20px;margin-bottom:20px;
+      display:flex;flex-wrap:wrap;gap:18px;align-items:center;justify-content:center">
+      <div style="text-align:center">
+        <div style="font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:var(--text3);margin-bottom:3px">Life Path</div>
+        <div style="font-family:'Cormorant Garamond',serif;font-size:24px;color:${isMasterLP?'var(--master)':'var(--gold)'}">${num.lp}${isMasterLP?'★':''}</div>
+        <div style="font-size:13px;color:var(--text3)">${lpD.n}</div>
+      </div>
+      <div style="width:1px;height:44px;background:var(--div)"></div>
+      <div style="text-align:center">
+        <div style="font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:var(--text3);margin-bottom:3px">Personal Year</div>
+        <div style="font-family:'Cormorant Garamond',serif;font-size:24px;color:${isMasterPY?'var(--master)':'var(--gold)'}">${num.py}${isMasterPY?'★':''}</div>
+        <div style="font-size:13px;color:var(--text3)">${pyD.n}</div>
+      </div>
+      <div style="width:1px;height:44px;background:var(--div)"></div>
+      <div style="text-align:center">
+        <div style="font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:var(--text3);margin-bottom:3px">Birth Kin</div>
+        <div style="font-family:'Cormorant Garamond',serif;font-size:16px;color:var(--teal);max-width:140px;line-height:1.3">${kin?.full||'—'}</div>
+      </div>
+      <button onclick="showScreen('sp',document.querySelectorAll('.npill')[4])"
+        style="background:none;border:1px solid var(--div);color:var(--text3);font-family:'EB Garamond',serif;
+        font-size:12px;letter-spacing:.15em;text-transform:uppercase;padding:6px 14px;
+        border-radius:2px;cursor:pointer;white-space:nowrap;transition:all .2s"
+        onmouseover="this.style.borderColor='var(--gold)';this.style.color='var(--gold)'"
+        onmouseout="this.style.borderColor='var(--div)';this.style.color='var(--text3)'">Edit Profile</button>
+    </div>`;
+  }
+
+  // Tier row — clickable, Oracle active
   html += `<div class="tier-row">
-    <span class="tier-pill">Free</span>
-    <span class="tier-pill">Seeker</span>
-    <span class="tier-pill">Initiate</span>
-    <span class="tier-pill">Mystic</span>
-    <span class="tier-pill active">Oracle</span>
+    <span class="tier-pill" onclick="showTierModal('free')" style="cursor:pointer">Free</span>
+    <span class="tier-pill" onclick="showTierModal('seeker')" style="cursor:pointer">Seeker</span>
+    <span class="tier-pill" onclick="showTierModal('initiate')" style="cursor:pointer">Initiate</span>
+    <span class="tier-pill" onclick="showTierModal('mystic')" style="cursor:pointer">Mystic</span>
+    <span class="tier-pill active" onclick="showTierModal('oracle')" style="cursor:pointer">Oracle</span>
   </div>`;
 
   if (isRawReading(r)) {
