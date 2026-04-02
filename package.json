@@ -1,7 +1,7 @@
 {
   "name": "cdp-server",
-  "version": "3.0.0",
-  "description": "Cosmic Daily Planner — Production Server",
+  "version": "5.0.0",
+  "description": "Cosmic Daily Planner — Production Server v5",
   "main": "server.js",
   "scripts": { "start": "node server.js" },
   "dependencies": { "express": "^4.18.2" },

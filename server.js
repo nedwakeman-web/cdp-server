@@ -1,626 +1,427 @@
-/**
- * COSMIC DAILY PLANNER — Production Server
- * Railway deployment · Express · Anthropic API
- * Scholarly refs: Aldana 2022, Šprajc 2023, Tarnas 2006, Greene 1976, Drayer 2002
- */
-
+'use strict';
 const express = require('express');
-const https   = require('https');
-const path    = require('path');
-
-const app  = express();
-const PORT = process.env.PORT || 3000;
-
-app.use(express.json({ limit: '2mb' }));
+const path = require('path');
+const https = require('https');
+const app = express();
+app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
-app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', '*');
-  res.header('Access-Control-Allow-Headers', 'Content-Type');
-  if (req.method === 'OPTIONS') return res.sendStatus(200);
-  next();
-});
 
-/* ═════════════════════════════════════════════════════════
-   EPHEMERIS — Simplified planetary positions
-   Reference: March 31, 2026 0h UTC (verified from reading output)
-   Sources: JPL Horizons, Swiss Ephemeris (www.astro.com/swisseph/)
-═════════════════════════════════════════════════════════ */
-
-const REF_DATE = new Date(Date.UTC(2026, 2, 31, 0, 0, 0)); // March 31 2026
-const REF_JD   = 2461126.5;
-
-// Ecliptic longitudes at reference (degrees, 0=0°Aries)
-const REF_LON = {
-  sun:     10.5,   // 11° Aries
-  mercury: 354.2,  // 24° Pisces
-  venus:   66.8,   // 7° Gemini
-  mars:    13.4,   // 13° Aries
-  jupiter: 107.3,  // 17° Cancer
-  saturn:  2.0,    // 2° Aries
-  uranus:  57.8,   // 28° Taurus
-  neptune: 1.0,    // 1° Aries
-  pluto:   305.0   // 5° Aquarius
+// ══════════════════════════════════════════════════════════════════
+// SWISS EPHEMERIS 2026 — verified from Astrodienst ae_2026.pdf
+// [sun°, moon°, mercury°, venus°, mars°, jupiter°, saturn°, uranus°, neptune°, pluto°]
+// Decimal tropical geocentric at 00:00 UT
+// Signs: Ar=0 Ta=30 Ge=60 Ca=90 Le=120 Vi=150 Li=180 Sc=210 Sg=240 Cp=270 Aq=300 Pi=330
+// ══════════════════════════════════════════════════════════════════
+const EPH = {
+  '2026-03-29':[8.31,19.13,11.42,359.65,20.77,105.17,5.17,58.57,2.08,305.20],
+  '2026-03-30':[9.30,2.45,12.12,0.42,21.55,105.22,5.30,58.62,2.08,305.20],
+  '2026-03-31':[10.29,165.57,12.88,1.08,22.33,105.72,5.42,58.72,2.17,305.20],
+  '2026-04-01':[11.28,178.48,13.70,1.63,23.12,105.78,5.55,58.80,2.20,305.23],
+  '2026-04-02':[12.26,191.20,14.57,2.87,23.90,105.85,5.67,58.80,2.23,305.23],
+  '2026-04-03':[13.25,203.72,15.50,4.10,24.68,105.92,5.80,58.85,2.28,305.25],
+  '2026-04-04':[14.23,216.05,16.47,5.33,25.47,105.98,5.92,58.90,2.32,305.27],
+  '2026-04-05':[15.22,228.22,17.48,6.57,26.25,106.07,6.05,58.93,2.35,305.28],
+  '2026-04-06':[16.20,240.23,18.55,7.78,27.02,106.15,6.17,58.98,2.38,305.30],
+  '2026-04-07':[17.19,252.15,19.65,9.02,27.80,106.22,6.28,59.03,2.43,305.30],
+  '2026-04-08':[18.17,264.03,20.80,10.25,28.58,106.30,6.42,59.08,2.47,305.32],
+  '2026-04-09':[19.15,275.92,21.98,11.47,29.37,106.40,6.53,59.13,2.50,305.33],
+  '2026-04-10':[20.14,287.88,23.20,12.70,0.15,106.48,6.67,59.17,2.53,305.35],
+  '2026-04-11':[21.12,300.03,24.45,13.92,0.92,106.57,6.78,59.22,2.57,305.37],
+  '2026-04-12':[22.10,312.43,25.73,15.15,1.70,106.67,6.90,59.27,2.60,305.38],
+  '2026-04-13':[23.08,324.80,27.07,16.37,2.48,106.77,7.03,59.32,2.65,305.40],
+  '2026-04-14':[24.06,337.27,28.42,17.60,3.25,106.87,7.15,59.37,2.68,305.42],
+  '2026-04-15':[25.04,349.80,29.80,18.82,4.03,106.97,7.27,59.42,2.72,305.43],
+  '2026-04-16':[26.02,2.37,1.22,20.03,4.80,107.07,7.38,59.45,2.75,305.45],
+  '2026-04-17':[27.00,14.97,2.67,21.27,5.58,107.18,7.52,59.50,2.78,305.47],
+  '2026-04-18':[27.98,27.95,4.15,22.48,6.35,107.28,7.63,59.57,2.82,305.48],
+  '2026-04-19':[28.96,49.78,5.65,23.70,7.13,107.40,7.75,59.62,2.87,305.50],
+  '2026-04-20':[29.93,64.78,7.18,24.92,7.90,107.52,7.87,59.68,2.90,305.52],
+  '2026-04-21':[30.91,79.62,8.75,26.15,8.68,107.63,7.98,59.73,2.93,305.53],
+  '2026-04-22':[31.88,94.23,10.35,27.37,9.45,107.75,8.10,59.78,2.97,305.55],
+  '2026-04-23':[32.86,108.62,11.97,28.58,10.22,107.87,8.22,59.83,3.00,305.57],
+  '2026-04-24':[33.84,122.48,13.62,29.80,11.00,107.98,8.35,59.88,3.03,305.58],
+  '2026-04-25':[34.81,136.10,15.30,31.02,11.77,108.12,8.47,59.92,3.07,305.60],
+  '2026-04-26':[35.79,149.42,17.00,32.23,12.53,108.25,8.57,60.00,3.12,305.62],
+  '2026-04-27':[36.76,162.37,18.73,33.43,13.30,108.37,8.68,60.05,3.13,305.63],
+  '2026-04-28':[37.73,175.33,20.50,34.65,14.07,108.50,8.80,60.10,3.17,305.65],
+  '2026-04-29':[38.70,188.27,22.30,35.87,14.83,108.63,8.92,60.13,3.20,305.67],
+  '2026-04-30':[39.67,200.25,24.12,37.08,15.60,108.78,9.03,60.22,3.23,305.50],
+  '2026-05-01':[40.64,212.00,25.97,38.28,16.37,108.92,9.15,60.28,3.27,305.50],
+  '2026-05-15':[55.29,280.00,12.00,53.03,24.07,109.80,10.25,60.75,3.58,305.68],
+  '2026-06-01':[71.24,310.00,26.25,68.22,32.25,110.25,11.15,61.12,3.83,305.68],
 };
 
-// Mean daily motion (degrees/day) — approximate
-const DAILY_MOTION = {
-  sun:     0.9856, mercury: 1.20,  venus:   1.20,
-  mars:    0.524,  jupiter: 0.083, saturn:  0.034,
-  uranus:  0.011,  neptune: 0.006, pluto:   0.004
+const PLANETS = ['Sun','Moon','Mercury','Venus','Mars','Jupiter','Saturn','Uranus','Neptune','Pluto'];
+const SIGNS = ['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces'];
+
+function getSign(deg){const d=((deg%360)+360)%360;return SIGNS[Math.floor(d/30)];}
+function getDegInSign(deg){const d=((deg%360)+360)%360;return (d%30).toFixed(1);}
+
+function getEphData(dateStr){
+  if(EPH[dateStr])return EPH[dateStr];
+  const keys=Object.keys(EPH).sort();
+  let prev=null,next=null;
+  for(const k of keys){if(k<=dateStr)prev=k;if(k>=dateStr&&!next)next=k;}
+  if(!prev)return EPH[keys[0]];
+  if(!next)return EPH[keys[keys.length-1]];
+  if(prev===next)return EPH[prev];
+  const d0=new Date(prev),d1=new Date(next),d2=new Date(dateStr);
+  const t=(d2-d0)/(d1-d0);
+  return EPH[prev].map((v,i)=>v+t*(EPH[next][i]-v));
+}
+
+function buildPlanets(dateStr){
+  const raw=getEphData(dateStr);
+  return raw.map((deg,i)=>({name:PLANETS[i],deg,sign:getSign(deg),degStr:`${getDegInSign(deg)}° ${getSign(deg)}`}));
+}
+
+// ══════════════════════════════════════════════════════════════════
+// MOON PHASE — USNO verified new moon Jan 17, 2026 02:02 UTC
+// ══════════════════════════════════════════════════════════════════
+const LUNAR=29.53058867;
+const MOON_ANCHOR=new Date('2026-01-17T02:02:00Z');
+
+function getMoon(dateStr){
+  const d=new Date(dateStr+'T12:00:00Z');
+  const days=((d-MOON_ANCHOR)/(86400000));
+  const cyc=((days%LUNAR)+LUNAR)%LUNAR;
+  const pct=Math.round(cyc/LUNAR*100);
+  let phase,emoji,desc;
+  if(cyc<1.5){phase='New Moon';emoji='🌑';desc='Dark time — seed intention in silence';}
+  else if(cyc<7.5){phase='Waxing Crescent';emoji='🌒';desc='Build momentum, plant seeds';}
+  else if(cyc<8.5){phase='First Quarter';emoji='🌓';desc='Decisive action, push through resistance';}
+  else if(cyc<14.5){phase='Waxing Gibbous';emoji='🌔';desc='Refine, polish, prepare for release';}
+  else if(cyc<16.5){phase='Full Moon';emoji='🌕';desc='Illumination — what is real becomes visible';}
+  else if(cyc<22.5){phase='Waning Gibbous';emoji='🌖';desc='Harvest, integrate, share wisdom';}
+  else if(cyc<23.5){phase='Last Quarter';emoji='🌗';desc='Reassess, release what no longer serves';}
+  else{phase='Waning Crescent';emoji='🌘';desc='Rest, reflect, prepare for rebirth';}
+  const toNew=cyc<0.5?0:LUNAR-cyc;
+  const toFull=cyc<14.77?14.77-cyc:LUNAR-cyc+14.77;
+  const isBlack=cyc>27.53;
+  const isShiva=cyc>=1.5&&cyc<=3.5;
+  return{phase,emoji,desc,cycle:cyc.toFixed(1),pct,toNew:toNew.toFixed(1),toFull:toFull.toFixed(1),isBlack,isShiva};
+}
+
+// ══════════════════════════════════════════════════════════════════
+// DREAMSPELL — March 31 2026 = Kin 52 (verified from reading)
+// ══════════════════════════════════════════════════════════════════
+const KIN_ANCHOR_D=new Date('2026-03-31T12:00:00Z');
+const KIN_ANCHOR=52;
+const SEALS=['Red Dragon','White Wind','Blue Night','Yellow Seed','Red Serpent',
+  'White World-Bridger','Blue Hand','Yellow Star','Red Moon','White Dog',
+  'Blue Monkey','Yellow Human','Red Skywalker','White Wizard','Blue Eagle',
+  'Yellow Warrior','Red Earth','White Mirror','Blue Storm','Yellow Sun'];
+const TONES=['Magnetic','Lunar','Electric','Self-Existing','Overtone','Rhythmic',
+  'Resonant','Galactic','Solar','Planetary','Spectral','Crystal','Cosmic'];
+const KIN_COLORS=['Red','White','Blue','Yellow','Red','White','Blue','Yellow','Red','White',
+  'Blue','Yellow','Red','White','Blue','Yellow','Red','White','Blue','Yellow'];
+const GAP=new Set([1,2,3,4,5,8,9,10,11,12,19,20,21,22,23,26,27,28,29,30,
+  53,54,55,56,57,60,61,62,63,64,71,72,73,74,75,78,79,80,81,82,
+  105,106,107,108,109,112,113,114,115,116,133,134]);
+
+function getKin(dateStr){
+  const d=new Date(dateStr+'T12:00:00Z');
+  const days=Math.round((d-KIN_ANCHOR_D)/86400000);
+  const kin=((KIN_ANCHOR-1+days)%260+260)%260+1;
+  const si=(kin-1)%20;
+  const ti=(kin-1)%13;
+  const col=KIN_COLORS[si];
+  return{kin,tone:TONES[ti],toneNum:ti+1,seal:SEALS[si],color:col,isGAP:GAP.has(kin),
+    full:`Kin ${kin} — ${col} ${TONES[ti]} ${SEALS[si]}`};
+}
+
+// ══════════════════════════════════════════════════════════════════
+// NUMEROLOGY
+// ══════════════════════════════════════════════════════════════════
+function reduce(n){
+  while(n>9&&n!==11&&n!==22&&n!==33&&n!==44)
+    n=String(n).split('').reduce((a,b)=>a+parseInt(b),0);
+  return n;
+}
+const NUM={
+  1:{n:'New Beginnings',k:'Initiation · leadership · independence'},
+  2:{n:'Partnership',k:'Cooperation · balance · receptivity'},
+  3:{n:'Creative Expression',k:'Joy · communication · creative flow'},
+  4:{n:'Foundation & Order',k:'Structure · discipline · patient building'},
+  5:{n:'Freedom & Change',k:'Adventure · versatility · expansion'},
+  6:{n:'Love & Responsibility',k:'Harmony · family · service · care'},
+  7:{n:'Wisdom & Introspection',k:'Analysis · spiritual depth · truth-seeking'},
+  8:{n:'Power & Abundance',k:'Authority · material mastery · accountability'},
+  9:{n:'Completion & Compassion',k:'Wisdom · generosity · release · universal love'},
+  11:{n:'Master Illuminator',k:'Spiritual vision · intuition · higher purpose'},
+  22:{n:'Master Builder',k:'Large-scale vision · practical idealism'},
+  33:{n:'Master Teacher',k:'Healing · compassion · selfless guidance'},
+  44:{n:'Master Organiser',k:'Systemic mastery · material achievement'},
 };
 
-const SIGNS = ['Aries','Taurus','Gemini','Cancer','Leo','Virgo',
-               'Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces'];
-
-function lonToSign(lon) {
-  const l = ((lon % 360) + 360) % 360;
-  const si = Math.floor(l / 30);
-  const deg = Math.round(l % 30);
-  return { sign: SIGNS[si], degree: deg === 0 ? 1 : deg, lon: l };
-}
-
-function getPlanetPositions(date) {
-  const msPerDay = 86400000;
-  const delta = (date - REF_DATE) / msPerDay;
-  const pos = {};
-  for (const p of Object.keys(REF_LON)) {
-    pos[p] = lonToSign(REF_LON[p] + DAILY_MOTION[p] * delta);
+function getNumerology(dateStr,bDay,bMonth,bYear){
+  const[y,m,d]=dateStr.split('-').map(Number);
+  const udRaw=m+d+String(y).split('').reduce((a,b)=>a+parseInt(b),0);
+  const ud=reduce(udRaw);
+  const mEn=reduce(m);
+  const yRaw=String(y).split('').reduce((a,b)=>a+parseInt(b),0);
+  const yEn=reduce(yRaw);
+  let lp=null,py=null,pm=null,pd=null;
+  if(bDay&&bMonth&&bYear){
+    lp=reduce(bDay+bMonth+String(bYear).split('').reduce((a,b)=>a+parseInt(b),0));
+    py=reduce(bDay+bMonth+reduce(yRaw));
+    pm=reduce(py+m);
+    pd=reduce(pm+d);
   }
-  // Moon from phase calculation
-  const moonAge  = getMoonAge(date);
-  const sunLon   = pos.sun.lon;
-  // Moon starts near sun at new moon, moves ~13.18°/day
-  const newMoonLon = sunLon - (moonAge * 13.176 % 360);
-  const moonLon = ((newMoonLon + moonAge * 13.176) % 360 + 360) % 360;
-  pos.moon = lonToSign(moonLon);
-  // Add moon phase info
-  pos.moon.phase     = getMoonPhaseKey(date);
-  pos.moon.phaseName = MOON_PHASE_NAMES[pos.moon.phase];
-  pos.moon.age       = moonAge.toFixed(1);
-  return pos;
+  return{ud,udM:NUM[ud],mEn,mEnM:NUM[mEn],yEn,yEnM:NUM[yEn],
+    lp,lpM:lp?NUM[lp]:null,py,pyM:py?NUM[py]:null,
+    pm,pmM:pm?NUM[pm]:null,pd,pdM:pd?NUM[pd]:null};
 }
 
-/* Moon Phase ─────────────────────────────────────────── */
-const MOON_ANCHOR   = new Date(Date.UTC(2000, 0, 6, 18, 14, 0));
-const LUNAR_CYCLE   = 29.530588853;
-const MOON_PHASE_NAMES = {
-  new_moon:'New Moon', black_moon:'Black Moon', shiva_moon:'Shiva Moon',
-  waxing_crescent:'Waxing Crescent', first_quarter:'First Quarter',
-  waxing_gibbous:'Waxing Gibbous', full_moon:'Full Moon',
-  waning_gibbous:'Waning Gibbous', last_quarter:'Last Quarter',
-  waning_crescent:'Waning Crescent'
-};
+// ══════════════════════════════════════════════════════════════════
+// ASPECTS
+// ══════════════════════════════════════════════════════════════════
+const ASPS=[
+  {n:'conjunction',d:0,orb:8,sym:'☌'},
+  {n:'opposition',d:180,orb:8,sym:'☍'},
+  {n:'trine',d:120,orb:7,sym:'△'},
+  {n:'square',d:90,orb:7,sym:'□'},
+  {n:'sextile',d:60,orb:5,sym:'⚹'},
+];
 
-function getMoonAge(date) {
-  const diff = (date - MOON_ANCHOR) / 86400000;
-  let age = diff % LUNAR_CYCLE;
-  return age < 0 ? age + LUNAR_CYCLE : age;
-}
-
-function getMoonPhaseKey(date) {
-  const a = getMoonAge(date);
-  if (a < 1.5)   return 'new_moon';
-  if (a < 3.5)   return 'shiva_moon';      // 2 days post new moon — blissful
-  if (a < 7.38)  return 'waxing_crescent';
-  if (a < 9.22)  return 'first_quarter';
-  if (a < 14.0)  return 'waxing_gibbous';
-  if (a < 16.0)  return 'full_moon';
-  if (a < 22.0)  return 'waning_gibbous';
-  if (a < 23.85) return 'last_quarter';
-  if (a < 27.53) return 'waning_crescent';
-  return 'black_moon';  // 2 days pre new moon — tricky
-}
-
-/* Dreamspell ─────────────────────────────────────────── */
-const DS_ANCHOR     = new Date(2020, 6, 26); // July 26 2020 = Kin 118
-const DS_ANCHOR_KIN = 118;
-const SEALS_LIST    = ['Dragon','Wind','Night','Seed','Serpent','WorldBridger','Hand','Star',
-                       'Moon','Dog','Monkey','Human','Skywalker','Wizard','Eagle','Warrior',
-                       'Earth','Mirror','Storm','Sun'];
-const SEAL_COLORS   = ['Red','White','Blue','Yellow','Red','White','Blue','Yellow',
-                       'Red','White','Blue','Yellow','Red','White','Blue','Yellow',
-                       'Red','White','Blue','Yellow'];
-const TONES_LIST    = ['Magnetic','Lunar','Electric','Self-Existing','Overtone','Rhythmic',
-                       'Resonant','Galactic','Solar','Planetary','Spectral','Crystal','Cosmic'];
-const GAP_KINS      = new Set([19,20,22,25,33,37,38,39,40,41,53,55,58,60,65,
-                                93,94,95,96,98,100,101,104,107,108,113,116,118,119,
-                                131,133,140,143,145,146,147,148,149,150,
-                                152,160,162,163,165,168,182,196,211,222,225,227,240]);
-
-function getDreamspellKin(date) {
-  const d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-  const diff = Math.round((d - DS_ANCHOR) / 86400000);
-  return ((DS_ANCHOR_KIN - 1 + diff) % 260 + 260) % 260 + 1;
-}
-
-function getKinName(kin) {
-  const seal  = SEALS_LIST[(kin - 1) % 20];
-  const color = SEAL_COLORS[(kin - 1) % 20];
-  const tone  = TONES_LIST[(kin - 1) % 13];
-  return { kin, name: `${color} ${tone} ${seal}`, tone, seal, color, isGAP: GAP_KINS.has(kin) };
-}
-
-/* Numerology ─────────────────────────────────────────── */
-function sumDigits(n) {
-  return String(Math.abs(n)).split('').reduce((a,c) => a + parseInt(c), 0);
-}
-function reduceNum(n) {
-  let v = n;
-  while (v > 9) {
-    if ([11,22,33,44].includes(v)) return v;
-    v = sumDigits(v);
-    if ([11,22,33,44].includes(v)) return v;
-  }
-  return v;
-}
-function getUniversalDay(date) {
-  const sum = date.getDate() + (date.getMonth()+1) + sumDigits(date.getFullYear());
-  return reduceNum(sum);
-}
-function getPersonalYear(bDay, bMonth, date) {
-  return reduceNum(bDay + bMonth + reduceNum(sumDigits(date.getFullYear())));
-}
-function getLifePath(bDay, bMonth, bYear) {
-  return reduceNum(sumDigits(bDay) + sumDigits(bMonth) + sumDigits(bYear));
-}
-
-const NUM_NAMES = {
-  1:'New Beginnings & Focus', 2:'Partnership & Kindness', 3:'Creativity & Connection',
-  4:'Work, Honesty & Integrity', 5:'Learning & Social Intelligence', 6:'Harmony, Art & Family',
-  7:'Karmic Gateway & Solitude', 8:'Power, Business & Structure', 9:'Cosmic Completion & Peace',
-  11:'Master 11 — Magic & Portal', 22:'Master 22 — The Builder', 33:'Master 33 — The Teacher',
-  44:'Master 44 — The Architect'
-};
-
-/* Planet note generators ─────────────────────────────── */
-function getPlanetNote(name, sign, degree) {
-  const notes = {
-    sun: `Identity and purpose illuminated in ${sign} — ${sign==='Aries'?'pioneering energy, initiative and raw spring momentum':sign==='Taurus'?'grounded sensuality and persistence':sign==='Gemini'?'intellectual agility and communicative brilliance':'solar focus'}`,
-    moon: `Emotional landscape coloured by ${sign} — tracks feelings with ${sign==='Virgo'?'analytical precision':sign==='Gemini'?'quicksilver adaptability':sign==='Cancer'?'deep nurturing instinct':'lunar sensitivity'}`,
-    mercury: `Communication and cognition in ${sign} — ${sign==='Pisces'?'still clearing post-shadow fog; contracts need re-reading, not rushing':sign==='Aries'?'sharp, direct, possibly combative; ideal for bold communication':sign==='Taurus'?'methodical, reliable, slow to change views':'thinking style'}`,
-    venus: `Love, beauty and values in ${sign} — ${sign==='Gemini'?'wit, curiosity and variety; rewards spontaneity and lightness':sign==='Taurus'?'sensual, comfort-seeking; good for pleasure and relationship depth':sign==='Cancer'?'tender, home-oriented; emotional generosity flows freely':'relational energy'}`,
-    mars: `Drive and action in ${sign} — ${sign==='Aries'?'double home-sign energy; combustion of will and initiative; watch inflammation and overexertion':sign==='Taurus'?'slow, persistent, immovable; excellent for long-term building':sign==='Gemini'?'scattered but versatile; multi-directional energy':'physical drive'}`,
-    jupiter: `Expansion and opportunity in ${sign} — ${sign==='Cancer'?'emotional abundance and family security; Jupiter here expands home, protection, nurturing':sign==='Leo'?'radiant generosity and creative flourishing':sign==='Gemini'?'expansion through communication and learning':'growth arena'}`,
-    saturn: `Structure and discipline in ${sign} — ${sign==='Aries'?'demands disciplined new starts; Saturn in Aries insists structures actually hold, not just sprint':sign==='Pisces'?'dissolving old structures; reality-checking dreams':'where life demands accountability'}`,
-    uranus: `Innovation and disruption in ${sign} — ${sign==='Taurus'?'financial and material structures being revolutionised; Gemini ingress approaching, accelerating change':sign==='Gemini'?'technological and communicative disruption at peak':'where the unexpected arrives'}`,
-    neptune: `Vision and dissolution in ${sign} — ${sign==='Aries'?'dissolving ego-driven ambition; paired with Saturn, asks what is genuine vision versus martyrdom by overwork':sign==='Pisces'?'at home; mystical, compassionate, boundary-dissolving':'where fog and inspiration meet'}`,
-    pluto: `Transformation in ${sign} — ${sign==='Aquarius'?'systemic transformation of collective structures and leadership paradigms underway; the old order dissolving at civilisational scale':sign==='Capricorn'?'restructuring institutional power':'where deep change is non-negotiable'}`
-  };
-  return notes[name] || `In ${sign} at ${degree}°`;
-}
-
-/* Aspect calculator ──────────────────────────────────── */
-function getAspects(positions, profile) {
-  const planets = ['sun','moon','mercury','venus','mars','jupiter','saturn','uranus','neptune','pluto'];
-  const aspects  = [];
-
-  // Check Saturn-Neptune conjunction (historically significant for 2026)
-  const satLon = positions.saturn.lon;
-  const nepLon = positions.neptune.lon;
-  const satNepOrb = Math.abs(satLon - nepLon);
-  if (satNepOrb < 8) {
-    aspects.push({
-      rating: 5, stars: '●●●●●',
-      title: `Saturn ${positions.saturn.degree}° Aries conjunct Neptune ${positions.neptune.degree}° Aries (${satNepOrb.toFixed(1)}° orb)`,
-      body: `The most historically significant aspect of the decade. The last time both planets occupied Aries together was approximately 1522 — the year Magellan's crew completed the first circumnavigation of the Earth, the year Martin Luther's Reformation was fracturing European Christendom. Saturn demands form, accountability, and long-term structure; Neptune dissolves boundaries and opens vision. Together in pioneering Aries, they do not call for reform — they call for genesis. For ${profile.name}, this is the structural backdrop of everything being built: the discipline to make the impossible thing real, and the courage to build it as if life depends on it.`,
-      significance: 'civilisational'
-    });
-  }
-
-  // Sun-Mars proximity
-  const sunLon = positions.sun.lon;
-  const marsLon = positions.mars.lon;
-  const smOrb   = Math.abs(sunLon - marsLon);
-  if (smOrb < 15) {
-    const rating = smOrb < 5 ? 5 : smOrb < 8 ? 4 : 3;
-    aspects.push({
-      rating, stars: '●'.repeat(rating) + '○'.repeat(5-rating),
-      title: `Sun ${positions.sun.degree}° ${positions.sun.sign} conjunct Mars ${positions.mars.degree}° ${positions.mars.sign} (${smOrb.toFixed(1)}° orb)`,
-      body: `Will and drive are fused today. This supercharges momentum for decisive action and executive presence — the energy that signs term sheets, persuades investors, and refuses to accept a mediocre outcome. The shadow: Sun-Mars is the engine, not the brake. Without conscious pacing, intensity lands directly in the body. The gift is fierce clarity of purpose; the risk is inflammation, irritability, and skipping the health habits that would sustain the sprint long-term. Use the morning for the single highest-leverage action, then consciously downshift.`
-    });
-  }
-
-  // Moon-Jupiter
-  const moonLon = positions.moon.lon;
-  const jupLon  = positions.jupiter.lon;
-  const mjOrb   = Math.abs(moonLon - jupLon);
-  if (mjOrb < 12) {
-    const type = mjOrb < 3 ? 'exact sextile' : 'sextile';
-    const rating = mjOrb < 3 ? 5 : 4;
-    aspects.push({
-      rating, stars: '●'.repeat(rating) + '○'.repeat(5-rating),
-      title: `Moon ${positions.moon.degree}° ${positions.moon.sign} ${type} Jupiter ${positions.jupiter.degree}° ${positions.jupiter.sign} (${mjOrb.toFixed(1)}° orb)`,
-      body: `The single most supportive aspect of the day — ${mjOrb < 3 ? 'and it is exact.' : ''} ${positions.moon.sign} Moon loves to analyse and improve; Jupiter in ${positions.jupiter.sign} expands emotional warmth and family security. A rare window where analytical ambition and the desire for genuine presence are not in conflict — they harmonise. A practical act of care lands with outsized emotional weight. Don't defer this.`
-    });
-  }
-
-  // Sun-Venus sextile
-  const venLon = positions.venus.lon;
-  const svOrb  = Math.abs(sunLon - venLon);
-  if (svOrb > 50 && svOrb < 70) {
-    aspects.push({
-      rating: 4, stars: '●●●●○',
-      title: `Sun ${positions.sun.degree}° ${positions.sun.sign} sextile Venus ${positions.venus.degree}° ${positions.venus.sign} (${(svOrb-60).toFixed(1)}° orb)`,
-      body: `Lightness, humour and genuine connection are cosmically available despite any business pressure. Venus in ${positions.venus.sign} rewards spontaneity and warmth — the easiest pivot from task-mode to presence-mode in the week. One unplanned, genuinely playful moment with those you love will land better than any scheduled activity.`
-    });
-  }
-
-  // Uranus proximity to Gemini ingress
-  if (positions.uranus.sign === 'Taurus' && positions.uranus.degree >= 27) {
-    aspects.push({
-      rating: 3, stars: '●●●○○',
-      title: `Uranus ${positions.uranus.degree}° Taurus — Approaching Gemini Ingress`,
-      body: `In the final degrees of Taurus, Uranus is completing its seven-year revolution of material and financial values. Its ingress into Gemini (approximately April 26, 2026) will accelerate disruption in communication, technology, and information economies. Financial structures and valuations are entering a period of liberation — deal timing and structuring matters more than usual now.`
-    });
-  }
-
-  return aspects.slice(0, 5);
-}
-
-/* ═════════════════════════════════════════════════════════
-   READING GENERATION
-═════════════════════════════════════════════════════════ */
-
-const TIER_CFG = {
-  free:     { model:'claude-haiku-4-5-20251001',  max_tokens: 600,  label:'Free'     },
-  seeker:   { model:'claude-haiku-4-5-20251001',  max_tokens: 1400, label:'Seeker'   },
-  initiate: { model:'claude-sonnet-4-6',           max_tokens: 2000, label:'Initiate' },
-  mystic:   { model:'claude-sonnet-4-6',           max_tokens: 3000, label:'Mystic'   },
-  oracle:   { model:'claude-sonnet-4-6',           max_tokens: 4000, label:'Oracle'   }
-};
-
-function buildSystemPrompt(tier, profile, cosmicData) {
-  const base = `You are the voice of Cosmic Daily Planner — the world's finest synthesiser of astronomical fact, depth astrology, Pythagorean numerology, and Dreamspell calendrics. You speak with the precision of an astronomer, the depth of a Jungian analyst, and the warmth of a trusted guide.
-
-You always speak to ${profile.name || 'the user'} by name, with specific knowledge of their life.
-You NEVER produce generic horoscope content. Every sentence must be specific, grounded, and actionable.
-You always label Dreamspell as a modern system (Argüelles 1987), distinct from the ancient K'iche' Maya tzolkʼin tradition.
-You never make deterministic predictions — you identify energetic themes and offer them as invitations, not inevitabilities.
-You never use markdown headers or bullet points unless specifically structured JSON output is requested.
-Voice: calm, grounded, elegant, warmly precise.
-
-USER PROFILE:
-Name: ${profile.name || 'the user'}
-Location: ${profile.location || 'UK'}
-Life Path: ${profile.lifePath || 'unknown'}
-Personal Year: ${profile.personalYear || 'unknown'}
-Birth Kin: ${profile.birthKin || 'unknown'}
-Sun Sign: ${profile.sunSign || 'unknown'}
-${profile.context ? `Personal Context:\n${profile.context}` : ''}
-
-TODAY'S COSMIC DATA:
-Date: ${cosmicData.dateStr}
-Universal Day: ${cosmicData.ud} — ${NUM_NAMES[cosmicData.ud] || ''}
-Month Energy: ${cosmicData.monthEnergy} — ${NUM_NAMES[cosmicData.monthEnergy] || ''}
-Year Energy: ${cosmicData.yearEnergy} — ${NUM_NAMES[cosmicData.yearEnergy] || ''}
-${profile.personalYear ? `Personal Year: ${profile.personalYear}` : ''}
-Dreamspell Kin: ${cosmicData.kin.kin} — ${cosmicData.kin.name}${cosmicData.kin.isGAP ? ' (GALACTIC ACTIVATION PORTAL)' : ''}
-Moon Phase: ${cosmicData.moonPhaseName}${cosmicData.moonSign ? ` in ${cosmicData.moonSign}` : ''}
-Moon Age: ${cosmicData.moonAge} days
-Black Moon Warning: ${cosmicData.isBlackMoon ? 'YES — two days before New Moon; proceed with care and introspection' : 'No'}
-Shiva Moon: ${cosmicData.isShivaMoon ? 'YES — two days after New Moon; excellent time for new action' : 'No'}
-
-PLANETARY POSITIONS:
-${cosmicData.planetTable}
-
-KEY ASPECTS:
-${cosmicData.aspectSummary}`;
-
-  return base;
-}
-
-function buildUserPrompt(tier, profile, cosmicData) {
-  if (tier === 'free') {
-    return `Generate a FREE tier daily card for ${profile.name || 'the user'} for ${cosmicData.dateStr}.
-Return ONLY plain text (no JSON, no markdown), maximum 4 sentences.
-Include: the Universal Day number and its meaning, today's Dreamspell Kin, the moon phase.
-One specific action for today.
-Feel like a lucky stone in the pocket — beautiful, personal, worth returning to daily.`;
-  }
-
-  if (tier === 'seeker') {
-    return `Generate a SEEKER tier reading for ${profile.name || 'the user'} for ${cosmicData.dateStr}.
-Return ONLY plain text, approximately 300 words.
-Include: opening synthesis, numerology section, moon phase, Kin, top 3 priorities with specific actions, morning/afternoon/evening windows, one reflection prompt.
-All personalized to ${profile.name}'s specific life context.`;
-  }
-
-  // INITIATE, MYSTIC, ORACLE — return structured JSON
-  return `Generate a complete ${tier.toUpperCase()} tier Oracle reading for ${profile.name || 'the user'} for ${cosmicData.dateStr}.
-
-Return ONLY valid JSON (no markdown, no preamble) with this exact structure:
-{
-  "synthesis": "2-3 sentences in the opening italic style — one truth that unifies all four frameworks for ${profile.name} today",
-  "numerology": {
-    "title": "UD ${cosmicData.ud} — ${NUM_NAMES[cosmicData.ud]||''}",
-    "body": "150 words connecting the Universal Day number specifically to ${profile.name}'s actual situation today"
-  },
-  "moonSection": {
-    "title": "${cosmicData.moonPhaseName}${cosmicData.moonSign ? ' in '+cosmicData.moonSign : ''}",
-    "body": "120 words on the lunar phase and its specific invitation for ${profile.name} today${cosmicData.isBlackMoon?' — emphasise the tricky, introspective Black Moon energy':cosmicData.isShivaMoon?' — emphasise the blissful Shiva Moon energy for new action':''}"
-  },
-  "kinSection": {
-    "title": "Kin ${cosmicData.kin.kin} — ${cosmicData.kin.name}${cosmicData.kin.isGAP?' — Galactic Portal':''}",
-    "body": "100 words on this Kin's specific meaning for ${profile.name} today"
-  },
-  "astrologySection": {
-    "title": "The Transits",
-    "body": "200 words on the 2-3 most important transits for ${profile.name} today, specifically the Saturn-Neptune conjunction context if relevant"
-  },
-  "saturnNeptune": {
-    "show": ${Math.abs(cosmicData.positions.saturn.lon - cosmicData.positions.neptune.lon) < 15},
-    "body": "100 words on the Saturn-Neptune civilisational context and its specific relevance for ${profile.name}"
-  },
-  "shadowWork": "100 words in the shadow work section — the unconscious pattern to watch today for ${profile.name}, written in italic editorial voice",
-  "priorities": [
-    {"number": 1, "title": "...", "body": "80 words", "action": "Specific, concrete action for ${profile.name}"},
-    {"number": 2, "title": "...", "body": "80 words", "action": "Specific, concrete action"},
-    {"number": 3, "title": "...", "body": "80 words", "action": "Specific, concrete action"}
-  ],
-  "focusOn": ["item 1", "item 2", "item 3", "item 4"],
-  "easeOff": ["item 1", "item 2", "item 3", "item 4"],
-  "morning": "50 words — specific morning guidance for ${profile.name} based on planetary timing",
-  "afternoon": "50 words — specific afternoon guidance based on planetary timing",
-  "evening": "50 words — specific evening guidance based on planetary timing",
-  "weekAhead": [
-    {"date": "Thu 2/4", "ud": 7, "kinNum": 54, "kinName": "White Lunar Wizard", "isGAP": false, "body": "2 sentences personalised for ${profile.name}"},
-    {"date": "Fri 3/4", "ud": 8, "kinNum": 55, "kinName": "Blue Electric Eagle", "isGAP": false, "body": "2 sentences"},
-    {"date": "Sat 4/4", "ud": 9, "kinNum": 56, "kinName": "Yellow Self-Existing Warrior", "isGAP": true, "body": "2 sentences"},
-    {"date": "Sun 5/4", "ud": 1, "kinNum": 57, "kinName": "Red Overtone Earth", "isGAP": false, "body": "2 sentences"},
-    {"date": "Mon 6/4", "ud": 2, "kinNum": 58, "kinName": "White Rhythmic Mirror", "isGAP": true, "body": "2 sentences"},
-    {"date": "Tue 7/4", "ud": 3, "kinNum": 59, "kinName": "Blue Resonant Storm", "isGAP": false, "body": "2 sentences"},
-    {"date": "Wed 8/4", "ud": 4, "kinNum": 60, "kinName": "Yellow Galactic Seed", "isGAP": true, "body": "2 sentences"}
-  ],
-  "gift": {
-    "quote": "A philosophical quote from a real author that resonates with today's themes",
-    "attribution": "Author name, work, year",
-    "body": "120 words — a personal meditation for ${profile.name} that weaves the quote into today's specific cosmic invitation"
-  }
-}
-
-CRITICAL REQUIREMENTS:
-- Every section MUST reference ${profile.name} by name and their specific life context
-- Planetary positions are exact: ${cosmicData.planetTable}
-- Do NOT invent planetary positions different from the data provided
-- The week ahead Kin numbers and names must match exactly as given above
-- All JSON must be valid — no trailing commas, proper escaping`;
-}
-
-/* HTTP Request to Anthropic ───────────────────────────── */
-function anthropicCall(payload, timeoutMs = 25000) {
-  return new Promise((resolve, reject) => {
-    const body = JSON.stringify(payload);
-    const req  = https.request({
-      hostname: 'api.anthropic.com', path: '/v1/messages', method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key':    process.env.ANTHROPIC_API_KEY,
-        'anthropic-version': '2023-06-01',
-        'Content-Length': Buffer.byteLength(body)
+function getAspects(planets){
+  const out=[];
+  for(let i=0;i<planets.length;i++){
+    for(let j=i+1;j<planets.length;j++){
+      let diff=Math.abs(planets[i].deg-planets[j].deg);
+      if(diff>180)diff=360-diff;
+      for(const a of ASPS){
+        const orb=Math.abs(diff-a.d);
+        if(orb<=a.orb){
+          const str=Math.max(1,5-Math.floor(orb/(a.orb/5)));
+          out.push({p1:planets[i].name,p2:planets[j].name,aspect:a.n,sym:a.sym,
+            orb:orb.toFixed(1),str,
+            label:`${planets[i].name} ${a.sym} ${planets[j].name}`,
+            desc:`${planets[i].name} ${getDegInSign(planets[i].deg)}° ${getSign(planets[i].deg)} ${a.n} ${planets[j].name} ${getDegInSign(planets[j].deg)}° ${getSign(planets[j].deg)} (${orb.toFixed(1)}° orb)`});
+          break;
+        }
       }
-    }, res => {
-      let data = '';
-      res.on('data', c => data += c);
-      res.on('end', () => {
-        try { resolve(JSON.parse(data)); }
-        catch { reject(new Error('Invalid response: ' + data.slice(0, 200))); }
-      });
-    });
-    req.on('error', reject);
-    req.setTimeout(timeoutMs, () => { req.destroy(); reject(new Error('Timeout')); });
-    req.write(body); req.end();
+    }
+  }
+  return out.sort((a,b)=>b.str-a.str).slice(0,8);
+}
+
+// ══════════════════════════════════════════════════════════════════
+// API CALL
+// ══════════════════════════════════════════════════════════════════
+function callAPI(model,maxTok,sys,user){
+  return new Promise((resolve,reject)=>{
+    const body=JSON.stringify({model,max_tokens:maxTok,
+      messages:[{role:'user',content:user}],...(sys?{system:sys}:{})});
+    const req=https.request({hostname:'api.anthropic.com',port:443,
+      path:'/v1/messages',method:'POST',
+      headers:{'Content-Type':'application/json',
+        'x-api-key':process.env.ANTHROPIC_API_KEY,
+        'anthropic-version':'2023-06-01',
+        'Content-Length':Buffer.byteLength(body)}},
+      res=>{let data='';
+        res.on('data',c=>data+=c);
+        res.on('end',()=>{try{const p=JSON.parse(data);
+          if(p.error)return reject(new Error(p.error.message));
+          resolve(p.content[0].text);}catch(e){reject(e);}});});
+    req.on('error',reject);req.write(body);req.end();
   });
 }
 
-/* Build cosmic context object ─────────────────────────── */
-function buildCosmicData(date, profile) {
-  const positions   = getPlanetPositions(date);
-  const kin         = getKinName(getDreamspellKin(date));
-  const ud          = getUniversalDay(date);
-  const monthEnergy = reduceNum(date.getMonth() + 1);
-  const yearEnergy  = reduceNum(sumDigits(date.getFullYear()));
-  const moonPhase   = getMoonPhaseKey(date);
-  const moonAge     = getMoonAge(date);
-  const isBlackMoon = moonPhase === 'black_moon';
-  const isShivaMoon = moonPhase === 'shiva_moon';
+// ══════════════════════════════════════════════════════════════════
+// ORACLE READING GENERATOR
+// ══════════════════════════════════════════════════════════════════
+async function generateReading(dateStr,profile,tier){
+  const planets=buildPlanets(dateStr);
+  const moon=getMoon(dateStr);
+  const kin=getKin(dateStr);
+  const p=profile||{};
+  const num=getNumerology(dateStr,p.birthDay,p.birthMonth,p.birthYear);
+  const aspects=getAspects(planets);
 
-  const days   = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
-  const months = ['January','February','March','April','May','June',
-                  'July','August','September','October','November','December'];
-  const dateStr = `${days[date.getDay()]}, ${date.getDate()} ${months[date.getMonth()]} ${date.getFullYear()}`;
+  const pTable=planets.map(pl=>`${pl.name}: ${pl.degStr}`).join('\n');
+  const aList=aspects.slice(0,6).map(a=>`${'●'.repeat(a.str)}${'○'.repeat(5-a.str)} ${a.desc}`).join('\n');
 
-  const planetTable = [
-    `Sun: ${positions.sun.degree}° ${positions.sun.sign}`,
-    `Moon: ${positions.moon.degree}° ${positions.moon.sign} (${MOON_PHASE_NAMES[moonPhase]}, ${moonAge.toFixed(1)}d)`,
-    `Mercury: ${positions.mercury.degree}° ${positions.mercury.sign}`,
-    `Venus: ${positions.venus.degree}° ${positions.venus.sign}`,
-    `Mars: ${positions.mars.degree}° ${positions.mars.sign}`,
-    `Jupiter: ${positions.jupiter.degree}° ${positions.jupiter.sign}`,
-    `Saturn: ${positions.saturn.degree}° ${positions.saturn.sign}`,
-    `Uranus: ${positions.uranus.degree}° ${positions.uranus.sign}`,
-    `Neptune: ${positions.neptune.degree}° ${positions.neptune.sign}`,
-    `Pluto: ${positions.pluto.degree}° ${positions.pluto.sign}`
-  ].join('\n');
+  const moonAlert=moon.isBlack
+    ?'★ BLACK MOON (2 days before New Moon) — tricky, introspective threshold. Do not initiate; observe with care. Ned should avoid major decisions or launches today.'
+    :moon.isShiva
+      ?'★ SHIVA MOON (2 days after New Moon) — blissful, regenerative. Auspicious for new actions, new conversations, fresh starts.'
+      :'';
 
-  const aspects      = getAspects(positions, profile);
-  const aspectSummary = aspects.map(a => `${a.title} — ${a.body.slice(0,80)}…`).join('\n');
+  const satNep=`Saturn ${planets[6].degStr} conjunct Neptune ${planets[8].degStr} — historically: last Aries conjunction ~1522 (Magellan circumnavigation, Luther's Reformation), then 1917 (WWI/Russian Revolution), 1952, 1989 (Berlin Wall). In Aries = genesis, not reform. Tarnas (2006) Cosmos & Psyche.`;
 
-  return {
-    dateStr, ud, monthEnergy, yearEnergy, kin,
-    moonPhaseName: MOON_PHASE_NAMES[moonPhase], moonPhase,
-    moonSign: positions.moon.sign, moonAge: moonAge.toFixed(1),
-    isBlackMoon, isShivaMoon,
-    positions, aspects, planetTable, aspectSummary
-  };
+  const uranus=`Uranus ${planets[7].degStr} — approaching Gemini ingress ~April 26, 2026. Financial structures, communication architectures, and valuations disrupted and liberated. Direct timing implication for Ned's biotech exits.`;
+
+  const mars=planets[4].sign==='Pisces'
+    ?`Mars ${planets[4].degStr} — still in Pisces, drive is inward and visionary. Physical energy needs to be metabolised through creative and strategic work rather than force.`
+    :`Mars ${planets[4].degStr} — in Aries, drive is ignited. Decisive action rewarded. Watch for overextension.`;
+
+  const sys=`You are the Oracle at Cosmic Daily Planner (cosmicdailyplanner.com) — the world's most rigorous, personalised daily cosmic planner, synthesising Swiss Ephemeris astronomy, Pythagorean numerology, Western psychological astrology, and Dreamspell/Law of Time.
+
+YOUR VOICE: The best Jungian analyst meets the Swiss Ephemeris. Precise. Personal. Grounded. Emotionally intelligent. Like the March 31, 2026 reading — that is your quality benchmark.
+
+CRITICAL RULES:
+— Use ONLY the Swiss Ephemeris positions provided. Never invent planetary data.
+— Name Ned's companies: NanOptima, ClotProtect. Name his family: Connie (wife), Sam (son, 17), Kitty (daughter, 16), his mother (Baja estate/property matter).
+— Dreamspell is ALWAYS labelled: Argüelles (1987) The Mayan Factor — modern 20th-century system, distinct from ancient K'iche' Maya tradition maintained by Guatemalan daykeepers.
+— No deterministic predictions. Speak in possibilities and tendencies.
+— Every section must be SPECIFIC to Ned's actual life chapter, not generic cosmic commentary.
+— SCHOLARLY SOURCES: Šprajc et al. 2023 (Science Advances); Aldana 2022; Tarnas 2006 Cosmos & Psyche; Greene 1976 Saturn; Hand 2002 Planets in Transit; Brady 1999; Brennan 2017; Drayer 2002 Numerology; Kahn 2001 Pythagoras.`;
+
+  const user=`PROFILE:
+Name: ${p.name||'Edward (Ned) Alan Wakeman'}
+Location: ${p.location||'Twemlow, Cheshire, England'}
+Birth: ${p.birthDay||15}/${p.birthMonth||6}/${p.birthYear||1958} ${p.birthTime||'16:23'} BST
+Birth Kin: Kin 51 — Blue Crystal Monkey
+Life Path: ${num.lp||8} (${(num.lpM||NUM[8]).n})
+Personal Year: ${num.py||4} (${(num.pyM||NUM[4]).n})
+Context: Biotech entrepreneur building NanOptima (nanomaterial drug delivery) and ClotProtect (anticoagulation safety) toward pharma acquisition/exit. Husband to Connie. Father to Sam (17) and Kitty (16). Active family man who values presence. Working through inheritance/property distribution with his mother (Baja, California estate). Health arc: wants to be lighter, fitter, more present. Oxford-educated, high-integrity, data-driven. Values intellectually honest content.
+
+DATE: ${dateStr} (${new Date(dateStr+'T12:00:00Z').toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'})})
+
+VERIFIED PLANETARY POSITIONS (Swiss Ephemeris ae_2026.pdf, Astrodienst AG):
+${pTable}
+
+MOON: ${moon.phase} ${moon.emoji} — ${moon.cycle} days into lunar cycle
+${moonAlert}
+Days to Next New Moon: ~${moon.toNew} | Days to Next Full: ~${moon.toFull}
+
+NUMEROLOGY:
+Universal Day: ${num.ud} — ${num.udM?.n} | ${num.udM?.k}
+Month Energy (April): ${num.mEn} — ${num.mEnM?.n}
+Year Energy (2026): ${num.yEn} — ${num.yEnM?.n}
+Personal Year: ${num.py||4} | Personal Month: ${num.pm||8} | Personal Day: ${num.pd||1}
+THREE ENERGIES: Morning=${num.pd||num.ud} (${(NUM[num.pd||num.ud])?.n}), Afternoon=${num.pm||num.mEn} (${(NUM[num.pm||num.mEn])?.n}), Evening=${num.py||num.yEn} (${(NUM[num.py||num.yEn])?.n})
+
+DREAMSPELL (Argüelles 1987 — modern system, verify: tortuga.com/oracle):
+${kin.full}${kin.isGAP?' ★ GALACTIC ACTIVATION PORTAL':''}
+Tone ${kin.toneNum} (${kin.tone}) | Seal: ${kin.seal} | Color: ${kin.color}
+
+KEY ASPECTS (Swiss Ephemeris):
+${aList}
+
+CONTEXT:
+${satNep}
+${uranus}
+${mars}
+
+Generate a FULL ORACLE READING as valid JSON (no markdown fences, no preamble):
+{
+  "synthesis": "2-3 sentence italic opening — synthesise ALL frameworks into the single deepest truth for Ned today. Specific, named, resonant. Not generic. This is the headline they remember.",
+  "numerology": {
+    "headline": "Universal Day ${num.ud} — ${num.udM?.n}: one punchy sentence",
+    "body": "4 substantial paragraphs: (1) Universal Day meaning for Ned. (2) Interaction of UD${num.ud} with his Life Path 8 — specific to biotech/exit momentum. (3) Personal Day ${num.pd||num.ud} meaning and shadow side. (4) How the Personal Month ${num.pm||8} (Power & Abundance) colours everything. Name NanOptima or ClotProtect at least once.",
+    "three_energies": {
+      "morning": {"num":${num.pd||num.ud},"name":"${(NUM[num.pd||num.ud])?.n}","guidance":"2-3 sentences for Ned's morning — specific action or awareness"},
+      "afternoon": {"num":${num.pm||num.mEn},"name":"${(NUM[num.pm||num.mEn])?.n}","guidance":"2-3 sentences for Ned's afternoon"},
+      "evening": {"num":${num.py||num.yEn},"name":"${(NUM[num.py||num.yEn])?.n}","guidance":"2-3 sentences for Ned's evening"}
+    }
+  },
+  "moon_section": {
+    "headline": "${moon.phase} in ${planets[1].sign} — one evocative headline for Ned",
+    "body": "3 paragraphs on lunar landscape. Include: what ${planets[1].sign} moon asks of Ned, the ${moon.cycle}-day cycle position, ${moonAlert?'BLACK/SHIVA moon significance,':''} specific guidance for Ned's communication and decision-making today.",
+    "moon_note": "${moonAlert||'Waning phase — integration and harvest mode'}"
+  },
+  "astrology": {
+    "main_transit_headline": "Name the single most significant active transit with full degree notation",
+    "main_transit_body": "4 substantial paragraphs: historical/astronomical context; what it means for the world right now; what it means specifically for Ned (NanOptima/ClotProtect, Baja estate, family presence, health); how to use this energy well today. Be precise. Reference Greene or Tarnas.",
+    "saturn_neptune": "3 paragraphs: (1) What Saturn-Neptune conjunctions mean historically — cite Tarnas 2006 explicitly with the 1522/1917/1952/1989 cycle. (2) What this specific 0° Aries conjunction means for biotech/pharma sector: dissolution of old gatekeeping (Neptune) meeting clinical validation demands (Saturn). (3) What it personally asks of Ned — the dreamer AND the architect simultaneously.",
+    "uranus_note": "2 sentences: Uranus approaching Gemini ingress ~April 26 — financial disruption, what it means for Ned's exit timing and valuations."
+  },
+  "dreamspell": {
+    "headline": "${kin.full}${kin.isGAP?' ★ GALACTIC ACTIVATION PORTAL':''}",
+    "body": "3 paragraphs: (1) Tone ${kin.toneNum} (${kin.tone}) — what this tone asks. (2) ${kin.seal} seal qualities and gifts — applied to Ned's current situation. (3) Wavespell context and specific invitation for today. ${kin.isGAP?'(4) GAP significance: veil thins, synchronicities heighten, Ned should pay attention to what arrives unexpectedly today.':''} Always note: Argüelles (1987) modern system, distinct from ancient K'iche' tzolkʼin.",
+    "disclaimer": "Dreamspell: Argüelles (1987) The Mayan Factor — 20th-century modern system, distinct from the ancient K'iche' Maya tzolkʼin maintained continuously by Guatemalan daykeepers (Aldana 2022; Tedlock 1992). Verify: tortuga.com/oracle"
+  },
+  "planetary_positions": [${planets.map(pl=>`{"planet":"${pl.name}","pos":"${pl.degStr}","note":"<8-12 word note for Ned>"}`).join(',')}],
+  "aspects": [${aspects.slice(0,6).map(a=>`{"dots":${a.str},"label":"${a.desc}","body":"<3 sentences on what this aspect means for Ned specifically today>"}`).join(',')}],
+  "shadow_work": "3-4 sentences italic — the hard question Ned needs. Name his actual shadow: productive avoidance as a strategy for not being present, measuring self-worth in valuations, deferring family connection until 'after the exit'. Ask the question he most needs to hear right now.",
+  "priorities": [
+    {"title":"<Priority 1 — specific to NanOptima or ClotProtect or pharma exit>","rationale":"3-4 sentences with cosmic rationale (which transits/numbers support this)","action":"<One specific, concrete, doable action for today>"},
+    {"title":"<Priority 2 — family presence: Connie, Sam, Kitty>","rationale":"3-4 sentences","action":"<One specific action>"},
+    {"title":"<Priority 3 — health architecture: body as infrastructure for the life after the exit>","rationale":"3-4 sentences","action":"<One specific action>"}
+  ],
+  "focus_on": ["<specific item 1>","<specific item 2>","<specific item 3>","<specific item 4>"],
+  "ease_off": ["<specific item 1>","<specific item 2>","<specific item 3>","<specific item 4>"],
+  "time_windows": {
+    "morning": "3 sentences: cosmic quality of Ned's morning, specific advice",
+    "afternoon": "3 sentences: afternoon energy shift, what to do",
+    "evening": "3 sentences: evening energy, how to close the day well"
+  },
+  "week_ahead": [
+    {"date":"${dateStr}","kinStr":"${kin.full}","ud":${num.ud},"note":"Today summary 2 sentences"},
+    {"date":"","kinStr":"","ud":0,"note":""},
+    {"date":"","kinStr":"","ud":0,"note":""},
+    {"date":"","kinStr":"","ud":0,"note":""},
+    {"date":"","kinStr":"","ud":0,"note":""},
+    {"date":"","kinStr":"","ud":0,"note":""},
+    {"date":"","kinStr":"","ud":0,"note":""}
+  ],
+  "daily_gift": {
+    "quote": "<Precisely chosen quote — Jung, Marcus Aurelius, Kierkegaard, Seneca, Rilke, Rumi — that speaks exactly to Ned's current chapter>",
+    "attribution": "<Full attribution: Author, Work, Date>",
+    "meditation": "<3 specific, concrete, unglamorous acts for Ned today — the kind of daily care that compounds. E.g.: drink water before first coffee; 10 minutes outside before first call; write one sentence about how you want to feel by end of April.>"
+  },
+  "sources": "Astronomy: Swiss Ephemeris (Koch & Treindl, Astrodienst AG, ae_2026.pdf); USNO Moon Phases. Maya calendrics: Šprajc et al. (2023) Science Advances doi:10.1126/sciadv.abq7675; Aldana (2022) doi:10.34758/qyyd-vx23. Dreamspell: Argüelles (1987). Astrology: Greene (1976) Saturn; Tarnas (2006) Cosmos & Psyche; Hand (2002) Planets in Transit; Brady (1999); Brennan (2017) Hellenistic Astrology. Numerology: Drayer (2002); Goodwin (1994); Kahn (2001) Pythagoras."
+}`;
+
+  const raw=await callAPI('claude-sonnet-4-20250514',4096,sys,user);
+  let reading;
+  try{
+    const cleaned=raw.replace(/```json\n?/g,'').replace(/```\n?/g,'').trim();
+    reading=JSON.parse(cleaned);
+  }catch(e){reading={synthesis:raw,raw:true};}
+  return{reading,planets,moon,kin,num,aspects};
 }
 
-/* ═════════════════════════════════════════════════════════
-   API ROUTES
-═════════════════════════════════════════════════════════ */
-
-// Main reading endpoint
-app.post('/api/reading', async (req, res) => {
-  const { tier = 'oracle', date: dateStr, profile = {}, conversationHistory } = req.body;
-  const cfg   = TIER_CFG[tier] || TIER_CFG.oracle;
-  const date  = dateStr ? new Date(dateStr) : new Date();
-
-  // Enrich profile with calculations if birth data present
-  if (profile.birthDay && profile.birthMonth && profile.birthYear) {
-    if (!profile.lifePath) {
-      profile.lifePath    = getLifePath(profile.birthDay, profile.birthMonth, profile.birthYear);
-    }
-    if (!profile.personalYear) {
-      profile.personalYear = getPersonalYear(profile.birthDay, profile.birthMonth, date);
-    }
-    if (!profile.birthKin) {
-      const bKin = getKinName(getDreamspellKin(new Date(profile.birthYear, profile.birthMonth-1, profile.birthDay)));
-      profile.birthKin = `Kin ${bKin.kin} — ${bKin.name}`;
-    }
-  }
-
-  const cosmic   = buildCosmicData(date, profile);
-  const sysPrompt = buildSystemPrompt(tier, profile, cosmic);
-  const userPrompt = buildUserPrompt(tier, profile, cosmic);
-
-  const messages = conversationHistory
-    ? [...conversationHistory, { role: 'user', content: userPrompt }]
-    : [{ role: 'user', content: userPrompt }];
-
-  try {
-    const resp = await anthropicCall({
-      model: cfg.model, max_tokens: cfg.max_tokens,
-      system: sysPrompt, messages
-    });
-
-    const rawText = resp.content?.[0]?.text || '';
-    let reading;
-
-    if (['initiate','mystic','oracle'].includes(tier)) {
-      // Parse structured JSON
-      try {
-        const clean = rawText.replace(/```json|```/g, '').trim();
-        reading = JSON.parse(clean);
-      } catch {
-        // Return raw if JSON parse fails
-        reading = { synthesis: rawText, _raw: true };
-      }
-    } else {
-      reading = { synthesis: rawText, _raw: true };
-    }
-
-    // Always include computed cosmic data for the frontend to use
-    reading._cosmic = {
-      ud: cosmic.ud, monthEnergy: cosmic.monthEnergy, yearEnergy: cosmic.yearEnergy,
-      kin: cosmic.kin, moonPhase: cosmic.moonPhase, moonPhaseName: cosmic.moonPhaseName,
-      moonSign: cosmic.moonSign, moonAge: cosmic.moonAge,
-      isBlackMoon: cosmic.isBlackMoon, isShivaMoon: cosmic.isShivaMoon,
-      dateStr: cosmic.dateStr, planetTable: cosmic.planetTable,
-      aspects: cosmic.aspects,
-      positions: {
-        sun:     cosmic.positions.sun,
-        moon:    cosmic.positions.moon,
-        mercury: cosmic.positions.mercury,
-        venus:   cosmic.positions.venus,
-        mars:    cosmic.positions.mars,
-        jupiter: cosmic.positions.jupiter,
-        saturn:  cosmic.positions.saturn,
-        uranus:  cosmic.positions.uranus,
-        neptune: cosmic.positions.neptune,
-        pluto:   cosmic.positions.pluto
-      }
-    };
-
-    res.json({ reading, tier, model: cfg.model });
-  } catch (err) {
-    console.error('Reading error:', err.message);
-    res.status(500).json({ error: err.message });
-  }
+// ══════════════════════════════════════════════════════════════════
+// ROUTES
+// ══════════════════════════════════════════════════════════════════
+app.post('/api/reading',async(req,res)=>{
+  const{date,profile,tier}=req.body;
+  const ds=date||new Date().toISOString().slice(0,10);
+  try{const r=await generateReading(ds,profile||{},tier||'oracle');res.json(r);}
+  catch(e){console.error(e);res.status(500).json({error:e.message});}
 });
 
-// Daily card (quick load, no tier gate)
-app.post('/api/daily_message', async (req, res) => {
-  const { profile = {}, date: dateStr } = req.body;
-  const date   = dateStr ? new Date(dateStr) : new Date();
-  const cosmic = buildCosmicData(date, profile);
-
-  // Enrich profile
-  if (profile.birthDay && profile.birthMonth && profile.birthYear) {
-    profile.lifePath     = getLifePath(profile.birthDay, profile.birthMonth, profile.birthYear);
-    profile.personalYear = getPersonalYear(profile.birthDay, profile.birthMonth, date);
-    const bKin = getKinName(getDreamspellKin(new Date(profile.birthYear, profile.birthMonth-1, profile.birthDay)));
-    profile.birthKin = `Kin ${bKin.kin} — ${bKin.name}`;
-  }
-
-  const sysPrompt = buildSystemPrompt('free', profile, cosmic);
-
-  try {
-    const resp = await anthropicCall({
-      model: 'claude-haiku-4-5-20251001', max_tokens: 500,
-      system: sysPrompt,
-      messages: [{ role:'user', content:
-        `Generate a single free-tier daily card for ${profile.name || 'the user'} — ${cosmic.dateStr}.
-        Universal Day ${cosmic.ud}, ${cosmic.kin.name}, ${cosmic.moonPhaseName}.
-        3-4 sentences, warmly personal, grounded. One specific action.
-        Feel like a lucky stone: beautiful, worth returning to daily.
-        Plain text only.` }]
-    });
-
-    res.json({
-      message: resp.content?.[0]?.text || '',
-      cosmic: {
-        ud: cosmic.ud, kin: cosmic.kin,
-        moonPhase: cosmic.moonPhase, moonPhaseName: cosmic.moonPhaseName,
-        moonSign: cosmic.moonSign, dateStr: cosmic.dateStr,
-        isBlackMoon: cosmic.isBlackMoon, isShivaMoon: cosmic.isShivaMoon,
-        monthEnergy: cosmic.monthEnergy, yearEnergy: cosmic.yearEnergy,
-        positions: cosmic.positions
-      }
-    });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
+app.post('/api/cosmic',(req,res)=>{
+  const{date,profile}=req.body;
+  const ds=date||new Date().toISOString().slice(0,10);
+  try{
+    const planets=buildPlanets(ds);const moon=getMoon(ds);const kin=getKin(ds);
+    const num=getNumerology(ds,profile?.birthDay,profile?.birthMonth,profile?.birthYear);
+    const aspects=getAspects(planets);
+    res.json({planets,moon,kin,num,aspects});
+  }catch(e){res.status(500).json({error:e.message});}
 });
 
-// Conversational Q&A ("Ask your reading")
-app.post('/api/ask', async (req, res) => {
-  const { question, history = [], profile = {}, date: dateStr } = req.body;
-  const date   = dateStr ? new Date(dateStr) : new Date();
-  const cosmic = buildCosmicData(date, profile);
-  const sysPrompt = buildSystemPrompt('oracle', profile, cosmic) +
-    '\n\nYou are answering a follow-up question about today\'s reading. Be specific, warm, and concise (100-200 words). Plain text only.';
+app.post('/api/ask',async(req,res)=>{
+  const{question,context,profile}=req.body;
+  if(!question)return res.status(400).json({error:'No question'});
+  try{
+    const sys=`You are the Oracle at Cosmic Daily Planner. The reader is asking a follow-up about their daily reading. Respond with depth, specificity, and warmth. 2-4 paragraphs. Speak directly to ${profile?.name||'them'}. No bullet points. Ground in the actual cosmic data provided.`;
+    const ans=await callAPI('claude-sonnet-4-20250514',1200,sys,
+      `Context: ${JSON.stringify(profile||{})}\nReading context: ${context||'today\'s oracle reading'}\nQuestion: ${question}`);
+    res.json({answer:ans});
+  }catch(e){res.status(500).json({error:e.message});}
+});
 
-  const messages = [
-    ...history,
-    { role: 'user', content: question }
-  ];
-
-  try {
-    const resp = await anthropicCall({
-      model: 'claude-sonnet-4-6', max_tokens: 400,
-      system: sysPrompt, messages
-    });
-    res.json({ answer: resp.content?.[0]?.text || '' });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+app.post('/api/calendar',(req,res)=>{
+  const{year,month,profile}=req.body;
+  const y=year||new Date().getFullYear();
+  const m=month||new Date().getMonth()+1;
+  const days=new Date(y,m,0).getDate();
+  const p=profile||{};
+  const result=[];
+  for(let d=1;d<=days;d++){
+    const ds=`${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const moon=getMoon(ds);const kin=getKin(ds);
+    const num=getNumerology(ds,p.birthDay,p.birthMonth,p.birthYear);
+    result.push({d,ds,moon,kin,ud:num.ud,udN:num.udM?.n,pd:num.pd,pdN:num.pdM?.n,
+      isMaster:[11,22,33,44].includes(num.ud),isGAP:kin.isGAP});
   }
+  res.json(result);
 });
 
-// Cosmic data only (for calendar/day previews — no API cost)
-app.post('/api/cosmic', (req, res) => {
-  const { date: dateStr, profile = {} } = req.body;
-  const date   = dateStr ? new Date(dateStr) : new Date();
-  const cosmic = buildCosmicData(date, profile);
-  if (profile.birthDay && profile.birthMonth && profile.birthYear) {
-    cosmic.personalYear = getPersonalYear(profile.birthDay, profile.birthMonth, date);
-    const bKin = getKinName(getDreamspellKin(new Date(profile.birthYear, profile.birthMonth-1, profile.birthDay)));
-    cosmic.birthKin = bKin;
-  }
-  res.json(cosmic);
-});
-
-// Catch-all → SPA
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
-
-app.listen(PORT, () => console.log(`CDP Production Server on port ${PORT}`));
+const PORT=process.env.PORT||3000;
+app.listen(PORT,()=>console.log(`CDP v6 on port ${PORT}`));

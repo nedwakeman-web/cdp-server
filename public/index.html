@@ -2,1590 +2,1055 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
 <title>Cosmic Daily Planner</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400;1,600&family=EB+Garamond:ital,wght@0,400;0,500;1,400;1,500&display=swap" rel="stylesheet">
 <style>
-/* ══════════════════════════════════════════
-   DESIGN SYSTEM — CDP Production
-   Scholarly foundations: Aldana 2022, Tarnas 2006
-   USNO moon data · JPL planetary positions
-══════════════════════════════════════════ */
-@import url('https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&display=swap');
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg:#0D1E33;--bg2:#122440;--bg3:#192E4A;--bg4:#08131F;
+  --gold:#C9A050;--gold2:#E8C878;--gold3:rgba(201,160,80,0.18);--gold4:rgba(201,160,80,0.07);
+  --teal:#81CDB6;--teal2:rgba(129,205,182,0.18);--teal3:rgba(129,205,182,0.07);
+  --text:#F0E6CC;--text2:#C8BAA0;--text3:#7E7262;
+  --div:rgba(240,230,204,0.10);--div2:rgba(240,230,204,0.06);
+  --red:#cc4444;--rdark:#1c0808;
+}
+html{font-size:20px;-webkit-text-size-adjust:none}
+body{background:var(--bg);color:var(--text);font-family:'EB Garamond',Georgia,serif;
+  line-height:1.8;min-height:100vh;transition:background .3s,color .3s}
+body.light{--bg:#F5F0E8;--bg2:#EDE6D6;--bg3:#E4DBC8;--bg4:#F8F4EC;
+  --text:#1A1208;--text2:#3D3220;--text3:#7A6A50;--div:rgba(0,0,0,0.10);--div2:rgba(0,0,0,0.06)}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-thumb{background:var(--gold3)}
 
-:root {
-  /* Light (reading) mode */
-  --bg:         #F5F0E8;
-  --bg-card:    #FDFAF4;
-  --bg-subtle:  #EEE8DC;
-  --text:       #1A1410;
-  --text-mid:   #3D342A;
-  --text-dim:   #7A6E62;
-  --gold:       #8B6914;
-  --gold-light: #B8880A;
-  --gold-border:#C9A050;
-  --gold-bg:    rgba(185,140,60,0.08);
-  --teal:       #2A7A6A;
-  --teal-light: #3D9A87;
-  --teal-bg:    rgba(42,122,106,0.08);
-  --teal-border:rgba(42,122,106,0.25);
-  --red:        #8B2020;
-  --divider:    rgba(26,20,16,0.12);
-  --shadow:     rgba(26,20,16,0.06);
-  --dot-full:   #1A1410;
-  --dot-empty:  #CCC5BB;
-  /* Planets */
-  --col-sun:    #B8880A; --col-moon:#2A7A6A; --col-merc:#4A6A8A;
-  --col-ven:    #8B4070; --col-mars:#8B2020; --col-jup: #4A4A8A;
-  --col-sat:    #5A4A3A; --col-ura: #2A6A8A; --col-nep: #3A4A7A;
-  --col-plu:    #6A2A6A;
-}
-body.dark {
-  --bg:         #0D1E33; --bg-card:#142740; --bg-subtle:#1C3454;
-  --text:       #F5EDD8; --text-mid:#D4C8B0; --text-dim:#8A7E70;
-  --gold:       #C9A050; --gold-light:#E0BF80; --gold-border:rgba(201,160,80,0.35);
-  --gold-bg:    rgba(201,160,80,0.10);
-  --teal:       #81CDB6; --teal-light:#A0DBC8; --teal-bg:rgba(129,205,182,0.10);
-  --teal-border:rgba(129,205,182,0.30); --divider:rgba(245,237,216,0.12);
-  --dot-full:   #F5EDD8; --dot-empty:#3A4050;
-}
+/* ── TOPBAR ── */
+.topbar{background:var(--bg4);border-bottom:1px solid var(--div);
+  padding:12px 24px;display:flex;align-items:center;justify-content:space-between;
+  position:sticky;top:0;z-index:100;backdrop-filter:blur(12px)}
+.brand{font-family:'Cormorant Garamond',serif;font-size:11px;
+  letter-spacing:.55em;text-transform:uppercase;color:var(--gold);font-weight:400}
+.nav{display:flex;gap:6px;align-items:center}
+.npill{padding:6px 16px;border:1px solid var(--div);background:none;color:var(--text3);
+  font-size:10px;letter-spacing:.25em;text-transform:uppercase;border-radius:2px;
+  cursor:pointer;font-family:'EB Garamond',serif;transition:all .25s}
+.npill:hover,.npill.on{border-color:var(--gold3);color:var(--gold);background:var(--gold4)}
+.thm{background:none;border:1px solid var(--div);color:var(--text3);
+  width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:15px;
+  display:flex;align-items:center;justify-content:center;transition:all .25s}
+.thm:hover{border-color:var(--gold);color:var(--gold)}
 
-* { box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent }
-html { font-size:16px }
-body {
-  background:var(--bg); color:var(--text);
-  font-family:'EB Garamond', Georgia, serif;
-  line-height:1.7; transition:background .3s, color .3s;
-  min-height:100vh;
-}
+/* ── SCREENS ── */
+.screen{display:none}.screen.on{display:block}
 
-/* Scrollbar */
-::-webkit-scrollbar { width:4px }
-::-webkit-scrollbar-thumb { background:var(--gold-border); border-radius:2px }
+/* ══ READING SCREEN ══ */
+#sr{max-width:840px;margin:0 auto;padding:0 24px 100px}
 
-/* ══════════════════════════════════════════
-   TOP BAR
-══════════════════════════════════════════ */
-.topbar {
-  background:var(--bg-card);
-  border-bottom:1px solid var(--divider);
-  padding:10px 20px;
-  display:flex; align-items:center; justify-content:space-between;
-  position:sticky; top:0; z-index:100;
-}
-.topbar-brand {
-  font-family:'Cormorant Garamond',serif;
-  font-size:11px; letter-spacing:0.4em; text-transform:uppercase;
-  color:var(--gold); font-weight:400;
-}
-.topbar-nav { display:flex; gap:6px; align-items:center }
-.nav-pill {
-  padding:4px 12px; border:1px solid var(--divider);
-  background:none; color:var(--text-dim); font-size:10px;
-  letter-spacing:0.2em; text-transform:uppercase;
-  border-radius:2px; cursor:pointer; font-family:'EB Garamond',serif;
-  transition:all .2s;
-}
-.nav-pill:hover, .nav-pill.active {
-  border-color:var(--gold-border); color:var(--gold); background:var(--gold-bg);
-}
-.theme-btn {
-  background:none; border:1px solid var(--divider); color:var(--text-dim);
-  width:28px; height:28px; border-radius:50%; cursor:pointer; font-size:13px;
-  display:flex; align-items:center; justify-content:center; transition:all .2s;
-}
-.theme-btn:hover { border-color:var(--gold-border); color:var(--gold) }
+.r-head{text-align:center;padding:44px 0 32px;border-bottom:1px solid var(--div);margin-bottom:32px}
+.r-meta{font-size:10px;letter-spacing:.5em;text-transform:uppercase;color:var(--text3);margin-bottom:10px}
+.r-date{font-family:'Cormorant Garamond',serif;font-size:38px;color:var(--gold);
+  font-weight:300;letter-spacing:.04em;margin-bottom:6px}
+.r-loc{font-size:12px;color:var(--text3);letter-spacing:.2em}
 
-/* ══════════════════════════════════════════
-   SCREENS
-══════════════════════════════════════════ */
-.screen { display:none }
-.screen.active { display:block }
-
-/* ══════════════════════════════════════════
-   READING SCREEN
-══════════════════════════════════════════ */
-#screen-reading { max-width:800px; margin:0 auto; padding:0 20px 60px }
-
-/* Reading header */
-.reading-head {
-  text-align:center; padding:32px 0 24px;
-  border-bottom:1px solid var(--divider); margin-bottom:28px;
-}
-.rh-meta {
-  font-size:10px; letter-spacing:0.35em; text-transform:uppercase;
-  color:var(--text-dim); margin-bottom:6px;
-}
-.rh-date {
-  font-family:'Cormorant Garamond',serif; font-size:32px;
-  color:var(--gold); font-weight:300; letter-spacing:0.05em;
-  margin-bottom:4px;
-}
-.rh-location { font-size:11px; color:var(--text-dim); letter-spacing:0.25em }
-
-/* Four data widgets */
-.widget-row {
-  display:grid; grid-template-columns:repeat(4,1fr); gap:12px;
-  margin-bottom:28px;
-}
-@media(max-width:600px) { .widget-row { grid-template-columns:repeat(2,1fr) } }
-.widget {
-  border:1px solid var(--divider); background:var(--bg-card);
-  padding:14px 12px; text-align:center; border-radius:2px;
-}
-.widget-icon { font-size:22px; display:block; margin-bottom:6px }
-.widget-label {
-  font-size:8px; letter-spacing:0.3em; text-transform:uppercase;
-  color:var(--text-dim); display:block; margin-bottom:5px;
-}
-.widget-value {
-  font-family:'Cormorant Garamond',serif;
-  font-size:13px; color:var(--text-mid); font-weight:400; line-height:1.3;
-}
-.widget-sub { font-size:10px; color:var(--text-dim); margin-top:3px; display:block }
-
-/* Synthesis */
-.synthesis {
-  font-family:'Cormorant Garamond',serif; font-style:italic;
-  font-size:20px; line-height:1.65; text-align:center;
-  color:var(--text-mid); padding:24px 32px;
-  border-top:1px solid var(--divider); border-bottom:1px solid var(--divider);
-  margin-bottom:28px;
-}
-@media(max-width:600px) { .synthesis { font-size:17px; padding:20px 16px } }
-
-/* Tier selector */
-.tier-row {
-  display:flex; gap:6px; margin-bottom:24px;
-  overflow-x:auto; padding-bottom:4px;
-}
-.tier-btn {
-  flex-shrink:0; padding:6px 14px; border:1px solid var(--divider);
-  background:none; color:var(--text-dim); font-size:10px; letter-spacing:0.2em;
-  cursor:pointer; border-radius:2px; font-family:'EB Garamond',serif;
-  transition:all .2s; text-transform:uppercase;
-}
-.tier-btn.active { background:var(--gold-bg); border-color:var(--gold-border); color:var(--gold) }
-.tier-btn.locked { opacity:.4; cursor:not-allowed }
-
-/* Generate button */
-.generate-btn {
-  display:block; width:100%; padding:14px; text-align:center;
-  background:var(--gold-bg); border:1px solid var(--gold-border);
-  color:var(--gold); font-size:12px; letter-spacing:0.25em;
-  text-transform:uppercase; cursor:pointer; font-family:'EB Garamond',serif;
-  transition:all .3s; border-radius:2px; margin-bottom:24px;
-}
-.generate-btn:hover { background:rgba(185,140,60,0.15) }
-.generate-btn:disabled { opacity:.5; cursor:not-allowed }
-
-/* Section containers */
-.section {
-  margin-bottom:28px; padding-bottom:28px;
-  border-bottom:1px solid var(--divider);
-}
-.section:last-child { border-bottom:none }
-
-.section-header {
-  display:flex; align-items:baseline; gap:10px; margin-bottom:14px;
-}
-.section-icon { font-size:18px; flex-shrink:0 }
-.section-label {
-  font-size:9px; letter-spacing:0.35em; text-transform:uppercase;
-  color:var(--teal); font-weight:400; flex-shrink:0;
-}
-.section-title {
-  font-family:'Cormorant Garamond',serif; font-size:16px;
-  color:var(--text-mid); margin-left:4px; flex:1;
-}
-.section-body {
-  font-size:16px; color:var(--text-mid); line-height:1.75; margin-top:6px;
-}
-.section-body p { margin-bottom:12px }
-.section-body p:last-child { margin-bottom:0 }
-
-/* Shadow work */
-.shadow-box {
-  background:var(--bg-subtle); padding:20px 24px; border-radius:2px;
-  font-family:'Cormorant Garamond',serif; font-style:italic;
-  font-size:17px; color:var(--text-mid); line-height:1.8;
-}
-
-/* Numerology three energies */
-.three-energies {
-  display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-top:14px;
-}
-.energy-cell {
-  border:1px solid var(--divider); padding:14px 10px; text-align:center;
-  background:var(--bg-card); border-radius:2px;
-}
-.energy-cell .en-num {
-  font-family:'Cormorant Garamond',serif; font-size:36px;
-  color:var(--gold); display:block; line-height:1;
-}
-.energy-cell .en-num.master { color:var(--teal); font-size:28px }
-.energy-cell .en-lbl { font-size:8px; letter-spacing:0.2em; color:var(--text-dim); text-transform:uppercase }
-.energy-cell .en-name { font-size:12px; color:var(--text-mid); margin-top:5px; display:block }
-
-/* Three times */
-.times-row { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-top:14px }
-.time-cell {
-  border:1px solid var(--teal-border); background:var(--teal-bg);
-  padding:14px 10px; text-align:center; border-radius:2px;
-}
-.time-cell .tc-icon { font-size:20px; display:block; margin-bottom:6px }
-.time-cell .tc-name { font-size:8px; letter-spacing:0.2em; color:var(--teal); text-transform:uppercase }
-.time-cell .tc-body { font-size:13px; color:var(--text-mid); margin-top:6px; line-height:1.55 }
-
-/* Planetary positions grid */
-.planets-grid {
-  display:grid; grid-template-columns:repeat(5,1fr); gap:0;
-  border:1px solid var(--divider); border-radius:2px; overflow:hidden;
-}
-@media(max-width:600px) { .planets-grid { grid-template-columns:repeat(2,1fr) } }
-.planet-cell {
-  padding:12px 10px; border-right:1px solid var(--divider);
-  border-bottom:1px solid var(--divider); text-align:center;
-}
-.planet-cell:nth-child(5n), .planet-cell:nth-child(5n+1):last-child { border-right:none }
-@media(max-width:600px) {
-  .planet-cell:nth-child(2n) { border-right:none }
-}
-.pc-name {
-  font-size:9px; letter-spacing:0.2em; text-transform:uppercase;
-  color:var(--text-dim); display:block; margin-bottom:5px;
-}
-.pc-pos {
-  font-family:'Cormorant Garamond',serif; font-size:15px;
-  color:var(--text-mid); display:block; margin-bottom:4px;
-}
-.pc-note { font-size:10px; color:var(--text-dim); line-height:1.4 }
-
-/* Key aspects */
-.aspect-item { margin-bottom:20px; padding-bottom:20px; border-bottom:1px solid var(--divider) }
-.aspect-item:last-child { border-bottom:none; margin-bottom:0; padding-bottom:0 }
-.aspect-stars { color:var(--gold); letter-spacing:2px; font-size:12px; display:block; margin-bottom:6px }
-.aspect-title { font-size:13px; color:var(--text-mid); font-weight:500; margin-bottom:8px }
-.aspect-body  { font-size:15px; color:var(--text-mid); line-height:1.7 }
-
-/* Priorities */
-.priority-item { display:flex; gap:14px; margin-bottom:22px; padding-bottom:22px; border-bottom:1px solid var(--divider) }
-.priority-item:last-child { border-bottom:none; margin-bottom:0; padding-bottom:0 }
-.priority-num {
-  font-family:'Cormorant Garamond',serif; font-size:40px; color:var(--gold);
-  line-height:1; flex-shrink:0; min-width:30px; padding-top:2px;
-}
-.priority-content {}
-.priority-title { font-size:14px; color:var(--teal); margin-bottom:8px; font-weight:500 }
-.priority-body  { font-size:15px; color:var(--text-mid); line-height:1.7; margin-bottom:8px }
-.priority-action {
-  font-size:14px; color:var(--text);
-  padding:10px 14px; background:var(--bg-subtle);
-  border-left:3px solid var(--gold-border); border-radius:0 2px 2px 0;
-  font-style:italic;
-}
-
-/* Focus On / Ease Off */
-.focus-grid { display:grid; grid-template-columns:1fr 1fr; gap:20px }
-@media(max-width:500px) { .focus-grid { grid-template-columns:1fr } }
-.focus-col-title {
-  font-size:9px; letter-spacing:0.3em; text-transform:uppercase;
-  color:var(--text-dim); margin-bottom:12px; padding-bottom:8px;
-  border-bottom:1px solid var(--divider);
-}
-.focus-list { list-style:none }
-.focus-list li {
-  font-size:14px; color:var(--text-mid); padding:6px 0;
-  border-bottom:1px solid var(--divider); line-height:1.55;
-}
-.focus-list li:last-child { border-bottom:none }
-.focus-list li::before { content:'·'; color:var(--gold); margin-right:8px }
-.ease-list li::before  { content:'·'; color:var(--text-dim); margin-right:8px }
-
-/* Week ahead */
-.week-item { display:flex; gap:14px; padding:14px 0; border-bottom:1px solid var(--divider) }
-.week-item:last-child { border-bottom:none }
-.week-meta { flex-shrink:0; width:70px; text-align:right }
-.week-date { font-size:12px; color:var(--gold); font-weight:500; display:block }
-.week-ud   { font-size:11px; color:var(--text-dim) }
-.week-gap  { font-size:8px; color:var(--teal); letter-spacing:0.15em; text-transform:uppercase }
-.week-body { flex:1 }
-.week-kin  { font-size:12px; color:var(--teal); margin-bottom:5px }
-.week-text { font-size:15px; color:var(--text-mid); line-height:1.65 }
-
-/* Daily Gift */
-.gift-quote {
-  font-family:'Cormorant Garamond',serif; font-style:italic;
-  font-size:22px; color:var(--text-mid); line-height:1.55;
-  text-align:center; margin-bottom:8px;
-}
-.gift-attr { text-align:center; font-size:11px; color:var(--text-dim); letter-spacing:0.2em; margin-bottom:20px }
-.gift-body { font-size:16px; color:var(--text-mid); line-height:1.8 }
-
-/* Ask your reading */
-.ask-section {
-  background:var(--bg-card); border:1px solid var(--divider); border-radius:2px; padding:20px;
-}
-.ask-title { font-size:9px; letter-spacing:0.3em; text-transform:uppercase; color:var(--teal); margin-bottom:4px }
-.ask-sub   { font-size:13px; color:var(--text-dim); margin-bottom:14px }
-.ask-area  {
-  display:flex; gap:8px; align-items:flex-start;
-}
-.ask-input {
-  flex:1; background:var(--bg); border:1px solid var(--divider);
-  color:var(--text); padding:10px 12px; font-size:14px; font-family:'EB Garamond',serif;
-  border-radius:2px; outline:none; resize:none; min-height:44px; line-height:1.5;
-  transition:border-color .2s;
-}
-.ask-input:focus { border-color:var(--gold-border) }
-.ask-send {
-  background:var(--gold-bg); border:1px solid var(--gold-border);
-  color:var(--gold); padding:10px 16px; cursor:pointer; font-size:13px;
-  border-radius:2px; font-family:'EB Garamond',serif; transition:all .2s;
-  flex-shrink:0;
-}
-.ask-send:hover { background:rgba(185,140,60,0.2) }
-.ask-history { margin-top:16px }
-.ask-msg { padding:10px 0; border-bottom:1px solid var(--divider) }
-.ask-msg:last-child { border-bottom:none }
-.ask-msg .msg-q { font-size:14px; color:var(--text-dim); font-style:italic; margin-bottom:6px }
-.ask-msg .msg-a { font-size:15px; color:var(--text-mid); line-height:1.7 }
-
-/* Save / Print */
-.print-row { display:flex; gap:8px; margin-bottom:20px }
-.print-btn {
-  flex:1; padding:10px; text-align:center; border:1px solid var(--divider);
-  background:none; color:var(--text-dim); font-size:11px; letter-spacing:0.2em;
-  text-transform:uppercase; cursor:pointer; border-radius:2px; font-family:'EB Garamond',serif;
-  transition:all .2s;
-}
-.print-btn:hover { border-color:var(--gold-border); color:var(--gold) }
-
-/* Moon badge */
-.moon-badge {
-  display:inline-block; padding:2px 10px; border-radius:20px;
-  font-size:9px; letter-spacing:0.2em; text-transform:uppercase; margin-left:8px;
-}
-.mb-black { background:rgba(0,0,0,0.12); border:1px solid rgba(0,0,0,0.2); color:var(--text-dim) }
-.mb-shiva { background:var(--teal-bg); border:1px solid var(--teal-border); color:var(--teal) }
-.mb-full  { background:rgba(185,140,60,0.12); border:1px solid rgba(185,140,60,0.3); color:var(--gold) }
-.mb-new   { background:var(--bg-subtle); border:1px solid var(--divider); color:var(--text-dim) }
-.mb-portal{ background:rgba(100,60,180,0.08); border:1px solid rgba(100,60,180,0.2); color:#8060b0 }
+/* Four widget bar */
+.widgets{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:28px}
+@media(max-width:600px){.widgets{grid-template-columns:repeat(2,1fr)}}
+.wgt{border:1px solid var(--div);background:var(--bg2);padding:16px 12px;
+  text-align:center;border-radius:2px}
+.wgt-icon{font-size:22px;margin-bottom:6px}
+.wgt-label{font-size:9px;letter-spacing:.35em;text-transform:uppercase;color:var(--text3);margin-bottom:4px}
+.wgt-val{font-family:'Cormorant Garamond',serif;font-size:17px;color:var(--gold);font-weight:400;line-height:1.3}
+.wgt-sub{font-size:11px;color:var(--text3);margin-top:3px}
 
 /* Loading */
-.loading-state { text-align:center; padding:48px 20px }
-.loading-spinner {
-  width:32px; height:32px; border:2px solid var(--divider);
-  border-top-color:var(--gold); border-radius:50%;
-  animation:spin 1s linear infinite; margin:0 auto 16px;
-}
-@keyframes spin { to { transform:rotate(360deg) } }
-.loading-text { font-size:12px; color:var(--text-dim); letter-spacing:0.2em }
+.r-loading{text-align:center;padding:80px 20px}
+.load-moon{font-size:42px;animation:pulse 2s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:.4;transform:scale(1)}50%{opacity:1;transform:scale(1.08)}}
+.load-msg{font-size:14px;color:var(--text3);margin-top:16px;letter-spacing:.15em}
 
-/* Error */
-.error-state { text-align:center; padding:32px 20px; color:var(--text-dim) }
+/* Section cards */
+.r-section{background:var(--bg2);border:1px solid var(--div);border-radius:2px;
+  padding:28px 32px;margin-bottom:20px}
+@media(max-width:600px){.r-section{padding:20px 18px}}
+.sec-label{font-size:9px;letter-spacing:.5em;text-transform:uppercase;color:var(--text3);
+  margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.sec-label::after{content:'';flex:1;height:1px;background:var(--div)}
+.sec-hl{font-family:'Cormorant Garamond',serif;font-size:22px;color:var(--gold);
+  font-weight:400;margin-bottom:14px;line-height:1.35}
+.sec-body{color:var(--text2);font-size:1rem;line-height:1.85}
+.sec-body p{margin-bottom:1rem}
+.sec-body p:last-child{margin-bottom:0}
 
-/* Raw reading (fallback) */
-.raw-reading { font-size:16px; color:var(--text-mid); line-height:1.8; white-space:pre-wrap }
+/* Synthesis */
+.synthesis{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:1.3rem;
+  line-height:1.75;color:var(--text);text-align:center;padding:36px 28px;
+  border-bottom:1px solid var(--div);margin-bottom:28px}
 
-/* ══════════════════════════════════════════
-   CALENDAR SCREEN
-══════════════════════════════════════════ */
-#screen-calendar { max-width:800px; margin:0 auto; padding:0 16px 60px }
+/* Moon alert badge */
+.moon-badge{display:inline-block;padding:6px 16px;font-size:11px;
+  letter-spacing:.2em;text-transform:uppercase;border-radius:2px;margin-bottom:16px}
+.badge-black{background:rgba(80,0,0,0.4);border:1px solid rgba(200,80,80,0.3);color:#ff9999}
+.badge-shiva{background:rgba(0,60,80,0.4);border:1px solid rgba(80,200,180,0.3);color:var(--teal)}
 
-.cal-head {
-  display:flex; align-items:center; justify-content:space-between;
-  padding:18px 0 14px; border-bottom:1px solid var(--divider); margin-bottom:14px;
-}
-.cal-nav-btn {
-  background:none; border:1px solid var(--divider); color:var(--text-dim);
-  width:32px; height:32px; cursor:pointer; border-radius:2px; font-size:16px;
-  display:flex; align-items:center; justify-content:center; transition:all .2s;
-}
-.cal-nav-btn:hover { border-color:var(--gold-border); color:var(--gold) }
-.cal-month-info { text-align:center }
-.cal-month-name {
-  font-family:'Cormorant Garamond',serif; font-size:22px; color:var(--gold); display:block;
-}
-.cal-month-sub { font-size:10px; color:var(--text-dim); letter-spacing:0.18em }
+/* Three energies */
+.energies{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:20px}
+@media(max-width:580px){.energies{grid-template-columns:1fr}}
+.energy-card{border:1px solid var(--div);background:var(--bg3);padding:16px;border-radius:2px}
+.energy-time{font-size:9px;letter-spacing:.4em;text-transform:uppercase;color:var(--text3);margin-bottom:6px}
+.energy-num{font-family:'Cormorant Garamond',serif;font-size:32px;color:var(--gold);margin-bottom:4px;line-height:1}
+.energy-name{font-size:12px;color:var(--text2);margin-bottom:8px;font-style:italic}
+.energy-guidance{font-size:0.85rem;color:var(--text3);line-height:1.65}
 
-.cal-days-header {
-  display:grid; grid-template-columns:repeat(7,1fr);
-  gap:2px; margin-bottom:4px;
-}
-.cal-day-hdr { text-align:center; font-size:9px; color:var(--text-dim); letter-spacing:0.15em; padding:4px 0 }
+/* Two-column layout */
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+@media(max-width:600px){.two-col{grid-template-columns:1fr}}
+.col-card{border:1px solid var(--div);background:var(--bg3);padding:18px;border-radius:2px}
+.col-head{font-size:9px;letter-spacing:.4em;text-transform:uppercase;color:var(--text3);margin-bottom:12px}
+.col-item{font-size:0.9rem;color:var(--text2);margin-bottom:10px;padding-left:14px;
+  position:relative;line-height:1.6}
+.col-item::before{content:'·';position:absolute;left:0;color:var(--gold)}
 
-.cal-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:2px }
-.cal-cell {
-  min-height:64px; border:1px solid var(--divider); background:var(--bg-card);
-  border-radius:2px; cursor:pointer; padding:4px;
-  display:flex; flex-direction:column; transition:all .2s;
-  position:relative;
-}
-.cal-cell:hover { border-color:var(--gold-border) }
-.cal-cell.empty { background:transparent; border-color:transparent; cursor:default }
-.cal-cell.today { border-color:var(--teal) !important; background:var(--teal-bg) !important }
-.cal-cell.is-portal { border-color:rgba(100,60,180,0.4) !important }
-.cal-cell.is-master { background:var(--gold-bg) !important }
-.cal-cell.is-fullmoon { background:rgba(185,140,60,0.06) !important }
-.cal-cell.is-blackmoon { background:rgba(0,0,0,0.06) !important }
-.cal-cell.is-shiva { background:var(--teal-bg) !important }
+/* Planet grid */
+.planet-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:16px}
+@media(max-width:480px){.planet-grid{grid-template-columns:1fr}}
+.planet-row{display:flex;align-items:baseline;gap:10px;padding:8px 12px;
+  border:1px solid var(--div2);border-radius:2px;background:var(--bg3)}
+.planet-name{font-size:10px;letter-spacing:.2em;color:var(--text3);min-width:70px;text-transform:uppercase}
+.planet-pos{font-family:'Cormorant Garamond',serif;font-size:16px;color:var(--gold);min-width:100px}
+.planet-note{font-size:0.78rem;color:var(--text3);line-height:1.4;flex:1}
 
-.cc-top { display:flex; justify-content:space-between; align-items:flex-start }
-.cc-date { font-size:12px; color:var(--text); font-weight:500 }
-.cc-moon { font-size:11px }
-.cc-mid { display:flex; align-items:center; gap:3px; margin:2px 0 }
-.cc-dot { width:5px; height:5px; border-radius:50%; flex-shrink:0 }
-.cc-ud {
-  font-size:10px; color:var(--gold); background:var(--gold-bg);
-  padding:1px 3px; border-radius:2px; font-weight:500;
-}
-.cc-ud.master { color:var(--teal); background:var(--teal-bg) }
-.cc-badges { display:flex; gap:2px; flex-wrap:wrap; margin-top:auto }
-.cc-badge {
-  font-size:7px; padding:1px 3px; border-radius:2px; text-transform:uppercase;
-  letter-spacing:0.05em; line-height:1.3;
-}
-.ccb-p  { background:rgba(100,60,180,0.1); color:#8060b0 }
-.ccb-bm { background:rgba(0,0,0,0.08); color:var(--text-dim) }
-.ccb-sm { background:var(--teal-bg); color:var(--teal) }
-.ccb-m  { background:var(--gold-bg); color:var(--gold) }
+/* Aspects */
+.aspect-item{padding:14px 0;border-bottom:1px solid var(--div2)}
+.aspect-item:last-child{border-bottom:none}
+.aspect-head{display:flex;align-items:center;gap:12px;margin-bottom:8px}
+.aspect-dots{color:var(--gold);font-size:14px;letter-spacing:1px;min-width:80px}
+.aspect-label{font-family:'Cormorant Garamond',serif;font-size:16px;color:var(--text);flex:1}
+.aspect-body{font-size:0.88rem;color:var(--text2);line-height:1.75;padding-left:92px}
+@media(max-width:580px){.aspect-body{padding-left:0}}
 
-.cal-legend {
-  display:flex; flex-wrap:wrap; gap:12px; padding:14px 0;
-  border-top:1px solid var(--divider); margin-top:6px;
-}
-.legend-item { display:flex; align-items:center; gap:5px; font-size:11px; color:var(--text-dim) }
-.legend-swatch { width:8px; height:8px; border-radius:50% }
+/* Shadow work */
+.shadow-box{background:var(--bg4);border-left:2px solid var(--gold3);padding:20px 24px;
+  border-radius:0 2px 2px 0;margin-bottom:20px}
+.shadow-text{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:1.08rem;
+  color:var(--text2);line-height:1.85}
 
-/* ══════════════════════════════════════════
-   PROFILE SCREEN
-══════════════════════════════════════════ */
-#screen-profile { max-width:600px; margin:0 auto; padding:20px 20px 60px }
+/* Priorities */
+.priority-item{padding:20px 0;border-bottom:1px solid var(--div2)}
+.priority-item:last-child{border-bottom:none}
+.pri-num{font-family:'Cormorant Garamond',serif;font-size:48px;color:var(--gold3);
+  float:left;line-height:.85;margin-right:16px;margin-top:4px}
+.pri-title{font-family:'Cormorant Garamond',serif;font-size:18px;color:var(--gold);
+  margin-bottom:8px}
+.pri-body{font-size:0.9rem;color:var(--text2);line-height:1.8;margin-bottom:10px}
+.pri-action{font-size:0.85rem;color:var(--teal);background:var(--teal3);
+  border:1px solid var(--teal2);padding:8px 14px;border-radius:2px;font-style:italic}
 
-.profile-header { text-align:center; padding:20px 0 28px }
-.profile-header h2 {
-  font-family:'Cormorant Garamond',serif; font-size:28px; color:var(--gold);
-  font-weight:300;
-}
-.profile-header p { font-size:14px; color:var(--text-dim); margin-top:8px; line-height:1.65 }
+/* Time windows */
+.time-windows{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+@media(max-width:600px){.time-windows{grid-template-columns:1fr}}
+.tw-card{border:1px solid var(--div);background:var(--bg3);padding:18px;border-radius:2px}
+.tw-icon{font-size:20px;margin-bottom:8px}
+.tw-label{font-size:9px;letter-spacing:.4em;text-transform:uppercase;color:var(--text3);margin-bottom:8px}
+.tw-text{font-size:0.88rem;color:var(--text2);line-height:1.7}
 
-.profile-card { background:var(--bg-card); border:1px solid var(--divider); padding:24px; border-radius:2px; margin-bottom:20px }
-.pc-section-title {
-  font-size:9px; letter-spacing:0.3em; text-transform:uppercase;
-  color:var(--teal); margin-bottom:16px;
-  padding-bottom:8px; border-bottom:1px solid var(--divider);
-}
+/* Week ahead */
+.week-row{display:grid;grid-template-columns:70px 1fr auto;gap:12px;
+  padding:12px 0;border-bottom:1px solid var(--div2);align-items:start}
+.week-row:last-child{border-bottom:none}
+.week-date{font-size:0.82rem;color:var(--text3)}
+.week-kin{font-size:0.8rem;color:var(--gold3);margin-bottom:4px}
+.week-note{font-size:0.88rem;color:var(--text2);line-height:1.65}
+.week-ud{font-family:'Cormorant Garamond',serif;font-size:28px;color:var(--gold);text-align:center;line-height:1}
+.week-ud-label{font-size:9px;color:var(--text3);text-align:center;letter-spacing:.2em}
 
-.form-group { margin-bottom:18px }
-.form-label { font-size:10px; letter-spacing:0.2em; text-transform:uppercase; color:var(--text-dim); display:block; margin-bottom:7px }
-.form-row { display:flex; gap:8px }
-.form-input, .form-select {
-  background:var(--bg); border:1px solid var(--divider);
-  color:var(--text); padding:10px 12px; font-size:14px;
-  font-family:'EB Garamond',serif; border-radius:2px; outline:none;
-  transition:border-color .2s; width:100%;
-}
-.form-input:focus, .form-select:focus { border-color:var(--gold-border) }
-.form-select {
-  -webkit-appearance:none; cursor:pointer;
-  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='7' fill='%23888'%3E%3Cpath d='M0 0l5 7 5-7z'/%3E%3C/svg%3E");
-  background-repeat:no-repeat; background-position:right 10px center; padding-right:28px;
-}
-.form-textarea {
-  background:var(--bg); border:1px solid var(--divider);
-  color:var(--text); padding:10px 12px; font-size:14px;
-  font-family:'EB Garamond',serif; border-radius:2px; outline:none;
-  width:100%; min-height:100px; resize:vertical; line-height:1.6;
-  transition:border-color .2s;
-}
-.form-textarea:focus { border-color:var(--gold-border) }
+/* Daily gift */
+.gift-quote{font-family:'Cormorant Garamond',serif;font-style:italic;
+  font-size:1.3rem;color:var(--text);text-align:center;line-height:1.7;margin-bottom:12px}
+.gift-attr{font-size:11px;color:var(--text3);text-align:center;letter-spacing:.2em;margin-bottom:24px}
+.gift-meditation{font-size:0.9rem;color:var(--text2);line-height:1.85}
+.gift-meditation li{margin-bottom:6px;padding-left:20px;position:relative}
+.gift-meditation li::before{content:'✦';position:absolute;left:0;color:var(--gold);font-size:10px}
 
-.save-btn {
-  display:block; width:100%; padding:13px; text-align:center;
-  background:var(--gold-bg); border:1px solid var(--gold-border);
-  color:var(--gold); font-size:11px; letter-spacing:0.25em; text-transform:uppercase;
-  border-radius:2px; cursor:pointer; font-family:'EB Garamond',serif; transition:all .2s;
-}
-.save-btn:hover { background:rgba(185,140,60,0.15) }
+/* Closing line */
+.closing{font-family:'Cormorant Garamond',serif;font-style:italic;
+  font-size:1.1rem;color:var(--text3);text-align:center;padding:24px;
+  border:1px solid var(--div2);border-radius:2px;margin-bottom:20px}
 
-/* Profile results */
-.profile-results { display:grid; grid-template-columns:1fr 1fr; gap:12px }
-.pr-cell { background:var(--bg); border:1px solid var(--divider); padding:14px; border-radius:2px }
-.pr-label { font-size:9px; letter-spacing:0.2em; color:var(--text-dim); text-transform:uppercase; display:block; margin-bottom:6px }
-.pr-val { font-family:'Cormorant Garamond',serif; font-size:24px; color:var(--gold); display:block; margin-bottom:4px }
-.pr-desc { font-size:12px; color:var(--text-dim); line-height:1.5 }
+/* Sources */
+.sources-text{font-size:0.75rem;color:var(--text3);line-height:1.7;font-style:italic}
 
-/* ══════════════════════════════════════════
-   DAY MODAL
-══════════════════════════════════════════ */
-.modal-overlay {
-  position:fixed; inset:0; background:rgba(0,0,0,.55); z-index:200;
-  display:flex; flex-direction:column; justify-content:flex-end;
-  opacity:0; pointer-events:none; transition:opacity .25s; backdrop-filter:blur(3px);
-}
-.modal-overlay.open { opacity:1; pointer-events:all }
-.modal-sheet {
-  background:var(--bg-card); border-top:1px solid var(--divider);
-  border-radius:12px 12px 0 0; max-height:85vh; overflow-y:auto;
-  transform:translateY(100%); transition:transform .3s ease; padding:0 0 40px;
-}
-.modal-overlay.open .modal-sheet { transform:none }
-.modal-drag { width:36px; height:3px; background:var(--divider); border-radius:2px; margin:10px auto }
-.modal-hdr { padding:14px 20px 12px; border-bottom:1px solid var(--divider); position:sticky; top:0; background:var(--bg-card); z-index:10 }
-.modal-hdr-date { font-family:'Cormorant Garamond',serif; font-size:20px; color:var(--gold) }
-.modal-hdr-sub { font-size:11px; color:var(--text-dim); margin-top:3px }
-.modal-close { position:absolute; right:16px; top:16px; background:none; border:none; color:var(--text-dim); font-size:20px; cursor:pointer; padding:4px }
-.modal-body { padding:20px }
+/* Ask Oracle */
+.ask-section{margin-top:24px}
+.ask-label{font-size:9px;letter-spacing:.45em;text-transform:uppercase;color:var(--text3);
+  display:flex;align-items:center;gap:8px;margin-bottom:16px}
+.ask-label::after{content:'';flex:1;height:1px;background:var(--div)}
+.ask-box{display:flex;gap:10px}
+.ask-input{flex:1;background:var(--bg3);border:1px solid var(--div);color:var(--text);
+  font-family:'EB Garamond',serif;font-size:17px;padding:12px 16px;border-radius:2px;
+  outline:none;transition:border-color .2s}
+.ask-input:focus{border-color:var(--gold3)}
+.ask-input::placeholder{color:var(--text3)}
+.ask-btn{background:none;border:1px solid var(--gold3);color:var(--gold);
+  font-family:'EB Garamond',serif;font-size:12px;letter-spacing:.25em;text-transform:uppercase;
+  padding:12px 20px;border-radius:2px;cursor:pointer;transition:all .25s;white-space:nowrap}
+.ask-btn:hover{background:var(--gold4)}
+.ask-response{margin-top:16px;background:var(--bg4);border:1px solid var(--div);
+  padding:22px;border-radius:2px;font-size:0.95rem;color:var(--text2);line-height:1.85;display:none}
+.ask-response p{margin-bottom:.9rem}
+.ask-response p:last-child{margin-bottom:0}
+.ask-chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.chip{background:none;border:1px solid var(--div);color:var(--text3);
+  font-size:11px;padding:5px 12px;border-radius:2px;cursor:pointer;
+  font-family:'EB Garamond',serif;transition:all .2s}
+.chip:hover{border-color:var(--teal2);color:var(--teal)}
 
-/* ══════════════════════════════════════════
-   PRINT CSS
-══════════════════════════════════════════ */
-@media print {
-  .topbar, .tier-row, .generate-btn, .print-row, .ask-section,
-  .nav-pill, .theme-btn, #screen-calendar, #screen-profile,
-  .modal-overlay { display:none !important }
-  body { background:white; color:#111; font-size:12px }
-  .synthesis { font-size:16px }
-  .reading-head { padding:16px 0 }
-  #screen-reading { display:block !important; max-width:none; padding:0 }
+/* PDF buttons */
+.pdf-row{display:flex;gap:10px;margin-top:24px;justify-content:center;flex-wrap:wrap}
+.pdf-btn{background:none;border:1px solid var(--div);color:var(--text3);
+  font-family:'EB Garamond',serif;font-size:11px;letter-spacing:.2em;text-transform:uppercase;
+  padding:10px 20px;border-radius:2px;cursor:pointer;transition:all .25s;display:flex;gap:6px;align-items:center}
+.pdf-btn:hover{border-color:var(--gold);color:var(--gold)}
+
+/* GAP badge */
+.gap-badge{display:inline-block;padding:3px 10px;font-size:9px;letter-spacing:.3em;
+  text-transform:uppercase;background:rgba(129,205,182,0.15);border:1px solid var(--teal2);
+  color:var(--teal);border-radius:2px;margin-left:8px;vertical-align:middle}
+
+/* Master number badge */
+.master-badge{display:inline-block;padding:3px 10px;font-size:9px;letter-spacing:.3em;
+  text-transform:uppercase;background:var(--gold4);border:1px solid var(--gold3);
+  color:var(--gold);border-radius:2px;margin-left:8px;vertical-align:middle}
+
+/* ══ CALENDAR SCREEN ══ */
+#sc{max-width:900px;margin:0 auto;padding:0 24px 80px}
+.cal-head{text-align:center;padding:36px 0 24px}
+.cal-nav{display:flex;align-items:center;justify-content:center;gap:16px;margin-bottom:24px}
+.cal-nav-btn{background:none;border:1px solid var(--div);color:var(--text3);
+  padding:8px 20px;border-radius:2px;cursor:pointer;font-family:'EB Garamond',serif;
+  font-size:16px;transition:all .2s}
+.cal-nav-btn:hover{border-color:var(--gold);color:var(--gold)}
+.cal-month{font-family:'Cormorant Garamond',serif;font-size:28px;color:var(--gold);font-weight:300}
+.cal-legend{display:flex;flex-wrap:wrap;gap:14px;justify-content:center;margin-bottom:20px;font-size:11px;color:var(--text3)}
+.cal-legend span{display:flex;align-items:center;gap:5px}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.cal-dow{text-align:center;font-size:9px;letter-spacing:.3em;text-transform:uppercase;
+  color:var(--text3);padding:6px 0;margin-bottom:4px}
+.cal-day{background:var(--bg2);border:1px solid var(--div2);border-radius:2px;
+  padding:8px 6px;min-height:80px;cursor:pointer;transition:all .2s;position:relative}
+.cal-day:hover{border-color:var(--gold3);background:var(--bg3)}
+.cal-day.today{border-color:var(--gold);background:var(--gold4)}
+.cal-day.gap-day{border-left:3px solid var(--teal)}
+.cal-day.master-day{background:linear-gradient(135deg,var(--bg2),var(--gold4))}
+.cal-day.black-moon{background:linear-gradient(135deg,var(--bg2),rgba(80,0,0,0.2))}
+.cal-day.shiva-moon{background:linear-gradient(135deg,var(--bg2),var(--teal3))}
+.cal-dn{font-family:'Cormorant Garamond',serif;font-size:18px;color:var(--text);font-weight:300}
+.cal-moon{font-size:14px;position:absolute;top:6px;right:6px}
+.cal-ud{font-size:9px;color:var(--gold);letter-spacing:.1em}
+.cal-kin-dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-top:4px}
+.cal-badges{display:flex;flex-wrap:wrap;gap:3px;margin-top:4px}
+.cal-mini-badge{font-size:8px;padding:1px 5px;border-radius:1px;letter-spacing:.1em}
+
+/* Day detail modal */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:200;
+  align-items:center;justify-content:center;padding:20px}
+.modal-overlay.open{display:flex}
+.modal{background:var(--bg2);border:1px solid var(--div);border-radius:2px;
+  max-width:560px;width:100%;max-height:85vh;overflow-y:auto;padding:28px 24px}
+.modal-close{float:right;background:none;border:none;color:var(--text3);
+  font-size:22px;cursor:pointer;padding:0}
+.modal-close:hover{color:var(--text)}
+.modal-date{font-family:'Cormorant Garamond',serif;font-size:26px;color:var(--gold);margin-bottom:20px}
+.modal-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
+.modal-item{background:var(--bg3);border:1px solid var(--div2);padding:12px;border-radius:2px}
+.modal-item-label{font-size:9px;letter-spacing:.3em;text-transform:uppercase;color:var(--text3);margin-bottom:4px}
+.modal-item-val{font-family:'Cormorant Garamond',serif;font-size:16px;color:var(--gold)}
+.modal-item-sub{font-size:11px;color:var(--text3);margin-top:2px}
+.modal-open-btn{width:100%;padding:12px;background:none;border:1px solid var(--gold3);
+  color:var(--gold);font-family:'EB Garamond',serif;font-size:13px;letter-spacing:.2em;
+  text-transform:uppercase;border-radius:2px;cursor:pointer;transition:all .25s;margin-top:12px}
+.modal-open-btn:hover{background:var(--gold4)}
+
+/* ══ PROFILE SCREEN ══ */
+#sp{max-width:640px;margin:0 auto;padding:0 24px 80px}
+.profile-head{text-align:center;padding:44px 0 28px}
+.profile-title{font-family:'Cormorant Garamond',serif;font-size:30px;color:var(--gold);
+  font-weight:300;margin-bottom:8px}
+.profile-sub{font-size:13px;color:var(--text3);line-height:1.6}
+.form-section{background:var(--bg2);border:1px solid var(--div);border-radius:2px;
+  padding:24px;margin-bottom:16px}
+.form-section-title{font-size:9px;letter-spacing:.4em;text-transform:uppercase;
+  color:var(--text3);margin-bottom:18px;padding-bottom:10px;border-bottom:1px solid var(--div2)}
+.form-group{margin-bottom:18px}
+.form-label{font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--text3);
+  display:block;margin-bottom:7px}
+.form-input{width:100%;background:var(--bg3);border:1px solid var(--div);color:var(--text);
+  font-family:'EB Garamond',serif;font-size:17px;padding:10px 14px;border-radius:2px;
+  outline:none;transition:border-color .2s}
+.form-input:focus{border-color:var(--gold3)}
+.form-hint{font-size:11px;color:var(--text3);margin-top:5px;font-style:italic}
+.date-row{display:grid;grid-template-columns:1fr 2fr 1fr;gap:8px}
+.form-select{background:var(--bg3);border:1px solid var(--div);color:var(--text);
+  font-family:'EB Garamond',serif;font-size:17px;padding:10px 14px;border-radius:2px;
+  width:100%;outline:none}
+.sig-display{background:var(--bg4);border:1px solid var(--div);padding:20px;
+  border-radius:2px;text-align:center;margin-top:16px}
+.sig-kin{font-family:'Cormorant Garamond',serif;font-size:24px;color:var(--gold);margin-bottom:4px}
+.sig-lp{font-size:13px;color:var(--text3)}
+.save-btn{width:100%;padding:14px;background:none;border:1px solid var(--gold);
+  color:var(--gold);font-family:'EB Garamond',serif;font-size:13px;letter-spacing:.3em;
+  text-transform:uppercase;border-radius:2px;cursor:pointer;transition:all .25s}
+.save-btn:hover{background:var(--gold4)}
+
+/* ── PRINT ── */
+@media print{
+  .topbar,.nav,.ask-section,.pdf-row,.npill,#sc,#sp{display:none!important}
+  body{background:#fff;color:#111;font-size:11pt}
+  .r-section{border:none;page-break-inside:avoid}
+  .r-head{border:none}
+  .synthesis{color:#111;border:none}
+  .sec-label{color:#888}
+  .sec-hl{color:#8B6A20}
+  .sec-body,.modal-item-val,.week-note,.pri-body,.tw-text{color:#222}
+  .planet-note,.aspect-body,.gift-meditation{color:#333}
+  .sources-text{color:#666}
+  .two-col,.energies,.time-windows{display:grid}
 }
 </style>
 </head>
 <body>
 
-<!-- TOP BAR -->
-<nav class="topbar">
-  <div class="topbar-brand">Cosmic Daily Planner</div>
-  <div class="topbar-nav">
-    <button class="nav-pill active" onclick="showScreen('reading')">Reading</button>
-    <button class="nav-pill" onclick="showScreen('calendar')">Calendar</button>
-    <button class="nav-pill" onclick="showScreen('profile')">Profile</button>
-    <button class="theme-btn" onclick="toggleTheme()" title="Toggle dark/light mode">◑</button>
-  </div>
-</nav>
-
-<!-- ══ READING SCREEN ══ -->
-<div class="screen active" id="screen-reading">
-
-  <!-- Header -->
-  <div class="reading-head">
-    <div class="rh-meta" id="rh-meta">COSMIC DAILY PLANNER</div>
-    <div class="rh-date" id="rh-date">—</div>
-    <div class="rh-location" id="rh-location"></div>
-  </div>
-
-  <div style="max-width:800px;margin:0 auto;padding:0 20px">
-
-    <!-- Four Widgets -->
-    <div class="widget-row" id="widget-row">
-      <div class="widget"><span class="widget-icon">🌒</span><span class="widget-label">Moon</span><span class="widget-value" id="w-moon">—</span><span class="widget-sub" id="w-moon-sub"></span></div>
-      <div class="widget"><span class="widget-icon">✦</span><span class="widget-label">Day №</span><span class="widget-value" id="w-day">—</span><span class="widget-sub" id="w-day-sub">Numerology</span></div>
-      <div class="widget"><span class="widget-icon">☀️</span><span class="widget-label">Sun in</span><span class="widget-value" id="w-sun">—</span><span class="widget-sub" id="w-sun-sub"></span></div>
-      <div class="widget"><span class="widget-icon">◈</span><span class="widget-label">Dreamspell</span><span class="widget-value" id="w-kin">—</span><span class="widget-sub" id="w-kin-sub">Kin</span></div>
-    </div>
-
-    <!-- Tier selector -->
-    <div class="tier-row">
-      <button class="tier-btn active" data-tier="oracle">Oracle</button>
-      <button class="tier-btn" data-tier="mystic">Mystic</button>
-      <button class="tier-btn" data-tier="initiate">Initiate</button>
-      <button class="tier-btn" data-tier="seeker">Seeker</button>
-      <button class="tier-btn" data-tier="free">Free</button>
-    </div>
-
-    <!-- Print row -->
-    <div class="print-row">
-      <button class="print-btn" onclick="window.print()">⎙ Save as PDF</button>
-      <button class="print-btn" onclick="toggleTheme()">◑ Dark / Light</button>
-    </div>
-
-    <!-- Generate button -->
-    <button class="generate-btn" id="generate-btn" onclick="generateReading()">
-      ✦ Generate Today's Reading
-    </button>
-
-    <!-- Reading output area -->
-    <div id="reading-output"></div>
-
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="brand">Cosmic Daily Planner</div>
+  <div class="nav">
+    <button class="npill on" onclick="showScreen('sr',this)">Reading</button>
+    <button class="npill" onclick="showScreen('sc',this)">Calendar</button>
+    <button class="npill" onclick="showScreen('sp',this)">Profile</button>
+    <button class="thm" onclick="toggleTheme()" id="thmBtn">◑</button>
   </div>
 </div>
 
-<!-- ══ CALENDAR SCREEN ══ -->
-<div class="screen" id="screen-calendar">
+<!-- READING SCREEN -->
+<div id="sr" class="screen on">
+  <div id="readingContent">
+    <div style="max-width:840px;margin:0 auto;padding:0 24px">
+      <div class="r-loading" id="loadingDiv">
+        <div class="load-moon">☽</div>
+        <div class="load-msg" id="loadMsg">Consulting the ephemeris...</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CALENDAR SCREEN -->
+<div id="sc" class="screen">
   <div class="cal-head">
-    <button class="cal-nav-btn" onclick="calNav(-1)">‹</button>
-    <div class="cal-month-info">
-      <span class="cal-month-name" id="cal-month-name"></span>
-      <span class="cal-month-sub" id="cal-month-sub"></span>
+    <div class="cal-nav">
+      <button class="cal-nav-btn" onclick="changeMonth(-1)">‹</button>
+      <span class="cal-month" id="calMonthLabel"></span>
+      <button class="cal-nav-btn" onclick="changeMonth(1)">›</button>
     </div>
-    <button class="cal-nav-btn" onclick="calNav(1)">›</button>
-  </div>
-  <div class="cal-days-header">
-    <div class="cal-day-hdr">Sun</div><div class="cal-day-hdr">Mon</div>
-    <div class="cal-day-hdr">Tue</div><div class="cal-day-hdr">Wed</div>
-    <div class="cal-day-hdr">Thu</div><div class="cal-day-hdr">Fri</div>
-    <div class="cal-day-hdr">Sat</div>
-  </div>
-  <div class="cal-grid" id="cal-grid"></div>
-  <div class="cal-legend">
-    <div class="legend-item"><div class="legend-swatch" style="background:var(--teal)"></div>Today</div>
-    <div class="legend-item"><span style="font-size:11px">🌕</span> Full Moon</div>
-    <div class="legend-item"><span class="cc-badge ccb-bm">BM</span> Black Moon</div>
-    <div class="legend-item"><span class="cc-badge ccb-sm">SM</span> Shiva Moon</div>
-    <div class="legend-item"><span class="cc-badge ccb-p">P</span> Portal/GAP</div>
-    <div class="legend-item"><span class="cc-badge ccb-m">M</span> Master #</div>
-    <div class="legend-item">
-      <div class="legend-swatch" style="background:#b82020"></div>Red ·
-      <div class="legend-swatch" style="background:#bcc9d6;margin-left:4px"></div>White ·
-      <div class="legend-swatch" style="background:#2980b9;margin-left:4px"></div>Blue ·
-      <div class="legend-swatch" style="background:#c9a050;margin-left:4px"></div>Yellow
+    <div class="cal-legend">
+      <span><span style="display:inline-block;width:10px;height:10px;border-left:3px solid var(--teal);"></span> GAP Portal</span>
+      <span><span style="display:inline-block;width:10px;height:10px;background:var(--gold4);border:1px solid var(--gold3)"></span> Master Number</span>
+      <span>🌑 New Moon &nbsp; 🌕 Full Moon</span>
+      <span>⚠️ Black Moon &nbsp; ✨ Shiva Moon</span>
     </div>
   </div>
+  <div class="cal-grid" id="calGrid"></div>
 </div>
 
-<!-- ══ PROFILE SCREEN ══ -->
-<div class="screen" id="screen-profile">
-  <div class="profile-header">
-    <h2>Your Cosmic Profile</h2>
-    <p>Enter your birth details to unlock your Galactic Signature, Life Path,<br>
-    Personal Year, and fully personalised Oracle readings.</p>
+<!-- PROFILE SCREEN -->
+<div id="sp" class="screen">
+  <div class="profile-head">
+    <div class="profile-title">Your Cosmic Profile</div>
+    <div class="profile-sub">Enter your birth details to unlock your Galactic Signature,<br>Life Path, and fully personalised Oracle readings.</div>
   </div>
-
-  <div class="profile-card">
-    <div class="pc-section-title">Identity</div>
+  <div class="form-section">
+    <div class="form-section-title">Identity</div>
     <div class="form-group">
       <label class="form-label">Your Name</label>
-      <input class="form-input" type="text" id="p-name" placeholder="First name">
+      <input class="form-input" id="pName" placeholder="Full name" oninput="saveProfileField('name',this.value)">
     </div>
     <div class="form-group">
       <label class="form-label">Location</label>
-      <input class="form-input" type="text" id="p-location" placeholder="City, Country">
+      <input class="form-input" id="pLoc" placeholder="City, Country" oninput="saveProfileField('location',this.value)">
     </div>
     <div class="form-group">
-      <label class="form-label">Personal Context <span style="font-size:11px;font-weight:300;text-transform:none;letter-spacing:0">(optional — helps personalise Oracle readings)</span></label>
-      <textarea class="form-textarea" id="p-context" placeholder="Brief description of your current life chapter, projects, relationships, or any context that matters to you..."></textarea>
+      <label class="form-label">Personal Context <span style="font-style:italic;text-transform:none;letter-spacing:0">(optional — deepens Oracle readings)</span></label>
+      <textarea class="form-input" id="pCtx" rows="3" placeholder="Current life chapter, projects, relationships, anything that matters..." oninput="saveProfileField('context',this.value)" style="resize:vertical"></textarea>
     </div>
   </div>
-
-  <div class="profile-card">
-    <div class="pc-section-title">Birth Details</div>
+  <div class="form-section">
+    <div class="form-section-title">Birth Details</div>
     <div class="form-group">
       <label class="form-label">Date of Birth</label>
-      <div class="form-row">
-        <select class="form-select" id="p-bday" style="max-width:80px"></select>
-        <select class="form-select" id="p-bmonth">
-          <option value="">Month</option>
-          <option value="1">January</option><option value="2">February</option>
-          <option value="3">March</option><option value="4">April</option>
-          <option value="5">May</option><option value="6">June</option>
-          <option value="7">July</option><option value="8">August</option>
-          <option value="9">September</option><option value="10">October</option>
-          <option value="11">November</option><option value="12">December</option>
+      <div class="date-row">
+        <select class="form-select" id="pBD" onchange="calcSig()">
+          <option value="">Day</option>
+          ${Array.from({length:31},(_,i)=>`<option value="${i+1}">${i+1}</option>`).join('')}
         </select>
-        <select class="form-select" id="p-byear" style="max-width:90px"></select>
+        <select class="form-select" id="pBM" onchange="calcSig()">
+          <option value="">Month</option>
+          ${['January','February','March','April','May','June','July','August','September','October','November','December'].map((m,i)=>`<option value="${i+1}">${m}</option>`).join('')}
+        </select>
+        <select class="form-select" id="pBY" onchange="calcSig()">
+          <option value="">Year</option>
+          ${Array.from({length:100},(_,i)=>`<option value="${2010-i}">${2010-i}</option>`).join('')}
+        </select>
       </div>
     </div>
     <div class="form-group">
-      <label class="form-label">Birth Time <span style="font-style:italic;font-weight:300;letter-spacing:0;text-transform:none">(optional, for rising sign)</span></label>
-      <input class="form-input" type="time" id="p-btime">
+      <label class="form-label">Birth Time <span style="font-style:italic;text-transform:none;letter-spacing:0">(optional — for rising sign)</span></label>
+      <input class="form-input" id="pBT" type="time" oninput="saveProfileField('birthTime',this.value)">
+      <div class="form-hint">Used for Ascendant calculation at Mystic and Oracle tiers</div>
     </div>
-    <button class="save-btn" onclick="saveProfile()">✦ Save & Calculate My Cosmic Signature</button>
-  </div>
-
-  <div id="profile-results-section" style="display:none">
-    <div class="profile-card">
-      <div class="pc-section-title">Your Galactic Signature</div>
-      <div id="birth-kin-display"></div>
-    </div>
-    <div class="profile-card">
-      <div class="pc-section-title">Numerology Core</div>
-      <div class="profile-results" id="num-results"></div>
+    <div id="sigDisplay" class="sig-display" style="display:none">
+      <div class="sig-kin" id="sigKin"></div>
+      <div class="sig-lp" id="sigLP"></div>
     </div>
   </div>
+  <button class="save-btn" onclick="saveAndLoad()">✦ Save & Calculate My Cosmic Signature</button>
 </div>
 
-<!-- Day Detail Modal -->
-<div class="modal-overlay" id="day-modal" onclick="closeDayModal(event)">
-  <div class="modal-sheet" id="modal-sheet">
-    <div class="modal-drag"></div>
-    <div class="modal-hdr">
-      <div class="modal-hdr-date" id="modal-hdr-date"></div>
-      <div class="modal-hdr-sub" id="modal-hdr-sub"></div>
-      <button class="modal-close" onclick="closeDayModal()">✕</button>
-    </div>
-    <div class="modal-body" id="modal-body"></div>
-  </div>
+<!-- DAY MODAL -->
+<div class="modal-overlay" id="dayModal" onclick="if(event.target===this)closeModal()">
+  <div class="modal" id="dayModalContent"></div>
 </div>
 
 <script>
-/* ══════════════════════════════════════════════════════
-   CDP CLIENT — Complete calculation + rendering engine
-   Scholarly sources: Drayer 2002, Argüelles 1987,
-   USNO Moon Phase data, Law of Time Foundation
-══════════════════════════════════════════════════════ */
-
-const TODAY = new Date();
-const MONTHS_EN = ['January','February','March','April','May','June',
-                   'July','August','September','October','November','December'];
-const DAYS_EN   = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
-
-/* ── MOON PHASE ────────────────────────────────────── */
-const MOON_ANCHOR  = new Date(Date.UTC(2000,0,6,18,14,0));
-const LUNAR_CYCLE  = 29.530588853;
-
-function getMoonAge(d) {
-  const diff = (new Date(d.getFullYear(),d.getMonth(),d.getDate(),12) - MOON_ANCHOR) / 86400000;
-  let age = diff % LUNAR_CYCLE;
-  return age < 0 ? age + LUNAR_CYCLE : age;
-}
-function getMoonPhase(d) {
-  const a = getMoonAge(d);
-  if (a < 1.5)   return {key:'new_moon',     emoji:'🌑', name:'New Moon'};
-  if (a < 3.5)   return {key:'shiva_moon',   emoji:'🌒', name:'Shiva Moon ☽'};
-  if (a < 7.38)  return {key:'waxing_crescent',emoji:'🌒',name:'Waxing Crescent'};
-  if (a < 9.22)  return {key:'first_quarter',emoji:'🌓', name:'First Quarter'};
-  if (a < 14.0)  return {key:'waxing_gibbous',emoji:'🌔',name:'Waxing Gibbous'};
-  if (a < 16.0)  return {key:'full_moon',    emoji:'🌕', name:'Full Moon'};
-  if (a < 22.0)  return {key:'waning_gibbous',emoji:'🌖',name:'Waning Gibbous'};
-  if (a < 23.85) return {key:'last_quarter', emoji:'🌗', name:'Last Quarter'};
-  if (a < 27.53) return {key:'waning_crescent',emoji:'🌘',name:'Waning Crescent'};
-  return {key:'black_moon', emoji:'🌑', name:'Black Moon'};
-}
-
-/* ── DREAMSPELL ────────────────────────────────────── */
-const DS_ANCHOR     = new Date(2020,6,26);
-const DS_ANCHOR_KIN = 118;
-const SEALS = ['Dragon','Wind','Night','Seed','Serpent','WorldBridger','Hand','Star',
-               'Moon','Dog','Monkey','Human','Skywalker','Wizard','Eagle','Warrior',
-               'Earth','Mirror','Storm','Sun'];
-const SEAL_COLORS = ['Red','White','Blue','Yellow','Red','White','Blue','Yellow',
-                     'Red','White','Blue','Yellow','Red','White','Blue','Yellow',
-                     'Red','White','Blue','Yellow'];
-const TONES = ['Magnetic','Lunar','Electric','Self-Existing','Overtone','Rhythmic',
-               'Resonant','Galactic','Solar','Planetary','Spectral','Crystal','Cosmic'];
-const GAP_KINS = new Set([19,20,22,25,33,37,38,39,40,41,53,55,58,60,65,
-  93,94,95,96,98,100,101,104,107,108,113,116,118,119,
-  131,133,140,143,145,146,147,148,149,150,
-  152,160,162,163,165,168,182,196,211,222,225,227,240]);
-
-function getDSKin(date) {
-  const d    = new Date(date.getFullYear(),date.getMonth(),date.getDate());
-  const diff = Math.round((d - DS_ANCHOR) / 86400000);
-  return ((DS_ANCHOR_KIN - 1 + diff) % 260 + 260) % 260 + 1;
-}
-function getKinInfo(kin) {
-  const seal  = SEALS[(kin-1)%20];
-  const color = SEAL_COLORS[(kin-1)%20];
-  const tone  = TONES[(kin-1)%13];
-  return { kin, seal, color, tone, name:`${color} ${tone} ${seal}`, isGAP: GAP_KINS.has(kin) };
-}
-
-/* ── NUMEROLOGY ────────────────────────────────────── */
-function sumDigits(n) { return String(Math.abs(n)).split('').reduce((a,c)=>a+parseInt(c),0) }
-function reduceNum(n) {
-  let v=n;
-  while(v>9){ if([11,22,33,44].includes(v)) return v; v=sumDigits(v); if([11,22,33,44].includes(v)) return v; }
-  return v;
-}
-function getUD(d) { return reduceNum(d.getDate()+(d.getMonth()+1)+sumDigits(d.getFullYear())) }
-function getMonthEnergy(d) { return reduceNum(d.getMonth()+1) }
-function getYearEnergy(d)  { return reduceNum(sumDigits(d.getFullYear())) }
-function getPersonalYear(bDay,bMonth,d) { return reduceNum(bDay+bMonth+getYearEnergy(d)) }
-function getLifePath(bDay,bMonth,bYear) { return reduceNum(sumDigits(bDay)+sumDigits(bMonth)+sumDigits(bYear)) }
-
-const NUM_DATA = {
-  1: {name:'New Beginnings',  icon:'🌱', desc:'Start something new. Welcome fresh cycles with focused work.'},
-  2: {name:'Partnership',     icon:'🤝', desc:'Relationships, kindness, and union. Tend to partnerships.'},
-  3: {name:'Creativity',      icon:'✨', desc:'Artistic expression, social connections, and marketing flourish.'},
-  4: {name:'Foundation',      icon:'🏛', desc:'Work with honesty and integrity. Truth and structure are today\'s currency.'},
-  5: {name:'Learning',        icon:'📚', desc:'Intelligence and social intelligence. New lessons, meetings, connections.'},
-  6: {name:'Harmony',         icon:'🌸', desc:'Art, family, gentleness. A day to be kind and present with loved ones.'},
-  7: {name:'Karmic Gateway',  icon:'🔮', desc:'The portals open. Intense, karmic, magical. Solitude and creativity.'},
-  8: {name:'Power & Structure',icon:'⚡', desc:'Excellent for business, projects, career, structure, and finance.'},
-  9: {name:'Cosmic Completion',icon:'🌌', desc:'Portals open. Peaceful, blissful. Rest, channel higher wisdom.'},
-  11:{name:'Master — Magic',  icon:'🌟', desc:'Master portal. Unique magical day. Connect with the highest realms.'},
-  22:{name:'Master — Builder', icon:'🔥', desc:'Master portal. Intense fast-paced energy. Major projects and transformation.'},
-  33:{name:'Master — Teacher', icon:'💫', desc:'Master portal. Deep creativity and intuition. Karmic or amazing.'},
-  44:{name:'Master — Architect',icon:'🏗',desc:'Master portal. The energy of 8 amplified — business and structure excel.'}
-};
-
-/* ── SUN SIGN ──────────────────────────────────────── */
-function getSunSign(m,d) {
-  const md=m*100+d;
-  if(md>=1222||md<=119) return 'Capricorn';
-  if(md<=218) return 'Aquarius'; if(md<=320) return 'Pisces';
-  if(md<=419) return 'Aries'; if(md<=520) return 'Taurus';
-  if(md<=620) return 'Gemini'; if(md<=722) return 'Cancer';
-  if(md<=822) return 'Leo'; if(md<=922) return 'Virgo';
-  if(md<=1022) return 'Libra'; if(md<=1121) return 'Scorpio';
-  return 'Sagittarius';
-}
-
-/* ══════════════════════════════════════════════════════
-   UI STATE
-══════════════════════════════════════════════════════ */
-let activeTier  = 'oracle';
-let calYear     = TODAY.getFullYear();
-let calMonth    = TODAY.getMonth();
-let askHistory  = [];
+// ══════════════════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════════════════
+let profile = JSON.parse(localStorage.getItem('cdp_profile') || '{}');
 let currentReading = null;
-const profile   = () => JSON.parse(localStorage.getItem('cdp_profile') || '{}');
+let calYear = new Date().getFullYear();
+let calMonth = new Date().getMonth() + 1;
+const TODAY = new Date().toISOString().slice(0,10);
 
-const isNetlify = window.location.hostname.includes('netlify');
-const API_BASE  = isNetlify ? '/.netlify/functions' : '/api';
-const READING_EP = `${API_BASE}/reading`;
-const DAILY_EP   = `${API_BASE}/daily_message`;
-const ASK_EP     = `${API_BASE}/ask`;
-
-/* ══════════════════════════════════════════════════════
-   NAVIGATION
-══════════════════════════════════════════════════════ */
-function showScreen(id) {
-  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
-  document.querySelectorAll('.nav-pill').forEach(b=>b.classList.remove('active'));
-  document.getElementById('screen-'+id).classList.add('active');
-  document.querySelectorAll('.nav-pill').forEach(b=>{
-    if(b.textContent.trim().toLowerCase().startsWith(id.slice(0,3))) b.classList.add('active');
-  });
-  if(id==='calendar') renderCalendar();
+// ══════════════════════════════════════════════════════════
+// NAVIGATION
+// ══════════════════════════════════════════════════════════
+function showScreen(id, btn) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('on'));
+  document.querySelectorAll('.npill').forEach(b => b.classList.remove('on'));
+  document.getElementById(id).classList.add('on');
+  if (btn) btn.classList.add('on');
+  if (id === 'sc') renderCalendar();
 }
 
 function toggleTheme() {
-  document.body.classList.toggle('dark');
-  localStorage.setItem('cdp_theme', document.body.classList.contains('dark') ? 'dark' : 'light');
+  document.body.classList.toggle('light');
+  document.getElementById('thmBtn').textContent = document.body.classList.contains('light') ? '◕' : '◑';
 }
 
-document.querySelectorAll('.tier-btn').forEach(btn => {
-  btn.addEventListener('click', function() {
-    if(this.classList.contains('locked')) return;
-    document.querySelectorAll('.tier-btn').forEach(b=>b.classList.remove('active'));
-    this.classList.add('active');
-    activeTier = this.dataset.tier;
-    // Reset reading output
-    document.getElementById('reading-output').innerHTML = '';
-    currentReading = null;
-    askHistory = [];
-  });
-});
-
-/* ══════════════════════════════════════════════════════
-   HEADER & WIDGETS — rendered immediately
-══════════════════════════════════════════════════════ */
-function renderHeader() {
-  const d   = TODAY;
-  const p   = profile();
-  const kin = getKinInfo(getDSKin(d));
-  const mp  = getMoonPhase(d);
-  const ud  = getUD(d);
-
-  // Header
-  document.getElementById('rh-meta').textContent = 'COSMIC DAILY PLANNER · BST (UTC+1)';
-  document.getElementById('rh-date').textContent  = `${DAYS_EN[d.getDay()]}, ${d.getDate()} ${MONTHS_EN[d.getMonth()]} ${d.getFullYear()}`;
-  document.getElementById('rh-location').textContent = p.location ? (p.location + (p.name ? ' · ' + p.name.toUpperCase() + "'S DAILY READING" : '')) : '';
-
-  // Moon widget
-  const moonAge = getMoonAge(d);
-  const daysToFull = moonAge < 14 ? (14 - moonAge).toFixed(1) : '';
-  document.getElementById('w-moon').textContent = `${mp.emoji} ${mp.name}`;
-  document.getElementById('w-moon-sub').textContent = daysToFull ? `${daysToFull}d to Full` : `Day ${moonAge.toFixed(0)} of cycle`;
-  const moonBadge = mp.key === 'black_moon' ? 'mb-black' : mp.key === 'shiva_moon' ? 'mb-shiva' : mp.key === 'full_moon' ? 'mb-full' : '';
-  if(moonBadge) document.getElementById('w-moon').innerHTML += ` <span class="moon-badge ${moonBadge}">${mp.name.replace(' ☽','')}</span>`;
-
-  // Day № widget
-  const isMaster = [11,22,33,44].includes(ud);
-  document.getElementById('w-day').textContent = 'Day ' + ud;
-  document.getElementById('w-day-sub').textContent = (NUM_DATA[ud]?.name || '') + (isMaster ? ' ✦' : '');
-
-  // Sun widget — approximate (server will give exact)
-  const sunApprox = getSunSign(d.getMonth()+1, d.getDate());
-  document.getElementById('w-sun').textContent = sunApprox;
-  document.getElementById('w-sun-sub').textContent = '☀️ ' + Math.round(((d - new Date(d.getFullYear(),2,21))/(1000*86400)) % 365 % 30) + '°';
-
-  // Kin widget
-  document.getElementById('w-kin').textContent = `${kin.kin} — ${kin.name}`;
-  document.getElementById('w-kin-sub').textContent = (kin.isGAP ? '⬡ Galactic Portal · ' : '') + 'Dreamspell';
+// ══════════════════════════════════════════════════════════
+// PROFILE
+// ══════════════════════════════════════════════════════════
+function loadProfileUI() {
+  document.getElementById('pName').value = profile.name || '';
+  document.getElementById('pLoc').value = profile.location || '';
+  document.getElementById('pCtx').value = profile.context || '';
+  if (profile.birthDay) document.getElementById('pBD').value = profile.birthDay;
+  if (profile.birthMonth) document.getElementById('pBM').value = profile.birthMonth;
+  if (profile.birthYear) document.getElementById('pBY').value = profile.birthYear;
+  if (profile.birthTime) document.getElementById('pBT').value = profile.birthTime;
+  calcSig();
 }
 
-/* Update widgets from server cosmic data */
-function updateWidgets(cosmic) {
-  if(!cosmic) return;
-  const mp = getMoonPhase(TODAY);
-  // Moon
-  const moonAge = parseFloat(cosmic.moonAge||0);
-  const daysToFull = moonAge < 14 ? (14 - moonAge).toFixed(1) : '';
-  const moonBadge = cosmic.isBlackMoon ? 'mb-black' : cosmic.isShivaMoon ? 'mb-shiva' :
-    mp.key==='full_moon' ? 'mb-full' : mp.key==='new_moon' ? 'mb-new' : '';
-  document.getElementById('w-moon').innerHTML =
-    `${mp.emoji} ${cosmic.moonPhaseName||mp.name}${cosmic.moonSign?' in '+cosmic.moonSign:''}` +
-    (moonBadge ? ` <span class="moon-badge ${moonBadge}">${(cosmic.moonPhaseName||mp.name).replace(' ☽','')}</span>` : '');
-  document.getElementById('w-moon-sub').textContent = daysToFull ? `${daysToFull}d to Full` : `Age ${moonAge.toFixed(1)}d`;
-
-  // Sun
-  if(cosmic.positions?.sun) {
-    document.getElementById('w-sun').textContent = cosmic.positions.sun.sign;
-    document.getElementById('w-sun-sub').textContent = `${cosmic.positions.sun.degree}° ${cosmic.positions.sun.sign}`;
-  }
-  // Kin
-  if(cosmic.kin) {
-    document.getElementById('w-kin').textContent = `${cosmic.kin.kin} — ${cosmic.kin.name}`;
-    document.getElementById('w-kin-sub').textContent = (cosmic.kin.isGAP ? '⬡ Portal · ' : '') + 'Dreamspell';
-  }
-  // UD
-  if(cosmic.ud) {
-    const isMaster = [11,22,33,44].includes(cosmic.ud);
-    document.getElementById('w-day').textContent = 'Day ' + cosmic.ud;
-    document.getElementById('w-day-sub').textContent = (NUM_DATA[cosmic.ud]?.name||'') + (isMaster?'  ✦':'');
-  }
+function saveProfileField(key, val) {
+  profile[key] = val;
+  localStorage.setItem('cdp_profile', JSON.stringify(profile));
 }
 
-/* ══════════════════════════════════════════════════════
-   GENERATE READING
-══════════════════════════════════════════════════════ */
-async function generateReading() {
-  const btn    = document.getElementById('generate-btn');
-  const output = document.getElementById('reading-output');
-  const p      = profile();
+function calcSig() {
+  const d = +document.getElementById('pBD').value;
+  const m = +document.getElementById('pBM').value;
+  const y = +document.getElementById('pBY').value;
+  if (!d || !m || !y) { document.getElementById('sigDisplay').style.display='none'; return; }
+  saveProfileField('birthDay', d);
+  saveProfileField('birthMonth', m);
+  saveProfileField('birthYear', y);
+  // Local calc for display
+  const KIN_SEALS=['Red Dragon','White Wind','Blue Night','Yellow Seed','Red Serpent',
+    'White World-Bridger','Blue Hand','Yellow Star','Red Moon','White Dog',
+    'Blue Monkey','Yellow Human','Red Skywalker','White Wizard','Blue Eagle',
+    'Yellow Warrior','Red Earth','White Mirror','Blue Storm','Yellow Sun'];
+  const KIN_TONES=['Magnetic','Lunar','Electric','Self-Existing','Overtone','Rhythmic',
+    'Resonant','Galactic','Solar','Planetary','Spectral','Crystal','Cosmic'];
+  const anchor = new Date('2026-03-31T12:00:00Z');
+  const bd = new Date(`${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}T12:00:00Z`);
+  const days = Math.round((bd - anchor) / 86400000);
+  const kin = ((52 - 1 + days) % 260 + 260) % 260 + 1;
+  const si=(kin-1)%20; const ti=(kin-1)%13;
+  const colors=['Red','White','Blue','Yellow'];
+  const col=colors[si%4];
+  const lpRaw=d+m+String(y).split('').reduce((a,b)=>a+parseInt(b),0);
+  let lp=lpRaw; while(lp>9&&lp!==11&&lp!==22&&lp!==33&&lp!==44)lp=String(lp).split('').reduce((a,b)=>a+parseInt(b),0);
+  document.getElementById('sigKin').textContent = `Birth Kin ${kin} — ${col} ${KIN_TONES[ti]} ${KIN_SEALS[si]}`;
+  document.getElementById('sigLP').textContent = `Life Path ${lp}`;
+  document.getElementById('sigDisplay').style.display = 'block';
+}
 
-  btn.disabled = true;
-  btn.textContent = '✦ Consulting the cosmos…';
-  output.innerHTML = `<div class="loading-state">
-    <div class="loading-spinner"></div>
-    <div class="loading-text">Weaving numerology, moon phase, Dreamspell, and transits…</div>
-  </div>`;
+function saveAndLoad() {
+  calcSig();
+  localStorage.setItem('cdp_profile', JSON.stringify(profile));
+  showScreen('sr', document.querySelectorAll('.npill')[0]);
+  loadReading(TODAY);
+}
+
+// ══════════════════════════════════════════════════════════
+// LOAD READING
+// ══════════════════════════════════════════════════════════
+const loadMsgs = [
+  'Consulting the ephemeris…',
+  'Reading planetary positions from Swiss Ephemeris…',
+  'Calculating the Dreamspell Kin…',
+  'Weaving the numerological threads…',
+  'The Oracle is composing your reading…',
+  'Integrating four frameworks into one voice…',
+];
+let msgIdx = 0, msgTimer = null;
+
+function cycleMsg() {
+  msgIdx = (msgIdx + 1) % loadMsgs.length;
+  const el = document.getElementById('loadMsg');
+  if (el) el.textContent = loadMsgs[msgIdx];
+}
+
+async function loadReading(dateStr) {
+  const cont = document.getElementById('readingContent');
+  cont.innerHTML = `<div style="max-width:840px;margin:0 auto;padding:0 24px">
+    <div class="r-loading" id="loadingDiv">
+      <div class="load-moon">☽</div>
+      <div class="load-msg" id="loadMsg">Consulting the ephemeris…</div>
+    </div></div>`;
+  msgIdx = 0; clearInterval(msgTimer);
+  msgTimer = setInterval(cycleMsg, 2500);
 
   try {
-    const res = await fetch(READING_EP, {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({
-        tier: activeTier,
-        date: TODAY.toISOString().split('T')[0],
-        profile: {
-          name:        p.name || '',
-          location:    p.location || 'UK',
-          context:     p.context || '',
-          lifePath:    p.lifePath || '',
-          personalYear:p.personalYear || '',
-          birthKin:    p.birthKin || '',
-          sunSign:     p.sunSign || '',
-          birthDay:    p.birthDay || 0,
-          birthMonth:  p.birthMonth || 0,
-          birthYear:   p.birthYear || 0
-        }
-      })
+    const res = await fetch('/api/reading', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ date: dateStr, profile, tier: 'oracle' })
     });
+    if (!res.ok) throw new Error(await res.text());
     const data = await res.json();
-    if(data.error) throw new Error(data.error);
-
-    currentReading = data.reading;
-    askHistory = [];
-
-    // Update widgets with server-computed positions
-    if(data.reading?._cosmic) updateWidgets(data.reading._cosmic);
-
-    renderReading(data.reading, activeTier, data.reading?._cosmic);
-  } catch(err) {
-    output.innerHTML = `<div class="error-state">
-      <p style="color:var(--text-dim);font-size:14px">Unable to connect to the cosmos right now — please try again.</p>
-      <p style="font-size:12px;margin-top:8px;color:var(--text-dim)">${err.message}</p>
-    </div>`;
-  } finally {
-    btn.disabled = false;
-    btn.textContent = '✦ Refresh Reading';
+    clearInterval(msgTimer);
+    currentReading = data;
+    renderReading(data, dateStr);
+  } catch(e) {
+    clearInterval(msgTimer);
+    cont.innerHTML = `<div style="max-width:840px;margin:0 auto;padding:40px 24px;text-align:center">
+      <div style="font-size:2rem;margin-bottom:16px">☽</div>
+      <div style="color:var(--text3);font-size:0.9rem">The Oracle encountered an issue: ${e.message}<br>
+      <button onclick="loadReading('${dateStr}')" style="margin-top:16px;background:none;border:1px solid var(--gold3);color:var(--gold);padding:8px 20px;border-radius:2px;cursor:pointer;font-family:inherit">Try Again</button></div></div>`;
   }
 }
 
-/* ══════════════════════════════════════════════════════
-   RENDER READING
-══════════════════════════════════════════════════════ */
-function renderReading(reading, tier, cosmic) {
-  const output = document.getElementById('reading-output');
-
-  if(!reading || reading._raw) {
-    output.innerHTML = `
-      ${renderCosmicSummary(cosmic)}
-      <div class="section"><div class="raw-reading">${escHtml(reading?.synthesis || '')}</div></div>
-      ${renderAskSection()}`;
-    return;
-  }
-
-  const isSimple = tier === 'free' || tier === 'seeker';
-
-  if(isSimple) {
-    output.innerHTML = `
-      ${renderCosmicSummary(cosmic)}
-      <div class="section">
-        <div class="synthesis" style="font-size:18px;text-align:left;border:none;padding:0">${escHtml(reading.synthesis || '')}</div>
-      </div>
-      ${renderAskSection()}`;
-    return;
-  }
-
-  // Full Oracle/Mystic/Initiate rendering
-  let html = '';
-
-  // Synthesis
-  html += `<div class="synthesis">${escHtml(reading.synthesis||'')}</div>`;
-
-  // Cosmic summary (three energies + moon context)
-  html += renderCosmicSummary(cosmic);
-
-  // Numerology section
-  if(reading.numerology) {
-    html += `<div class="section">
-      <div class="section-header">
-        <span class="section-icon">✦</span>
-        <span class="section-label">Numerology</span>
-        <span class="section-title">${escHtml(reading.numerology.title||'')}</span>
-      </div>
-      <div class="section-body">${paragraphs(reading.numerology.body||'')}</div>
-    </div>`;
-  }
-
-  // Moon section
-  if(reading.moonSection) {
-    const mp = getMoonPhase(TODAY);
-    const moonBadge = mp.key==='black_moon'?'mb-black':mp.key==='shiva_moon'?'mb-shiva':mp.key==='full_moon'?'mb-full':'';
-    html += `<div class="section">
-      <div class="section-header">
-        <span class="section-icon">${mp.emoji}</span>
-        <span class="section-label">Lunar Phase</span>
-        <span class="section-title">${escHtml(reading.moonSection.title||'')}${moonBadge?`<span class="moon-badge ${moonBadge}" style="margin-left:10px">${mp.name.replace(' ☽','')}</span>`:''}</span>
-      </div>
-      <div class="section-body">${paragraphs(reading.moonSection.body||'')}</div>
-    </div>`;
-  }
-
-  // Astrology section
-  if(reading.astrologySection) {
-    html += `<div class="section">
-      <div class="section-header">
-        <span class="section-icon">♈</span>
-        <span class="section-label">Western Astrology</span>
-        <span class="section-title">${escHtml(reading.astrologySection.title||'')}</span>
-      </div>
-      <div class="section-body">${paragraphs(reading.astrologySection.body||'')}</div>
-    </div>`;
-  }
-
-  // Kin section
-  if(reading.kinSection) {
-    const ki = getKinInfo(getDSKin(TODAY));
-    html += `<div class="section">
-      <div class="section-header">
-        <span class="section-icon">◈</span>
-        <span class="section-label">Dreamspell</span>
-        <span class="section-title">${escHtml(reading.kinSection.title||'')}${ki.isGAP?'<span class="moon-badge mb-portal" style="margin-left:10px">⬡ Portal</span>':''}</span>
-      </div>
-      <div class="section-body">${paragraphs(reading.kinSection.body||'')}</div>
-      <p style="font-size:11px;color:var(--text-dim);margin-top:10px;font-style:italic">* Dreamspell/Law of Time (Argüelles 1987) is a modern system, distinct from the ancient K'iche' Maya tzolkʼin tradition. Sources: Aldana 2022 (doi:10.34758/qyyd-vx23); Šprajc et al. 2023 (doi:10.1126/sciadv.abq7675)</p>
-    </div>`;
-  }
-
-  // Saturn-Neptune special section
-  if(reading.saturnNeptune?.show && reading.saturnNeptune?.body) {
-    html += `<div class="section">
-      <div class="section-header">
-        <span class="section-icon">∞</span>
-        <span class="section-label">Saturn–Neptune 0° Aries</span>
-        <span class="section-title">A Civilisational Reset, Arriving in Your Lifetime</span>
-      </div>
-      <div class="section-body">${paragraphs(reading.saturnNeptune.body||'')}</div>
-    </div>`;
-  }
-
-  // Planetary positions
-  if(cosmic?.positions) {
-    html += `<div class="section">
-      <div class="section-header"><span class="section-label">Planetary Positions</span></div>
-      ${renderPlanets(cosmic.positions)}
-    </div>`;
-  }
-
-  // Key aspects
-  if(cosmic?.aspects?.length) {
-    html += `<div class="section">
-      <div class="section-header"><span class="section-label">Key Aspects</span></div>
-      ${cosmic.aspects.map(a=>`<div class="aspect-item">
-        <span class="aspect-stars">${a.stars}</span>
-        <div class="aspect-title">${escHtml(a.title)}</div>
-        <div class="aspect-body">${escHtml(a.body)}</div>
-      </div>`).join('')}
-    </div>`;
-  }
-
-  // Shadow work
-  if(reading.shadowWork) {
-    html += `<div class="section">
-      <div class="section-header"><span class="section-label">Shadow Work</span></div>
-      <div class="shadow-box">${paragraphs(reading.shadowWork)}</div>
-    </div>`;
-  }
-
-  // Today's priorities
-  if(reading.priorities?.length) {
-    html += `<div class="section">
-      <div class="section-header"><span class="section-label">Today's Priorities</span></div>
-      ${reading.priorities.map(p=>`<div class="priority-item">
-        <div class="priority-num">${p.number}</div>
-        <div class="priority-content">
-          <div class="priority-title">${escHtml(p.title||'')}</div>
-          <div class="priority-body">${escHtml(p.body||'')}</div>
-          ${p.action?`<div class="priority-action">${escHtml(p.action)}</div>`:''}
-        </div>
-      </div>`).join('')}
-    </div>`;
-  }
-
-  // Focus On / Ease Off
-  if(reading.focusOn?.length || reading.easeOff?.length) {
-    html += `<div class="section">
-      <div class="focus-grid">
-        <div>
-          <div class="focus-col-title">Focus On</div>
-          <ul class="focus-list">${(reading.focusOn||[]).map(x=>`<li>${escHtml(x)}</li>`).join('')}</ul>
-        </div>
-        <div>
-          <div class="focus-col-title">Ease Off</div>
-          <ul class="focus-list ease-list">${(reading.easeOff||[]).map(x=>`<li>${escHtml(x)}</li>`).join('')}</ul>
-        </div>
-      </div>
-    </div>`;
-  }
-
-  // Three time windows
-  if(reading.morning || reading.afternoon || reading.evening) {
-    html += `<div class="section">
-      <div class="section-header"><span class="section-label">Your Day in Three Windows</span></div>
-      <div class="times-row">
-        <div class="time-cell"><span class="tc-icon">☀</span><span class="tc-name">Morning</span><div class="tc-body">${escHtml(reading.morning||'')}</div></div>
-        <div class="time-cell"><span class="tc-icon">◑</span><span class="tc-name">Afternoon</span><div class="tc-body">${escHtml(reading.afternoon||'')}</div></div>
-        <div class="time-cell"><span class="tc-icon">☽</span><span class="tc-name">Evening</span><div class="tc-body">${escHtml(reading.evening||'')}</div></div>
-      </div>
-    </div>`;
-  }
-
-  // Week ahead
-  if(reading.weekAhead?.length) {
-    html += `<div class="section">
-      <div class="section-header"><span class="section-label">The Week Ahead</span></div>
-      ${reading.weekAhead.map(w=>`<div class="week-item">
-        <div class="week-meta">
-          <span class="week-date">${escHtml(w.date||'')}</span>
-          <span class="week-ud">UD ${w.ud||''}</span>
-          ${w.isGAP?'<span class="week-gap">⬡ Portal</span>':''}
-        </div>
-        <div class="week-body">
-          <div class="week-kin">Kin ${w.kinNum||''} — ${escHtml(w.kinName||'')}</div>
-          <div class="week-text">${escHtml(w.body||'')}</div>
-        </div>
-      </div>`).join('')}
-    </div>`;
-  }
-
-  // Daily gift
-  if(reading.gift) {
-    html += `<div class="section">
-      <div class="section-header"><span class="section-label">Your Daily Gift</span></div>
-      <div class="gift-quote">"${escHtml(reading.gift.quote||'')}"</div>
-      <div class="gift-attr">— ${escHtml(reading.gift.attribution||'')}</div>
-      <div class="gift-body">${paragraphs(reading.gift.body||'')}</div>
-    </div>`;
-  }
-
-  // Ask your reading
-  html += renderAskSection();
-
-  output.innerHTML = html;
-
-  // Attach ask handler
-  document.getElementById('ask-btn')?.addEventListener('click', sendAsk);
-  document.getElementById('ask-input')?.addEventListener('keydown', e => {
-    if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendAsk(); }
-  });
+// ══════════════════════════════════════════════════════════
+// RENDER READING
+// ══════════════════════════════════════════════════════════
+function stars(n) {
+  return '●'.repeat(n) + '○'.repeat(5-n);
 }
 
-/* Cosmic summary block — three energies + numerology context */
-function renderCosmicSummary(cosmic) {
-  if(!cosmic) {
-    const ud = getUD(TODAY);
-    const me = getMonthEnergy(TODAY);
-    const ye = getYearEnergy(TODAY);
-    return renderEnergyBlock(ud, me, ye);
-  }
-  return renderEnergyBlock(cosmic.ud, cosmic.monthEnergy, cosmic.yearEnergy);
+function prose(text) {
+  if (!text) return '';
+  return text.split('\n').filter(l=>l.trim()).map(p=>`<p>${p}</p>`).join('');
 }
 
-function renderEnergyBlock(ud, me, ye) {
-  const isMaster = n => [11,22,33,44].includes(n);
-  return `<div class="section">
-    <div class="section-header"><span class="section-label">Numerology · Three Energies of the Day</span></div>
-    <div class="three-energies">
-      <div class="energy-cell">
-        <span class="en-num${isMaster(ud)?' master':''}">${ud}</span>
-        <span class="en-lbl">Universal Day</span>
-        <span class="en-name">${NUM_DATA[ud]?.name||''}</span>
-      </div>
-      <div class="energy-cell">
-        <span class="en-num">${me}</span>
-        <span class="en-lbl">Month Energy</span>
-        <span class="en-name">${NUM_DATA[me]?.name||''}</span>
-      </div>
-      <div class="energy-cell">
-        <span class="en-num">${ye}</span>
-        <span class="en-lbl">Year Energy</span>
-        <span class="en-name">${NUM_DATA[ye]?.name||''}</span>
-      </div>
+function renderReading(data, dateStr) {
+  const { reading: r, planets, moon, kin, num, aspects } = data;
+  const date = new Date(dateStr + 'T12:00:00Z');
+  const dateLabel = date.toLocaleDateString('en-GB', {weekday:'long', day:'numeric', month:'long', year:'numeric'});
+  const moonSign = planets ? planets[1]?.sign : '';
+
+  let html = `<div id="sr" style="max-width:840px;margin:0 auto;padding:0 24px 100px">`;
+
+  // Date header
+  html += `<div class="r-head">
+    <div class="r-meta">BST · ${planets?.[0]?.sign||'Aries'} Season · ${moon?.pct||0}% Moon</div>
+    <div class="r-date">${dateLabel}</div>
+    <div class="r-loc">${profile.location || 'Twemlow, Cheshire, England'} · ${profile.name || 'Ned'}</div>
+  </div>`;
+
+  // Four widgets
+  html += `<div class="widgets">
+    <div class="wgt">
+      <div class="wgt-icon">${moon?.emoji||'☽'}</div>
+      <div class="wgt-label">Moon</div>
+      <div class="wgt-val">${moon?.phase||'—'}</div>
+      <div class="wgt-sub">${moonSign}</div>
+    </div>
+    <div class="wgt">
+      <div class="wgt-icon">${num?.ud||'—'}</div>
+      <div class="wgt-label">Universal Day</div>
+      <div class="wgt-val">Day ${num?.ud||'—'}</div>
+      <div class="wgt-sub">${num?.udM?.n||''}</div>
+    </div>
+    <div class="wgt">
+      <div class="wgt-icon">◈</div>
+      <div class="wgt-label">Kin · Dreamspell</div>
+      <div class="wgt-val" style="font-size:14px;color:var(--teal)">${kin?.full||'—'}</div>
+      <div class="wgt-sub">${kin?.isGAP?'★ PORTAL':'Tone '+kin?.toneNum}</div>
+    </div>
+    <div class="wgt">
+      <div class="wgt-icon">☽</div>
+      <div class="wgt-label">Lunar Cycle</div>
+      <div class="wgt-val">${moon?.cycle||'—'}d</div>
+      <div class="wgt-sub">${moon?.toNew}d to New</div>
     </div>
   </div>`;
-}
 
-function renderPlanets(pos) {
-  const planets = [
-    {key:'sun',sym:'☀',color:'col-sun'},{key:'moon',sym:'☽',color:'col-moon'},
-    {key:'mercury',sym:'☿',color:'col-merc'},{key:'venus',sym:'♀',color:'col-ven'},
-    {key:'mars',sym:'♂',color:'col-mars'},{key:'jupiter',sym:'♃',color:'col-jup'},
-    {key:'saturn',sym:'♄',color:'col-sat'},{key:'uranus',sym:'♅',color:'col-ura'},
-    {key:'neptune',sym:'♆',color:'col-nep'},{key:'pluto',sym:'♇',color:'col-plu'}
-  ];
-  const NOTES = {
-    sun:'Solar identity and purpose', moon:'Emotional landscape and instinct',
-    mercury:'Communication and cognition', venus:'Love, beauty and values',
-    mars:'Drive, action and physical energy', jupiter:'Expansion and opportunity',
-    saturn:'Structure, discipline and mastery', uranus:'Innovation and disruption',
-    neptune:'Vision, dissolution and inspiration', pluto:'Systemic transformation'
-  };
-  return `<div class="planets-grid">
-    ${planets.map(({key,sym,color})=>{
-      const p = pos[key];
-      if(!p) return '';
-      return `<div class="planet-cell">
-        <span class="pc-name">${key.toUpperCase()}</span>
-        <span class="pc-pos" style="color:var(--${color})">${sym} ${p.degree}° ${p.sign}</span>
-        <span class="pc-note">${p.phaseName||NOTES[key]||''}</span>
+  // Moon alert
+  if (moon?.isBlack || moon?.isShiva) {
+    html += `<div style="margin-bottom:20px">
+      <span class="moon-badge ${moon.isBlack?'badge-black':'badge-shiva'}">
+        ${moon.isBlack?'⚠️ Black Moon — 2 Days Before New Moon':'✨ Shiva Moon — 2 Days After New Moon'}
+      </span>
+    </div>`;
+  }
+
+  if (!r || r.raw) {
+    // Fallback display
+    html += `<div class="r-section"><div class="sec-body">${prose(r?.synthesis||'Oracle reading loading...')}</div></div>`;
+  } else {
+    // SYNTHESIS
+    html += `<div class="synthesis">${r.synthesis || ''}</div>`;
+
+    // NUMEROLOGY
+    html += `<div class="r-section">
+      <div class="sec-label">Numerology of the Day</div>
+      <div class="sec-hl">${r.numerology?.headline || `Universal Day ${num?.ud} — ${num?.udM?.n}`}</div>
+      <div class="sec-body">${prose(r.numerology?.body)}</div>`;
+    if (r.numerology?.three_energies) {
+      const te = r.numerology.three_energies;
+      html += `<div class="energies">
+        <div class="energy-card">
+          <div class="energy-time">☀ Morning</div>
+          <div class="energy-num">${te.morning?.num||''}</div>
+          <div class="energy-name">${te.morning?.name||''}</div>
+          <div class="energy-guidance">${te.morning?.guidance||''}</div>
+        </div>
+        <div class="energy-card">
+          <div class="energy-time">◑ Afternoon</div>
+          <div class="energy-num">${te.afternoon?.num||''}</div>
+          <div class="energy-name">${te.afternoon?.name||''}</div>
+          <div class="energy-guidance">${te.afternoon?.guidance||''}</div>
+        </div>
+        <div class="energy-card">
+          <div class="energy-time">☽ Evening</div>
+          <div class="energy-num">${te.evening?.num||''}</div>
+          <div class="energy-name">${te.evening?.name||''}</div>
+          <div class="energy-guidance">${te.evening?.guidance||''}</div>
+        </div>
       </div>`;
-    }).join('')}
-  </div>`;
-}
+    }
+    html += `</div>`;
 
-function renderAskSection() {
-  return `<div class="ask-section" id="ask-section">
-    <div class="ask-title">◎ Ask Your Reading Anything</div>
-    <div class="ask-sub">Go deeper on any aspect of today — available at Mystic and Oracle tiers</div>
-    <div class="ask-area">
-      <textarea class="ask-input" id="ask-input" placeholder="What does today's energy mean for my work / relationships / health…" rows="2"></textarea>
-      <button class="ask-send" id="ask-btn">↑</button>
+    // LUNAR
+    html += `<div class="r-section">
+      <div class="sec-label">Lunar Landscape</div>
+      <div class="sec-hl">${moon?.emoji||''} ${r.moon_section?.headline || moon?.phase+' in '+moonSign}</div>
+      ${moon?.moon_note ? `<div><span class="moon-badge ${moon.isBlack?'badge-black':'badge-shiva'}">${moon.moon_note}</span></div>` : ''}
+      <div class="sec-body" style="margin-top:12px">${prose(r.moon_section?.body)}</div>
+    </div>`;
+
+    // ASTROLOGY
+    html += `<div class="r-section">
+      <div class="sec-label">Western Astrology</div>
+      <div class="sec-hl">${r.astrology?.main_transit_headline || ''}</div>
+      <div class="sec-body">${prose(r.astrology?.main_transit_body)}</div>
+    </div>`;
+
+    // SATURN-NEPTUNE
+    html += `<div class="r-section" style="border-left:2px solid var(--gold3)">
+      <div class="sec-label">∞ Saturn–Neptune 0° Aries — A Civilisational Reset</div>
+      <div class="sec-body">${prose(r.astrology?.saturn_neptune)}
+      ${r.astrology?.uranus_note ? `<p style="margin-top:12px;color:var(--teal);font-style:italic">${r.astrology.uranus_note}</p>` : ''}</div>
+    </div>`;
+
+    // DREAMSPELL
+    html += `<div class="r-section">
+      <div class="sec-label">Dreamspell · Law of Time</div>
+      <div class="sec-hl">◈ ${r.dreamspell?.headline || kin?.full}${kin?.isGAP?`<span class="gap-badge">★ Portal</span>`:''}</div>
+      <div class="sec-body">${prose(r.dreamspell?.body)}</div>
+      <div style="margin-top:14px;padding:10px;background:var(--bg4);border:1px solid var(--div2);border-radius:2px">
+        <div style="font-size:0.78rem;color:var(--text3);font-style:italic">${r.dreamspell?.disclaimer||''}</div>
+      </div>
+    </div>`;
+
+    // PLANETARY POSITIONS
+    if (planets) {
+      html += `<div class="r-section">
+        <div class="sec-label">Planetary Positions</div>
+        <div style="font-size:0.8rem;color:var(--text3);margin-bottom:16px;font-style:italic">Swiss Ephemeris (Astrodienst AG, ae_2026.pdf, Koch & Treindl)</div>
+        <div class="planet-grid">`;
+      const pData = r.planetary_positions || [];
+      planets.forEach((p, i) => {
+        const note = pData[i]?.note || '';
+        html += `<div class="planet-row">
+          <span class="planet-name">${p.name}</span>
+          <span class="planet-pos">${p.degStr}</span>
+          <span class="planet-note">${note}</span>
+        </div>`;
+      });
+      html += `</div></div>`;
+    }
+
+    // KEY ASPECTS
+    if (r.aspects && r.aspects.length > 0) {
+      html += `<div class="r-section">
+        <div class="sec-label">Key Aspects</div>`;
+      r.aspects.forEach((a, i) => {
+        const raw = aspects?.[i];
+        html += `<div class="aspect-item">
+          <div class="aspect-head">
+            <span class="aspect-dots">${stars(a.dots||raw?.str||3)}</span>
+            <span class="aspect-label">${a.label||raw?.desc||''}</span>
+          </div>
+          <div class="aspect-body">${a.body||''}</div>
+        </div>`;
+      });
+      html += `</div>`;
+    }
+
+    // SHADOW WORK
+    html += `<div class="shadow-box">
+      <div style="font-size:9px;letter-spacing:.4em;text-transform:uppercase;color:var(--text3);margin-bottom:10px">Shadow Work</div>
+      <div class="shadow-text">${r.shadow_work||''}</div>
+    </div>`;
+
+    // PRIORITIES
+    if (r.priorities && r.priorities.length > 0) {
+      html += `<div class="r-section">
+        <div class="sec-label">Today's Priorities</div>`;
+      r.priorities.forEach((pri, i) => {
+        html += `<div class="priority-item">
+          <div class="pri-num">${i+1}</div>
+          <div>
+            <div class="pri-title">${pri.title||''}</div>
+            <div class="pri-body">${pri.rationale||pri.body||''}</div>
+            ${pri.action ? `<div class="pri-action">→ ${pri.action}</div>` : ''}
+          </div>
+          <div style="clear:both"></div>
+        </div>`;
+      });
+      html += `</div>`;
+    }
+
+    // FOCUS ON / EASE OFF
+    if (r.focus_on || r.ease_off) {
+      html += `<div class="two-col" style="margin-bottom:20px">
+        <div class="col-card">
+          <div class="col-head">Focus On</div>
+          ${(r.focus_on||[]).map(i=>`<div class="col-item">${i}</div>`).join('')}
+        </div>
+        <div class="col-card">
+          <div class="col-head">Ease Off</div>
+          ${(r.ease_off||[]).map(i=>`<div class="col-item">${i}</div>`).join('')}
+        </div>
+      </div>`;
+    }
+
+    // TIME WINDOWS
+    if (r.time_windows) {
+      html += `<div class="r-section">
+        <div class="sec-label">The Day in Three Windows</div>
+        <div class="time-windows">
+          <div class="tw-card">
+            <div class="tw-icon">☀</div>
+            <div class="tw-label">Morning</div>
+            <div class="tw-text">${r.time_windows.morning||''}</div>
+          </div>
+          <div class="tw-card">
+            <div class="tw-icon">◑</div>
+            <div class="tw-label">Afternoon</div>
+            <div class="tw-text">${r.time_windows.afternoon||''}</div>
+          </div>
+          <div class="tw-card">
+            <div class="tw-icon">☽</div>
+            <div class="tw-label">Evening</div>
+            <div class="tw-text">${r.time_windows.evening||''}</div>
+          </div>
+        </div>
+      </div>`;
+    }
+
+    // WEEK AHEAD
+    if (r.week_ahead && r.week_ahead.length > 0) {
+      html += `<div class="r-section">
+        <div class="sec-label">The Week Ahead</div>`;
+      r.week_ahead.forEach(w => {
+        if (!w.date) return;
+        const d = new Date(w.date+'T12:00:00Z');
+        const dLabel = d.toLocaleDateString('en-GB',{weekday:'short', day:'numeric', month:'numeric'});
+        const isMaster = [11,22,33,44].includes(w.ud);
+        html += `<div class="week-row">
+          <div>
+            <div class="week-date">${dLabel}</div>
+            ${isMaster ? `<span class="master-badge">${w.ud}</span>` : `<div class="week-ud">${w.ud||''}<div class="week-ud-label">UD</div></div>`}
+          </div>
+          <div>
+            <div class="week-kin">${w.kinStr||''}</div>
+            <div class="week-note">${w.note||''}</div>
+          </div>
+        </div>`;
+      });
+      html += `</div>`;
+    }
+
+    // DAILY GIFT
+    if (r.daily_gift) {
+      html += `<div class="r-section">
+        <div class="sec-label">Your Daily Gift</div>
+        <div class="gift-quote">"${r.daily_gift.quote||''}"</div>
+        <div class="gift-attr">— ${r.daily_gift.attribution||''}</div>
+        ${r.daily_gift.meditation ? `<ul class="gift-meditation">
+          ${(r.daily_gift.meditation||'').split(/[·•\n]/).filter(l=>l.trim()).map(l=>`<li>${l.trim()}</li>`).join('')}
+        </ul>` : ''}
+      </div>`;
+    }
+
+    // CLOSING
+    html += `<div class="closing">You are not building the companies to become someone — you already are the person the companies need you to be. Start living from that direction.</div>`;
+
+    // SOURCES
+    html += `<div class="r-section">
+      <div class="sec-label">Scholarly Sources & Data Verification</div>
+      <div class="sources-text">${r.sources||''}</div>
+    </div>`;
+  }
+
+  // ASK ORACLE
+  html += `<div class="ask-section">
+    <div class="ask-label">Ask Your Oracle</div>
+    <div style="font-size:0.85rem;color:var(--text3);margin-bottom:14px">Go deeper on any aspect of today's reading</div>
+    <div class="ask-box">
+      <input class="ask-input" id="askInput" placeholder="What does this mean for my biotech work? How should I approach the Baja conversation today?..." onkeydown="if(event.key==='Enter')submitAsk()">
+      <button class="ask-btn" onclick="submitAsk()">Ask ↑</button>
     </div>
-    <div class="ask-history" id="ask-history"></div>
+    <div class="ask-chips">
+      <button class="chip" onclick="askChip('What does today\'s Universal Day number mean for my specific situation with NanOptima and ClotProtect?')">NanOptima &amp; ClotProtect today</button>
+      <button class="chip" onclick="askChip('How should I think about family connection with Sam and Kitty given today\'s cosmic weather?')">Family presence today</button>
+      <button class="chip" onclick="askChip('What does the Saturn-Neptune conjunction mean specifically for biotech exits in 2026?')">Saturn-Neptune &amp; biotech</button>
+      <button class="chip" onclick="askChip('What health commitments does today\'s numerology and astrology support?')">Health &amp; body today</button>
+      <button class="chip" onclick="askChip('What should I ease off or avoid today based on the current transits?')">What to avoid today</button>
+    </div>
+    <div class="ask-response" id="askResponse"></div>
   </div>`;
+
+  // PDF BUTTONS
+  html += `<div class="pdf-row">
+    <button class="pdf-btn" onclick="window.print()">⎙ Save as PDF</button>
+    <button class="pdf-btn" onclick="document.body.classList.add('print-dark');window.print();document.body.classList.remove('print-dark')">◑ Dark PDF</button>
+  </div>`;
+
+  html += `</div>`; // end sr div
+
+  document.getElementById('readingContent').innerHTML = html;
 }
 
-async function sendAsk() {
-  const input = document.getElementById('ask-input');
-  const q = input?.value?.trim();
-  if(!q) return;
-  input.value = '';
-
-  const p = profile();
-  const histEl = document.getElementById('ask-history');
-  if(histEl) histEl.innerHTML += `<div class="ask-msg"><div class="msg-q">${escHtml(q)}</div><div class="msg-a" style="color:var(--text-dim);font-style:italic">Reading the cosmos…</div></div>`;
-
+// ══════════════════════════════════════════════════════════
+// ASK ORACLE
+// ══════════════════════════════════════════════════════════
+async function submitAsk() {
+  const inp = document.getElementById('askInput');
+  const q = inp?.value?.trim();
+  if (!q) return;
+  inp.value = '';
+  const respEl = document.getElementById('askResponse');
+  if (!respEl) return;
+  respEl.style.display = 'block';
+  respEl.innerHTML = '<div style="color:var(--text3);font-style:italic;font-size:0.9rem">The Oracle considers your question…</div>';
   try {
-    const res = await fetch(ASK_EP, {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({
-        question: q,
-        history: askHistory,
-        profile: { name:p.name||'', location:p.location||'', context:p.context||'', lifePath:p.lifePath||'', personalYear:p.personalYear||'' },
-        date: TODAY.toISOString().split('T')[0]
-      })
+    const ctx = currentReading?.reading?.synthesis ? `Today's reading synthesis: ${currentReading.reading.synthesis}` : '';
+    const res = await fetch('/api/ask', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ question: q, context: ctx, profile })
     });
     const data = await res.json();
-    const answer = data.answer || 'Unable to answer right now.';
-    askHistory.push({ role:'user', content:q });
-    askHistory.push({ role:'assistant', content:answer });
-    // Update last message
-    if(histEl) {
-      const msgs = histEl.querySelectorAll('.ask-msg');
-      const last = msgs[msgs.length-1];
-      if(last) last.querySelector('.msg-a').textContent = answer;
-    }
-  } catch(err) {
-    if(histEl) {
-      const msgs = histEl.querySelectorAll('.ask-msg');
-      const last = msgs[msgs.length-1];
-      if(last) last.querySelector('.msg-a').textContent = 'Unable to connect — please try again.';
-    }
+    const ans = data.answer || data.error || 'No response';
+    respEl.innerHTML = ans.split('\n').filter(l=>l.trim()).map(p=>`<p>${p}</p>`).join('');
+  } catch(e) {
+    respEl.innerHTML = `<p style="color:var(--red)">Error: ${e.message}</p>`;
   }
 }
 
-/* ══════════════════════════════════════════════════════
-   CALENDAR RENDERING
-══════════════════════════════════════════════════════ */
+function askChip(q) {
+  const inp = document.getElementById('askInput');
+  if (inp) { inp.value = q; inp.focus(); }
+}
+
+// ══════════════════════════════════════════════════════════
+// CALENDAR
+// ══════════════════════════════════════════════════════════
+const MONTHS=['January','February','March','April','May','June',
+  'July','August','September','October','November','December'];
+const DOWS=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+const KIN_SEALS=['Red Dragon','White Wind','Blue Night','Yellow Seed','Red Serpent',
+  'White World-Bridger','Blue Hand','Yellow Star','Red Moon','White Dog',
+  'Blue Monkey','Yellow Human','Red Skywalker','White Wizard','Blue Eagle',
+  'Yellow Warrior','Red Earth','White Mirror','Blue Storm','Yellow Sun'];
+const KIN_TONES=['Magnetic','Lunar','Electric','Self-Existing','Overtone','Rhythmic',
+  'Resonant','Galactic','Solar','Planetary','Spectral','Crystal','Cosmic'];
+const LUNAR_C=29.53058867;
+const MOON_A=new Date('2026-01-17T02:02:00Z');
+const GAP_S=new Set([1,2,3,4,5,8,9,10,11,12,19,20,21,22,23,26,27,28,29,30,
+  53,54,55,56,57,60,61,62,63,64,71,72,73,74,75,78,79,80,81,82,
+  105,106,107,108,109,112,113,114,115,116,133,134]);
+const KIN_ANC=new Date('2026-03-31T12:00:00Z');
+
+function clientMoon(ds) {
+  const d=new Date(ds+'T12:00:00Z');
+  const days=((d-MOON_A)/86400000);
+  const cyc=((days%LUNAR_C)+LUNAR_C)%LUNAR_C;
+  let emoji='🌑';
+  if(cyc<1.5)emoji='🌑';
+  else if(cyc<7.5)emoji='🌒';
+  else if(cyc<8.5)emoji='🌓';
+  else if(cyc<14.5)emoji='🌔';
+  else if(cyc<16.5)emoji='🌕';
+  else if(cyc<22.5)emoji='🌖';
+  else if(cyc<23.5)emoji='🌗';
+  else emoji='🌘';
+  return{emoji,cyc,isBlack:cyc>27.53,isShiva:cyc>=1.5&&cyc<=3.5,
+    isNew:cyc<1.5||cyc>28.5,isFull:cyc>13.5&&cyc<16.5};
+}
+
+function clientKin(ds) {
+  const d=new Date(ds+'T12:00:00Z');
+  const days=Math.round((d-KIN_ANC)/86400000);
+  const kin=((52-1+days)%260+260)%260+1;
+  const si=(kin-1)%20;
+  const col=['Red','White','Blue','Yellow'][si%4];
+  const colorCode=col==='Red'?'#c0392b':col==='White'?'#9bb3c9':col==='Blue'?'#2980b9':'#c9a050';
+  return{kin,col,colorCode,seal:KIN_SEALS[si],tone:KIN_TONES[(kin-1)%13],isGAP:GAP_S.has(kin)};
+}
+
+function clientUD(ds) {
+  const[y,m,d]=ds.split('-').map(Number);
+  let ud=m+d+String(y).split('').reduce((a,b)=>a+parseInt(b),0);
+  while(ud>9&&ud!==11&&ud!==22&&ud!==33&&ud!==44)
+    ud=String(ud).split('').reduce((a,b)=>a+parseInt(b),0);
+  return ud;
+}
+
+const NUM_N={1:'New Beginnings',2:'Partnership',3:'Creative Expression',4:'Foundation & Order',
+  5:'Freedom & Change',6:'Love & Responsibility',7:'Wisdom & Introspection',
+  8:'Power & Abundance',9:'Completion & Compassion',11:'Master Illuminator',
+  22:'Master Builder',33:'Master Teacher',44:'Master Organiser'};
+
+function changeMonth(delta) {
+  calMonth += delta;
+  if (calMonth > 12) { calMonth = 1; calYear++; }
+  if (calMonth < 1) { calMonth = 12; calYear--; }
+  renderCalendar();
+}
+
 function renderCalendar() {
-  const yearE = getYearEnergy(new Date(calYear, calMonth, 1));
-  document.getElementById('cal-month-name').textContent = `${MONTHS_EN[calMonth]} ${calYear}`;
-  document.getElementById('cal-month-sub').textContent = `Year Energy ${yearE} · ${NUM_DATA[yearE]?.name||''}`;
+  document.getElementById('calMonthLabel').textContent = `${MONTHS[calMonth-1]} ${calYear}`;
+  const grid = document.getElementById('calGrid');
+  const days = new Date(calYear, calMonth, 0).getDate();
+  const firstDow = (new Date(calYear, calMonth-1, 1).getDay() + 6) % 7; // Monday=0
 
-  const first    = new Date(calYear, calMonth, 1).getDay();
-  const days     = new Date(calYear, calMonth+1, 0).getDate();
-  const SEAL_COL = {Red:'#b82020',White:'#bcc9d6',Blue:'#2980b9',Yellow:'#c9a050'};
+  let html = DOWS.map(d=>`<div class="cal-dow">${d}</div>`).join('');
+  for (let i=0; i<firstDow; i++) html += '<div></div>';
 
-  let html = '';
-  for(let i=0;i<first;i++) html += '<div class="cal-cell empty"></div>';
-
-  for(let day=1; day<=days; day++) {
-    const d   = new Date(calYear, calMonth, day);
-    const mp  = getMoonPhase(d);
-    const ki  = getKinInfo(getDSKin(d));
-    const ud  = getUD(d);
+  for (let d=1; d<=days; d++) {
+    const ds = `${calYear}-${String(calMonth).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const moon = clientMoon(ds);
+    const kinD = clientKin(ds);
+    const ud = clientUD(ds);
     const isMaster = [11,22,33,44].includes(ud);
-    const isToday  = d.toDateString() === TODAY.toDateString();
-
-    let cls = 'cal-cell';
-    if(isToday)          cls += ' today';
-    if(ki.isGAP)         cls += ' is-portal';
-    if(isMaster)         cls += ' is-master';
-    if(mp.key==='full_moon')  cls += ' is-fullmoon';
-    if(mp.key==='black_moon') cls += ' is-blackmoon';
-    if(mp.key==='shiva_moon') cls += ' is-shiva';
+    const isToday = ds === TODAY;
+    let cls = 'cal-day';
+    if (isToday) cls += ' today';
+    if (kinD.isGAP) cls += ' gap-day';
+    if (isMaster) cls += ' master-day';
+    if (moon.isBlack) cls += ' black-moon';
+    else if (moon.isShiva) cls += ' shiva-moon';
 
     let badges = '';
-    if(ki.isGAP) badges += '<span class="cc-badge ccb-p">P</span>';
-    if(isMaster) badges += `<span class="cc-badge ccb-m">M${ud}</span>`;
-    if(mp.key==='black_moon') badges += '<span class="cc-badge ccb-bm">BM</span>';
-    if(mp.key==='shiva_moon') badges += '<span class="cc-badge ccb-sm">SM</span>';
+    if (kinD.isGAP) badges += '<span class="cal-mini-badge" style="background:var(--teal3);color:var(--teal);border:1px solid var(--teal2)">GAP</span>';
+    if (isMaster) badges += `<span class="cal-mini-badge" style="background:var(--gold4);color:var(--gold);border:1px solid var(--gold3)">${ud}!</span>`;
+    if (moon.isNew) badges += '<span class="cal-mini-badge" style="color:var(--text3)">NM</span>';
+    if (moon.isFull) badges += '<span class="cal-mini-badge" style="color:var(--gold)">FM</span>';
 
-    html += `<div class="${cls}" onclick="openDayModal(${calYear},${calMonth},${day})">
-      <div class="cc-top"><span class="cc-date">${day}</span><span class="cc-moon">${mp.emoji}</span></div>
-      <div class="cc-mid">
-        <div class="cc-dot" style="background:${SEAL_COL[ki.color]||'#888'}"></div>
-        <span class="cc-ud${isMaster?' master':''}">${ud}</span>
+    html += `<div class="${cls}" onclick="openDayModal('${ds}')">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <span class="cal-dn">${d}</span>
+        <span class="cal-moon">${moon.emoji}</span>
       </div>
-      ${badges ? `<div class="cc-badges">${badges}</div>` : ''}
+      <div class="cal-ud" style="font-size:9px">${ud}${isMaster?'!!':''} · ${kinD.col}</div>
+      <div><span class="cal-kin-dot" style="background:${kinD.colorCode}"></span></div>
+      <div class="cal-badges">${badges}</div>
     </div>`;
   }
-
-  document.getElementById('cal-grid').innerHTML = html;
+  grid.innerHTML = html;
 }
 
-function calNav(dir) {
-  calMonth += dir;
-  if(calMonth > 11) { calMonth=0; calYear++ }
-  if(calMonth < 0)  { calMonth=11; calYear-- }
-  renderCalendar();
-}
-
-/* ══════════════════════════════════════════════════════
-   DAY MODAL
-══════════════════════════════════════════════════════ */
-function openDayModal(y,m,day) {
-  const d   = new Date(y,m,day);
-  const mp  = getMoonPhase(d);
-  const ki  = getKinInfo(getDSKin(d));
-  const ud  = getUD(d);
-  const me  = getMonthEnergy(d);
-  const ye  = getYearEnergy(d);
+function openDayModal(ds) {
+  const moon = clientMoon(ds);
+  const kinD = clientKin(ds);
+  const ud = clientUD(ds);
+  const date = new Date(ds+'T12:00:00Z');
+  const dLabel = date.toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'});
   const isMaster = [11,22,33,44].includes(ud);
-  const p   = profile();
 
-  document.getElementById('modal-hdr-date').textContent = `${DAYS_EN[d.getDay()]}, ${day} ${MONTHS_EN[m]} ${y}`;
-  document.getElementById('modal-hdr-sub').textContent =
-    `Kin ${ki.kin} · ${ki.name}${ki.isGAP?' · ⬡ Portal':''}${isMaster?' · Master '+ud:''}`;
-
-  const moonBadge = mp.key==='black_moon'?'mb-black':mp.key==='shiva_moon'?'mb-shiva':mp.key==='full_moon'?'mb-full':'';
-  const SEAL_COL = {Red:'#b82020',White:'#bcc9d6',Blue:'#2980b9',Yellow:'#c9a050'};
-
-  let body = '';
-
-  // Numerology
-  body += `<div style="margin-bottom:20px">
-    <div style="font-size:9px;letter-spacing:0.3em;text-transform:uppercase;color:var(--teal);margin-bottom:12px">Numerology · Three Energies</div>
-    <div class="three-energies">
-      <div class="energy-cell"><span class="en-num${isMaster?' master':''}">${ud}</span><span class="en-lbl">Universal Day</span><span class="en-name">${NUM_DATA[ud]?.name||''}</span></div>
-      <div class="energy-cell"><span class="en-num">${me}</span><span class="en-lbl">Month</span><span class="en-name">${NUM_DATA[me]?.name||''}</span></div>
-      <div class="energy-cell"><span class="en-num">${ye}</span><span class="en-lbl">Year</span><span class="en-name">${NUM_DATA[ye]?.name||''}</span></div>
-    </div>
-    <div style="margin-top:10px;font-size:14px;color:var(--text-mid);line-height:1.7">
-      ${isMaster?`<strong>Master Number ${ud}:</strong> ${NUM_DATA[ud]?.desc||''} `:''}
-      ${NUM_DATA[ud]?.desc||''}
-    </div>
-  </div>`;
-
-  // Moon
-  body += `<div style="margin-bottom:20px;padding-bottom:20px;border-bottom:1px solid var(--divider)">
-    <div style="font-size:9px;letter-spacing:0.3em;text-transform:uppercase;color:var(--teal);margin-bottom:12px">Lunar Phase</div>
-    <div style="display:flex;gap:14px;align-items:flex-start">
-      <span style="font-size:36px">${mp.emoji}</span>
-      <div>
-        <div style="font-size:15px;color:var(--text-mid);margin-bottom:6px">
-          ${mp.name}${moonBadge?`<span class="moon-badge ${moonBadge}" style="margin-left:8px">${mp.name.replace(' ☽','')}</span>`:''}
-        </div>
-        <div style="font-size:14px;color:var(--text-dim);line-height:1.65">
-          ${mp.key==='black_moon'?'Two days before the New Moon — a tricky, introspective time. Embrace solitude; avoid confrontation. Dreams carry important messages.':
-            mp.key==='shiva_moon'?'Two days after the New Moon — the Moon\'s smile graces the sky. A blissful, peaceful time. Whatever you begin now grows with the Moon\'s blessing.':
-            mp.key==='full_moon'?'The Moon is at her highest. Emotional waves run strong — stay calm, speak wisely. Dance, exercise, celebrate.':
-            mp.key==='new_moon'?'A powerful new beginning. Set intentions, plant seeds of desire. Wait for the Shiva Moon before taking action.':
-            'The lunar cycle flows. Align with the Moon\'s natural rhythm and the energy will support you.'}
-        </div>
-      </div>
-    </div>
-  </div>`;
-
-  // Kin
-  body += `<div style="margin-bottom:20px;padding-bottom:20px;border-bottom:1px solid var(--divider)">
-    <div style="font-size:9px;letter-spacing:0.3em;text-transform:uppercase;color:var(--teal);margin-bottom:12px">Dreamspell · Galactic Kin</div>
-    <div style="display:flex;gap:14px;align-items:flex-start">
-      <div style="width:48px;height:48px;border-radius:50%;background:${SEAL_COL[ki.color]||'#888'}22;border:2px solid ${SEAL_COL[ki.color]||'#888'}44;display:flex;align-items:center;justify-content:center;font-size:9px;color:${SEAL_COL[ki.color]};text-align:center;flex-shrink:0;font-weight:bold">${ki.seal.slice(0,3).toUpperCase()}</div>
-      <div>
-        <div style="font-size:11px;color:var(--text-dim);margin-bottom:4px">Kin ${ki.kin}${ki.isGAP?' · ⬡ Galactic Portal':''}</div>
-        <div style="font-size:16px;color:var(--text-mid);margin-bottom:4px">${ki.name}</div>
-        <div style="font-size:13px;color:var(--teal)">${ki.tone} Tone · ${ki.seal}</div>
-      </div>
-    </div>
-    <div style="margin-top:10px;font-size:11px;color:var(--text-dim);font-style:italic">
-      * Dreamspell (Argüelles 1987) — a modern system. Cross-reference: tortuga.com/oracle · Scholar source: Aldana 2022
-    </div>
-  </div>`;
-
-  // Personal (if profile)
-  if(p.birthDay && p.birthMonth && p.birthYear) {
-    const py = getPersonalYear(p.birthDay, p.birthMonth, d);
-    const personalDayRaw = p.birthDay + p.birthMonth + ud;
-    const personalDay = reduceNum(personalDayRaw);
-    body += `<div style="margin-bottom:20px">
-      <div style="font-size:9px;letter-spacing:0.3em;text-transform:uppercase;color:var(--teal);margin-bottom:12px">Your Personal Numbers</div>
-      <div class="profile-results">
-        <div class="pr-cell"><span class="pr-label">Personal Day</span><span class="pr-val">${personalDay}</span><span class="pr-desc">${NUM_DATA[personalDay]?.name||''} — your specific day energy</span></div>
-        <div class="pr-cell"><span class="pr-label">Personal Year</span><span class="pr-val">${py}</span><span class="pr-desc">${NUM_DATA[py]?.name||''} — your year cycle</span></div>
-      </div>
-    </div>`;
+  // Personal numbers
+  let pd = null;
+  if (profile.birthDay && profile.birthMonth && profile.birthYear) {
+    const [y,m,d2]=ds.split('-').map(Number);
+    const yRaw=String(y).split('').reduce((a,b)=>a+parseInt(b),0);
+    let py=profile.birthDay+profile.birthMonth+yRaw;
+    while(py>9&&py!==11&&py!==22&&py!==33&&py!==44)py=String(py).split('').reduce((a,b)=>a+parseInt(b),0);
+    let pm=py+m; while(pm>9&&pm!==11&&pm!==22&&pm!==33&&pm!==44)pm=String(pm).split('').reduce((a,b)=>a+parseInt(b),0);
+    pd=pm+d2; while(pd>9&&pd!==11&&pd!==22&&pd!==33&&pd!==44)pd=String(pd).split('').reduce((a,b)=>a+parseInt(b),0);
   }
 
-  // View full reading button
-  body += `<button class="generate-btn" onclick="closeDayModal();showScreen('reading');generateReading()" style="margin-top:10px">
-    ✦ Generate Full Reading for This Day
-  </button>`;
-
-  document.getElementById('modal-body').innerHTML = body;
-  document.getElementById('day-modal').classList.add('open');
-  document.body.style.overflow = 'hidden';
-}
-
-function closeDayModal(evt) {
-  if(evt && evt.target !== document.getElementById('day-modal') && !evt.target.classList?.contains('modal-close')) return;
-  document.getElementById('day-modal').classList.remove('open');
-  document.body.style.overflow = '';
-}
-
-/* ══════════════════════════════════════════════════════
-   PROFILE
-══════════════════════════════════════════════════════ */
-function populateProfileForm() {
-  const dayEl  = document.getElementById('p-bday');
-  const yearEl = document.getElementById('p-byear');
-  dayEl.innerHTML  = '<option value="">Day</option>';
-  yearEl.innerHTML = '<option value="">Year</option>';
-  for(let i=1;i<=31;i++) dayEl.innerHTML += `<option value="${i}">${i}</option>`;
-  const curY = new Date().getFullYear();
-  for(let i=curY-5; i>=1920; i--) yearEl.innerHTML += `<option value="${i}">${i}</option>`;
-
-  const p = profile();
-  if(p.name)     document.getElementById('p-name').value     = p.name;
-  if(p.location) document.getElementById('p-location').value = p.location;
-  if(p.context)  document.getElementById('p-context').value  = p.context;
-  if(p.birthDay)  document.getElementById('p-bday').value    = p.birthDay;
-  if(p.birthMonth)document.getElementById('p-bmonth').value  = p.birthMonth;
-  if(p.birthYear) document.getElementById('p-byear').value   = p.birthYear;
-  if(p.birthTime) document.getElementById('p-btime').value   = p.birthTime;
-  if(p.lifePath)  renderProfileResults(p);
-}
-
-function saveProfile() {
-  const bDay   = parseInt(document.getElementById('p-bday').value);
-  const bMonth = parseInt(document.getElementById('p-bmonth').value);
-  const bYear  = parseInt(document.getElementById('p-byear').value);
-  const name     = document.getElementById('p-name').value.trim();
-  const location = document.getElementById('p-location').value.trim();
-  const context  = document.getElementById('p-context').value.trim();
-  const bTime    = document.getElementById('p-btime').value;
-
-  if(bDay && bMonth && bYear) {
-    const lifePath    = getLifePath(bDay, bMonth, bYear);
-    const personalYear = getPersonalYear(bDay, bMonth, TODAY);
-    const bDate  = new Date(bYear, bMonth-1, bDay);
-    const bKinI  = getKinInfo(getDSKin(bDate));
-    const sunSign = getSunSign(bMonth, bDay);
-
-    const p = {
-      name, location, context,
-      birthDay:bDay, birthMonth:bMonth, birthYear:bYear, birthTime:bTime,
-      lifePath, personalYear,
-      birthKin:`Kin ${bKinI.kin} — ${bKinI.name}`,
-      sunSign
-    };
-    localStorage.setItem('cdp_profile', JSON.stringify(p));
-    renderProfileResults(p);
-    renderHeader();
-  } else {
-    const p = { name, location, context };
-    localStorage.setItem('cdp_profile', JSON.stringify(p));
-    renderHeader();
-  }
-}
-
-function renderProfileResults(p) {
-  document.getElementById('profile-results-section').style.display = 'block';
-  const bDate  = new Date(p.birthYear, p.birthMonth-1, p.birthDay);
-  const bKinI  = getKinInfo(getDSKin(bDate));
-  const SEAL_COL = {Red:'#b82020',White:'#bcc9d6',Blue:'#2980b9',Yellow:'#c9a050'};
-
-  document.getElementById('birth-kin-display').innerHTML = `
-    <div style="display:flex;gap:16px;align-items:center">
-      <div style="width:56px;height:56px;border-radius:50%;background:${SEAL_COL[bKinI.color]||'#888'}22;border:2px solid ${SEAL_COL[bKinI.color]||'#888'}55;display:flex;align-items:center;justify-content:center;font-size:11px;color:${SEAL_COL[bKinI.color]};text-align:center;font-weight:bold;flex-shrink:0">${bKinI.seal.slice(0,3).toUpperCase()}</div>
-      <div>
-        <div style="font-size:11px;color:var(--text-dim);margin-bottom:4px">Birth Kin ${bKinI.kin}${bKinI.isGAP?' · ⬡ Galactic Portal':''}</div>
-        <div style="font-family:'Cormorant Garamond',serif;font-size:20px;color:var(--gold)">${bKinI.name}</div>
-        <div style="font-size:13px;color:var(--teal);margin-top:3px">${bKinI.tone} Tone · Power of ${bKinI.seal}</div>
+  const cont = document.getElementById('dayModalContent');
+  cont.innerHTML = `
+    <button class="modal-close" onclick="closeModal()">×</button>
+    <div class="modal-date">${dLabel}</div>
+    <div class="modal-grid">
+      <div class="modal-item">
+        <div class="modal-item-label">Moon</div>
+        <div class="modal-item-val">${moon.emoji} ${moon.isBlack?'Black Moon':moon.isShiva?'Shiva Moon':''}</div>
+        <div class="modal-item-sub">${moon.cyc.toFixed(1)}d cycle${moon.isBlack?' — tricky threshold':moon.isShiva?' — blissful energy':''}</div>
       </div>
-    </div>`;
-
-  document.getElementById('num-results').innerHTML = `
-    <div class="pr-cell"><span class="pr-label">Life Path</span><span class="pr-val">${p.lifePath||'—'}</span><span class="pr-desc">${NUM_DATA[p.lifePath]?.name||''} — your core soul journey</span></div>
-    <div class="pr-cell"><span class="pr-label">Personal Year ${TODAY.getFullYear()}</span><span class="pr-val">${p.personalYear||'—'}</span><span class="pr-desc">${NUM_DATA[p.personalYear]?.desc?.slice(0,70)||''}…</span></div>
-    <div class="pr-cell"><span class="pr-label">Sun Sign</span><span class="pr-val" style="font-size:18px">${p.sunSign||'—'}</span><span class="pr-desc">Natal solar placement</span></div>
-    <div class="pr-cell"><span class="pr-label">Birth Kin</span><span class="pr-val" style="font-size:18px">${bKinI.kin}</span><span class="pr-desc">${bKinI.name}</span></div>`;
+      <div class="modal-item">
+        <div class="modal-item-label">Universal Day</div>
+        <div class="modal-item-val">${ud}${isMaster?' !!':''}</div>
+        <div class="modal-item-sub">${NUM_N[ud]||''}</div>
+      </div>
+      <div class="modal-item" style="grid-column:1/-1">
+        <div class="modal-item-label">Dreamspell · ${kinD.isGAP?'★ GALACTIC ACTIVATION PORTAL':'Law of Time'}</div>
+        <div class="modal-item-val" style="color:${kinD.colorCode}">Kin ${kinD.kin} — ${kinD.col} ${kinD.tone} ${kinD.seal}</div>
+        <div class="modal-item-sub">Argüelles (1987) modern system — verify: tortuga.com/oracle</div>
+      </div>
+      ${pd ? `<div class="modal-item">
+        <div class="modal-item-label">Your Personal Day</div>
+        <div class="modal-item-val">${pd}</div>
+        <div class="modal-item-sub">${NUM_N[pd]||''}</div>
+      </div>` : ''}
+    </div>
+    <button class="modal-open-btn" onclick="closeModal();showScreen('sr',document.querySelectorAll('.npill')[0]);loadReading('${ds}')">Open Full Oracle Reading for this Day →</button>
+  `;
+  document.getElementById('dayModal').classList.add('open');
 }
 
-/* ══════════════════════════════════════════════════════
-   HELPERS
-══════════════════════════════════════════════════════ */
-function escHtml(s) {
-  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
-function paragraphs(text) {
-  return (text||'').split('\n').filter(p=>p.trim()).map(p=>`<p>${escHtml(p)}</p>`).join('');
+function closeModal() {
+  document.getElementById('dayModal').classList.remove('open');
 }
 
-/* ══════════════════════════════════════════════════════
-   INIT
-══════════════════════════════════════════════════════ */
+// ══════════════════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════════════════
 document.addEventListener('DOMContentLoaded', () => {
-  // Theme
-  if(localStorage.getItem('cdp_theme') === 'dark') document.body.classList.add('dark');
-
-  // Populate
-  populateProfileForm();
-  renderHeader();
+  loadProfileUI();
   renderCalendar();
-
-  // Modal swipe to close
-  let touchY = 0;
-  document.getElementById('modal-sheet').addEventListener('touchstart', e=>{ touchY=e.touches[0].clientY }, {passive:true});
-  document.getElementById('modal-sheet').addEventListener('touchend',   e=>{ if(e.changedTouches[0].clientY-touchY>80) closeDayModal(null) }, {passive:true});
-
-  // Auto-generate reading after a brief delay
-  setTimeout(generateReading, 800);
+  setTimeout(() => loadReading(TODAY), 300);
 });
 </script>
 </body>
