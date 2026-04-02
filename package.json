@@ -1,9 +1,16 @@
 {
   "name": "cdp-server",
-  "version": "5.0.0",
-  "description": "Cosmic Daily Planner — Production Server v5",
+  "version": "7.0.0",
+  "description": "Cosmic Daily Planner — Railway Server v7 (Streaming)",
   "main": "server.js",
-  "scripts": { "start": "node server.js" },
-  "dependencies": { "express": "^4.18.2" },
-  "engines": { "node": ">=18" }
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
 }
