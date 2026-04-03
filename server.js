@@ -344,9 +344,21 @@ async function generateReading(dateStr, profile, tier) {
     : `{"date":"${w.date}","day":"${w.dayStr}","kin":"${w.kin}","ud":${w.ud},"isGAP":${w.isGAP},"note":"<2-sentence personalised note for Ned — Dreamspell tone + UD meaning + practical pointer>"}`
   ).join(',\n    ');
 
+  // ── TIER-SPECIFIC SCOPE ──
+  const tierScope = {
+    free: `TIER: Free — Generate ONLY: synthesis (1 sentence), Universal Day number + name + one sentence meaning, moon phase + sign, today's Kin, one "For Today" action. JSON must have: synthesis, numerology:{headline, body(1 paragraph)}, moon_section:{headline, body(1 paragraph)}, dreamspell:{headline}, closing_line. Nothing else. Keep total output under 500 tokens.`,
+    seeker: `TIER: Seeker — Generate full reading with: synthesis, numerology (all fields including three_energies), moon_section, astrology (main_transit only, no saturn_neptune deep dive), dreamspell, priorities (3), focus_on, ease_off, time_windows, closing_line, sources. No week_ahead, no daily_gift. Keep prose fields to 2 sentences each.`,
+    initiate: `TIER: Initiate — Generate full reading with all fields except: omit daily_gift.meditation and deep saturn_neptune historical analysis. Keep prose fields to 3 sentences each. Include week_ahead.`,
+    mystic: `TIER: Mystic — Generate complete reading with all fields. Include natal chart context. Keep prose fields to 3-4 sentences. Full week_ahead. Full daily_gift.`,
+    oracle: `TIER: Oracle — Generate the COMPLETE, MAXIMALLY DETAILED reading. Every field, maximum depth, 3-5 sentences per prose field. Full historical context for saturn_neptune. Full week_ahead with personalised notes. Complete daily_gift with meditation. This is the premium bespoke experience — match the March 31 2026 benchmark reading quality.`
+  };
+  const scope = tierScope[tier] || tierScope.oracle;
+
   const sys = `You are the Oracle at Cosmic Daily Planner (cosmicdailyplanner.com) — the world's most rigorous, personalised daily cosmic planner, synthesising Swiss Ephemeris astronomy, Pythagorean numerology, Western psychological astrology, and Dreamspell/Law of Time.
 
-YOUR VOICE: The best Jungian analyst meets the Swiss Ephemeris. Precise. Personal. Grounded. Emotionally intelligent. The March 31 2026 reading is your quality benchmark — match and exceed it.
+YOUR VOICE: The best Jungian analyst meets the Swiss Ephemeris. Precise. Personal. Grounded. Emotionally intelligent.
+
+${scope}
 
 CRITICAL RULES:
 — Use ONLY the Swiss Ephemeris positions provided. Never invent planetary data.
@@ -355,7 +367,7 @@ CRITICAL RULES:
 — No deterministic predictions. Speak in possibilities and tendencies.
 — Every section must be SPECIFIC to Ned's actual life chapter, not generic cosmic commentary.
 — RESPOND ONLY WITH VALID JSON. No markdown fences. No preamble. No text outside the JSON object.
-— CRITICAL: The JSON MUST be syntactically complete and valid. Every opened brace and bracket must be closed. Keep each prose field to 2-3 sentences maximum. Never truncate. If approaching length, shorten earlier sections — but always close the JSON properly.
+— CRITICAL: The JSON MUST be syntactically complete and valid. Every opened brace and bracket must be closed. If approaching length limit, shorten EARLIER sections first — but always close the JSON properly with all required closing braces.
 — SCHOLARLY SOURCES: Šprajc et al. 2023 (Science Advances); Aldana 2022; Tarnas 2006 Cosmos & Psyche; Greene 1976 Saturn; Hand 2002 Planets in Transit; Brady 1999; Brennan 2017; Drayer 2002 Numerology; Kahn 2001 Pythagoras.`;
 
   const user = `PROFILE:
@@ -467,8 +479,9 @@ Generate the FULL ORACLE READING as valid JSON (no markdown, no fences, no pream
   "sources": "Astronomy: Swiss Ephemeris (Koch & Treindl, Astrodienst AG, ae_2026.pdf); USNO Moon Phases. Maya calendrics: Šprajc et al. (2023) Science Advances doi:10.1126/sciadv.abq7675; Aldana (2022) doi:10.34758/qyyd-vx23. Dreamspell: Argüelles (1987) The Mayan Factor. Astrology: Greene (1976) Saturn; Tarnas (2006) Cosmos & Psyche; Hand (2002) Planets in Transit; Brady (1999) Predictive Astrology; Brennan (2017) Hellenistic Astrology. Numerology: Drayer (2002); Goodwin (1994); Kahn (2001) Pythagoras."
 }`;
 
-  // 8192 tokens — maximum for Claude Sonnet 4.6
-  const raw = await callAPI('claude-sonnet-4-6', 8192, sys, user);
+  // Token budget by tier — smaller tiers complete faster
+  const maxTok = {free:800, seeker:2000, initiate:4000, mystic:6000, oracle:8192}[tier] || 8192;
+  const raw = await callAPI('claude-sonnet-4-6', maxTok, sys, user);
 
   let reading;
   try {
