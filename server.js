@@ -322,26 +322,47 @@ async function generateReading(dateStr, profile, tier) {
   const aspects = getAspects(planets);
   const weekAhead = getWeekAhead(dateStr);
 
+  // ── DYNAMIC PROFILE — fully from user input, no hardcoded fallbacks ──
+  const userName = p.name || p.nickname || 'the reader';
+  const firstName = p.nickname || (p.name ? p.name.split(' ')[0] : 'you');
+  const userLocation = p.location || 'their location';
+  const userContext = p.context || '';
+  const userBirth = (p.birthDay && p.birthMonth && p.birthYear)
+    ? `${p.birthDay}/${p.birthMonth}/${p.birthYear}${p.birthTime ? ' ' + p.birthTime : ''}`
+    : 'not provided';
+
+  // Build birth kin string from calculated num
+  const birthKinStr = num.birthKin ? `Kin ${num.birthKin.kin} — ${num.birthKin.full}` : 'not calculated';
+
+  // Profile context for the Oracle — ONLY from user input
+  const profileBlock = `Name: ${userName}
+Location: ${userLocation}
+Date of Birth: ${userBirth}
+Birth Kin (Dreamspell): ${birthKinStr}
+Life Path: ${num.lp || 'not calculated'} (${num.lpM?.n || ''})
+Personal Year: ${num.py || 'not calculated'} (${num.pyM?.n || ''})
+Personal Context: ${userContext || 'None provided — give a universal reading grounded in the cosmic data.'}`;
+
   const pTable = planets.map(pl => `${pl.name}: ${pl.degStr}`).join('\n');
   const aList = aspects.slice(0,6).map(a => `${'●'.repeat(a.str)}${'○'.repeat(5-a.str)} ${a.desc}`).join('\n');
 
   const moonAlert = moon.isBlack
-    ? '★ BLACK MOON (2 days before New Moon) — tricky, introspective threshold. Do not initiate; observe with care. Ned should avoid major decisions or launches today.'
+    ? `★ BLACK MOON (2 days before New Moon) — tricky, introspective threshold. ${firstName} should not initiate major actions today; observe and prepare instead.`
     : moon.isShiva
-      ? '★ SHIVA MOON (2 days after New Moon) — blissful, regenerative. Auspicious for new actions, new conversations, fresh starts.'
+      ? `★ SHIVA MOON (2 days after New Moon) — blissful, regenerative. Auspicious for new actions, new conversations, and fresh starts for ${firstName}.`
       : '';
 
-  const satNep = `Saturn ${planets[6].degStr} conjunct Neptune ${planets[8].degStr} — historically significant (Tarnas 2006): last Aries conjunction ~1522 (Magellan circumnavigation, Luther's Reformation), then 1917 (WWI/Russian Revolution), 1952, 1989 (Berlin Wall fall). In Aries = genesis, not reform. Dissolution of old structures meeting new idealism in the sign of pioneers.`;
+  const satNep = `Saturn ${planets[6].degStr} conjunct Neptune ${planets[8].degStr} — historically significant (Tarnas 2006): last Aries conjunction ~1522 (Magellan circumnavigation, Luther's Reformation), then 1917 (WWI/Russian Revolution), 1952, 1989 (Berlin Wall fall). In Aries = genesis, not reform. Dissolution of old structures meeting new idealism.`;
 
-  const uranus = `Uranus ${planets[7].degStr} — approaching Gemini ingress ~April 26 2026. Financial structures, communication architectures, and valuations disrupted and liberated. Direct timing implication for Ned's biotech exits.`;
+  const uranus = `Uranus ${planets[7].degStr} — approaching Gemini ingress ~April 26 2026. Financial structures, communication architectures, and valuations disrupted and liberated.`;
 
   const mars = planets[4].sign === 'Pisces'
     ? `Mars ${planets[4].degStr} — in Pisces, drive is inward and visionary. Physical energy best metabolised through creative and strategic work rather than force.`
     : `Mars ${planets[4].degStr} — in Aries, drive is ignited. Decisive action rewarded. Watch for overextension.`;
 
   const weekAheadJSON = weekAhead.map((w,i) => i===0
-    ? `{"date":"${w.date}","day":"${w.dayStr}","kin":"${w.kin}","ud":${w.ud},"isGAP":${w.isGAP},"note":"<Today — 2-sentence summary of the day for Ned>"}`
-    : `{"date":"${w.date}","day":"${w.dayStr}","kin":"${w.kin}","ud":${w.ud},"isGAP":${w.isGAP},"note":"<2-sentence personalised note for Ned — Dreamspell tone + UD meaning + practical pointer>"}`
+    ? `{"date":"${w.date}","day":"${w.dayStr}","kin":"${w.kin}","ud":${w.ud},"isGAP":${w.isGAP},"note":"<Today — 2-sentence summary>"}`
+    : `{"date":"${w.date}","day":"${w.dayStr}","kin":"${w.kin}","ud":${w.ud},"isGAP":${w.isGAP},"note":"<2-sentence personalised note for ${firstName} — Dreamspell tone + UD meaning + practical pointer>"}`
   ).join(',\n    ');
 
   // ── TIER-SPECIFIC SCOPE ──
@@ -350,11 +371,11 @@ async function generateReading(dateStr, profile, tier) {
     seeker: `TIER: Seeker — Generate full reading with: synthesis, numerology (all fields including three_energies), moon_section, astrology (main_transit only, no saturn_neptune deep dive), dreamspell, priorities (3), focus_on, ease_off, time_windows, closing_line, sources. No week_ahead, no daily_gift. Keep prose fields to 2 sentences each.`,
     initiate: `TIER: Initiate — Generate full reading with all fields except: omit daily_gift.meditation and deep saturn_neptune historical analysis. Keep prose fields to 3 sentences each. Include week_ahead.`,
     mystic: `TIER: Mystic — Generate complete reading with all fields. Include natal chart context. Keep prose fields to 3-4 sentences. Full week_ahead. Full daily_gift.`,
-    oracle: `TIER: Oracle — Generate the COMPLETE, MAXIMALLY DETAILED reading. Every field, maximum depth, 3-5 sentences per prose field. Full historical context for saturn_neptune. Full week_ahead with personalised notes. Complete daily_gift with meditation. This is the premium bespoke experience — match the March 31 2026 benchmark reading quality.`
+    oracle: `TIER: Oracle — Generate the COMPLETE, MAXIMALLY DETAILED reading. Every field, maximum depth, 3-5 sentences per prose field. Full historical context for saturn_neptune. Full week_ahead with personalised notes. Complete daily_gift with meditation. This is the premium bespoke experience.`
   };
   const scope = tierScope[tier] || tierScope.oracle;
 
-  const sys = `You are the Oracle at Cosmic Daily Planner (cosmicdailyplanner.com) — the world's most rigorous, personalised daily cosmic planner, synthesising Swiss Ephemeris astronomy, Pythagorean numerology, Western psychological astrology, and Dreamspell/Law of Time.
+  const sys = `You are the Oracle at Cosmic Daily Planner (cosmicdailyplanner.com) — a rigorous, personalised daily cosmic planner synthesising Swiss Ephemeris astronomy, Pythagorean numerology, Western psychological astrology, and Dreamspell/Law of Time.
 
 YOUR VOICE: The best Jungian analyst meets the Swiss Ephemeris. Precise. Personal. Grounded. Emotionally intelligent.
 
@@ -362,22 +383,17 @@ ${scope}
 
 CRITICAL RULES:
 — Use ONLY the Swiss Ephemeris positions provided. Never invent planetary data.
-— Name Ned's companies: NanOptima, ClotProtect. Family: Connie (wife), Sam (son 17), Kitty (daughter 16), his mother (Baja estate matter).
+— Address the reader by their first name (${firstName}) throughout. Use ONLY the personal context they have provided — do not invent details about their life.
+— If personal context is provided (companies, family, projects, relationships), reference it specifically. If not provided, speak universally but still specifically to the cosmic weather.
 — Dreamspell is ALWAYS labelled: Argüelles (1987) The Mayan Factor — modern 20th-century system, distinct from ancient K'iche' Maya tradition maintained by Guatemalan daykeepers.
 — No deterministic predictions. Speak in possibilities and tendencies.
-— Every section must be SPECIFIC to Ned's actual life chapter, not generic cosmic commentary.
+— Every section must be grounded in the actual planetary data and personal context provided.
 — RESPOND ONLY WITH VALID JSON. No markdown fences. No preamble. No text outside the JSON object.
-— CRITICAL: The JSON MUST be syntactically complete and valid. Every opened brace and bracket must be closed. If approaching length limit, shorten EARLIER sections first — but always close the JSON properly with all required closing braces.
+— CRITICAL: The JSON MUST be syntactically complete and valid. Every opened brace and bracket must be closed. If approaching length limit, shorten EARLIER sections first — but always close the JSON properly.
 — SCHOLARLY SOURCES: Šprajc et al. 2023 (Science Advances); Aldana 2022; Tarnas 2006 Cosmos & Psyche; Greene 1976 Saturn; Hand 2002 Planets in Transit; Brady 1999; Brennan 2017; Drayer 2002 Numerology; Kahn 2001 Pythagoras.`;
 
   const user = `PROFILE:
-Name: ${p.name || 'Edward (Ned) Alan Wakeman'}
-Location: ${p.location || 'Twemlow, Cheshire, England'}
-Birth: ${p.birthDay || 15}/${p.birthMonth || 6}/${p.birthYear || 1958} ${p.birthTime || '16:23'} BST
-Birth Kin: Kin 51 — Blue Crystal Monkey
-Life Path: ${num.lp || 8} (${(num.lpM || NUM[8]).n})
-Personal Year: ${num.py || 4} (${(num.pyM || NUM[4]).n})
-Context: Biotech entrepreneur building NanOptima (nanomaterial drug delivery) and ClotProtect (anticoagulation safety) toward pharma acquisition/exit. Husband to Connie. Father to Sam (17) and Kitty (16). Active family man who values presence. Working through inheritance/property distribution with his mother (Baja, California estate). Health arc: wants to be lighter, fitter, more present. Oxford-educated, high-integrity, data-driven.
+${profileBlock}
 
 DATE: ${dateStr} (${new Date(dateStr + 'T12:00:00Z').toLocaleDateString('en-GB', {weekday:'long', day:'numeric', month:'long', year:'numeric'})})
 
@@ -392,7 +408,7 @@ NUMEROLOGY:
 Universal Day: ${num.ud} — ${num.udM?.n} | ${num.udM?.k}
 Month Energy (${new Date(dateStr + 'T12:00:00Z').toLocaleDateString('en-GB', {month:'long'})}): ${num.mEn} — ${num.mEnM?.n}
 Year Energy (${dateStr.slice(0,4)}): ${num.yEn} — ${num.yEnM?.n}
-Personal Year: ${num.py || 4} | Personal Month: ${num.pm || 8} | Personal Day: ${num.pd || 1}
+Personal Year: ${num.py || 'n/a'} | Personal Month: ${num.pm || 'n/a'} | Personal Day: ${num.pd || 'n/a'}
 THREE ENERGIES OF DAY: Morning=${num.pd || num.ud} (${NUM[num.pd || num.ud]?.n}), Afternoon=${num.pm || num.mEn} (${NUM[num.pm || num.mEn]?.n}), Evening=${num.py || num.yEn} (${NUM[num.py || num.yEn]?.n})
 
 DREAMSPELL (Argüelles 1987 — modern system, verify: tortuga.com/oracle):
@@ -412,71 +428,62 @@ ${weekAhead.map(w => `${w.dayStr}: ${w.kin} | UD${w.ud}${w.isGAP ? ' GAP' : ''}`
 
 Generate the FULL ORACLE READING as valid JSON (no markdown, no fences, no preamble — JSON object only):
 {
-  "synthesis": "<2-3 sentence italic opening — synthesise ALL four frameworks into the single deepest truth for Ned today. Specific, named, resonant. Not generic. This is the headline they remember all day.>",
+  "synthesis": "<2-3 sentence italic opening — synthesise ALL four frameworks into the single deepest truth for ${firstName} today. Specific, resonant, not generic.>",
   "numerology": {
-    "headline": "UD ${num.ud} — ${num.udM?.n}: <one punchy, Ned-specific sentence>",
-    "body": "<4 substantial paragraphs: (1) Universal Day ${num.ud} meaning for Ned today — named companies, named life chapter. (2) Interaction of UD${num.ud} with his Life Path 8 — specific to biotech/exit momentum. (3) Personal Day ${num.pd || num.ud} meaning and shadow side. (4) How Personal Month ${num.pm || 8} colours everything this month. Name NanOptima or ClotProtect at least once.>",
+    "headline": "UD ${num.ud} — ${num.udM?.n}: <one punchy, ${firstName}-specific sentence>",
+    "body": "<Paragraphs on UD${num.ud} meaning for ${firstName} today. Reference their personal context. Interaction with Life Path ${num.lp || ''}. Personal Day ${num.pd || num.ud} meaning. Personal Month ${num.pm || ''} colour.>",
     "three_energies": {
-      "morning": {"num": ${num.pd || num.ud}, "name": "${NUM[num.pd || num.ud]?.n}", "guidance": "<3 sentences for Ned's morning — specific action or awareness>"},
-      "afternoon": {"num": ${num.pm || num.mEn}, "name": "${NUM[num.pm || num.mEn]?.n}", "guidance": "<3 sentences for Ned's afternoon>"},
-      "evening": {"num": ${num.py || num.yEn}, "name": "${NUM[num.py || num.yEn]?.n}", "guidance": "<3 sentences for Ned's evening — how to close the day well>"}
+      "morning": {"num": ${num.pd || num.ud}, "name": "${NUM[num.pd || num.ud]?.n}", "guidance": "<3 sentences for ${firstName}'s morning — specific action or awareness>"},
+      "afternoon": {"num": ${num.pm || num.mEn}, "name": "${NUM[num.pm || num.mEn]?.n}", "guidance": "<3 sentences for ${firstName}'s afternoon>"},
+      "evening": {"num": ${num.py || num.yEn}, "name": "${NUM[num.py || num.yEn]?.n}", "guidance": "<3 sentences for ${firstName}'s evening — how to close the day well>"}
     }
   },
   "moon_section": {
-    "headline": "<${moon.phase} in ${planets[1].sign} — one evocative, Ned-specific headline>",
-    "body": "<3 paragraphs: (1) What ${moon.phase} in ${planets[1].sign} asks of Ned specifically. (2) The ${moon.cycle}-day position in the cycle and what is culminating or releasing. (3) ${moonAlert ? 'Specific guidance for the ' + (moon.isBlack ? 'BLACK MOON' : 'SHIVA MOON') + ' — what this threshold means for Ned\'s decisions today.' : 'Specific guidance for Ned\'s communication and relationship decisions today.'}>",
-    "moon_note": "${moonAlert || 'Standard lunar phase — see body for guidance'}"
+    "headline": "<${moon.phase} in ${planets[1].sign} — one evocative, ${firstName}-specific headline>",
+    "body": "<3 paragraphs on what ${moon.phase} in ${planets[1].sign} asks of ${firstName}. The ${moon.cycle}-day position. ${moonAlert ? 'Specific guidance for the lunar threshold.' : 'Communication and relationship guidance.'}>",
+    "moon_note": "${moonAlert || 'Standard lunar phase'}"
   },
   "astrology": {
     "main_transit_headline": "<Name the single most significant active transit with full degree notation>",
-    "main_transit_body": "<4 substantial paragraphs: (1) What this transit is — precise astronomical description. (2) Historical/cultural context — be specific with dates and events. (3) What it means for the world and the biotech/pharma sector right now. (4) What it specifically asks of Ned — NanOptima, ClotProtect, Baja estate, family presence, health. Reference Greene or Tarnas explicitly.>",
-    "saturn_neptune": "<3 paragraphs: (1) Saturn-Neptune cycle — cite Tarnas 2006 explicitly, name 1522/1917/1952/1989 with their historical events. (2) What this conjunction means for the biotech/pharma sector: dissolution of old gatekeeping models (Neptune) meeting clinical validation demands (Saturn). (3) What it personally asks of Ned — the dreamer AND the architect simultaneously. The impossible thing.>",
-    "uranus_note": "<2 sentences: Uranus approaching Gemini ingress ~April 26 — financial disruption, specific implication for Ned's exit timing and valuations.>"
+    "main_transit_body": "<4 paragraphs: astronomical description; historical/cultural context with specific dates; what it means for the world now; what it specifically asks of ${firstName} given their context. Reference Greene or Tarnas.>",
+    "saturn_neptune": "<3 paragraphs: Saturn-Neptune cycle citing Tarnas 2006, 1522/1917/1952/1989 events; what this conjunction means structurally and visionally; what it personally asks of ${firstName}.>",
+    "uranus_note": "<2 sentences: Uranus approaching Gemini ingress ~April 26 — financial disruption implication for ${firstName}.>"
   },
   "dreamspell": {
     "headline": "${kin.full}${kin.isGAP ? ' ★ GALACTIC ACTIVATION PORTAL' : ''}",
-    "body": "<3 paragraphs minimum: (1) Tone ${kin.toneNum} (${kin.tone}) — what this tone asks of Ned today. (2) ${kin.seal} seal — gifts, powers, applied to Ned's specific situation right now. (3) Wavespell position and specific invitation. ${kin.isGAP ? '(4) GAP significance: the veil between dimensions is thinner today — Ned should pay attention to what arrives unexpectedly: the right call, the right sentence, the moment of clarity.' : ''} Always note: Argüelles (1987) modern system, distinct from ancient K\'iche\' tzolkʼin.>",
-    "disclaimer": "Dreamspell: Argüelles (1987) The Mayan Factor — 20th-century modern system, distinct from the ancient K'iche' Maya tzolkʼin maintained continuously by Guatemalan daykeepers (Aldana 2022; Tedlock 1992). Verify: tortuga.com/oracle"
+    "body": "<3 paragraphs: Tone ${kin.toneNum} (${kin.tone}) for ${firstName}; ${kin.seal} seal gifts applied to their situation; wavespell position. ${kin.isGAP ? 'GAP significance: what arrives unexpectedly today.' : ''}>",
+    "disclaimer": "Dreamspell: Argüelles (1987) The Mayan Factor — 20th-century modern system, distinct from the ancient K'iche' Maya tzolkʼin maintained continuously by Guatemalan daykeepers (Aldana 2022). Verify: tortuga.com/oracle"
   },
   "planetary_positions": [
-    {"planet":"Sun","pos":"${planets[0].degStr}","sign":"${planets[0].sign}","note":"<12-15 word personalised note for Ned>"},
-    {"planet":"Moon","pos":"${planets[1].degStr}","sign":"${planets[1].sign}","note":"<12-15 word personalised note for Ned>"},
-    {"planet":"Mercury","pos":"${planets[2].degStr}","sign":"${planets[2].sign}","note":"<12-15 word personalised note for Ned>"},
-    {"planet":"Venus","pos":"${planets[3].degStr}","sign":"${planets[3].sign}","note":"<12-15 word personalised note for Ned>"},
-    {"planet":"Mars","pos":"${planets[4].degStr}","sign":"${planets[4].sign}","note":"<12-15 word personalised note for Ned>"},
-    {"planet":"Jupiter","pos":"${planets[5].degStr}","sign":"${planets[5].sign}","note":"<12-15 word personalised note for Ned>"},
-    {"planet":"Saturn","pos":"${planets[6].degStr}","sign":"${planets[6].sign}","note":"<12-15 word personalised note for Ned>"},
-    {"planet":"Uranus","pos":"${planets[7].degStr}","sign":"${planets[7].sign}","note":"<12-15 word personalised note for Ned>"},
-    {"planet":"Neptune","pos":"${planets[8].degStr}","sign":"${planets[8].sign}","note":"<12-15 word personalised note for Ned>"},
-    {"planet":"Pluto","pos":"${planets[9].degStr}","sign":"${planets[9].sign}","note":"<12-15 word personalised note for Ned>"}
+    ${planets.map(pl => `{"planet":"${pl.name}","pos":"${pl.degStr}","sign":"${pl.sign}","note":"<12-15 word personalised note for ${firstName}>"}`).join(',\n    ')}
   ],
   "aspects": [
-    ${aspects.slice(0,6).map(a => `{"dots":${a.str},"label":"${a.desc}","body":"<3 sentences: what this aspect means for Ned specifically today — named, grounded, actionable>"}`).join(',\n    ')}
+    ${aspects.slice(0,6).map(a => `{"dots":${a.str},"label":"${a.desc}","body":"<3 sentences: what this aspect means for ${firstName} specifically today>"}`).join(',\n    ')}
   ],
-  "shadow_work": "<3-4 sentences italic — the hard question Ned actually needs. Name his real shadow: productive avoidance as a strategy for not being present, measuring self-worth entirely in valuations, deferring family connection until 'after the exit'. Ask the question he most needs to hear right now. Do not soften it.>",
+  "shadow_work": "<3-4 sentences — the hard question ${firstName} actually needs right now. Based on their context. Do not soften it.>",
   "priorities": [
-    {"rank":1,"title":"<Specific to NanOptima or ClotProtect — name the company>","rationale":"<3-4 sentences with full cosmic rationale — which transits and numbers support this today>","action":"<One specific, concrete, completable action for today — not 'work on the pitch' but the exact next step>"},
-    {"rank":2,"title":"<Family presence: Connie, Sam, or Kitty — name who>","rationale":"<3-4 sentences>","action":"<One specific action>"},
-    {"rank":3,"title":"<Health architecture — body as infrastructure for the life after the exit>","rationale":"<3-4 sentences>","action":"<One specific action with a time attached>"}
+    {"rank":1,"title":"<${userContext ? 'Specific to their stated context' : 'Most important cosmic priority today'}>","rationale":"<3-4 sentences with cosmic rationale>","action":"<One specific, concrete, completable action>"},
+    {"rank":2,"title":"<Relationship or connection priority>","rationale":"<3-4 sentences>","action":"<One specific action>"},
+    {"rank":3,"title":"<Body, health, or rest priority>","rationale":"<3-4 sentences>","action":"<One specific action with a time>"}
   ],
   "focus_on": ["<specific item 1>","<specific item 2>","<specific item 3>","<specific item 4>"],
   "ease_off": ["<specific item 1>","<specific item 2>","<specific item 3>","<specific item 4>"],
   "time_windows": {
-    "morning": "<3 sentences: cosmic quality of Ned's morning, what the energy supports, specific advice for the first part of his day>",
-    "afternoon": "<3 sentences: how the energy shifts in the afternoon, what becomes available, specific advice>",
-    "evening": "<3 sentences: how to close the day with integrity — review, connection, rest, the habit that compounds>"
+    "morning": "<3 sentences: cosmic quality of ${firstName}'s morning, what the energy supports, specific advice>",
+    "afternoon": "<3 sentences: how the energy shifts in the afternoon for ${firstName}>",
+    "evening": "<3 sentences: how ${firstName} closes the day with integrity>"
   },
   "week_ahead": [
     ${weekAheadJSON}
   ],
   "daily_gift": {
-    "quote": "<Precisely chosen quote — Jung, Marcus Aurelius, Kierkegaard, Seneca, Rilke, or Rumi — that speaks exactly to Ned's current chapter. Not generic wisdom. The right sentence for this specific man at this specific moment.>",
+    "quote": "<Precisely chosen quote — Jung, Marcus Aurelius, Kierkegaard, Seneca, Rilke, or Rumi — that speaks exactly to ${firstName}'s current chapter.>",
     "attribution": "<Full attribution: Author, Work, Date>",
-    "reflection": "<2-3 sentences of personalised reflection on why this quote lands for Ned right now — specific to his life chapter>",
-    "meditation": "<3 specific, concrete, unglamorous acts for Ned today — the kind of daily care that compounds over months. E.g.: drink water before first coffee; 10 minutes outside before first call; write one sentence about how you want to feel by end of the month.>"
+    "reflection": "<2-3 sentences of personalised reflection on why this quote lands for ${firstName} right now>",
+    "meditation": "<3 specific, concrete, unglamorous acts for ${firstName} today — daily care that compounds over months.>"
   },
-  "closing_line": "<One final sentence in italics — the kind that stays with you. Ned-specific. Not inspirational fluff. The truth of where he actually is.>",
-  "sources": "Astronomy: Swiss Ephemeris (Koch & Treindl, Astrodienst AG, ae_2026.pdf); USNO Moon Phases. Maya calendrics: Šprajc et al. (2023) Science Advances doi:10.1126/sciadv.abq7675; Aldana (2022) doi:10.34758/qyyd-vx23. Dreamspell: Argüelles (1987) The Mayan Factor. Astrology: Greene (1976) Saturn; Tarnas (2006) Cosmos & Psyche; Hand (2002) Planets in Transit; Brady (1999) Predictive Astrology; Brennan (2017) Hellenistic Astrology. Numerology: Drayer (2002); Goodwin (1994); Kahn (2001) Pythagoras."
+  "closing_line": "<One final sentence — ${firstName}-specific. The truth of where they actually are.>",
+  "sources": "Astronomy: Swiss Ephemeris (Koch & Treindl, Astrodienst AG, ae_2026.pdf); USNO Moon Phases. Maya calendrics: Šprajc et al. (2023) Science Advances doi:10.1126/sciadv.abq7675; Aldana (2022). Dreamspell: Argüelles (1987) The Mayan Factor. Astrology: Greene (1976) Saturn; Tarnas (2006) Cosmos & Psyche; Hand (2002) Planets in Transit. Numerology: Drayer (2002); Kahn (2001) Pythagoras."
 }`;
 
   // Token budget by tier — smaller tiers complete faster
