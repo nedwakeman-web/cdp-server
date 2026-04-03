@@ -1697,206 +1697,194 @@ function renderReading(data, dateStr) {
     <span class="tier-pill active" onclick="showTierModal('oracle')" style="cursor:pointer">Oracle</span>
   </div>`;
 
-  if (isRawReading(r)) {
-    // Smart fallback — extract synthesis from raw text, show calculated data
-    let synth = '';
-    const rawText = r?.synthesis || '';
-    if (rawText.includes('"synthesis"')) {
-      const m = rawText.match(/"synthesis"\s*:\s*"((?:[^"\\]|\\.)*)"/);
-      synth = m ? m[1].replace(/\\n/g,' ').replace(/\*/g,'') : '';
-    }
-    if (!synth) synth = rawText.slice(0, 400);
+  // ── RESILIENT RENDERING: show whatever Claude returned, section by section ──
+  // Never gate on isRawReading — always render something meaningful
+  const hasAI = !isRawReading(r);
 
-    if (synth) {
-      html += `<div class="synthesis">${synth}</div>`;
-    }
+  // SYNTHESIS — always show (AI or calculated fallback)
+  const synthText = hasAI
+    ? String(r.synthesis||'').replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/\*(.*?)\*/g,'$1').replace(/^[_*]+|[_*]+$/g,'').trim()
+    : '';
+  if (synthText) {
+    html += `<div class="synthesis">${synthText}</div>`;
+  }
 
-    // Still show calculated data sections even when prose failed
-    html += `<div class="r-section">
-      <div class="sec-label">Numerology of the Day</div>
-      <div class="sec-hl">Universal Day ${num?.ud} — ${num?.udM?.n||''}</div>
-      <div class="sec-body"><p>${num?.udM?.k||''}</p></div>
-      ${num?.pd ? `<div class="sec-body" style="margin-top:12px"><p>Personal Day ${num.pd} — ${(NUM_DATA[num.pd]||{}).n||''}: ${(NUM_DATA[num.pd]||{}).m||''}</p></div>` : ''}
-    </div>`;
-
-    if (planets) {
-      html += `<div class="r-section">
-        <div class="sec-label">Planetary Positions · Swiss Ephemeris</div>
-        <div class="planet-grid">`;
-      planets.forEach(p => {
-        html += `<div class="planet-row">
-          <span class="planet-name">${p.name}</span>
-          <span class="planet-pos">${p.degStr}</span>
-        </div>`;
-      });
-      html += `</div></div>`;
-    }
-
-    html += `<div style="text-align:center;padding:30px 20px">
-      <div style="font-size:.85rem;color:var(--text3);margin-bottom:14px;font-style:italic">The Oracle's full reading encountered a rendering issue. The cosmic data above is accurate. Tap below to request the full reading.</div>
-      <button onclick="loadReading('${dateStr}')" style="background:none;border:1px solid var(--gold3);color:var(--gold);padding:9px 22px;border-radius:2px;cursor:pointer;font-family:'EB Garamond',serif;font-size:12px;letter-spacing:.25em;text-transform:uppercase">Request Full Reading ↺</button>
-    </div>`;
+  // NUMEROLOGY — AI body if available, always show calculated strip
+  html += `<div class="r-section">
+    <div class="sec-label">Numerology of the Day</div>
+    <div class="sec-hl">${r.numerology?.headline||`Universal Day ${num?.ud} — ${num?.udM?.n||''}`}</div>`;
+  if (r.numerology?.body) {
+    html += `<div class="sec-body">${prose(r.numerology.body)}</div>`;
   } else {
-  // SYNTHESIS — strip markdown asterisks before rendering
-    html += `<div class="synthesis">${String(r.synthesis||'').replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/\*(.*?)\*/g,'$1').replace(/^[_*]+|[_*]+$/g,'').trim()}</div>`;
-
-    // NUMEROLOGY
-    html += `<div class="r-section">
-      <div class="sec-label">Numerology of the Day</div>
-      <div class="sec-hl">${r.numerology?.headline||`Universal Day ${num?.ud} — ${num?.udM?.n}`}</div>
-      <div class="sec-body">${prose(r.numerology?.body)}</div>`;
-    if (r.numerology?.three_energies) {
-      const te = r.numerology.three_energies;
-      html += `<div class="energies">`;
-      [['morning','☀ Morning',te.morning],['afternoon','◑ Afternoon',te.afternoon],['evening','☽ Evening',te.evening]].forEach(([k,lbl,e])=>{
-        html += `<div class="energy-card${activeWindow===k?' active-window':''}">
-          <div class="energy-time">${lbl}${activeWindow===k?' <span style="color:var(--teal);font-size:8px">· Now</span>':''}</div>
-          <div class="energy-num">${e?.num||''}</div>
-          <div class="energy-name">${e?.name||''}</div>
-          <div class="energy-guidance">${e?.guidance||''}</div>
-        </div>`;
-      });
-      html += `</div>`;
-    }
-    html += `</div>`;
-
-    // LUNAR
-    html += `<div class="r-section">
-      <div class="sec-label">Lunar Landscape</div>
-      <div class="sec-hl">${moon?.emoji||''} ${r.moon_section?.headline||moon?.phase+' in '+moonSign}</div>
-      ${moon?.moon_note&&(moon.isBlack||moon.isShiva)?`<div><span class="moon-badge ${moon.isBlack?'badge-black':'badge-shiva'}">${moon.moon_note}</span></div>`:''}
-      <div class="sec-body" style="margin-top:10px">${prose(r.moon_section?.body)}</div>
+    // Calculated fallback
+    html += `<div class="sec-body">
+      <p>${num?.udM?.k||''} — ${num?.udM?.m||''}</p>
+      ${num?.pd ? `<p>Personal Day ${num.pd} (${(NUM_DATA[num.pd]||{}).n||''}): ${(NUM_DATA[num.pd]||{}).m||''}</p>` : ''}
+      ${num?.pm ? `<p>Personal Month ${num.pm} (${(NUM_DATA[num.pm]||{}).n||''}): ${(NUM_DATA[num.pm]||{}).m||''}</p>` : ''}
     </div>`;
+  }
+  // Three energies — always show (AI or calculated)
+  const te = r.numerology?.three_energies;
+  const teM = { morning: num?.pd||num?.ud, afternoon: num?.pm||num?.mEn, evening: num?.py||num?.yEn };
+  html += `<div class="energies">`;
+  [['morning','☀ Morning'],['afternoon','◑ Afternoon'],['evening','☽ Evening']].forEach(([k,lbl])=>{
+    const e = te?.[k];
+    const fallbackNum = teM[k];
+    const fallbackD = NUM_DATA[fallbackNum] || {};
+    html += `<div class="energy-card${activeWindow===k?' active-window':''}">
+      <div class="energy-time">${lbl}${activeWindow===k?' <span style="color:var(--teal);font-size:11px">· Now</span>':''}</div>
+      <div class="energy-num" style="${[11,22,33,44].includes(e?.num||fallbackNum)?'color:var(--master)':''}">${e?.num||fallbackNum||''}</div>
+      <div class="energy-name">${e?.name||fallbackD.n||''}</div>
+      <div class="energy-guidance">${e?.guidance||fallbackD.m||''}</div>
+    </div>`;
+  });
+  html += `</div></div>`;
 
-    // ASTROLOGY
+  // LUNAR — AI or calculated fallback
+  html += `<div class="r-section">
+    <div class="sec-label">Lunar Landscape</div>
+    <div class="sec-hl">${moon?.emoji||''} ${r.moon_section?.headline||(moon?.phase+' in '+moonSign)||''}</div>
+    ${moon?.isBlack?`<div><span class="moon-badge badge-black">⚠️ Black Moon — 2 days before New Moon — threshold day</span></div>`:''}
+    ${moon?.isShiva?`<div><span class="moon-badge badge-shiva">✨ Shiva Moon — 2 days after New Moon — auspicious</span></div>`:''}
+    <div class="sec-body" style="margin-top:10px">${r.moon_section?.body ? prose(r.moon_section.body) : `<p>The ${moon?.phase||'Moon'} in ${moonSign} on day ${moon?.cycle||'—'} of the lunar cycle. ${moon?.toNew||'—'} days to the New Moon.</p>`}</div>
+  </div>`;
+
+  // ASTROLOGY — only if AI returned it
+  if (r.astrology?.main_transit_headline || r.astrology?.main_transit_body) {
     html += `<div class="r-section">
       <div class="sec-label">Western Astrology</div>
       <div class="sec-hl">${r.astrology?.main_transit_headline||''}</div>
       <div class="sec-body">${prose(r.astrology?.main_transit_body||r.astrology?.main_transit||'')}</div>
     </div>`;
+  }
 
-    // SATURN-NEPTUNE
+  // SATURN-NEPTUNE — only if AI returned it
+  if (r.astrology?.saturn_neptune) {
     html += `<div class="r-section" style="border-left:2px solid var(--gold3)">
       <div class="sec-label">∞ Saturn–Neptune 0° Aries — A Civilisational Reset</div>
-      <div class="sec-body">${prose(r.astrology?.saturn_neptune)}
+      <div class="sec-body">${prose(r.astrology.saturn_neptune)}
       ${r.astrology?.uranus_note?`<p style="margin-top:10px;color:var(--teal);font-style:italic">${r.astrology.uranus_note}</p>`:''}
-      ${r.astrology?.mars_note?`<p style="color:var(--text3);font-style:italic">${r.astrology.mars_note}</p>`:''}
       </div>
     </div>`;
+  }
 
-    // DREAMSPELL
+  // DREAMSPELL — AI or calculated fallback
+  html += `<div class="r-section">
+    <div class="sec-label">Dreamspell · Law of Time</div>
+    <div class="sec-hl">◈ ${r.dreamspell?.headline||kin?.full||''}${kin?.isGAP?`<span class="gap-badge">★ Portal</span>`:''}</div>
+    <div class="sec-body">${r.dreamspell?.body ? prose(r.dreamspell.body) : `<p>Kin ${kin?.kinNum||''} — ${kin?.full||''}. Tone ${kin?.toneNum||''} (${kin?.tone||''}) · Seal: ${kin?.seal||''}. ${kin?.isGAP?'Galactic Activation Portal — the veil between dimensions is thinner today. Pay attention to what arrives unexpectedly.':''}</p>`}</div>
+    <div style="margin-top:10px;padding:9px;background:var(--bg4);border:1px solid var(--div2);border-radius:2px">
+      <div style="font-size:13px;color:var(--text3);font-style:italic">${r.dreamspell?.disclaimer||'Dreamspell: Argüelles (1987) The Mayan Factor — modern system. Verify: tortuga.com/oracle'}</div>
+    </div>
+  </div>`;
+
+  // PLANETARY POSITIONS — always show (clickable)
+  if (planets) {
+    const pData = r.planetary_positions || r.key_planets || [];
     html += `<div class="r-section">
-      <div class="sec-label">Dreamspell · Law of Time</div>
-      <div class="sec-hl">◈ ${r.dreamspell?.headline||kin?.full}${kin?.isGAP?`<span class="gap-badge">★ Portal</span>`:''}</div>
-      <div class="sec-body">${prose(r.dreamspell?.body)}</div>
-      <div style="margin-top:12px;padding:9px;background:var(--bg4);border:1px solid var(--div2);border-radius:2px">
-        <div style="font-size:.72rem;color:var(--text3);font-style:italic">${r.dreamspell?.disclaimer||''}</div>
+      <div class="sec-label">Planetary Positions</div>
+      <div style="font-size:14px;color:var(--text3);margin-bottom:14px;font-style:italic">Swiss Ephemeris (Astrodienst AG, ae_2026.pdf) · Tap any planet for a personalised interpretation</div>
+      <div class="planet-grid" id="planetGrid">`;
+    planets.forEach((p, i) => {
+      const note = pData[i]?.note || '';
+      html += `<div class="planet-row" id="planet-${i}" onclick="interpretPlanet(${i},'${p.name}','${p.degStr}','${p.sign}')">
+        <span class="planet-name">${p.name}</span>
+        <span class="planet-pos">${p.degStr}</span>
+        <span class="planet-note">${note}</span>
+        <span style="font-size:12px;color:var(--gold3);margin-left:auto;flex-shrink:0">↗</span>
+      </div>`;
+    });
+    html += `</div>
+      <div id="planetInterpBox" style="display:none;margin-top:12px" class="planet-interp"></div>
+    </div>`;
+  }
+
+  // KEY ASPECTS — AI + calculated fallback
+  const aspectsToShow = r.aspects?.length ? r.aspects : r.top_aspects;
+  if (aspectsToShow?.length || aspects?.length) {
+    html += `<div class="r-section"><div class="sec-label">Key Aspects</div>`;
+    const showList = aspectsToShow?.length ? aspectsToShow : [];
+    showList.forEach((a, i) => {
+      const raw = aspects?.[i];
+      html += `<div class="aspect-item">
+        <div class="aspect-head">
+          <span class="aspect-dots">${stars(a.dots||raw?.str||3)}</span>
+          <span class="aspect-label">${a.label||raw?.desc||''}</span>
+        </div>
+        <div class="aspect-body">${a.body||''}</div>
+      </div>`;
+    });
+    // If no AI aspects, show calculated ones
+    if (!showList.length && aspects?.length) {
+      aspects.slice(0,4).forEach(a => {
+        html += `<div class="aspect-item">
+          <div class="aspect-head">
+            <span class="aspect-dots">${stars(a.str||3)}</span>
+            <span class="aspect-label">${a.desc||''}</span>
+          </div>
+          <div class="aspect-body" style="color:var(--text3);font-style:italic">Tap a planet above for a personalised interpretation of this aspect.</div>
+        </div>`;
+      });
+    }
+    html += `</div>`;
+  }
+
+  // SHADOW WORK — only if AI returned it
+  if (r.shadow_work) {
+    html += `<div class="shadow-box">
+      <div style="font-size:13px;letter-spacing:.35em;text-transform:uppercase;color:var(--text3);margin-bottom:9px">Shadow Work</div>
+      <div class="shadow-text">${cleanText(r.shadow_work)}</div>
+    </div>`;
+  }
+
+  // PRIORITIES — only if AI returned them
+  if (r.priorities?.length) {
+    html += `<div class="r-section"><div class="sec-label">Today's Priorities</div>`;
+    r.priorities.forEach((pri, i) => {
+      html += `<div class="priority-item">
+        <div class="pri-num">${i+1}</div>
+        <div>
+          <div class="pri-title">${pri.title||''}</div>
+          <div class="pri-body">${pri.rationale||pri.body||''}</div>
+          ${pri.action?`<div class="pri-action">→ ${pri.action}</div>`:''}
+        </div>
+        <div style="clear:both"></div>
+      </div>`;
+    });
+    html += `</div>`;
+  }
+
+  // FOCUS ON / EASE OFF
+  if (r.focus_on?.length || r.ease_off?.length) {
+    html += `<div class="two-col" style="margin-bottom:18px">
+      <div class="col-card">
+        <div class="col-head">Focus On</div>
+        ${(r.focus_on||[]).map(i=>`<div class="col-item">${i}</div>`).join('')}
+      </div>
+      <div class="col-card">
+        <div class="col-head">Ease Off</div>
+        ${(r.ease_off||[]).map(i=>`<div class="col-item">${i}</div>`).join('')}
       </div>
     </div>`;
+  }
 
-    // PLANETARY POSITIONS — clickable for bespoke interpretation
-    if (planets) {
-      const pData = r.planetary_positions || r.key_planets || [];
-      html += `<div class="r-section">
-        <div class="sec-label">Planetary Positions</div>
-        <div style="font-size:14px;color:var(--text3);margin-bottom:14px;font-style:italic">Swiss Ephemeris (Astrodienst AG, ae_2026.pdf) · Tap any planet for a personalised interpretation</div>
-        <div class="planet-grid" id="planetGrid">`;
-      planets.forEach((p, i) => {
-        const note = pData[i]?.note || '';
-        html += `<div class="planet-row" id="planet-${i}" onclick="interpretPlanet(${i},'${p.name}','${p.degStr}','${p.sign}')">
-          <span class="planet-name">${p.name}</span>
-          <span class="planet-pos">${p.degStr}</span>
-          <span class="planet-note">${note}</span>
-          <span style="font-size:12px;color:var(--gold3);margin-left:auto;flex-shrink:0">↗</span>
-        </div>`;
-      });
-      html += `</div>
-        <div id="planetInterpBox" style="display:none;margin-top:12px" class="planet-interp"></div>
+  // TIME WINDOWS — AI or fallback from three_energies
+  const tw = r.time_windows;
+  const te2 = r.numerology?.three_energies;
+  if (tw || te2) {
+    html += `<div class="r-section">
+      <div class="sec-label">The Day in Three Windows</div>
+      <div class="time-windows">`;
+    [['morning','☀','Morning'],['afternoon','◑','Afternoon'],['evening','☽','Evening']].forEach(([k,icon,lbl])=>{
+      const text = tw?.[k] || te2?.[k]?.guidance || '';
+      html += `<div class="tw-card${activeWindow===k?' active-window':''}">
+        <div class="tw-icon">${icon}${activeWindow===k?' <span style="font-size:11px;color:var(--teal)">· Now</span>':''}</div>
+        <div class="tw-label">${lbl}</div>
+        <div class="tw-text">${text}</div>
       </div>`;
-    }
-
-    // KEY ASPECTS
-    if (r.aspects && r.aspects.length > 0) {
-      html += `<div class="r-section"><div class="sec-label">Key Aspects</div>`;
-      r.aspects.forEach((a, i) => {
-        const raw = aspects?.[i];
-        html += `<div class="aspect-item">
-          <div class="aspect-head">
-            <span class="aspect-dots">${stars(a.dots||raw?.str||3)}</span>
-            <span class="aspect-label">${a.label||raw?.desc||''}</span>
-          </div>
-          <div class="aspect-body">${a.body||''}</div>
-        </div>`;
-      });
-      html += `</div>`;
-    }
-
-    // TOP ASPECTS fallback
-    if ((!r.aspects || r.aspects.length===0) && r.top_aspects && r.top_aspects.length > 0) {
-      html += `<div class="r-section"><div class="sec-label">Key Aspects</div>`;
-      r.top_aspects.forEach((a, i) => {
-        html += `<div class="aspect-item">
-          <div class="aspect-head">
-            <span class="aspect-dots">${stars(aspects?.[i]?.str||3)}</span>
-            <span class="aspect-label">${a.label||''}</span>
-          </div>
-          <div class="aspect-body">${a.body||''}</div>
-        </div>`;
-      });
-      html += `</div>`;
-    }
-
-    // SHADOW WORK
-    html += `<div class="shadow-box">
-      <div style="font-size:9px;letter-spacing:.4em;text-transform:uppercase;color:var(--text3);margin-bottom:9px">Shadow Work</div>
-      <div class="shadow-text">${cleanText(r.shadow_work||'')}</div>
-    </div>`;
-
-    // PRIORITIES
-    if (r.priorities && r.priorities.length > 0) {
-      html += `<div class="r-section"><div class="sec-label">Today's Priorities</div>`;
-      r.priorities.forEach((pri, i) => {
-        html += `<div class="priority-item">
-          <div class="pri-num">${i+1}</div>
-          <div>
-            <div class="pri-title">${pri.title||''}</div>
-            <div class="pri-body">${pri.rationale||pri.body||''}</div>
-            ${pri.action?`<div class="pri-action">→ ${pri.action}</div>`:''}
-          </div>
-          <div style="clear:both"></div>
-        </div>`;
-      });
-      html += `</div>`;
-    }
-
-    // FOCUS ON / EASE OFF
-    if (r.focus_on || r.ease_off) {
-      html += `<div class="two-col" style="margin-bottom:18px">
-        <div class="col-card">
-          <div class="col-head">Focus On</div>
-          ${(r.focus_on||[]).map(i=>`<div class="col-item">${i}</div>`).join('')}
-        </div>
-        <div class="col-card">
-          <div class="col-head">Ease Off</div>
-          ${(r.ease_off||[]).map(i=>`<div class="col-item">${i}</div>`).join('')}
-        </div>
-      </div>`;
-    }
-
-    // TIME WINDOWS
-    if (r.time_windows) {
-      html += `<div class="r-section">
-        <div class="sec-label">The Day in Three Windows</div>
-        <div class="time-windows">`;
-      [['morning','☀','Morning'],['afternoon','◑','Afternoon'],['evening','☽','Evening']].forEach(([k,icon,lbl])=>{
-        html += `<div class="tw-card${activeWindow===k?' active-window':''}">
-          <div class="tw-icon">${icon}${activeWindow===k?' <span style="font-size:8px;color:var(--teal)">· Now</span>':''}</div>
-          <div class="tw-label">${lbl}</div>
-          <div class="tw-text">${r.time_windows[k]||''}</div>
-        </div>`;
-      });
-      html += `</div></div>`;
-    }
+    });
+    html += `</div></div>`;
+  }
 
     // WEEK AHEAD
     if (r.week_ahead && r.week_ahead.length > 0) {
@@ -1938,11 +1926,12 @@ function renderReading(data, dateStr) {
     html += `<div class="closing">${closing}</div>`;
 
     // SOURCES
-    html += `<div class="r-section">
-      <div class="sec-label">Scholarly Sources & Data Verification</div>
-      <div class="sources-text">${r.sources||''}</div>
-    </div>`;
-  }
+    if (r.sources) {
+      html += `<div class="r-section">
+        <div class="sec-label">Scholarly Sources & Data Verification</div>
+        <div class="sources-text">${r.sources}</div>
+      </div>`;
+    }
 
   // ASK ORACLE — context-aware chips based on reading
   const chips = buildChips(r);
