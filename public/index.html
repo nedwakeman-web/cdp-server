@@ -1391,7 +1391,7 @@ function renderCard() {
   const date = new Date(dateStr + 'T12:00:00Z');
   const dayName   = date.toLocaleDateString('en-GB', {weekday:'long'}).toUpperCase();
   const dateLine  = date.toLocaleDateString('en-GB', {day:'numeric', month:'long', year:'numeric'}).toUpperCase();
-  const locLine   = (profile.location || 'Twemlow, Cheshire').toUpperCase();
+  const locLine   = (profile.location || 'your location').toUpperCase();
 
   // ── CONTENT EXTRACTION (works even with raw/truncated reading) ──
   const tw = r.time_windows || {};
@@ -1668,7 +1668,7 @@ function renderReading(data, dateStr) {
   const date = new Date(dateStr + 'T12:00:00Z');
   const dateLabel = date.toLocaleDateString('en-GB', {weekday:'long', day:'numeric', month:'long', year:'numeric'});
   const moonSign = planets ? planets[1]?.sign : '';
-  const nickname = profile.nickname || profile.name?.split(' ')[0] || 'Ned';
+  const nickname = profile.nickname || profile.name?.split(' ')[0] || 'you';
   const curHour = new Date().getHours();
   const activeWindow = curHour < 12 ? 'morning' : curHour < 18 ? 'afternoon' : 'evening';
 
@@ -1678,7 +1678,7 @@ function renderReading(data, dateStr) {
   html += `<div class="r-head">
     <div class="r-meta">BST · ${planets?.[0]?.sign||'Aries'} Season · ${moon?.pct||0}% Moon${moon?.isBlack?' · ⚠️ Black Moon':moon?.isShiva?' · ✨ Shiva Moon':''}</div>
     <div class="r-date">${dateLabel}</div>
-    <div class="r-loc">${profile.location || 'Twemlow, Cheshire, England'} · ${nickname}</div>
+    <div class="r-loc">${profile.location || 'your location'} · ${nickname}</div>
   </div>`;
 
   // Four widgets
@@ -2058,23 +2058,22 @@ function renderReading(data, dateStr) {
 }
 
 function buildChips(r) {
-  // Some chips are always present, others are context-aware
+  const firstName = getFirstName();
   const base = [
-    {q:`What does today's Universal Day number mean specifically for my NanOptima and ClotProtect exit strategy right now?`,l:'NanOptima & ClotProtect today'},
-    {q:`How should I think about family presence with Sam and Kitty given today's cosmic weather?`,l:'Family presence today'},
-    {q:`What does the Saturn-Neptune conjunction mean for biotech exits in 2026?`,l:'Saturn-Neptune & biotech'},
-    {q:`What health commitments does today's numerology and astrology best support?`,l:'Health architecture today'},
-    {q:`What should I ease off or consciously avoid today based on the current transits?`,l:'What to avoid today'},
+    {q:`What does today's Universal Day number mean specifically for ${firstName}'s most important work and decisions right now?`,l:'Today & your work'},
+    {q:`What does today's cosmic weather say about ${firstName}'s key relationships and connections?`,l:'Relationships today'},
+    {q:`What does the Saturn-Neptune conjunction in Aries mean for ${firstName}'s situation in 2026?`,l:'Saturn-Neptune & you'},
+    {q:`What health and energy practices does today's astrology and numerology best support for ${firstName}?`,l:'Health & body today'},
+    {q:`What should ${firstName} ease off or consciously avoid today based on the current transits?`,l:'What to avoid today'},
   ];
-  // Add dynamic chip if GAP day
   if (currentReading?.kin?.isGAP) {
-    base.push({q:'This is a Galactic Activation Portal day — what does that specifically mean for what arrives for me today?',l:'★ GAP day — what to watch for'});
+    base.push({q:`This is a Galactic Activation Portal day — what does that specifically mean for what arrives for ${firstName} today?`,l:'★ GAP day — what to watch for'});
   }
   if (currentReading?.moon?.isBlack) {
-    base.push({q:'What does the Black Moon mean for my decisions and energy today?',l:'⚠️ Black Moon guidance'});
+    base.push({q:`What does the Black Moon mean for ${firstName}'s decisions and energy today?`,l:'⚠️ Black Moon guidance'});
   }
   if (currentReading?.moon?.isShiva) {
-    base.push({q:'How do I best use the Shiva Moon energy today?',l:'✨ Shiva Moon energy'});
+    base.push({q:`How should ${firstName} best use the Shiva Moon energy today?`,l:'✨ Shiva Moon energy'});
   }
   return base.map(c=>`<button class="chip" onclick="askChip('${c.q.replace(/'/g,"\\\'")}')">${c.l}</button>`).join('');
 }
@@ -2104,7 +2103,17 @@ function closeDrawer() {
   document.body.style.overflow = '';
 }
 
+// ── Helper: get first name from profile ──
+function getFirstName() {
+  return profile.nickname || (profile.name ? profile.name.split(' ')[0] : 'you');
+}
+function getUserContext() {
+  return profile.context ? `User context: ${profile.context}.` : '';
+}
+
 async function fetchInsight(question, followUpChips) {
+  const firstName = getFirstName();
+  const userCtx = getUserContext();
   const readingCtx = currentReading?.reading?.synthesis
     ? `Today's Oracle synthesis: ${currentReading.reading.synthesis}.`
     : '';
@@ -2114,9 +2123,10 @@ async function fetchInsight(question, followUpChips) {
 
   const fullQ = `${question}
 
-Context: ${readingCtx} ${moonCtx} ${kinCtx} ${numCtx}
+${userCtx}
+${readingCtx} ${moonCtx} ${kinCtx} ${numCtx}
 
-Respond with 3-5 sentences of deep, specific, personalised insight. Speak directly to Ned. Reference NanOptima, ClotProtect, Connie, Sam, Kitty, or the Baja estate where relevant. End with one concrete action or question for him to sit with.`;
+Respond with 3-5 sentences of deep, specific, personalised insight. Speak directly to ${firstName}. Reference their personal context where relevant. End with one concrete action or question for them to sit with.`;
 
   try {
     const res = await fetch(API_BASE + '/api/ask', {
@@ -2159,109 +2169,119 @@ async function drawerFollowUp(question, label) {
 
 // ── PLANET CLICK ──
 async function interpretPlanet(idx, name, pos, sign) {
+  const firstName = getFirstName();
   const note = currentReading?.reading?.planetary_positions?.[idx]?.note || '';
   const chips = [
-    {q:`How does ${name} at ${pos} ${sign} interact with my Life Path ${currentReading?.num?.lp||'8'} today?`, l:`${name} & Life Path`},
-    {q:`What does ${name} at ${pos} ${sign} mean for NanOptima and ClotProtect right now?`, l:`${name} & Biotech`},
-    {q:`How should I work with ${name} in ${sign} energy this week?`, l:`Working with ${name}`},
+    {q:`How does ${name} at ${pos} ${sign} interact with ${firstName}'s Life Path ${currentReading?.num?.lp||''} today?`, l:`${name} & Life Path`},
+    {q:`What does ${name} at ${pos} ${sign} mean for ${firstName}'s work and projects right now?`, l:`${name} & Work`},
+    {q:`How should ${firstName} work with ${name} in ${sign} energy this week?`, l:`Working with ${name}`},
   ];
-  // Mark the row as active
   document.querySelectorAll('.planet-row').forEach(r => r.classList.remove('active-planet'));
   const row = document.getElementById(`planet-${idx}`);
   if (row) row.classList.add('active-planet');
-
   openDrawer(
     `${name} · ${pos} ${sign}`,
-    `${name} is at ${pos} in ${sign} today. ${note ? 'Note: '+note+'.' : ''} What does this position mean specifically for Ned today — his biotech exit work, family life, and health? Ground the interpretation in the actual degree and sign energy.`,
+    `${name} is at ${pos} in ${sign} today. ${note ? 'Note: '+note+'.' : ''} ${getUserContext()} What does this position mean specifically for ${firstName} today? Ground the interpretation in the actual degree and sign energy. End with one concrete action or awareness.`,
     chips
   );
 }
 
 // ── TAPPABLE SECTION HELPERS ──
 function tapSynthesis() {
+  const firstName = getFirstName();
   const synth = currentReading?.reading?.synthesis || '';
-  openDrawer('Deep Synthesis', `This is the Oracle's opening synthesis for today: "${synth}". Go deeper — what is the single most important thing this synthesis is asking Ned to understand or do today? What is it NOT saying that also needs to be heard?`, [
-    {q:'What is today trying to teach Ned about who he is becoming?', l:'Who Ned is becoming'},
-    {q:'What would Ned regret not acting on today?', l:'What not to miss'},
+  openDrawer('Deep Synthesis', `This is the Oracle's opening synthesis for today: "${synth}". ${getUserContext()} Go deeper — what is the single most important thing this synthesis is asking ${firstName} to understand or do today? What is it NOT saying that also needs to be heard?`, [
+    {q:`What is today trying to teach ${firstName} about who they are becoming?`, l:'Who you are becoming'},
+    {q:`What would ${firstName} regret not acting on today?`, l:'What not to miss'},
   ]);
 }
 
 function tapNumerology(num, name) {
-  openDrawer(`Numerology · ${num} ${name}`, `Today's Universal Day is ${num} (${name}). Ned's Personal Day is ${currentReading?.num?.pd||num}. What does this number specifically ask of him in his role as a biotech entrepreneur and father today? How does it interact with his Life Path ${currentReading?.num?.lp||'8'}?`, [
-    {q:`How does UD ${num} specifically affect deal-making and pharma conversations?`, l:`UD ${num} & business`},
-    {q:`What does UD ${num} mean for Ned's family time today?`, l:`UD ${num} & family`},
-    {q:`What is the shadow side of ${num} energy Ned should watch for?`, l:`Shadow of ${num}`},
+  const firstName = getFirstName();
+  openDrawer(`Numerology · ${num} ${name}`, `Today's Universal Day is ${num} (${name}). ${firstName}'s Personal Day is ${currentReading?.num?.pd||num}. ${getUserContext()} What does this number specifically ask of ${firstName} today? How does it interact with their Life Path ${currentReading?.num?.lp||''}?`, [
+    {q:`How does UD ${num} specifically affect ${firstName}'s work and decisions today?`, l:`UD ${num} & work`},
+    {q:`What does UD ${num} mean for ${firstName}'s relationships today?`, l:`UD ${num} & relationships`},
+    {q:`What is the shadow side of ${num} energy ${firstName} should watch for?`, l:`Shadow of ${num}`},
   ]);
 }
 
 function tapEnergy(mode, num, name, guidance) {
+  const firstName = getFirstName();
   const modeLabel = mode==='morning'?'Morning':mode==='afternoon'?'Afternoon':'Evening';
-  openDrawer(`${modeLabel} · ${num} ${name}`, `The ${modeLabel.toLowerCase()} carries the energy of ${num} (${name}). ${guidance ? 'Current guidance: '+guidance : ''} Go deeper — what specific actions, conversations, or internal states does this ${modeLabel.toLowerCase()} energy support for Ned today? Be concrete and specific to his actual situation.`, [
-    {q:`What is the single most important thing Ned should do this ${modeLabel.toLowerCase()}?`, l:`Priority this ${modeLabel.toLowerCase()}`},
-    {q:`What should Ned avoid this ${modeLabel.toLowerCase()}?`, l:`What to avoid`},
+  openDrawer(`${modeLabel} · ${num} ${name}`, `The ${modeLabel.toLowerCase()} carries the energy of ${num} (${name}). ${guidance ? 'Current guidance: '+guidance : ''} ${getUserContext()} What specific actions, conversations, or internal states does this ${modeLabel.toLowerCase()} energy support for ${firstName} today?`, [
+    {q:`What is the single most important thing ${firstName} should do this ${modeLabel.toLowerCase()}?`, l:`Priority this ${modeLabel.toLowerCase()}`},
+    {q:`What should ${firstName} avoid this ${modeLabel.toLowerCase()}?`, l:'What to avoid'},
   ]);
 }
 
 function tapMoon() {
+  const firstName = getFirstName();
   const m = currentReading?.moon;
   const sign = currentReading?.planets?.[1]?.sign || '';
-  openDrawer(`${m?.emoji||'☽'} ${m?.phase||'Moon'} in ${sign}`, `The Moon is ${m?.phase||'at'} in ${sign}, day ${m?.cycle||'—'} of the lunar cycle, ${m?.toNew||'—'} days to the New Moon. ${m?.isBlack?'★ BLACK MOON — threshold day.':m?.isShiva?'★ SHIVA MOON — auspicious.':''} What does this lunar position ask of Ned today in his relationships, his body, and his inner life?`, [
-    {q:'How does this moon phase affect Ned\'s energy and sleep?', l:'Body & energy'},
-    {q:'What does this lunar position say about Ned\'s relationships with Connie, Sam, and Kitty today?', l:'Family & relationships'},
-    {q:'What is releasing or completing in Ned\'s life at this lunar phase?', l:'What is completing'},
+  openDrawer(`${m?.emoji||'☽'} ${m?.phase||'Moon'} in ${sign}`, `The Moon is ${m?.phase||'at'} in ${sign}, day ${m?.cycle||'—'} of the lunar cycle, ${m?.toNew||'—'} days to the New Moon. ${m?.isBlack?'★ BLACK MOON — threshold day.':m?.isShiva?'★ SHIVA MOON — auspicious.':''} ${getUserContext()} What does this lunar position ask of ${firstName} today in their relationships, body, and inner life?`, [
+    {q:`How does this moon phase affect ${firstName}'s energy and sleep?`, l:'Body & energy'},
+    {q:`What does this lunar position say about ${firstName}'s key relationships today?`, l:'Relationships'},
+    {q:`What is releasing or completing in ${firstName}'s life at this lunar phase?`, l:'What is completing'},
   ]);
 }
 
 function tapDreamspell() {
+  const firstName = getFirstName();
   const k = currentReading?.kin;
-  openDrawer(`◈ ${k?.full||'Dreamspell'}`, `Today's Dreamspell Kin is ${k?.full||''}. Tone ${k?.toneNum||''} (${k?.tone||''}) · Seal: ${k?.seal||''} · Color: ${k?.color||''}. ${k?.isGAP?'★ GALACTIC ACTIVATION PORTAL — the veil is thinner today.':''} What does this Kin specifically invite Ned to embody or practice today? Note: Argüelles (1987) modern system.`, [
-    {q:`What is the gift and the shadow of the ${k?.seal||'seal'} for Ned right now?`, l:'Gift & shadow of seal'},
-    {q:`How does Tone ${k?.toneNum||''} (${k?.tone||''}) shape Ned's approach today?`, l:`Tone ${k?.toneNum||''} in practice`},
-    k?.isGAP ? {q:'What specific surprises or arrivals should Ned pay attention to today on this GAP day?', l:'★ GAP day arrivals'} : null,
+  openDrawer(`◈ ${k?.full||'Dreamspell'}`, `Today's Dreamspell Kin is ${k?.full||''}. Tone ${k?.toneNum||''} (${k?.tone||''}) · Seal: ${k?.seal||''} · Color: ${k?.color||''}. ${k?.isGAP?'★ GALACTIC ACTIVATION PORTAL — the veil is thinner today.':''} ${getUserContext()} What does this Kin specifically invite ${firstName} to embody or practice today?`, [
+    {q:`What is the gift and the shadow of the ${k?.seal||'seal'} for ${firstName} right now?`, l:'Gift & shadow'},
+    {q:`How does Tone ${k?.toneNum||''} (${k?.tone||''}) shape ${firstName}'s approach today?`, l:`Tone in practice`},
+    k?.isGAP ? {q:`What specific arrivals or synchronicities should ${firstName} watch for today on this GAP day?`, l:'★ GAP day arrivals'} : null,
   ].filter(Boolean));
 }
 
 function tapAspect(label, body) {
-  openDrawer(`Aspect · ${label}`, `This aspect is active today: ${label}. ${body ? 'Current interpretation: '+body : ''} Go deeper — what does this specific aspect ask of Ned today in his work with NanOptima and ClotProtect, his family life, and his own development?`, [
-    {q:`How does the ${label} affect Ned's decision-making today?`, l:'Decision-making'},
+  const firstName = getFirstName();
+  openDrawer(`Aspect · ${label}`, `This aspect is active today: ${label}. ${body ? 'Current interpretation: '+body : ''} ${getUserContext()} Go deeper — what does this specific aspect ask of ${firstName} today in their work, relationships, and inner life?`, [
+    {q:`How does the ${label} affect ${firstName}'s decision-making today?`, l:'Decision-making'},
     {q:`What is the opportunity hidden in the tension of ${label}?`, l:'Hidden opportunity'},
   ]);
 }
 
 function tapShadow(shadow) {
-  openDrawer('Shadow Work', `Today's shadow question for Ned: "${shadow}" Help him sit with this question without deflecting. What is it actually pointing to? What would genuine engagement with this shadow look like in his daily life this week?`, [
-    {q:'What is the first small step toward integrating this shadow?', l:'First step'},
-    {q:'What does Ned gain by keeping this shadow unconscious?', l:'Payoff of avoidance'},
-    {q:'What would Ned\'s life look like in one year if he engaged this shadow fully?', l:'One year forward'},
+  const firstName = getFirstName();
+  openDrawer('Shadow Work', `Today's shadow question for ${firstName}: "${shadow}" ${getUserContext()} Help them sit with this question without deflecting. What is it actually pointing to? What would genuine engagement look like in daily life this week?`, [
+    {q:`What is the first small step toward integrating this shadow for ${firstName}?`, l:'First step'},
+    {q:`What does ${firstName} gain by keeping this shadow unconscious?`, l:'Payoff of avoidance'},
+    {q:`What would ${firstName}'s life look like in one year if they engaged this shadow fully?`, l:'One year forward'},
   ]);
 }
 
 function tapPriority(title, rationale, action) {
-  openDrawer(`Priority · ${title}`, `One of today's top priorities is: "${title}". The cosmic rationale: ${rationale}. The suggested action: ${action}. Help Ned get more specific — what does this actually look like in practice? What might get in the way, and how does he navigate it?`, [
-    {q:`What is the single first physical action Ned can take on "${title}" in the next hour?`, l:'Next 60 minutes'},
-    {q:`What belief or habit is most likely to prevent Ned from acting on "${title}"?`, l:'What gets in the way'},
+  const firstName = getFirstName();
+  openDrawer(`Priority · ${title}`, `One of today's top priorities is: "${title}". The cosmic rationale: ${rationale}. The suggested action: ${action}. ${getUserContext()} Help ${firstName} get more specific — what does this actually look like in practice? What might get in the way?`, [
+    {q:`What is the single first physical action ${firstName} can take on "${title}" in the next hour?`, l:'Next 60 minutes'},
+    {q:`What belief or habit is most likely to prevent ${firstName} from acting on "${title}"?`, l:'What gets in the way'},
   ]);
 }
 
 function tapWeekDay(day, kin, ud, note) {
-  openDrawer(`${day} Preview`, `${day}: ${kin}, Universal Day ${ud}. ${note ? 'Note: '+note : ''} What should Ned be thinking about or preparing for on this day? How does it connect to what he's building right now with NanOptima and ClotProtect?`, [
-    {q:`Should Ned schedule anything specific on ${day}?`, l:`Planning ${day}`},
-    {q:`What is the energy of UD ${ud} for business and family on ${day}?`, l:`UD ${ud} energy`},
+  const firstName = getFirstName();
+  openDrawer(`${day} Preview`, `${day}: ${kin}, Universal Day ${ud}. ${note ? 'Note: '+note : ''} ${getUserContext()} What should ${firstName} be thinking about or preparing for on this day? How does it connect to what they're building right now?`, [
+    {q:`Should ${firstName} schedule anything specific on ${day}?`, l:`Planning ${day}`},
+    {q:`What is the energy of UD ${ud} for ${firstName} on ${day}?`, l:`UD ${ud} energy`},
   ]);
 }
 
 function tapDailyGift(quote, attribution) {
-  openDrawer('Your Daily Gift', `Today's quote is: "${quote}" — ${attribution}. What does this specifically mean for Ned right now — not as general wisdom, but as a precise message for this man at this moment in his life?`, [
-    {q:'How does this quote apply to Ned\'s relationship with Connie?', l:'In relationship'},
-    {q:'How does this quote apply to NanOptima and ClotProtect right now?', l:'In business'},
-    {q:'What would Ned do differently today if he truly lived this quote?', l:'Living it today'},
+  const firstName = getFirstName();
+  openDrawer('Your Daily Gift', `Today's quote is: "${quote}" — ${attribution}. ${getUserContext()} What does this specifically mean for ${firstName} right now — not as general wisdom, but as a precise message for this person at this moment?`, [
+    {q:`How does this quote apply to ${firstName}'s most important relationships right now?`, l:'In relationship'},
+    {q:`How does this quote apply to ${firstName}'s work and projects right now?`, l:'In work'},
+    {q:`What would ${firstName} do differently today if they truly lived this quote?`, l:'Living it today'},
   ]);
 }
 
 function tapClosing(closing) {
-  openDrawer('Closing Reflection', `Today's closing line: "${closing}". Unpack this for Ned — what is it really saying about where he is and where he's going?`, [
-    {q:'What is the single most honest thing Ned could say about where he actually is right now?', l:'Honest assessment'},
-    {q:'What does Ned most need to hear right now that he\'s avoiding?', l:'What he\'s avoiding'},
+  const firstName = getFirstName();
+  openDrawer('Closing Reflection', `Today's closing line: "${closing}". ${getUserContext()} Unpack this for ${firstName} — what is it really saying about where they are and where they're going?`, [
+    {q:`What is the single most honest thing ${firstName} could say about where they actually are right now?`, l:'Honest assessment'},
+    {q:`What does ${firstName} most need to hear right now that they might be avoiding?`, l:'What you might be avoiding'},
   ]);
 }
 
