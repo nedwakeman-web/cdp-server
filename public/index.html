@@ -417,7 +417,51 @@ body.light{--bg:#F5F0E8;--bg2:#EDE6D6;--bg3:#E4DBC8;--bg4:#F8F4EC;
   text-transform:uppercase;border-radius:2px;cursor:pointer;transition:all .25s}
 .save-btn:hover{background:var(--gold4)}
 
-/* ══ TIER INFO MODAL ══ */
+/* ══ INSIGHT DRAWER ══ */
+#insightDrawer{
+  position:fixed;bottom:0;left:0;right:0;z-index:400;
+  transform:translateY(100%);transition:transform .35s cubic-bezier(.4,0,.2,1);
+  max-height:82vh;display:flex;flex-direction:column;
+  background:var(--bg2);border-top:1px solid var(--gold3);
+  box-shadow:0 -8px 40px rgba(0,0,0,.6)}
+#insightDrawer.open{transform:translateY(0)}
+.drawer-handle{width:40px;height:4px;background:var(--div);border-radius:2px;
+  margin:10px auto 0;cursor:pointer;flex-shrink:0}
+.drawer-header{padding:14px 20px 12px;border-bottom:1px solid var(--div);
+  display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.drawer-topic{font-family:'Cormorant Garamond',serif;font-size:18px;color:var(--gold);
+  font-weight:400;flex:1}
+.drawer-close{background:none;border:none;color:var(--text3);font-size:24px;
+  cursor:pointer;padding:0 0 0 12px;line-height:1;transition:color .2s}
+.drawer-close:hover{color:var(--gold)}
+.drawer-body{overflow-y:auto;flex:1;padding:20px}
+.drawer-response{font-size:17px;color:var(--text2);line-height:1.9}
+.drawer-response p{margin-bottom:1rem}.drawer-response p:last-child{margin-bottom:0}
+.drawer-loading{display:flex;align-items:center;gap:12px;color:var(--text3);font-style:italic;font-size:16px;padding:10px 0}
+.drawer-loading::before{content:'☽';font-size:22px;animation:pulse 1.5s ease-in-out infinite}
+.drawer-chips{display:flex;flex-wrap:wrap;gap:7px;margin-top:18px;padding-top:14px;
+  border-top:1px solid var(--div2)}
+.drawer-input-row{padding:14px 20px;border-top:1px solid var(--div);
+  display:flex;gap:8px;flex-shrink:0;background:var(--bg2)}
+.drawer-input{flex:1;background:var(--bg3);border:1px solid var(--div);color:var(--text);
+  font-family:'EB Garamond',serif;font-size:17px;padding:10px 14px;border-radius:2px;
+  outline:none;transition:border-color .2s}
+.drawer-input:focus{border-color:var(--gold3)}
+.drawer-input::placeholder{color:var(--text3)}
+.drawer-send{background:none;border:1px solid var(--gold3);color:var(--gold);
+  font-family:'EB Garamond',serif;font-size:13px;letter-spacing:.15em;
+  text-transform:uppercase;padding:10px 18px;border-radius:2px;cursor:pointer;
+  white-space:nowrap;transition:all .2s}
+.drawer-send:hover{background:var(--gold4)}
+/* Tappable section markers */
+.tappable{cursor:pointer;position:relative;transition:all .2s}
+.tappable:hover{opacity:.85}
+.tap-hint{font-size:12px;color:var(--gold3);letter-spacing:.12em;text-transform:uppercase;
+  float:right;margin-top:3px;opacity:.7;font-family:'EB Garamond',serif}
+.tappable:hover .tap-hint{opacity:1;color:var(--gold)}
+/* Overlay when drawer open */
+#drawerOverlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:399}
+#drawerOverlay.open{display:block}
 #tierModal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.82);z-index:300;
   align-items:center;justify-content:center;padding:20px}
 #tierModal.open{display:flex;align-items:center;justify-content:center}
@@ -626,6 +670,25 @@ body.print-card-mode{background:#0D1E33}
 <!-- DAY DETAIL MODAL -->
 <div class="modal-overlay" id="dayModal" onclick="if(event.target===this)closeModal()">
   <div class="modal" id="dayModalContent"></div>
+</div>
+
+<!-- INSIGHT DRAWER -->
+<div id="drawerOverlay" onclick="closeDrawer()"></div>
+<div id="insightDrawer">
+  <div class="drawer-handle" onclick="closeDrawer()"></div>
+  <div class="drawer-header">
+    <div class="drawer-topic" id="drawerTopic">Oracle Insight</div>
+    <button class="drawer-close" onclick="closeDrawer()">×</button>
+  </div>
+  <div class="drawer-body" id="drawerBody">
+    <div class="drawer-loading" id="drawerLoading">Consulting the Oracle…</div>
+  </div>
+  <div class="drawer-input-row">
+    <input class="drawer-input" id="drawerInput"
+      placeholder="Ask a follow-up question…"
+      onkeydown="if(event.key==='Enter')drawerAsk()">
+    <button class="drawer-send" onclick="drawerAsk()">Ask ↑</button>
+  </div>
 </div>
 
 <!-- TIER INFO MODAL -->
@@ -1706,12 +1769,18 @@ function renderReading(data, dateStr) {
     ? String(r.synthesis||'').replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/\*(.*?)\*/g,'$1').replace(/^[_*]+|[_*]+$/g,'').trim()
     : '';
   if (synthText) {
-    html += `<div class="synthesis">${synthText}</div>`;
+    html += `<div class="synthesis tappable" onclick="tapSynthesis()" title="Tap for deeper insight">
+      ${synthText}
+      <div class="tap-hint">↗ Go deeper</div>
+    </div>`;
   }
 
   // NUMEROLOGY — AI body if available, always show calculated strip
   html += `<div class="r-section">
-    <div class="sec-label">Numerology of the Day</div>
+    <div class="sec-label tappable" onclick="tapNumerology(${num?.ud||'—'},'${num?.udM?.n||''}')">
+      Numerology of the Day
+      <span class="tap-hint">↗ Interpret</span>
+    </div>
     <div class="sec-hl">${r.numerology?.headline||`Universal Day ${num?.ud} — ${num?.udM?.n||''}`}</div>`;
   if (r.numerology?.body) {
     html += `<div class="sec-body">${prose(r.numerology.body)}</div>`;
@@ -1731,19 +1800,25 @@ function renderReading(data, dateStr) {
     const e = te?.[k];
     const fallbackNum = teM[k];
     const fallbackD = NUM_DATA[fallbackNum] || {};
-    html += `<div class="energy-card${activeWindow===k?' active-window':''}">
+    const guidance = e?.guidance || fallbackD.m || '';
+    const num2 = e?.num||fallbackNum||'';
+    const name2 = e?.name||fallbackD.n||'';
+    html += `<div class="energy-card${activeWindow===k?' active-window':''} tappable"
+      onclick="tapEnergy('${k}',${num2},'${name2.replace(/'/g,"\\'")}','${guidance.replace(/'/g,"\\'").slice(0,80)}…')"
+      title="Tap for deeper ${lbl} guidance">
       <div class="energy-time">${lbl}${activeWindow===k?' <span style="color:var(--teal);font-size:11px">· Now</span>':''}</div>
-      <div class="energy-num" style="${[11,22,33,44].includes(e?.num||fallbackNum)?'color:var(--master)':''}">${e?.num||fallbackNum||''}</div>
-      <div class="energy-name">${e?.name||fallbackD.n||''}</div>
-      <div class="energy-guidance">${e?.guidance||fallbackD.m||''}</div>
+      <div class="energy-num" style="${[11,22,33,44].includes(e?.num||fallbackNum)?'color:var(--master)':''}">${num2}</div>
+      <div class="energy-name">${name2}</div>
+      <div class="energy-guidance">${guidance}</div>
+      <div style="font-size:11px;color:var(--gold3);margin-top:8px;text-align:right">↗ Tap for insight</div>
     </div>`;
   });
   html += `</div></div>`;
 
   // LUNAR — AI or calculated fallback
   html += `<div class="r-section">
-    <div class="sec-label">Lunar Landscape</div>
-    <div class="sec-hl">${moon?.emoji||''} ${r.moon_section?.headline||(moon?.phase+' in '+moonSign)||''}</div>
+    <div class="sec-label tappable" onclick="tapMoon()">Lunar Landscape <span class="tap-hint">↗ Interpret</span></div>
+    <div class="sec-hl tappable" onclick="tapMoon()" style="cursor:pointer">${moon?.emoji||''} ${r.moon_section?.headline||(moon?.phase+' in '+moonSign)||''}</div>
     ${moon?.isBlack?`<div><span class="moon-badge badge-black">⚠️ Black Moon — 2 days before New Moon — threshold day</span></div>`:''}
     ${moon?.isShiva?`<div><span class="moon-badge badge-shiva">✨ Shiva Moon — 2 days after New Moon — auspicious</span></div>`:''}
     <div class="sec-body" style="margin-top:10px">${r.moon_section?.body ? prose(r.moon_section.body) : `<p>The ${moon?.phase||'Moon'} in ${moonSign} on day ${moon?.cycle||'—'} of the lunar cycle. ${moon?.toNew||'—'} days to the New Moon.</p>`}</div>
@@ -1770,8 +1845,8 @@ function renderReading(data, dateStr) {
 
   // DREAMSPELL — AI or calculated fallback
   html += `<div class="r-section">
-    <div class="sec-label">Dreamspell · Law of Time</div>
-    <div class="sec-hl">◈ ${r.dreamspell?.headline||kin?.full||''}${kin?.isGAP?`<span class="gap-badge">★ Portal</span>`:''}</div>
+    <div class="sec-label tappable" onclick="tapDreamspell()">Dreamspell · Law of Time <span class="tap-hint">↗ Interpret</span></div>
+    <div class="sec-hl tappable" onclick="tapDreamspell()" style="cursor:pointer">◈ ${r.dreamspell?.headline||kin?.full||''}${kin?.isGAP?`<span class="gap-badge">★ Portal</span>`:''}</div>
     <div class="sec-body">${r.dreamspell?.body ? prose(r.dreamspell.body) : `<p>Kin ${kin?.kinNum||''} — ${kin?.full||''}. Tone ${kin?.toneNum||''} (${kin?.tone||''}) · Seal: ${kin?.seal||''}. ${kin?.isGAP?'Galactic Activation Portal — the veil between dimensions is thinner today. Pay attention to what arrives unexpectedly.':''}</p>`}</div>
     <div style="margin-top:10px;padding:9px;background:var(--bg4);border:1px solid var(--div2);border-radius:2px">
       <div style="font-size:13px;color:var(--text3);font-style:italic">${r.dreamspell?.disclaimer||'Dreamspell: Argüelles (1987) The Mayan Factor — modern system. Verify: tortuga.com/oracle'}</div>
@@ -1806,10 +1881,13 @@ function renderReading(data, dateStr) {
     const showList = aspectsToShow?.length ? aspectsToShow : [];
     showList.forEach((a, i) => {
       const raw = aspects?.[i];
-      html += `<div class="aspect-item">
+      const safeLabel = (a.label||raw?.desc||'').replace(/'/g,"\\'").slice(0,100);
+      const safeBody = (a.body||'').replace(/'/g,"\\'").slice(0,150);
+      html += `<div class="aspect-item tappable" onclick="tapAspect('${safeLabel}','${safeBody}')" title="Tap for interpretation">
         <div class="aspect-head">
           <span class="aspect-dots">${stars(a.dots||raw?.str||3)}</span>
           <span class="aspect-label">${a.label||raw?.desc||''}</span>
+          <span style="font-size:12px;color:var(--gold3);margin-left:auto">↗</span>
         </div>
         <div class="aspect-body">${a.body||''}</div>
       </div>`;
@@ -1831,9 +1909,13 @@ function renderReading(data, dateStr) {
 
   // SHADOW WORK — only if AI returned it
   if (r.shadow_work) {
-    html += `<div class="shadow-box">
-      <div style="font-size:13px;letter-spacing:.35em;text-transform:uppercase;color:var(--text3);margin-bottom:9px">Shadow Work</div>
-      <div class="shadow-text">${cleanText(r.shadow_work)}</div>
+    const sw = cleanText(r.shadow_work);
+    html += `<div class="shadow-box tappable" onclick="tapShadow('${sw.replace(/'/g,"\\'").slice(0,200)}')" title="Tap to go deeper into shadow work">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:9px">
+        <div style="font-size:13px;letter-spacing:.35em;text-transform:uppercase;color:var(--text3)">Shadow Work</div>
+        <div style="font-size:12px;color:var(--gold3);letter-spacing:.12em;text-transform:uppercase">↗ Work with this</div>
+      </div>
+      <div class="shadow-text">${sw}</div>
     </div>`;
   }
 
@@ -1841,10 +1923,13 @@ function renderReading(data, dateStr) {
   if (r.priorities?.length) {
     html += `<div class="r-section"><div class="sec-label">Today's Priorities</div>`;
     r.priorities.forEach((pri, i) => {
-      html += `<div class="priority-item">
+      const safeTitle = (pri.title||'').replace(/'/g,"\\'").slice(0,80);
+      const safeRat = (pri.rationale||'').replace(/'/g,"\\'").slice(0,150);
+      const safeAct = (pri.action||'').replace(/'/g,"\\'").slice(0,100);
+      html += `<div class="priority-item tappable" onclick="tapPriority('${safeTitle}','${safeRat}','${safeAct}')" title="Tap for specific guidance">
         <div class="pri-num">${i+1}</div>
-        <div>
-          <div class="pri-title">${pri.title||''}</div>
+        <div style="flex:1">
+          <div class="pri-title">${pri.title||''} <span style="font-size:12px;color:var(--gold3)">↗</span></div>
           <div class="pri-body">${pri.rationale||pri.body||''}</div>
           ${pri.action?`<div class="pri-action">→ ${pri.action}</div>`:''}
         </div>
@@ -1894,14 +1979,16 @@ function renderReading(data, dateStr) {
         const d = new Date(w.date+'T12:00:00Z');
         const dLabel = d.toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'numeric'});
         const isMaster = [11,22,33,44].includes(w.ud);
-        html += `<div class="week-row">
+        const safeNote = (w.note||'').replace(/'/g,"\\'").slice(0,100);
+        html += `<div class="week-row tappable" onclick="tapWeekDay('${w.dayStr||dLabel}','${w.kinStr||w.kin||''}',${w.ud||'—'},'${safeNote}')" title="Tap for preview">
           <div>
             <div class="week-date">${dLabel}</div>
-            ${isMaster?`<div style="font-size:9px;color:var(--master)">${w.ud}★</div>`:`<div class="week-ud">${w.ud||''}<div class="week-ud-label">UD</div></div>`}
+            ${isMaster?`<div style="font-size:11px;color:var(--master)">${w.ud}★</div>`:`<div class="week-ud">${w.ud||''}<div class="week-ud-label">UD</div></div>`}
           </div>
           <div>
             <div class="week-kin">${w.kinStr||w.kin||''}</div>
             <div class="week-note">${w.note||''}</div>
+            <div style="font-size:11px;color:var(--gold3);margin-top:4px">↗ Preview this day</div>
           </div>
         </div>`;
       });
@@ -1921,9 +2008,24 @@ function renderReading(data, dateStr) {
       </div>`;
     }
 
-    // CLOSING
+    if (r.daily_gift) {
+      const safeQ = (r.daily_gift.quote||'').replace(/'/g,"\\'").slice(0,150);
+      const safeA = (r.daily_gift.attribution||'').replace(/'/g,"\\'");
+      html += `<div class="r-section">
+        <div class="sec-label">Your Daily Gift</div>
+        <div class="gift-quote tappable" onclick="tapDailyGift('${safeQ}','${safeA}')" title="Tap to go deeper">"${r.daily_gift.quote||''}" <span style="font-size:13px;color:var(--gold3)">↗</span></div>
+        <div class="gift-attr">— ${r.daily_gift.attribution||''}</div>
+        ${r.daily_gift.reflection?`<div style="font-size:17px;color:var(--text3);text-align:center;font-style:italic;margin-bottom:18px;line-height:1.7">${r.daily_gift.reflection}</div>`:''}
+        ${r.daily_gift.meditation?`<ul class="gift-meditation">
+          ${(r.daily_gift.meditation||'').split(/[·•\n♡◎✦]/).filter(l=>l.trim()).map(l=>`<li>${l.trim()}</li>`).join('')}
+        </ul>`:''}
+      </div>`;
+    }
+
+    // CLOSING — tappable
     const closing = r.closing_line || 'You are not building the companies to become someone — you already are the person the companies need you to be. Start living from that direction.';
-    html += `<div class="closing">${closing}</div>`;
+    const safeClosing = closing.replace(/'/g,"\\'").slice(0,200);
+    html += `<div class="closing tappable" onclick="tapClosing('${safeClosing}')" title="Tap to reflect deeper">${closing} <span style="font-size:13px;color:var(--gold3)">↗</span></div>`;
 
     // SOURCES
     if (r.sources) {
@@ -1981,49 +2083,186 @@ function buildChips(r) {
 // ASK ORACLE
 // ══════════════════════════════════════════════════════════
 // ══════════════════════════════════════════════════════════
-// PLANET INTERPRETATION — click any planet for bespoke reading
+// INSIGHT DRAWER — universal tap-for-insight system
 // ══════════════════════════════════════════════════════════
-async function interpretPlanet(idx, name, pos, sign) {
-  const box = document.getElementById('planetInterpBox');
-  if (!box) return;
+let drawerContext = ''; // carries context across follow-up questions
 
-  // Toggle off if already showing this planet
-  const prevIdx = box.getAttribute('data-planet');
-  document.querySelectorAll('.planet-row').forEach(r => r.classList.remove('active-planet'));
-  if (prevIdx === String(idx) && box.style.display !== 'none') {
-    box.style.display = 'none';
-    box.setAttribute('data-planet', '');
-    return;
-  }
+function openDrawer(topic, question, chips) {
+  document.getElementById('drawerTopic').textContent = topic;
+  document.getElementById('drawerBody').innerHTML = `<div class="drawer-loading">Consulting the Oracle…</div>`;
+  document.getElementById('drawerInput').value = '';
+  document.getElementById('insightDrawer').classList.add('open');
+  document.getElementById('drawerOverlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+  drawerContext = question;
+  fetchInsight(question, chips);
+}
 
-  // Mark active and show loading
-  const row = document.getElementById(`planet-${idx}`);
-  if (row) row.classList.add('active-planet');
-  box.setAttribute('data-planet', String(idx));
-  box.style.display = 'block';
-  box.innerHTML = `<span style="color:var(--text3);font-style:italic">The Oracle reads ${name} at ${pos}…</span>`;
+function closeDrawer() {
+  document.getElementById('insightDrawer').classList.remove('open');
+  document.getElementById('drawerOverlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+async function fetchInsight(question, followUpChips) {
+  const readingCtx = currentReading?.reading?.synthesis
+    ? `Today's Oracle synthesis: ${currentReading.reading.synthesis}.`
+    : '';
+  const moonCtx = currentReading?.moon ? `Moon: ${currentReading.moon.phase} in ${currentReading.planets?.[1]?.sign||''}. Day ${currentReading.moon.cycle} of cycle.` : '';
+  const kinCtx = currentReading?.kin ? `Dreamspell: ${currentReading.kin.full}.${currentReading.kin.isGAP?' ★ GAP day.':''}` : '';
+  const numCtx = currentReading?.num ? `UD: ${currentReading.num.ud}, PD: ${currentReading.num.pd}, LP: ${currentReading.num.lp}.` : '';
+
+  const fullQ = `${question}
+
+Context: ${readingCtx} ${moonCtx} ${kinCtx} ${numCtx}
+
+Respond with 3-5 sentences of deep, specific, personalised insight. Speak directly to Ned. Reference NanOptima, ClotProtect, Connie, Sam, Kitty, or the Baja estate where relevant. End with one concrete action or question for him to sit with.`;
 
   try {
-    const context = currentReading?.reading?.synthesis
-      ? `Today's synthesis: ${currentReading.reading.synthesis}`
-      : "Today's Oracle reading";
-    const moonPhase = currentReading?.moon?.phase || '';
-    const kin = currentReading?.kin?.full || '';
-    const ud = currentReading?.num?.ud || '';
-
-    const q = `${name} is at ${pos} in ${sign} today. In the context of: ${context}. Moon: ${moonPhase}. Kin: ${kin}. Universal Day: ${ud}.
-
-Give a bespoke 3-4 sentence interpretation of what ${name} at ${pos} ${sign} means specifically for Ned today — referencing NanOptima, ClotProtect, family (Connie, Sam, Kitty), or the Baja estate as appropriate. Ground it in the actual degree and sign. End with one concrete action or awareness for today. Speak directly to Ned in the second person.`;
-
     const res = await fetch(API_BASE + '/api/ask', {
       method: 'POST', headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({question: q, context, profile})
+      body: JSON.stringify({question: fullQ, context: readingCtx, profile})
     });
     const data = await res.json();
-    box.innerHTML = `<strong style="font-size:14px;letter-spacing:.15em;text-transform:uppercase;color:var(--gold);font-style:normal">${name} · ${pos}</strong><br><br>${data.answer || data.error || 'No response'}`;
+    const answer = data.answer || data.error || 'The Oracle is silent on this — try again.';
+    drawerContext = question + '\n\nOracle said: ' + answer;
+
+    const chipsHtml = (followUpChips || []).map(c =>
+      `<button class="chip" onclick="drawerFollowUp('${c.q.replace(/'/g,"\\'")}','${c.l.replace(/'/g,"\\'")}')">
+        ${c.l}
+      </button>`).join('');
+
+    document.getElementById('drawerBody').innerHTML = `
+      <div class="drawer-response">${answer.split('\n').filter(l=>l.trim()).map(p=>`<p>${cleanText(p)}</p>`).join('')}</div>
+      ${chipsHtml ? `<div class="drawer-chips">${chipsHtml}</div>` : ''}`;
   } catch(e) {
-    box.innerHTML = `<span style="color:var(--red)">Could not reach the Oracle: ${e.message}</span>`;
+    document.getElementById('drawerBody').innerHTML =
+      `<p style="color:var(--red)">Could not reach the Oracle: ${e.message}</p>`;
   }
+}
+
+async function drawerAsk() {
+  const inp = document.getElementById('drawerInput');
+  const q = inp?.value?.trim();
+  if (!q) return;
+  inp.value = '';
+  const topic = document.getElementById('drawerTopic').textContent;
+  document.getElementById('drawerBody').innerHTML = `<div class="drawer-loading">The Oracle considers your question…</div>`;
+  await fetchInsight(`Follow-up on "${topic}": ${q} [Previous context: ${drawerContext}]`, null);
+}
+
+async function drawerFollowUp(question, label) {
+  document.getElementById('drawerTopic').textContent = label;
+  document.getElementById('drawerBody').innerHTML = `<div class="drawer-loading">Going deeper…</div>`;
+  await fetchInsight(question, null);
+}
+
+// ── PLANET CLICK ──
+async function interpretPlanet(idx, name, pos, sign) {
+  const note = currentReading?.reading?.planetary_positions?.[idx]?.note || '';
+  const chips = [
+    {q:`How does ${name} at ${pos} ${sign} interact with my Life Path ${currentReading?.num?.lp||'8'} today?`, l:`${name} & Life Path`},
+    {q:`What does ${name} at ${pos} ${sign} mean for NanOptima and ClotProtect right now?`, l:`${name} & Biotech`},
+    {q:`How should I work with ${name} in ${sign} energy this week?`, l:`Working with ${name}`},
+  ];
+  // Mark the row as active
+  document.querySelectorAll('.planet-row').forEach(r => r.classList.remove('active-planet'));
+  const row = document.getElementById(`planet-${idx}`);
+  if (row) row.classList.add('active-planet');
+
+  openDrawer(
+    `${name} · ${pos} ${sign}`,
+    `${name} is at ${pos} in ${sign} today. ${note ? 'Note: '+note+'.' : ''} What does this position mean specifically for Ned today — his biotech exit work, family life, and health? Ground the interpretation in the actual degree and sign energy.`,
+    chips
+  );
+}
+
+// ── TAPPABLE SECTION HELPERS ──
+function tapSynthesis() {
+  const synth = currentReading?.reading?.synthesis || '';
+  openDrawer('Deep Synthesis', `This is the Oracle's opening synthesis for today: "${synth}". Go deeper — what is the single most important thing this synthesis is asking Ned to understand or do today? What is it NOT saying that also needs to be heard?`, [
+    {q:'What is today trying to teach Ned about who he is becoming?', l:'Who Ned is becoming'},
+    {q:'What would Ned regret not acting on today?', l:'What not to miss'},
+  ]);
+}
+
+function tapNumerology(num, name) {
+  openDrawer(`Numerology · ${num} ${name}`, `Today's Universal Day is ${num} (${name}). Ned's Personal Day is ${currentReading?.num?.pd||num}. What does this number specifically ask of him in his role as a biotech entrepreneur and father today? How does it interact with his Life Path ${currentReading?.num?.lp||'8'}?`, [
+    {q:`How does UD ${num} specifically affect deal-making and pharma conversations?`, l:`UD ${num} & business`},
+    {q:`What does UD ${num} mean for Ned's family time today?`, l:`UD ${num} & family`},
+    {q:`What is the shadow side of ${num} energy Ned should watch for?`, l:`Shadow of ${num}`},
+  ]);
+}
+
+function tapEnergy(mode, num, name, guidance) {
+  const modeLabel = mode==='morning'?'Morning':mode==='afternoon'?'Afternoon':'Evening';
+  openDrawer(`${modeLabel} · ${num} ${name}`, `The ${modeLabel.toLowerCase()} carries the energy of ${num} (${name}). ${guidance ? 'Current guidance: '+guidance : ''} Go deeper — what specific actions, conversations, or internal states does this ${modeLabel.toLowerCase()} energy support for Ned today? Be concrete and specific to his actual situation.`, [
+    {q:`What is the single most important thing Ned should do this ${modeLabel.toLowerCase()}?`, l:`Priority this ${modeLabel.toLowerCase()}`},
+    {q:`What should Ned avoid this ${modeLabel.toLowerCase()}?`, l:`What to avoid`},
+  ]);
+}
+
+function tapMoon() {
+  const m = currentReading?.moon;
+  const sign = currentReading?.planets?.[1]?.sign || '';
+  openDrawer(`${m?.emoji||'☽'} ${m?.phase||'Moon'} in ${sign}`, `The Moon is ${m?.phase||'at'} in ${sign}, day ${m?.cycle||'—'} of the lunar cycle, ${m?.toNew||'—'} days to the New Moon. ${m?.isBlack?'★ BLACK MOON — threshold day.':m?.isShiva?'★ SHIVA MOON — auspicious.':''} What does this lunar position ask of Ned today in his relationships, his body, and his inner life?`, [
+    {q:'How does this moon phase affect Ned\'s energy and sleep?', l:'Body & energy'},
+    {q:'What does this lunar position say about Ned\'s relationships with Connie, Sam, and Kitty today?', l:'Family & relationships'},
+    {q:'What is releasing or completing in Ned\'s life at this lunar phase?', l:'What is completing'},
+  ]);
+}
+
+function tapDreamspell() {
+  const k = currentReading?.kin;
+  openDrawer(`◈ ${k?.full||'Dreamspell'}`, `Today's Dreamspell Kin is ${k?.full||''}. Tone ${k?.toneNum||''} (${k?.tone||''}) · Seal: ${k?.seal||''} · Color: ${k?.color||''}. ${k?.isGAP?'★ GALACTIC ACTIVATION PORTAL — the veil is thinner today.':''} What does this Kin specifically invite Ned to embody or practice today? Note: Argüelles (1987) modern system.`, [
+    {q:`What is the gift and the shadow of the ${k?.seal||'seal'} for Ned right now?`, l:'Gift & shadow of seal'},
+    {q:`How does Tone ${k?.toneNum||''} (${k?.tone||''}) shape Ned's approach today?`, l:`Tone ${k?.toneNum||''} in practice`},
+    k?.isGAP ? {q:'What specific surprises or arrivals should Ned pay attention to today on this GAP day?', l:'★ GAP day arrivals'} : null,
+  ].filter(Boolean));
+}
+
+function tapAspect(label, body) {
+  openDrawer(`Aspect · ${label}`, `This aspect is active today: ${label}. ${body ? 'Current interpretation: '+body : ''} Go deeper — what does this specific aspect ask of Ned today in his work with NanOptima and ClotProtect, his family life, and his own development?`, [
+    {q:`How does the ${label} affect Ned's decision-making today?`, l:'Decision-making'},
+    {q:`What is the opportunity hidden in the tension of ${label}?`, l:'Hidden opportunity'},
+  ]);
+}
+
+function tapShadow(shadow) {
+  openDrawer('Shadow Work', `Today's shadow question for Ned: "${shadow}" Help him sit with this question without deflecting. What is it actually pointing to? What would genuine engagement with this shadow look like in his daily life this week?`, [
+    {q:'What is the first small step toward integrating this shadow?', l:'First step'},
+    {q:'What does Ned gain by keeping this shadow unconscious?', l:'Payoff of avoidance'},
+    {q:'What would Ned\'s life look like in one year if he engaged this shadow fully?', l:'One year forward'},
+  ]);
+}
+
+function tapPriority(title, rationale, action) {
+  openDrawer(`Priority · ${title}`, `One of today's top priorities is: "${title}". The cosmic rationale: ${rationale}. The suggested action: ${action}. Help Ned get more specific — what does this actually look like in practice? What might get in the way, and how does he navigate it?`, [
+    {q:`What is the single first physical action Ned can take on "${title}" in the next hour?`, l:'Next 60 minutes'},
+    {q:`What belief or habit is most likely to prevent Ned from acting on "${title}"?`, l:'What gets in the way'},
+  ]);
+}
+
+function tapWeekDay(day, kin, ud, note) {
+  openDrawer(`${day} Preview`, `${day}: ${kin}, Universal Day ${ud}. ${note ? 'Note: '+note : ''} What should Ned be thinking about or preparing for on this day? How does it connect to what he's building right now with NanOptima and ClotProtect?`, [
+    {q:`Should Ned schedule anything specific on ${day}?`, l:`Planning ${day}`},
+    {q:`What is the energy of UD ${ud} for business and family on ${day}?`, l:`UD ${ud} energy`},
+  ]);
+}
+
+function tapDailyGift(quote, attribution) {
+  openDrawer('Your Daily Gift', `Today's quote is: "${quote}" — ${attribution}. What does this specifically mean for Ned right now — not as general wisdom, but as a precise message for this man at this moment in his life?`, [
+    {q:'How does this quote apply to Ned\'s relationship with Connie?', l:'In relationship'},
+    {q:'How does this quote apply to NanOptima and ClotProtect right now?', l:'In business'},
+    {q:'What would Ned do differently today if he truly lived this quote?', l:'Living it today'},
+  ]);
+}
+
+function tapClosing(closing) {
+  openDrawer('Closing Reflection', `Today's closing line: "${closing}". Unpack this for Ned — what is it really saying about where he is and where he's going?`, [
+    {q:'What is the single most honest thing Ned could say about where he actually is right now?', l:'Honest assessment'},
+    {q:'What does Ned most need to hear right now that he\'s avoiding?', l:'What he\'s avoiding'},
+  ]);
 }
 
 async function submitAsk() {
