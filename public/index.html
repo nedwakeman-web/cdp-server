@@ -5504,43 +5504,105 @@ function getFirstName() {
 }
 
 function getUserContext() {
-  // Beta 2: enriched context including roles, threads, and hormonal phase
   const parts = [];
-  if (profile.context) parts.push('Context: ' + profile.context + '.');
-  if (profile.roles && profile.roles.length) parts.push('Roles: ' + (Array.isArray(profile.roles) ? profile.roles.join(', ') : profile.roles) + '.');
-  if (profile.active_threads && profile.active_threads.length) parts.push('Active projects: ' + (Array.isArray(profile.active_threads) ? profile.active_threads.join(', ') : profile.active_threads) + '.');
+  const fn = getFirstName();
+
+  // Name
+  if (profile.name || profile.nickname) parts.push('Name: ' + (profile.nickname||profile.name) + '.');
+
+  // Location
+  if (profile.location) parts.push('Location: ' + profile.location + '.');
+
+  // Birth / numerology
+  if (profile.birthDay && profile.birthMonth && profile.birthYear) {
+    parts.push('Born: ' + profile.birthDay + '/' + profile.birthMonth + '/' + profile.birthYear + '.');
+  }
+
+  // Context / roles / projects
+  if (profile.context) parts.push('Life context: ' + profile.context + '.');
+  if (profile.roles && profile.roles.length) parts.push('Roles: ' + (Array.isArray(profile.roles)?profile.roles.join(', '):profile.roles) + '.');
+  if (profile.active_threads && profile.active_threads.length) parts.push('Active projects/threads: ' + (Array.isArray(profile.active_threads)?profile.active_threads.join('; '):profile.active_threads) + '.');
+
+  // Company / work references from known profile fields
+  if (profile.company) parts.push('Company: ' + profile.company + '.');
+  if (profile.work) parts.push('Work: ' + profile.work + '.');
+  if (profile.focus) parts.push('Current focus: ' + profile.focus + '.');
+  if (profile.chapter) parts.push('Current life chapter: ' + profile.chapter + '.');
+  if (profile.building) parts.push('Building: ' + profile.building + '.');
+  if (profile.people) parts.push('Key people: ' + profile.people + '.');
+  if (profile.pattern) parts.push('Repeating pattern: ' + profile.pattern + '.');
+  if (profile.gut) parts.push('Gut/intuition note: ' + profile.gut + '.');
+
+  // Hormonal phase
   const cycleCtx = getCycleContext();
-  if (cycleCtx) parts.push('Hormonal phase: ' + cycleCtx);
+  if (cycleCtx) parts.push('Hormonal phase: ' + cycleCtx + '.');
+
   return parts.join(' ');
+}
+
+function getLifeContext() {
+  // Returns a brief human-readable context string for chip labels
+  // Pulls the most specific thing known about the user's current situation
+  if (profile.building) return profile.building.split(',')[0].slice(0,40);
+  if (profile.active_threads && profile.active_threads.length) {
+    const t = Array.isArray(profile.active_threads) ? profile.active_threads[0] : profile.active_threads;
+    return t.slice(0,40);
+  }
+  if (profile.context) return profile.context.slice(0,40);
+  if (profile.company) return profile.company.slice(0,40);
+  if (profile.chapter) return profile.chapter.slice(0,40);
+  return null; // no context available
 }
 
 async function fetchInsight(question, followUpChips) {
   const firstName = getFirstName();
   const userCtx = getUserContext();
+  const lifeCtx = getLifeContext();
   const readingCtx = currentReading?.reading?.synthesis
-    ? `Today's Oracle synthesis: ${currentReading.reading.synthesis}.`
+    ? 'Today\'s Oracle synthesis: ' + currentReading.reading.synthesis.slice(0,200) + '.'
     : '';
-  const moonCtx = currentReading?.moon ? `Moon: ${currentReading.moon.phase} in ${currentReading.planets?.[1]?.sign||''}. Day ${currentReading.moon.cycle} of cycle.` : '';
-  const kinCtx = currentReading?.kin ? `Dreamspell: ${currentReading.kin.full}.${currentReading.kin.isGAP?' ★ GAP day.':''}` : '';
-  const numCtx = currentReading?.num ? `UD: ${currentReading.num.ud}, PD: ${currentReading.num.pd}, LP: ${currentReading.num.lp}.` : '';
+  const moonCtx = currentReading?.moon ? 'Moon: ' + currentReading.moon.phase + '. Day ' + currentReading.moon.cycle + ' of cycle.' : '';
+  const kinCtx = currentReading?.kin ? 'Dreamspell: ' + currentReading.kin.full + (currentReading.kin.isGAP?' ★ GAP portal.':'') + '.' : '';
+  const numCtx = currentReading?.num ? 'UD: ' + currentReading.num.ud + ', PD: ' + (currentReading.num.pd||currentReading.num.ud) + ', LP: ' + (currentReading.num.lp||'?') + ', PY: ' + (currentReading.num.py||'?') + '.' : '';
+  const p1Ctx = currentReading?.reading?.priorities?.[0]?.title ? 'Priority 1 today: "' + currentReading.reading.priorities[0].title + '".' : '';
 
-  const fullQ = `${question}
+  const sysPrompt = `You are the Oracle at Cosmic Daily Planner — a personal cosmic intelligence that speaks directly, warmly, and specifically.
 
-${userCtx}
-${readingCtx} ${moonCtx} ${kinCtx} ${numCtx}
+RULES:
+— Address ${firstName} by name throughout. Every sentence should feel written for them specifically.
+— If context about their life, work, or projects is provided — reference it directly and by name. Never be generic.
+— 4-6 sentences of deep, specific insight. No preamble. No "great question".
+— End with ONE precise question for ${firstName} to sit with — not rhetorical, not generic. The question that, if answered honestly, would move something.
+— Draw on the reading data provided. Be the continuation of the Oracle reading, not a new conversation.
+— Reference scholarly sources naturally where relevant (Tarnas, Greene, Argüelles, Drayer — not as footnotes, but as intellectual grounding).`;
 
-Respond with 3-5 sentences of deep, specific, personalised insight. Speak directly to ${firstName}. Reference their personal context where relevant. End with one concrete action or question for them to sit with.`;
+  const fullQ = question + '\n\n' + [userCtx, readingCtx, moonCtx, kinCtx, numCtx, p1Ctx].filter(Boolean).join(' ');
 
   try {
     const res = await fetch(API_BASE + '/api/ask', {
       method: 'POST', headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({question: fullQ, context: readingCtx, profile, readingData: currentReading?.reading || {}})
+      body: JSON.stringify({
+        question: fullQ,
+        systemPrompt: sysPrompt,
+        context: readingCtx,
+        profile,
+        readingData: currentReading?.reading || {}
+      })
     });
     const data = await res.json();
     const answer = data.answer || data.error || 'The Oracle is silent on this — try again.';
     drawerContext = question + '\n\nOracle said: ' + answer;
 
-    const chipsHtml = (followUpChips || []).map(c =>
+    // Build contextual follow-up chips — always have something to go deeper with
+    let finalChips = followUpChips || [];
+    if (finalChips.length < 2) {
+      // Add universal follow-ups based on context
+      if (lifeCtx) finalChips.push({q: 'Given what you just said — what is the single most important thing ' + firstName + ' should do about ' + lifeCtx + ' in the next 24 hours?', l: 'Next 24h action'});
+      finalChips.push({q: 'What is the shadow or risk in this that ' + firstName + ' might be avoiding seeing?', l: 'The shadow'});
+      finalChips.push({q: 'If ' + firstName + ' acted on what you just said, what would change first?', l: 'What changes first'});
+    }
+
+    const chipsHtml = finalChips.map(c =>
       `<button class="chip" onclick="drawerFollowUp('${c.q.replace(/'/g,"\\'")}','${c.l.replace(/'/g,"\\'")}')">
         ${c.l}
       </button>`).join('');
@@ -5929,52 +5991,75 @@ function buildChips(r) {
   const kin = currentReading?.kin || {};
   const rd = r || {};
   const hour = new Date().getHours();
+  const lifeCtx = getLifeContext(); // most specific known context
+  const userCtx = getUserContext();
   const chips = [];
 
-  // 1. Universal Day — specific to today's number
+  // 1. Universal Day — anchored to their actual work/life
   if (num.ud) {
     const udName = NUM_DATA[num.ud]?.n || '';
-    chips.push({l:'UD ' + num.ud + ' · ' + udName, q:'Today is Universal Day ' + num.ud + ' (' + udName + '). Personal Day ' + (num.pd||num.ud) + '. ' + getUserContext() + ' How does this specific number frequency directly affect ' + firstName + '\'s work and decisions right now? Be specific — not general numerology theory, but how it interacts with what they are actually doing today.'});
+    const udChipLabel = 'UD ' + num.ud + ' · ' + udName;
+    const udQ = lifeCtx
+      ? 'Today is Universal Day ' + num.ud + ' (' + udName + '). ' + userCtx + ' How does this specific number energy apply to ' + firstName + '\'s work on ' + lifeCtx + ' right now? What timing advantage or caution does it carry for decisions and conversations today?'
+      : 'Today is Universal Day ' + num.ud + ' (' + udName + '). ' + userCtx + ' What does this number specifically ask of ' + firstName + ' in their work and decisions today?';
+    chips.push({l: udChipLabel, q: udQ});
   }
 
-  // 2. Time-of-day energy
+  // 2. Time-of-day — specific to what they are likely doing right now
   const timeOfDay = hour < 12 ? 'morning' : hour < 17 ? 'afternoon' : 'evening';
   const energyNum = hour < 12 ? (num.pd||num.ud) : hour < 17 ? (num.pm||num.mEn) : (num.py||num.yEn);
-  chips.push({l: (hour<12?'🌅 Morning':hour<17?'☀️ Now':'🌙 Evening') + ' · ' + energyNum, q: 'It is currently ' + timeOfDay + '. The ' + timeOfDay + ' energy for ' + firstName + ' is ' + energyNum + ' (' + (NUM_DATA[energyNum]?.n||'') + '). What is the single most important thing ' + firstName + ' should do or be aware of in the next 2-3 hours? ' + getUserContext()});
+  const timeQ = lifeCtx
+    ? 'It is ' + timeOfDay + '. ' + timeOfDay + ' energy: ' + energyNum + ' (' + (NUM_DATA[energyNum]?.n||'') + '). ' + userCtx + ' Given that ' + firstName + ' is working on ' + lifeCtx + ', what is the single most valuable use of the next 2 hours? What should they start, continue, or stop right now?'
+    : 'It is ' + timeOfDay + '. Energy: ' + energyNum + ' (' + (NUM_DATA[energyNum]?.n||'') + '). ' + userCtx + ' What is the single most important thing for ' + firstName + ' in the next 2 hours — and what should they avoid?';
+  chips.push({l: (hour<12?'🌅 Morning':hour<17?'☀️ Now':'🌙 Evening') + ' · ' + energyNum, q: timeQ});
 
-  // 3. Moon — specific to phase and special status
+  // 3. Moon — specific to their relationship and decision context
   if (moon.phase) {
-    const moonSign = currentReading?.planets?.[1]?.sign || '';
-    const special = moon.isBlack ? '(Black Moon — 2 days before New Moon)' : moon.isShiva ? '(Shiva Moon — 2 days after New Moon)' : '';
-    chips.push({l:(moon.emoji||'☽') + ' ' + moon.phase + (special?' · Special':''), q:'Moon: ' + moon.phase + (moonSign?' in '+moonSign:'') + ' ' + special + '. Day ' + moon.cycle + ' of cycle, ' + moon.toNew + 'd to New Moon. ' + getUserContext() + ' What does this lunar moment ask of ' + firstName + ' in their body, relationships, and decisions today?' + (moon.isBlack?' What specifically should NOT be initiated today?':'') + (moon.isShiva?' What should specifically be planted or started?':'')});
+    const special = moon.isBlack ? '★ Black Moon — threshold. Do not initiate.' : moon.isShiva ? '✨ Shiva Moon — auspicious. Plant with intention.' : '';
+    const moonQ = lifeCtx
+      ? 'Moon: ' + moon.phase + (moon.isBlack?' (BLACK MOON — 2 days before New Moon)':moon.isShiva?' (SHIVA MOON — 2 days after New Moon)':'') + '. ' + userCtx + ' How does this lunar moment apply to ' + firstName + '\'s situation with ' + lifeCtx + '?' + (moon.isBlack?' What specifically should NOT be pushed forward today?':'') + (moon.isShiva?' What new direction should be initiated in the next 48 hours?':'') + ' What does the body need right now?'
+      : 'Moon: ' + moon.phase + '. ' + special + ' ' + userCtx + ' What does this lunar moment ask of ' + firstName + ' in body, relationships, and decisions today?';
+    chips.push({l: (moon.emoji||'☽') + ' ' + moon.phase + (special?' · Special':''), q: moonQ});
   }
 
-  // 4. Dreamspell Kin
+  // 4. Dreamspell Kin — specific archetype + their situation
   if (kin.full) {
-    chips.push({l:'◈ ' + kin.seal + (kin.isGAP?' ★ Portal':''), q:'Dreamspell Kin today: ' + kin.full + '. Tone ' + kin.toneNum + ' (' + kin.tone + ') of the ' + kin.seal + '. ' + (kin.isGAP?'Galactic Activation Portal day.':'') + ' What specific quality does the ' + kin.seal + ' invite ' + firstName + ' to embody today — not abstract symbolism, but as a concrete way of showing up? (Argüelles 1987 Dreamspell — modern system)'});
+    const kinQ = lifeCtx
+      ? 'Dreamspell Kin: ' + kin.full + '. Tone ' + kin.toneNum + ' (' + kin.tone + ') of the ' + kin.seal + '. ' + (kin.isGAP?'GAP portal day — heightened synchronicities. ':'') + userCtx + ' The ' + kin.seal + ' archetype: what specific quality does it invite ' + firstName + ' to embody in their work on ' + lifeCtx + ' today? Not abstract symbolism — how does it change how they show up? (Argüelles 1987 Dreamspell)'
+      : 'Dreamspell Kin: ' + kin.full + '. Tone ' + kin.toneNum + ' (' + kin.tone + '). ' + (kin.isGAP?'GAP portal day. ':'') + userCtx + ' What does the ' + kin.seal + ' specifically invite ' + firstName + ' to embody or notice today?';
+    chips.push({l: '◈ ' + kin.seal + (kin.isGAP?' ★':''), q: kinQ});
   }
 
-  // 5. Priority 1 deep-dive
+  // 5. Priority 1 — go deeper on the specific priority
   if (rd.priorities?.[0]?.title) {
     const p1 = rd.priorities[0];
-    chips.push({l:'↗ Priority 1: "' + (p1.title||'').slice(0,28) + (p1.title?.length>28?'…':'') + '"', q:firstName + '\'s top priority today: "' + p1.title + '". Rationale: ' + (p1.rationale||'') + '. Action: ' + (p1.action||'') + '. Get specific — what does this look like in the next 3 hours? What resistance will ' + firstName + ' most likely encounter, and how do they work with it rather than against it?'});
+    chips.push({l: '↗ ' + (p1.title||'').slice(0,30) + (p1.title?.length>30?'…':''), q: firstName + '\'s top priority today: "' + p1.title + '". Rationale: ' + (p1.rationale||'') + '. Concrete action: ' + (p1.action||'') + '. ' + userCtx + ' Get specific — what does this look like in the next 3 hours? What is the most likely resistance ' + firstName + ' will hit, and how do they work with it rather than against it today?'});
   }
 
-  // 6. Shadow work
+  // 6. Shadow work — personal and direct
   if (rd.shadow_work) {
-    chips.push({l:'Shadow: "' + (rd.shadow_work||'').slice(0,30) + '…"', q:'Shadow question for ' + firstName + ': "' + rd.shadow_work + '". What is this actually pointing to? What does ' + firstName + ' gain by keeping this unconscious? What would honest engagement look like in practice today?'});
+    chips.push({l: '◾ Shadow: dig deeper', q: 'Shadow question for ' + firstName + ': "' + rd.shadow_work + '". ' + userCtx + ' What is this actually pointing to in ' + firstName + '\'s current life — not as a problem to fix, but as something they\'ve been avoiding seeing? What would honest engagement look like in practice today? What does this shadow protect them from having to face?'});
   }
 
-  // 7. Saturn-Neptune civilisational context
-  chips.push({l:'Saturn-Neptune & your situation', q:'Saturn and Neptune conjunct in Aries in 2026 — historically significant (Tarnas 2006: last conjunction 1952, then 1989 Berlin Wall fall). What does this civilisational-scale dissolution of structures mean specifically for ' + firstName + '\'s work in ' + (Array.isArray(profile.active_threads)?profile.active_threads.slice(0,2).join(' and '):profile.context||'their current professional situation') + '? How is this macro-cycle showing up in their daily reality right now?'});
+  // 7. Saturn-Neptune + their specific situation
+  const satNepCtx = lifeCtx
+    ? 'Saturn-Neptune conjunct in Aries — civilisational dissolution of old structures meeting new vision (Tarnas 2006). ' + userCtx + ' How is this macro-cycle showing up specifically in ' + firstName + '\'s work on ' + lifeCtx + '? What old structure in their field is dissolving right now, and what is ' + firstName + ' being asked to build in its place?'
+    : 'Saturn-Neptune conjunct in Aries 2026 — historically significant (Tarnas 2006: last conjunctions 1952, 1989 Berlin Wall). ' + userCtx + ' What does this civilisational reset mean for ' + firstName + '\'s current chapter? How is the dissolution of old structures showing up in their daily reality?';
+  chips.push({l: 'Saturn-Neptune & ' + (lifeCtx ? lifeCtx.slice(0,20) : 'your situation'), q: satNepCtx});
 
-  // 8. GAP portal specifics
+  // 8. GAP portal — only on portal days
   if (kin.isGAP) {
-    chips.push({l:'★ GAP: what arrives today', q:'GAP Portal Kin ' + kin.kin + '. The veil is thinner; synchronicities amplified. What specific types of arrivals, encounters, or insights should ' + firstName + ' be receptive to today? ' + getUserContext() + ' What would be a waste of this portal day for them?'});
+    chips.push({l: '★ GAP portal — what arrives today', q: 'GAP Portal Kin ' + kin.kin + '. The veil is thinner; synchronicities amplified. ' + userCtx + ' What specific types of arrivals, encounters, insights, or conversations should ' + firstName + ' be especially receptive to today? What would be a waste of this portal day? What should they write down before the day ends?'});
   }
 
-  // 9. Decision Engine
-  chips.push({l:'⏱ Time a decision', q:'__DECISION_ENGINE__'});
+  // 9. Life Path × current chapter
+  if (num.lp) {
+    const lpName = (NUM_DATA[num.lp]||{}).n || '';
+    chips.push({l: 'LP ' + num.lp + ' ' + lpName + ' · your path now', q: 'Life Path ' + num.lp + ' (' + lpName + '). Personal Year ' + (num.py||'?') + '. ' + userCtx + ' How is ' + firstName + '\'s Life Path showing up as a strength or a tension in their current chapter?' + (lifeCtx?' Specifically in relation to ' + lifeCtx + ' — what does LP ' + num.lp + ' ask of them right now?':'')});
+  }
+
+  // 10. Decision Engine
+  chips.push({l: '⏱ Time a decision', q: '__DECISION_ENGINE__'});
 
   return chips.map(c => {
     if (c.q === '__DECISION_ENGINE__') return '<button class="chip chip-decision" onclick="openDecisionEngine()">⏱ Time a decision</button>';
