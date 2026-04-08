@@ -1822,6 +1822,75 @@ function showScreen(id, btn) {
 // ══════════════════════════════════════════════════════════
 // COSMIC CONTEXT PAGE
 // ══════════════════════════════════════════════════════════
+// ── Year section drawer helpers — called from onclick ──────────
+let _yearCtx = {}; // populated by renderContext before building HTML
+
+function openUYDrawer() {
+  const d = _yearCtx;
+  openDrawer(
+    'Universal Year ' + d.uy + ' \u00b7 ' + d.uyName,
+    'Universal Year ' + d.uy + ' (' + d.uyName + ') — the collective numerological frequency everyone shares in ' + d.yr + '. ' + (d.uyM||'') + ' ' + getUserContext() + ' What does this universal energy mean as both an opportunity and a tension for navigating ' + d.yr + '?',
+    [
+      {q: 'How do I work with Universal Year ' + d.uy + ' energy rather than resist it?', l: 'Working with it'},
+      {q: 'What does Universal Year ' + d.uy + ' ask people to release or build?', l: 'Release or build'},
+    ]
+  );
+}
+
+function openPYDrawer() {
+  const d = _yearCtx;
+  const fn = getFirstName();
+  openDrawer(
+    'Personal Year ' + d.py + ' \u00b7 ' + d.pyName + ' \u2014 ' + d.yr,
+    'Personal Year ' + d.py + ' (' + d.pyName + ') for ' + fn + ' in ' + d.yr + '. ' + (d.pyArc||'') + ' Universal Year backdrop: ' + d.uy + ' (' + d.uyName + '). ' + getUserContext() + ' What does Personal Year ' + d.py + ' specifically ask of ' + fn + ' right now? What is the unique gift and challenge of this personal year?',
+    [
+      {q: 'What milestones does Personal Year ' + d.py + ' point toward for ' + fn + ' in ' + d.yr + '?', l: 'Milestones this year'},
+      {q: 'How does Personal Year ' + d.py + ' interact with Universal Year ' + d.uy + ' for ' + fn + '?', l: 'Personal vs universal'},
+      {q: 'What should ' + fn + ' prioritise building or completing in Personal Year ' + d.py + '?', l: 'What to build now'},
+    ]
+  );
+}
+
+function openChineseYearDrawer() {
+  const d = _yearCtx;
+  const fn = getFirstName();
+  openDrawer(
+    d.yr + ' \u00b7 Year of the ' + d.chEl + ' ' + d.chAn,
+    'Chinese Zodiac ' + d.yr + ': Year of the ' + d.chEl + ' ' + d.chAn + '. ' + getUserContext() + ' What is the energy, archetype, and guidance of the ' + d.chEl + ' ' + d.chAn + ' year? What does the ' + d.chEl + ' element bring as a quality to this year? What does it ask of those navigating it?',
+    [
+      {q: 'What opportunities does the ' + d.chEl + ' ' + d.chAn + ' year offer that should not be missed?', l: 'Key opportunities'},
+      {q: 'What are the shadow qualities of the ' + d.chEl + ' ' + d.chAn + ' year to watch for?', l: 'Shadow of this year'},
+    ]
+  );
+}
+
+function openYearBearerDrawer() {
+  const d = _yearCtx;
+  const fn = getFirstName();
+  openDrawer(
+    'Dreamspell Year Bearer \u00b7 Kin ' + d.ybKin,
+    'Dreamspell Year Bearer for Jul ' + d.yr + ' \u2013 Jul ' + (d.yr+1) + ': Kin ' + d.ybKin + ' (' + d.ybFull + '). The Year Bearer sets the energetic tone for the entire 13-Moon year. ' + getUserContext() + ' What archetype does Kin ' + d.ybKin + ' carry, and how does it colour the quality of this Dreamspell year? What does it ask people to embody? (Argu\u00e9lles 1987)',
+    [
+      {q: 'How does Kin ' + d.ybKin + ' as Year Bearer shape the quality of the year for ' + fn + '?', l: 'Year Bearer for me'},
+      {q: 'What is the gift and shadow of ' + d.ybFull + ' as the Year Bearer?', l: 'Gift & shadow of the year'},
+    ]
+  );
+}
+
+function openYearSynthesisDrawer() {
+  const d = _yearCtx;
+  const fn = getFirstName();
+  openDrawer(
+    'What does ' + d.yr + ' ask of ' + fn + '?',
+    'Year synthesis: Universal Year ' + d.uy + ' (' + d.uyName + ').' + (d.py?' Personal Year ' + d.py + ' (' + d.pyName + ').':'') + ' Chinese year: ' + d.chEl + ' ' + d.chAn + '. Dreamspell Year Bearer: Kin ' + d.ybKin + ' ' + d.ybFull + '. ' + getUserContext() + ' What is the deepest synthesis of these four frameworks for ' + fn + ' in ' + d.yr + '? What is being asked to be built, released, and initiated? Be specific to their situation.',
+    [
+      {q: 'What milestones should ' + fn + ' aim for before the end of ' + d.yr + '?', l: 'Milestones for ' + d.yr},
+      {q: 'What do the four year frameworks together say about the next 3 months for ' + fn + '?', l: 'Next 3 months'},
+      {q: 'What is ' + d.yr + ' asking ' + fn + ' to finally stop carrying?', l: 'What to release this year'},
+    ]
+  );
+}
+
 function renderContext() {
   const el = document.getElementById('sctxInner');
   if (!el) return;
@@ -1925,6 +1994,16 @@ function renderContext() {
   const ybSi = (ybKin-1)%20; const ybTi = (ybKin-1)%13;
   const yearBearerFull = KIN_COLORS[ybSi%4]+' '+KIN_TONES[ybTi]+' '+KIN_SEALS[ybSi];
 
+  // Populate year drawer context for helper functions
+  _yearCtx = {
+    yr: curYear,
+    uy: universalYear, uyName: uyD.n||'', uyM: uyD.m||'',
+    py: personalYear||null, pyName: personalYear ? ((NUM_DATA[personalYear]||{}).n||'') : '',
+    pyArc: personalYear ? (PY_ARC[personalYear]||'') : '',
+    chEl: curChinese.element, chAn: curChinese.animal,
+    ybKin, ybFull: yearBearerFull,
+  };
+
   // ── Long-term transits (hardcoded for 2025-2027) ─────────
   const longTermTransits = [
     { planet: '\u2644', name: 'Saturn in Aries', duration: 'May 2025 \u2013 Apr 2028',
@@ -1988,15 +2067,19 @@ function renderContext() {
       ${uyD.m || ''} This is the collective numerological frequency for all of ${curYear} \u2014 the energy everyone on Earth is navigating together.
     </div>
     <div class="ctx-grid">
-      <div class="ctx-card">
+      <div class="ctx-card tappable" style="cursor:pointer"
+        onclick="openUYDrawer()">
         <div class="ctx-card-num">${universalYear}</div>
         <div class="ctx-card-name">Universal Year</div>
         <div class="ctx-card-body">${uyD.k || ''}</div>
+        <div style="font-size:10px;color:var(--gold3);margin-top:8px">↗ Tap for insight</div>
       </div>
-      ${hasBirth && personalYear ? `<div class="ctx-card">
+      ${hasBirth && personalYear ? `<div class="ctx-card tappable" style="cursor:pointer"
+        onclick="openPYDrawer()">
         <div class="ctx-card-num ${[11,22,33,44].includes(personalYear)?'master':''}">${personalYear}</div>
         <div class="ctx-card-name">Your Personal Year</div>
         <div class="ctx-card-body">${(NUM_DATA[personalYear]||{}).k||''}</div>
+        <div style="font-size:10px;color:var(--gold3);margin-top:8px">↗ Tap for insight</div>
       </div>` : `<div class="ctx-card" style="display:flex;align-items:center;justify-content:center">
         <div style="text-align:center;color:var(--text3);font-size:14px;font-style:italic">
           Add birth details in Profile<br>to unlock your Personal Year
@@ -2008,23 +2091,24 @@ function renderContext() {
       ${PY_ARC[personalYear] || ''}
     </div>` : ''}
     <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:14px">
-      <div style="background:var(--bg3);border:1px solid var(--div);border-radius:2px;padding:12px 16px;flex:1;min-width:160px">
+      <div class="tappable" style="background:var(--bg3);border:1px solid var(--div);border-radius:2px;padding:12px 16px;flex:1;min-width:160px;cursor:pointer"
+        onclick="openChineseYearDrawer()">
         <div style="font-size:10px;letter-spacing:.3em;text-transform:uppercase;color:var(--text3);margin-bottom:6px">Chinese Zodiac ${curYear}</div>
         <div style="font-size:18px;color:var(--gold);margin-bottom:4px">${curChinese.element} ${curChinese.animal}</div>
         <div style="font-size:13px;color:var(--text3)">Year of the ${curChinese.element} ${curChinese.animal}</div>
+        <div style="font-size:10px;color:var(--gold3);margin-top:8px">↗ Tap for insight</div>
       </div>
-      <div style="background:var(--bg3);border:1px solid var(--div);border-radius:2px;padding:12px 16px;flex:1;min-width:160px">
+      <div class="tappable" style="background:var(--bg3);border:1px solid var(--div);border-radius:2px;padding:12px 16px;flex:1;min-width:160px;cursor:pointer"
+        onclick="openYearBearerDrawer()">
         <div style="font-size:10px;letter-spacing:.3em;text-transform:uppercase;color:var(--text3);margin-bottom:6px">Dreamspell Year Bearer</div>
         <div style="font-size:15px;color:var(--gold);margin-bottom:4px">Kin ${ybKin}</div>
-        <div style="font-size:13px;color:var(--text3)">${yearBearerFull}<br><span style="font-style:italic">Jul 26 \u2013 Jul 25</span></div>
+        <div style="font-size:13px;color:var(--text3)">${yearBearerFull}<br><span style="font-style:italic">Jul 26 – Jul 25</span></div>
+        <div style="font-size:10px;color:var(--teal);margin-top:8px">↗ Tap for insight</div>
       </div>
     </div>
     <button class="tap-cta" style="margin-top:14px;font-size:12px"
-      onclick="openDrawer('Year ${curYear} Interpretation',
-        'Universal Year is ${universalYear} (${uyD.n||''}). ${hasBirth && personalYear ? 'Personal Year is '+personalYear+' ('+((NUM_DATA[personalYear]||{}).n||'')+').' : ''} Chinese year: ${curChinese.element} ${curChinese.animal}. Dreamspell Year Bearer: Kin ${ybKin} ${yearBearerFull}. ${firstName ? 'User\u2019s name: '+firstName+'.' : ''} What is the deepest synthesis of these four year energies? What does ${curYear} want from the person navigating it? Give a rich, specific, 3-5 sentence interpretation.',
-        [{q:'How does my Personal Year interact with the universal energy of ${curYear}?',l:'Personal vs universal year'},
-         {q:'What does the ${curChinese.element} ${curChinese.animal} add to this year\u2019s energy?',l:'Chinese zodiac depth'}])">
-      What does ${curYear} ask of me? <span class="cta-arrow">\u2192</span>
+      onclick="openYearSynthesisDrawer()">
+      What does ${curYear} ask of me? <span class="cta-arrow">→</span>
     </button>
   </div>`;
 
@@ -5558,25 +5642,40 @@ async function fetchInsight(question, followUpChips) {
   const firstName = getFirstName();
   const userCtx = getUserContext();
   const lifeCtx = getLifeContext();
+
+  // Use reading data if available, else fall back to client-side calculations
+  const dateStr = currentDate || TODAY;
+  const clientMoonData = clientMoon(dateStr);
+  const clientKinData = clientKin(dateStr);
+  const clientUDData = clientUD(dateStr);
+
   const readingCtx = currentReading?.reading?.synthesis
     ? 'Today\'s Oracle synthesis: ' + currentReading.reading.synthesis.slice(0,200) + '.'
     : '';
-  const moonCtx = currentReading?.moon ? 'Moon: ' + currentReading.moon.phase + '. Day ' + currentReading.moon.cycle + ' of cycle.' : '';
-  const kinCtx = currentReading?.kin ? 'Dreamspell: ' + currentReading.kin.full + (currentReading.kin.isGAP?' ★ GAP portal.':'') + '.' : '';
-  const numCtx = currentReading?.num ? 'UD: ' + currentReading.num.ud + ', PD: ' + (currentReading.num.pd||currentReading.num.ud) + ', LP: ' + (currentReading.num.lp||'?') + ', PY: ' + (currentReading.num.py||'?') + '.' : '';
-  const p1Ctx = currentReading?.reading?.priorities?.[0]?.title ? 'Priority 1 today: "' + currentReading.reading.priorities[0].title + '".' : '';
+  const moonCtx = currentReading?.moon
+    ? 'Moon: ' + currentReading.moon.phase + '. Day ' + currentReading.moon.cycle + ' of cycle.'
+    : 'Moon: ' + clientMoonData.phase + '. Day ' + parseFloat(clientMoonData.cyc).toFixed(1) + ' of cycle.' + (clientMoonData.isBlack?' BLACK MOON.':clientMoonData.isShiva?' SHIVA MOON.':'');
+  const kinCtx = currentReading?.kin
+    ? 'Dreamspell: ' + currentReading.kin.full + (currentReading.kin.isGAP?' ★ GAP portal.':'') + '.'
+    : 'Dreamspell Kin: ' + clientKinData.full + (clientKinData.isGAP?' ★ GAP portal.':'') + '.';
+  const numCtx = currentReading?.num
+    ? 'UD: ' + currentReading.num.ud + ', PD: ' + (currentReading.num.pd||currentReading.num.ud) + ', LP: ' + (currentReading.num.lp||'?') + ', PY: ' + (currentReading.num.py||'?') + '.'
+    : 'Universal Day: ' + clientUDData + '.';
+  const p1Ctx = currentReading?.reading?.priorities?.[0]?.title
+    ? 'Priority 1 today: "' + currentReading.reading.priorities[0].title + '".'
+    : '';
+  const readingStatus = currentReading?.reading?.synthesis
+    ? '' : '(Note: full reading is still composing — respond using the cosmic data provided.)';
 
-  const sysPrompt = `You are the Oracle at Cosmic Daily Planner — a personal cosmic intelligence that speaks directly, warmly, and specifically.
+  const sysPrompt = 'You are the Oracle at Cosmic Daily Planner — a personal cosmic intelligence that speaks directly, warmly, and specifically.\n\nRULES:\n\u2014 Address ' + firstName + ' by name throughout. Every sentence should feel written for them specifically.\n\u2014 If context about their life, work, or projects is provided \u2014 reference it directly and by name. Never be generic.\n\u2014 4-6 sentences of deep, specific insight. No preamble. No "great question".\n\u2014 End with ONE precise question for ' + firstName + ' to sit with \u2014 the question that, if answered honestly, would move something.\n\u2014 Use the cosmic data provided. If full reading synthesis is not yet available, work from the raw cosmic data.\n\u2014 Reference scholarly sources naturally where relevant (Tarnas, Greene, Argu\u00e9lles, Drayer).';
 
-RULES:
-— Address ${firstName} by name throughout. Every sentence should feel written for them specifically.
-— If context about their life, work, or projects is provided — reference it directly and by name. Never be generic.
-— 4-6 sentences of deep, specific insight. No preamble. No "great question".
-— End with ONE precise question for ${firstName} to sit with — not rhetorical, not generic. The question that, if answered honestly, would move something.
-— Draw on the reading data provided. Be the continuation of the Oracle reading, not a new conversation.
-— Reference scholarly sources naturally where relevant (Tarnas, Greene, Argüelles, Drayer — not as footnotes, but as intellectual grounding).`;
+  const fullQ = question + '\n\n' + [userCtx, readingCtx, moonCtx, kinCtx, numCtx, p1Ctx, readingStatus].filter(Boolean).join(' ');
 
-  const fullQ = question + '\n\n' + [userCtx, readingCtx, moonCtx, kinCtx, numCtx, p1Ctx].filter(Boolean).join(' ');
+  // Show loading state
+  const body = document.getElementById('drawerBody');
+  if (body && body.innerHTML.indexOf('drawer-loading') < 0) {
+    body.innerHTML = '<div class="drawer-loading">The Oracle considers\u2026</div>';
+  }
 
   try {
     const res = await fetch(API_BASE + '/api/ask', {
@@ -5584,20 +5683,26 @@ RULES:
       body: JSON.stringify({
         question: fullQ,
         systemPrompt: sysPrompt,
-        context: readingCtx,
+        context: readingCtx || moonCtx + ' ' + kinCtx,
         profile,
         readingData: currentReading?.reading || {}
       })
     });
+
+    if (!res.ok) throw new Error('Server returned ' + res.status);
     const data = await res.json();
-    const answer = data.answer || data.error || 'The Oracle is silent on this — try again.';
+
+    if (!data.answer || data.answer.trim() === '') {
+      throw new Error('empty_response');
+    }
+
+    const answer = data.answer;
     drawerContext = question + '\n\nOracle said: ' + answer;
 
-    // Build contextual follow-up chips — always have something to go deeper with
+    // Build contextual follow-up chips
     let finalChips = followUpChips || [];
     if (finalChips.length < 2) {
-      // Add universal follow-ups based on context
-      if (lifeCtx) finalChips.push({q: 'Given what you just said — what is the single most important thing ' + firstName + ' should do about ' + lifeCtx + ' in the next 24 hours?', l: 'Next 24h action'});
+      if (lifeCtx) finalChips.push({q: 'Given what you just said \u2014 what is the single most important thing ' + firstName + ' should do about ' + lifeCtx + ' in the next 24 hours?', l: 'Next 24h action'});
       finalChips.push({q: 'What is the shadow or risk in this that ' + firstName + ' might be avoiding seeing?', l: 'The shadow'});
       finalChips.push({q: 'If ' + firstName + ' acted on what you just said, what would change first?', l: 'What changes first'});
     }
@@ -5607,12 +5712,17 @@ RULES:
         ${c.l}
       </button>`).join('');
 
-    document.getElementById('drawerBody').innerHTML = `
-      <div class="drawer-response">${answer.split('\n').filter(l=>l.trim()).map(p=>`<p>${cleanText(p)}</p>`).join('')}</div>
+    if (body) body.innerHTML =
+      `<div class="drawer-response">${answer.split('\n').filter(l=>l.trim()).map(p=>`<p>${cleanText(p)}</p>`).join('')}</div>
       ${chipsHtml ? `<div class="drawer-chips">${chipsHtml}</div>` : ''}`;
+
   } catch(e) {
-    document.getElementById('drawerBody').innerHTML =
-      `<p style="color:var(--red)">Could not reach the Oracle: ${e.message}</p>`;
+    const isReading = !currentReading?.reading?.synthesis;
+    const msg = e.message === 'empty_response' || isReading
+      ? 'The full reading is still composing \u2014 the Oracle responds more richly once it arrives. Try again in a moment, or ask a specific question below.'
+      : 'Could not reach the Oracle: ' + e.message;
+    const retryBtn = `<button class="chip" onclick="fetchInsight('${question.replace(/'/g,"\\'")}', null)" style="margin-top:10px">\u21ba Try again</button>`;
+    if (body) body.innerHTML = `<p style="color:var(--text3);font-style:italic;font-size:15px">${msg}</p>${retryBtn}`;
   }
 }
 
