@@ -902,7 +902,7 @@ app.post('/api/cosmic', (req, res) => {
 });
 
 app.post('/api/ask', async (req, res) => {
-  const {question, context, profile, readingData} = req.body;
+  const {question, context, profile, readingData, systemPrompt} = req.body;
   if (!question) return res.status(400).json({error: 'No question'});
   try {
     const p = profile || {};
@@ -913,21 +913,24 @@ app.post('/api/ask', async (req, res) => {
       ? `Roles: ${Array.isArray(p.roles) ? p.roles.join(', ') : p.roles}.` : '';
     const threadsCtx = (p.active_threads && p.active_threads.length)
       ? `Active projects: ${Array.isArray(p.active_threads) ? p.active_threads.join(', ') : p.active_threads}.` : '';
-    const intentionsCtx = (p.intentions && p.intentions.length)
-      ? `Intentions: ${Array.isArray(p.intentions) ? p.intentions.join(', ') : p.intentions}.` : '';
+    const buildingCtx = p.building ? `Currently building: ${p.building}.` : '';
+    const chapterCtx = p.chapter ? `Current chapter: ${p.chapter}.` : '';
+    const focusCtx = p.focus ? `Current focus: ${p.focus}.` : '';
 
-    const sys = `You are the Oracle at Cosmic Daily Planner — the same voice that wrote today's full reading. A reader is asking a follow-up or deeper question.
+    // Use frontend-provided systemPrompt if available, else default
+    const sys = systemPrompt || `You are the Oracle at Cosmic Daily Planner — the same voice that wrote today's full reading. A reader is asking a follow-up or deeper question.
 
 YOUR VOICE: The best Jungian analyst meets the Swiss Ephemeris. Precise. Personal. Grounded. Emotionally intelligent.
 
 RULES:
 — Address ${firstName} by name throughout.
 — Speak directly from the cosmic data provided. Never invent planetary positions.
-— 3-5 paragraphs of depth. No bullet points. No lists.
-— End with one concrete action, question, or awareness for ${firstName} to carry.
-— Reference their specific personal context, projects, and relationships where relevant.
+— 4-6 sentences of depth. No bullet points. No lists.
+— End with one precise question for ${firstName} to sit with — the one that, if answered honestly, would move something.
+— Reference their specific personal context, projects, and relationships where relevant and by name.
 — Dreamspell always labelled as Argüelles (1987) modern system, distinct from ancient K'iche' tradition.
-— Draw on: Tarnas (2006), Greene (1976), Hand (2002), Brady (1999), Drayer (2002) where relevant.`;
+— Draw on: Tarnas (2006), Greene (1976), Hand (2002), Brady (1999), Drayer (2002) where relevant.
+— If the full reading has not yet completed, respond from the raw cosmic data provided. Never say you don't have enough information.`;
 
     const fullContext = [
       context ? `Today's reading context: ${context}` : '',
@@ -936,9 +939,8 @@ RULES:
       readingData?.astrology?.main_transit_headline ? `Main transit: ${readingData.astrology.main_transit_headline}` : '',
       readingData?.numerology?.headline ? `Numerology: ${readingData.numerology.headline}` : '',
       p.context ? `Personal context: ${p.context}` : '',
-      rolesCtx,          // Beta 2
-      threadsCtx,        // Beta 2
-      intentionsCtx,     // Beta 2
+      rolesCtx, threadsCtx,
+      buildingCtx, chapterCtx, focusCtx,
       p.birthDay ? `Born: ${p.birthDay}/${p.birthMonth}/${p.birthYear}${p.birthTime ? ' at ' + p.birthTime : ''}${p.birthLocation ? ' in ' + p.birthLocation : ''}` : '',
     ].filter(Boolean).join('\n');
 
