@@ -2040,6 +2040,17 @@ function renderContext() {
     44:'Master Year 44 \u2014 Master Organiser. A year of systemic achievement. Material and spiritual mastery can be integrated.'
   };
 
+  // Populate year drawer context for helper functions
+  _yearCtx = {
+    yr: curYear,
+    uy: universalYear, uyName: uyD.n||'', uyM: uyD.m||'',
+    py: personalYear||null, pyName: personalYear ? ((NUM_DATA[personalYear]||{}).n||'') : '',
+    pyArc: personalYear ? (PY_ARC[personalYear]||'') : '',
+    chEl: curChinese.element, chAn: curChinese.animal,
+    ybKin, ybFull: yearBearerFull,
+  };
+
+
   const firstName = profile.nickname || (profile.name ? profile.name.split(' ')[0] : null);
   const hasBirth = !!(profile.birthDay && profile.birthMonth && profile.birthYear);
 
@@ -5644,7 +5655,11 @@ async function fetchInsight(question, followUpChips) {
   const lifeCtx = getLifeContext();
 
   // Use reading data if available, else fall back to client-side calculations
+<<<<<<< HEAD
+  const dateStr = (typeof currentDate !== 'undefined' && currentDate) ? currentDate : TODAY;
+=======
   const dateStr = currentDate || TODAY;
+>>>>>>> 5262b1d20ad4eebfa58beec74bc0c843082a9842
   const clientMoonData = clientMoon(dateStr);
   const clientKinData = clientKin(dateStr);
   const clientUDData = clientUD(dateStr);
