@@ -4193,28 +4193,43 @@ function renderSkeletonReading(dateStr, tier) {
   </div>`;
 
   // Widgets
+  // Widget tap handlers — pre-computed questions
+  const wgtFN = getFirstName();
+  const wgtMoonQ = 'The Moon is in ' + moonPhase + ' phase today. Day ' + parseFloat(moonAge).toFixed(1) + ' of the lunar cycle. ' + (isBlack?'BLACK MOON — threshold day.':isShiva?'SHIVA MOON — auspicious.':'') + ' What does this lunar position mean for ' + wgtFN + ' today in terms of energy, emotions, and timing?';
+  const wgtKinQ = 'Today\'s Dreamspell Kin is ' + kinFull + (isGAP?' — GALACTIC ACTIVATION PORTAL.':'') + ' What does this Kin specifically invite ' + wgtFN + ' to embody or be aware of today? (Argüelles 1987 Dreamspell system)';
+  const wgtUDQ = 'Universal Day ' + dispNum + ' (' + (dispD.n||'') + '). ' + (dispD.m||'') + ' What does this number energy mean for ' + wgtFN + ' today — how does it shape the quality of decisions, interactions, and timing?';
+  const wgtLPQ = lp ? 'Life Path ' + lp + ' (' + (lpD.n||'') + '). This is the permanent core energy. What are the deepest gifts, shadow patterns, and vocational direction of Life Path ' + lp + ' for ' + wgtFN + '?' : '';
+
   html += `<div class="widgets">
-    <div class="wgt">
+    <div class="wgt tappable" style="cursor:pointer" title="Tap for numerology insight"
+      onclick="openDrawer('Universal Day ${dispNum} · ${dispD.n}', '${wgtUDQ.replace(/'/g,"\'")}', [{q:'How does Universal Day ${dispNum} shape timing and decisions today for ${wgtFN}?',l:'Timing today'},{q:'What is the shadow of ${dispNum} energy to watch for?',l:'Shadow of ${dispNum}'}])">
       <div class="wgt-label">Day</div>
       <div class="wgt-icon" style="${isMD?'color:var(--master)':''}">
         ${isMD?'★':''}</div>
       <div class="wgt-val" style="${isMD?'color:var(--master)':''}">${dispNum}</div>
       <div class="wgt-name">${dispD.n}</div>
+      <div style="font-size:9px;color:var(--gold3);margin-top:5px">↗</div>
     </div>
-    <div class="wgt">
+    <div class="wgt tappable" style="cursor:pointer" title="Tap for lunar insight"
+      onclick="openDrawer('Moon · ${moonPhase}', '${wgtMoonQ.replace(/'/g,"\'")}', [{q:'How does the ${moonPhase} affect ${wgtFN}\'s energy and mood today?',l:'Energy & mood'},{q:'What should ${wgtFN} do or avoid today based on this moon phase?',l:'Do or avoid'}${isBlack?",{q:'What specifically should "+wgtFN+" NOT initiate on this Black Moon threshold?',l:'⚠ Black Moon'}":isShiva?",{q:'What new intention should "+wgtFN+" plant in the next 48 hours?',l:'✨ Shiva Moon'}":''  }])">
       <div class="wgt-label">Moon</div>
       <div class="wgt-icon">${moonEmoji}</div>
       <div class="wgt-val" style="font-size:13px;line-height:1.3">${moonPhase}</div>
+      <div style="font-size:9px;color:var(--gold3);margin-top:5px">↗</div>
     </div>
-    <div class="wgt">
+    <div class="wgt tappable" style="cursor:pointer" title="Tap for Dreamspell insight"
+      onclick="openDrawer('Kin · ${kinFull}', '${wgtKinQ.replace(/'/g,"\'")}', [{q:'What is the gift and shadow of the ${KS[si]} archetype today?',l:'Gift & shadow'},{q:'How does Tone ${ti+1} (${KT[ti]}) shape the quality of today?',l:'Tone in practice'}${isGAP?",{q:'What synchronicities should "+wgtFN+" watch for on this GAP portal day?',l:'★ GAP portals'}":""}])">
       <div class="wgt-label">Kin</div>
       <div class="wgt-icon">${isGAP?'★':'◈'}</div>
       <div class="wgt-val" style="font-size:11px;line-height:1.4">${kinFull}</div>
+      <div style="font-size:9px;color:var(--teal);margin-top:5px">↗</div>
     </div>
-    ${lp ? `<div class="wgt">
+    ${lp ? `<div class="wgt tappable" style="cursor:pointer" title="Tap for Life Path insight"
+      onclick="openDrawer('Life Path ${lp} · ${lpD.n}', '${wgtLPQ.replace(/'/g,"\'")}', [{q:'What is the vocational direction and natural strengths of Life Path ${lp}?',l:'Vocation & strengths'},{q:'What is the shadow pattern of Life Path ${lp} to know and work with?',l:'Shadow pattern'},{q:'How does Life Path ${lp} interact with Personal Year ${py||'?'}?',l:'LP × Personal Year'}])">
       <div class="wgt-label">Life Path</div>
       <div class="wgt-val" style="${[11,22,33,44].includes(lp)?'color:var(--master)':''}">${lp}</div>
       <div class="wgt-name">${lpD.n}</div>
+      <div style="font-size:9px;color:var(--gold3);margin-top:5px">↗</div>
     </div>` : '<div class="wgt"><div class="wgt-label">Profile</div><div class="wgt-name" style="font-size:13px;margin-top:8px">Add birth date<br>for personal readings</div></div>'}
   </div>`;
 
