@@ -109,9 +109,15 @@ function getMoon(dateStr){
   else{phase='Waning Crescent';emoji='🌘';desc='Rest, reflect, prepare for rebirth';}
   const toNew=cyc<0.5?0:LUNAR-cyc;
   const toFull=cyc<14.77?14.77-cyc:LUNAR-cyc+14.77;
-  const isBlack=cyc>27.53;
-  const isShiva=cyc>=1.5&&cyc<=3.5;
-  return{phase,emoji,desc,cycle:cyc.toFixed(1),pct,toNew:toNew.toFixed(1),toFull:toFull.toFixed(1),isBlack,isShiva};
+  // BLACK MOON: exactly 2 days BEFORE new moon (toNew <= 2.0)
+  // This is the threshold time — tricky, introspective, avoid major launches
+  const isBlack=toNew>=0&&toNew<=2.0;
+  // SHIVA MOON: exactly 2 days AFTER new moon (cyc 0.5–2.5)
+  // The first crescent appears — blissful, generative, auspicious for new beginnings
+  const isShiva=cyc>=0.5&&cyc<=2.5;
+  const isNewMoon=cyc<0.5||cyc>29.0;
+  const isFullMoon=cyc>=14.0&&cyc<=16.0;
+  return{phase,emoji,desc,cycle:cyc.toFixed(1),pct,toNew:toNew.toFixed(1),toFull:toFull.toFixed(1),isBlack,isShiva,isNewMoon,isFullMoon};
 }
 
 // ══════════════════════════════════════════════════════════════════
@@ -161,7 +167,15 @@ function getWeekAhead(startDateStr){
 }
 
 // ══════════════════════════════════════════════════════════════════
-// NUMEROLOGY
+// NUMEROLOGY — Three Energies of the Day
+// Morning = Personal Day (microcosm — today's precise frequency)
+// Afternoon = Personal Month (mid-range context — monthly arc)
+// Evening = Personal Year (macrocosm — annual arc and life theme)
+// Universal Day = reduce(day + month + year digits)
+// Month Energy = reduce(month number)
+// Year Energy = reduce(year digits)
+// Special days: 7 (introspection/wisdom), 9 (completion/compassion)
+// Master days: 11, 22, 33, 44 — do NOT reduce further
 // ══════════════════════════════════════════════════════════════════
 function reduce(n){
   while(n>9&&n!==11&&n!==22&&n!==33&&n!==44)
@@ -169,19 +183,58 @@ function reduce(n){
   return n;
 }
 const NUM={
-  1:{n:'New Beginnings',k:'Initiation · leadership · independence'},
-  2:{n:'Partnership',k:'Cooperation · balance · receptivity'},
-  3:{n:'Creative Expression',k:'Joy · communication · creative flow'},
-  4:{n:'Foundation & Order',k:'Structure · discipline · patient building'},
-  5:{n:'Freedom & Change',k:'Adventure · versatility · expansion'},
-  6:{n:'Love & Responsibility',k:'Harmony · family · service · care'},
-  7:{n:'Wisdom & Introspection',k:'Analysis · spiritual depth · truth-seeking'},
-  8:{n:'Power & Abundance',k:'Authority · material mastery · accountability'},
-  9:{n:'Completion & Compassion',k:'Wisdom · generosity · release · universal love'},
-  11:{n:'Master Illuminator',k:'Spiritual vision · intuition · higher purpose'},
-  22:{n:'Master Builder',k:'Large-scale vision · practical idealism'},
-  33:{n:'Master Teacher',k:'Healing · compassion · selfless guidance'},
-  44:{n:'Master Organiser',k:'Systemic mastery · material achievement'},
+  1:{n:'New Beginnings',k:'Initiation · leadership · independence',
+    morning:'Morning calls for bold initiation — begin something, assert your direction with confidence.',
+    afternoon:'Afternoon sustains the initiating impulse. Push independently through resistance.',
+    evening:'Evening resonates with independence. Reflect on what you have started and what leadership asks of you.'},
+  2:{n:'Partnership',k:'Cooperation · balance · receptivity',
+    morning:'Morning asks for deep listening and receptivity. Collaborate, do not compete.',
+    afternoon:'Afternoon favours partnership decisions and sensitive negotiations.',
+    evening:'Evening is for tending relationships — what balance needs restoring?'},
+  3:{n:'Creative Expression',k:'Joy · communication · creative flow',
+    morning:'Morning overflows with creative potential. Speak, write, create — the channel is open.',
+    afternoon:'Afternoon sustains expressive momentum. Ideas multiply with sharing.',
+    evening:'Evening calls for joyful communication — connect, share what is alive in you.'},
+  4:{n:'Foundation & Order',k:'Structure · discipline · patient building',
+    morning:'Morning energy is grounded and methodical. Lay foundations, build systems.',
+    afternoon:'Afternoon rewards steady focus. Practical effort accumulates.',
+    evening:'Evening consolidates what was built. Honour the discipline of the day.'},
+  5:{n:'Freedom & Change',k:'Adventure · versatility · expansion',
+    morning:'Morning sparks restlessness. Stay adaptable; the unexpected is the gift.',
+    afternoon:'Afternoon accelerates change. Navigate rather than control.',
+    evening:'Evening asks: what does freedom mean right now? Release rigidity.'},
+  6:{n:'Love & Responsibility',k:'Harmony · family · service · care',
+    morning:'Morning centres on care and responsibility. Home and relationship call for attention.',
+    afternoon:'Afternoon sustains the energy of service and harmony.',
+    evening:'Evening is deeply relational. Tend to those who matter most.'},
+  7:{n:'Wisdom & Introspection',k:'Analysis · spiritual depth · truth-seeking',
+    morning:'Morning is introspective and quiet. Inner work, research, and deep thinking are rewarded.',
+    afternoon:'Afternoon opens the philosophical channel. Question beneath the surface.',
+    evening:'Evening is for silence and contemplation. Answers come inward, not outward.'},
+  8:{n:'Power & Abundance',k:'Authority · material mastery · accountability',
+    morning:'Morning carries authority and material weight. Decisions today have consequence.',
+    afternoon:'Afternoon amplifies executive capacity. Speak clearly, act decisively.',
+    evening:'Evening is for taking stock — what has been built, what has been earned?'},
+  9:{n:'Completion & Compassion',k:'Wisdom · generosity · release · universal love',
+    morning:'Morning is open and cosmic. Special encounters and completions arrive unbidden.',
+    afternoon:'Afternoon calls for generosity and letting go.',
+    evening:'Evening is for release. Close cycles, forgive, and prepare for what is next.'},
+  11:{n:'Master Illuminator',k:'Spiritual vision · intuition · higher purpose',master:true,
+    morning:'Master Morning — the portals are open. Spiritual insight and high intuition are available before the noise of the day begins.',
+    afternoon:'Master Afternoon — unusual clarity and vision. What is offered is rare.',
+    evening:'Master Evening — integration of the day\'s revelations. Something important has arrived; be still enough to receive it.'},
+  22:{n:'Master Builder',k:'Large-scale vision · practical idealism · manifestation',master:true,
+    morning:'Master Morning — practical idealism at its peak. Major projects respond to clear, committed focus.',
+    afternoon:'Master Afternoon — civilisational-scale energy is available. Build with intention.',
+    evening:'Master Evening — reflect on what you are truly building over the long arc.'},
+  33:{n:'Master Teacher',k:'Healing · compassion · selfless guidance',master:true,
+    morning:'Master Morning — compassionate service and healing are amplified.',
+    afternoon:'Master Afternoon — teach, guide, and give freely.',
+    evening:'Master Evening — what has your generosity created today? Receive the reflection.'},
+  44:{n:'Master Organiser',k:'Systemic mastery · material achievement · divine structure',master:true,
+    morning:'Master Morning — structural clarity and material achievement are supported.',
+    afternoon:'Master Afternoon — deep systems thinking opens. Pay close attention to business and money.',
+    evening:'Master Evening — review the architecture of your long-term vision.'},
 };
 
 function getNumerology(dateStr,bDay,bMonth,bYear){
@@ -198,9 +251,21 @@ function getNumerology(dateStr,bDay,bMonth,bYear){
     pm=reduce(py+m);
     pd=reduce(pm+d);
   }
+  // Three energies: morning=Personal Day (or UD if no birth), afternoon=Personal Month (or mEn), evening=Personal Year (or yEn)
+  const morningNum = pd||ud;
+  const afternoonNum = pm||mEn;
+  const eveningNum = py||yEn;
+  const threeEnergies = {
+    morning: { num: morningNum, name: NUM[morningNum]?.n||'', desc: NUM[morningNum]?.morning||NUM[morningNum]?.k||'', isMaster: [11,22,33,44].includes(morningNum) },
+    afternoon: { num: afternoonNum, name: NUM[afternoonNum]?.n||'', desc: NUM[afternoonNum]?.afternoon||NUM[afternoonNum]?.k||'', isMaster: [11,22,33,44].includes(afternoonNum) },
+    evening: { num: eveningNum, name: NUM[eveningNum]?.n||'', desc: NUM[eveningNum]?.evening||NUM[eveningNum]?.k||'', isMaster: [11,22,33,44].includes(eveningNum) },
+  };
+  const isMasterDay=[11,22,33,44].includes(ud);
+  const isSpecialDay=[7,9].includes(ud); // 7=introspection, 9=completion — always noteworthy
   return{ud,udM:NUM[ud],mEn,mEnM:NUM[mEn],yEn,yEnM:NUM[yEn],
     lp,lpM:lp?NUM[lp]:null,py,pyM:py?NUM[py]:null,
-    pm,pmM:pm?NUM[pm]:null,pd,pdM:pd?NUM[pd]:null};
+    pm,pmM:pm?NUM[pm]:null,pd,pdM:pd?NUM[pd]:null,
+    threeEnergies,isMasterDay,isSpecialDay};
 }
 
 // ══════════════════════════════════════════════════════════════════
@@ -297,8 +362,8 @@ function callAPI(model, maxTok, sys, user) {
     });
 
     req.on('error', err => reject(err));
-    req.setTimeout(120000, () => {
-      req.destroy(new Error('Socket timeout after 120s'));
+    req.setTimeout(240000, () => {
+      req.destroy(new Error('Socket timeout after 240s'));
     });
     req.write(body);
     req.end();
@@ -458,7 +523,7 @@ async function generateReading(dateStr, profile = {}, tier = 'oracle', recentHis
   // ── TIER-SPECIFIC SCOPE ──
   const tierScope = {
     free: `TIER: Free — Generate ONLY: synthesis (1 sentence), Universal Day number + name + one sentence meaning, moon phase + sign, today's Kin, one "For Today" action. JSON must have: synthesis, numerology:{headline, body(1 paragraph)}, moon_section:{headline, body(1 paragraph)}, dreamspell:{headline}, closing_line. Nothing else. Keep total output under 500 tokens.`,
-    seeker: `TIER: Seeker — Generate full reading with: synthesis, numerology (all fields including three_energies), moon_section, astrology (main_transit only, no saturn_neptune deep dive), dreamspell, priorities (3), focus_on, ease_off, time_windows, closing_line, sources. No week_ahead, no daily_gift. Keep prose fields to 2 sentences each.`,
+    seeker: `TIER: Seeker — Generate a focused reading. Required JSON fields ONLY: synthesis (3 sentences), numerology:{headline,body(2 sentences),three_energies:{morning,afternoon,evening each with num+name+guidance}}, moon_section:{headline,body(2 sentences)}, astrology:{main_transit_headline,main_transit_body(2 sentences)}, dreamspell:{headline,body(2 sentences)}, priorities:[3 items with title+rationale(2 sentences)+action], shadow_work(2 sentences), focus_on:[4 items], ease_off:[4 items], time_windows:{morning,afternoon,evening each 1 sentence}, closing_line, sources. NO week_ahead. NO daily_gift. Total output under 1800 tokens.`,
     initiate: `TIER: Initiate — Generate full reading with all fields except: omit daily_gift.meditation and deep saturn_neptune historical analysis. Keep prose fields to 3 sentences each. Include week_ahead.`,
     mystic: `TIER: Mystic — Generate complete reading with all fields. Include natal chart context. Keep prose fields to 3-4 sentences. Full week_ahead. Full daily_gift.`,
     oracle: `TIER: Oracle — Generate the COMPLETE, MAXIMALLY DETAILED reading. This is the £50,000-tier experience. Every prose field must be FULL, RICH paragraphs — 4-6 sentences minimum per paragraph, multiple paragraphs per section as defined in the JSON schema. The benchmark is a 25-30 page printed document. Numerology body: 4 full paragraphs. Moon body: 3 full paragraphs. Main transit body: 4 full paragraphs. Saturn-Neptune: 3 full paragraphs. Dreamspell body: 4 full paragraphs. Each aspect: 3 full sentences. Shadow work: 4 italic sentences. Each priority: 3-4 sentence rationale + specific action. Full week_ahead with 2-sentence personalised notes for each day. Complete daily_gift with meditation. Do NOT truncate any field. Every field in the JSON schema must be populated to maximum depth.`
@@ -583,8 +648,8 @@ Generate the FULL ORACLE READING as valid JSON (no markdown, no fences, no pream
   "sources": "Astronomy: Swiss Ephemeris (Koch & Treindl, Astrodienst AG, ae_2026.pdf); USNO Moon Phases. Maya calendrics: Šprajc et al. (2023) Science Advances doi:10.1126/sciadv.abq7675; Aldana (2022) doi:10.34758/qyyd-vx23. Dreamspell: Argüelles (1987) The Mayan Factor. Astrology: Greene (1976) Saturn; Tarnas (2006) Cosmos & Psyche; Hand (2002) Planets in Transit; Brady (1999) Predictive Astrology; Brennan (2017) Hellenistic Astrology. Numerology: Drayer (2002); Kahn (2001) Pythagoras."
 }`;
 
-  const maxTok = {free:800, seeker:3000, initiate:5000, mystic:8000, oracle:16000}[tier] || 8192;
-  const raw = await callAPI('claude-sonnet-4-6', maxTok, sys, user);
+  const maxTok = {free:800, seeker:4500, initiate:6000, mystic:9000, oracle:16000}[tier] || 8192;
+  const raw = await callAPI('claude-sonnet-4-5-20250514', maxTok, sys, user);
 
   let reading;
   try {
@@ -682,7 +747,9 @@ Generate ONLY these sections as valid JSON:
 }`;
 
   const maxTok1 = {free:400, seeker:1800, initiate:2200, mystic:2800, oracle:3500}[tier] || 2000;
-  const raw1 = await callAPI('claude-sonnet-4-6', maxTok1, sys1, user1);
+  // Use Haiku for seeker/free Phase1 (fast enough), Sonnet for deeper tiers
+  const p1Model = (tier === 'seeker' || tier === 'free') ? 'claude-haiku-4-5-20251001' : 'claude-sonnet-4-5-20250514';
+  const raw1 = await callAPI(p1Model, maxTok1, sys1, user1);
 
   try {
     const cleaned = raw1.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
@@ -705,7 +772,7 @@ function newJobId() {
   return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
 }
 function cleanOldJobs() {
-  const cutoff = Date.now() - 7200000;
+  const cutoff = Date.now() - 14400000; // 4hr TTL — survives brief Railway redeploys
   for (const [id, job] of jobs) {
     if (job.startedAt < cutoff) jobs.delete(id);
   }
@@ -753,9 +820,20 @@ app.post('/api/reading/start', async (req, res) => {
           job.status = 'phase1_complete';
           console.log(`Job ${jobId} Phase 1 complete (${((Date.now() - job.startedAt)/1000).toFixed(1)}s)`);
         }
+        // Seeker: Phase 1 IS the full reading — skip Phase 2 to avoid timeout
+        if (activeTier === 'seeker') {
+          const seekerJob = jobs.get(jobId);
+          if (seekerJob) {
+            seekerJob.status = 'complete';
+            seekerJob.result = { reading: p1, planets, moon, kin, num, aspects };
+            seekerJob.completedAt = Date.now();
+            console.log(`Job ${jobId} Seeker complete via Phase 1 (${((Date.now() - seekerJob.startedAt)/1000).toFixed(1)}s)`);
+          }
+          return;
+        }
       }
 
-      // Phase 2 — full depth (runs immediately after phase 1 or alone for free)
+      // Phase 2 — full depth (runs for initiate/mystic/oracle; free goes direct)
       const r = await generateReading(ds, profile || {}, activeTier, recentHistory || [], planets, moon, kin, num, aspects);
       const job = jobs.get(jobId);
       if (job) {
@@ -864,7 +942,7 @@ RULES:
       p.birthDay ? `Born: ${p.birthDay}/${p.birthMonth}/${p.birthYear}${p.birthTime ? ' at ' + p.birthTime : ''}${p.birthLocation ? ' in ' + p.birthLocation : ''}` : '',
     ].filter(Boolean).join('\n');
 
-    const ans = await callAPI('claude-sonnet-4-6', 2500, sys,
+    const ans = await callAPI('claude-sonnet-4-5-20250514', 2500, sys,
       `${fullContext}\n\nQuestion from ${firstName}: ${question}`);
     res.json({answer: ans});
   } catch(e) {
@@ -885,12 +963,78 @@ app.post('/api/calendar', (req, res) => {
     const moon = getMoon(ds);
     const kin = getKin(ds);
     const num = getNumerology(ds, p.birthDay, p.birthMonth, p.birthYear);
-    result.push({d, ds, moon, kin, ud: num.ud, udN: num.udM?.n,
+    // Master number class for calendar styling
+    const masterClass = num.isMasterDay
+      ? (num.ud===11?'master-11':num.ud===22?'master-22':num.ud===33?'master-33':'master-44')
+      : '';
+    result.push({
+      d, ds,
+      // Moon
+      moon: { phase: moon.phase, emoji: moon.emoji, cycle: moon.cycle, pct: moon.pct,
+        toNew: moon.toNew, toFull: moon.toFull,
+        isBlack: moon.isBlack, isShiva: moon.isShiva,
+        isNewMoon: moon.isNewMoon, isFullMoon: moon.isFullMoon },
+      // Dreamspell
+      kin: { kin: kin.kin, tone: kin.tone, toneNum: kin.toneNum, seal: kin.seal,
+        color: kin.color, full: kin.full, isGAP: kin.isGAP },
+      // Universal day numerology
+      ud: num.ud, udN: num.udM?.n, udK: num.udM?.k,
+      mEn: num.mEn, mEnN: num.mEnM?.n,
+      yEn: num.yEn, yEnN: num.yEnM?.n,
+      // Personal numerology (if birth data available)
       pd: num.pd, pdN: num.pdM?.n,
-      isMaster: [11,22,33,44].includes(num.ud),
-      isGAP: kin.isGAP});
+      pm: num.pm, pmN: num.pmM?.n,
+      py: num.py, pyN: num.pyM?.n,
+      // Three energies
+      threeEnergies: num.threeEnergies,
+      // Flags
+      isMasterDay: num.isMasterDay,
+      isSpecialDay: num.isSpecialDay,
+      isGAP: kin.isGAP,
+      masterClass,
+    });
   }
   res.json(result);
+});
+
+// ── DAY DETAIL — full framework data for a single day ──
+app.post('/api/daydetail', (req, res) => {
+  const {date, profile} = req.body;
+  if (!date) return res.status(400).json({error:'date required'});
+  const p = profile || {};
+  try {
+    const planets = buildPlanets(date);
+    const moon = getMoon(date);
+    const kin = getKin(date);
+    const num = getNumerology(date, p.birthDay, p.birthMonth, p.birthYear);
+    const aspects = getAspects(planets);
+    // Key aspects — top 3 for day detail
+    const topAspects = aspects.slice(0,3).map(a => ({
+      label: a.label, desc: a.desc, str: a.str, aspect: a.aspect }));
+    res.json({
+      date, planets, moon, kin, num, topAspects,
+      // Highlight summary for display
+      summary: {
+        moonPhase: `${moon.emoji} ${moon.phase} (day ${moon.cycle} of cycle)`,
+        moonAlert: moon.isBlack ? '⚠️ Black Moon — two days before New Moon. A threshold: inward, cautious, no major launches.'
+          : moon.isShiva ? '✨ Shiva Moon — two days after New Moon. Auspicious, generative. Plant intentions now.'
+          : moon.isNewMoon ? '🌑 New Moon — the cycle begins. Set intentions in silence.'
+          : moon.isFullMoon ? '🌕 Full Moon — peak illumination. What is ready to be seen or released?'
+          : '',
+        kinFull: kin.full,
+        gapAlert: kin.isGAP ? '★ Galactic Activation Portal — heightened sensitivity. Pay close attention to what arrives.' : '',
+        universalDay: `${num.ud}${[11,22,33,44].includes(num.ud)?'★':''} — ${num.udM?.n||''}`,
+        monthEnergy: `${num.mEn} — ${num.mEnM?.n||''}`,
+        yearEnergy: `${num.yEn} — ${num.yEnM?.n||''}`,
+        personalDay: num.pd ? `${num.pd}${[11,22,33,44].includes(num.pd)?'★':''} — ${num.pdM?.n||''}` : null,
+        personalMonth: num.pm ? `${num.pm} — ${num.pmM?.n||''}` : null,
+        personalYear: num.py ? `${num.py} — ${num.pyM?.n||''}` : null,
+        threeEnergies: num.threeEnergies,
+        masterAlert: num.isMasterDay ? `★ Master Number ${num.ud} Day — ${num.udM?.n} — portals wide open` : '',
+        specialAlert: num.isSpecialDay ? `✧ Day ${num.ud} — ${num.udM?.n} — a day of particular depth` : '',
+      }
+    });
+  } catch(e) { res.status(500).json({error: e.message}); }
 });
 
 // ══════════════════════════════════════════════════════════════════
@@ -1256,7 +1400,66 @@ app.post('/api/compatibility', async (req, res) => {
       ? `${pB.birthYear}-${String(pB.birthMonth).padStart(2,'0')}-${String(pB.birthDay).padStart(2,'0')}`
       : null;
 
-    // ── ALL FOUR FRAMEWORKS ──
+    // ── CHINESE ZODIAC (6th framework) ──
+    const _CAN = ['Rat','Ox','Tiger','Rabbit','Dragon','Snake','Horse','Goat','Monkey','Rooster','Dog','Pig'];
+    const _CEL = ['Metal','Metal','Water','Water','Wood','Wood','Fire','Fire','Earth','Earth'];
+    const _CNY = {1950:[1,27],1951:[2,6],1952:[1,27],1953:[2,14],1954:[2,3],1955:[1,24],1956:[2,12],
+      1957:[1,31],1958:[2,18],1959:[2,8],1960:[1,28],1961:[2,15],1962:[2,5],1963:[1,25],1964:[2,13],
+      1965:[2,2],1966:[1,21],1967:[2,9],1968:[1,30],1969:[2,17],1970:[2,6],1971:[1,27],1972:[2,15],
+      1973:[2,3],1974:[1,23],1975:[2,11],1976:[1,31],1977:[2,18],1978:[2,7],1979:[1,28],1980:[2,16],
+      1981:[2,5],1982:[1,25],1983:[2,13],1984:[2,2],1985:[2,20],1986:[2,9],1987:[1,29],1988:[2,17],
+      1989:[2,6],1990:[1,27],1991:[2,15],1992:[2,4],1993:[1,23],1994:[2,10],1995:[1,31],1996:[2,19],
+      1997:[2,7],1998:[1,28],1999:[2,16],2000:[2,5],2001:[1,24],2002:[2,12],2003:[2,1],2004:[1,22],
+      2005:[2,9],2006:[1,29],2007:[2,18],2008:[2,7],2009:[1,26],2010:[2,14],2011:[2,3],2012:[1,23],
+      2013:[2,10],2014:[1,31],2015:[2,19],2016:[2,8],2017:[1,28],2018:[2,16],2019:[2,5],2020:[1,25],
+      2021:[2,12],2022:[2,1],2023:[1,22],2024:[2,10],2025:[1,29],2026:[2,17]};
+    function _chSign(y,bm,bd){
+      let e=parseInt(y);
+      if(bm&&bd&&_CNY[e]){const[cm,cd]=_CNY[e];if(parseInt(bm)<cm||(parseInt(bm)===cm&&parseInt(bd)<cd))e--;}
+      return{animal:_CAN[((e-1900)%12+12)%12],element:_CEL[((e-1900)%10+10)%10],year:e};
+    }
+    // 12-animal affinity/clash system (Three Harmonies + Six Clashes)
+    const _CC = {
+      'Rat-Dragon':{t:'Affinity',q:'Natural strategic alliance — shared ambition and drive',d:'Rat\'s cleverness amplifies Dragon\'s vision. Formidable together.'},
+      'Rat-Monkey':{t:'Affinity',q:'Brilliant inventive partnership',d:'Both quick-witted and adaptable. Risk: each may outmanoeuvre the other.'},
+      'Rat-Ox':{t:'Best Match',q:'Deeply complementary — the most stable pairing',d:'Rat\'s intelligence + Ox\'s dependability = enduring foundation.'},
+      'Rat-Horse':{t:'Clash',q:'Opposing core needs',d:'Rat needs closeness; Horse needs freedom. Growth comes from honouring both.'},
+      'Rat-Rabbit':{t:'Neutral',q:'Different rhythms, genuine warmth possible',d:'Rat active and strategic; Rabbit gentle and artistic. Complementary if patient.'},
+      'Tiger-Horse':{t:'Affinity',q:'Adventurous, bold, mutually inspiring',d:'Both independent spirits. High energy; must consciously build shared ground.'},
+      'Tiger-Dog':{t:'Affinity',q:'Loyal, idealistic, deeply aligned in values',d:'Profound trust and shared humanitarian outlook.'},
+      'Tiger-Monkey':{t:'Clash',q:'Fundamental difference of approach',d:'Tiger direct; Monkey tactical. Productive if approached consciously.'},
+      'Rabbit-Goat':{t:'Affinity',q:'Gentle, artistic, naturally harmonious',d:'Shared sensitivity and appreciation for beauty and peace.'},
+      'Rabbit-Pig':{t:'Affinity',q:'Warm, loyal, mutually supportive',d:'Both value comfort, honesty, and genuine feeling.'},
+      'Rabbit-Rooster':{t:'Clash',q:'Contrasting sensibilities',d:'Rabbit seeks peace; Rooster seeks precision. Complementary if each accepts the other\'s rhythm.'},
+      'Dragon-Monkey':{t:'Affinity',q:'Dynamic, inventive, ambitious',d:'Shared drive; risk of competing for the stage.'},
+      'Dragon-Rat':{t:'Affinity',q:'Powerful natural alliance',d:'Dragon\'s vision + Rat\'s strategy — formidable.'},
+      'Dragon-Dog':{t:'Clash',q:'Philosophical opposition',d:'Dragon expansive; Dog questioning. Honest dialogue is the bridge.'},
+      'Snake-Rooster':{t:'Affinity',q:'Sophisticated, refined, deeply intuitive',d:'Shared depth, patience, and aesthetic intelligence.'},
+      'Snake-Ox':{t:'Affinity',q:'Grounded and enduring',d:'Snake\'s insight + Ox\'s persistence = lasting structures.'},
+      'Snake-Pig':{t:'Clash',q:'Contrasting inner orientations',d:'Snake analytical; Pig open-hearted. Bridges built through honest warmth.'},
+      'Horse-Tiger':{t:'Affinity',q:'Bold, freedom-loving, mutually inspiring',d:'Both independent; must consciously build shared ground.'},
+      'Horse-Dog':{t:'Affinity',q:'Freedom and loyalty in balance',d:'Horse leads; Dog stands by. Natural companionship and ease.'},
+      'Goat-Pig':{t:'Affinity',q:'Creative, emotionally resonant, joyful',d:'Both feeling-oriented; genuine warmth and mutual acceptance.'},
+      'Goat-Rabbit':{t:'Affinity',q:'Artistic, warm, naturally understanding',d:'Deep emotional compatibility and shared aesthetic sensibility.'},
+      'Goat-Ox':{t:'Clash',q:'Different life rhythms',d:'Goat intuitive and flexible; Ox methodical and fixed. Growth through mutual respect.'},
+      'Monkey-Rat':{t:'Affinity',q:'Clever, stimulating, adaptable',d:'Strong mental connection; emotional depth work beneficial.'},
+      'Monkey-Dragon':{t:'Affinity',q:'Inventive, ambitious, dynamic',d:'Shared drive for achievement and originality.'},
+      'Rooster-Ox':{t:'Affinity',q:'Diligent, dependable, productive',d:'Both hardworking; naturally complement each other\'s focus.'},
+      'Rooster-Snake':{t:'Affinity',q:'Refined, intelligent, discriminating',d:'Shared depth, high standards, and sophisticated sensibility.'},
+      'Dog-Tiger':{t:'Affinity',q:'Loyal, principled, deeply aligned',d:'Shared values; both protective of those they love.'},
+      'Dog-Horse':{t:'Affinity',q:'Freedom and loyalty in balance',d:'Natural ease and mutual respect.'},
+      'Pig-Rabbit':{t:'Affinity',q:'Harmonious, warm, naturally close',d:'Both seek genuine connection and peace.'},
+      'Pig-Goat':{t:'Affinity',q:'Creative, emotionally open, joyful',d:'Easy warmth and deep mutual acceptance.'},
+    };
+    function _chCompat(a,b){const k1=a+'-'+b,k2=b+'-'+a;return _CC[k1]||_CC[k2]||{t:'Neutral',q:'A unique pairing',d:'Neither natural affinity nor inherent clash — shaped primarily by the individuals themselves.'};}
+    const chineseA = pA.birthYear ? _chSign(pA.birthYear, pA.birthMonth, pA.birthDay) : null;
+    const chineseB = pB.birthYear ? _chSign(pB.birthYear, pB.birthMonth, pB.birthDay) : null;
+    const chineseCompat = (chineseA && chineseB) ? _chCompat(chineseA.animal, chineseB.animal) : null;
+    const chineseText = (chineseA && chineseB)
+      ? `CHINESE ASTROLOGY (6th framework — solar year signs, CNY-corrected):\n${pA.name||'Person A'}: ${chineseA.element} ${chineseA.animal}\n${pB.name||'Person B'}: ${chineseB.element} ${chineseB.animal}\nRelationship: ${chineseCompat.t} — ${chineseCompat.q}\nDynamic: ${chineseCompat.d}`
+      : 'Chinese astrology: birth year data insufficient';
+
+    // ── ALL SIX FRAMEWORKS ──
     const natalA    = dateA ? getNatalPlanets(dateA) : null;
     const natalB    = dateB ? getNatalPlanets(dateB) : null;
     const kinA      = dateA ? getKin(dateA) : null;
@@ -1358,72 +1561,69 @@ app.post('/api/compatibility', async (req, res) => {
     }).join(',\n    ');
 
     const sys = 'You are the Oracle at Cosmic Daily Planner — the most sophisticated multi-framework relationship reading system in existence.\n\n'
-      + 'YOUR VOICE: A Jungian analyst, a spiritual director, and the wisest friend they have ever had — in one voice. Precise. Warm. Deeply honest. You speak to what is actually happening beneath the surface, not just what is comfortable to hear. You hold both the gifts and the shadows with equal care.\n\n'
+      + 'YOUR VOICE: A Jungian analyst, a spiritual director, and the wisest friend they have ever had. Precise. Warm. Deeply honest.\n\n'
       + 'TOPIC: ' + topicDesc + '\n\n'
-      + 'FRAMEWORK SOURCES you are drawing on simultaneously:\n'
-      + '1. Western astrology synastry (natal planetary cross-aspects, approximate positions, Meeus 1998)\n'
-      + '2. Pythagorean numerology cross-analysis (Life Path compatibility, Drayer 2002; Millman 1993)\n'
+      + 'FRAMEWORK SOURCES (all six must be synthesised — not treated separately):\n'
+      + '1. Western astrology synastry (natal planetary cross-aspects, Meeus 1998)\n'
+      + '2. Pythagorean numerology (Life Path compatibility, Drayer 2002; Millman 1993)\n'
       + '3. Dreamspell synastry (chromatic family, tonal relationship, combined Kin, Arguelles 1987)\n'
-      + '4. Natal lunar phase archetypes (emotional rhythm and relationship archetype from birth phase)\n'
-      + '5. Biorhythm cross-analysis for today (physical, emotional, intellectual cycle synchrony)\n\n'
+      + '4. Natal lunar phase archetypes (birth emotional rhythm, Brady 1999)\n'
+      + '5. Biorhythm cross-analysis today (physical, emotional, intellectual cycle synchrony)\n'
+      + '6. Chinese astrology (solar year signs, CNY-corrected, three-harmony and six-clash system)\n\n'
       + 'RULES:\n'
-      + '— Address ' + nameA + ' directly throughout. Use both names. Never "Person A" or "Person B".\n'
-      + '— Synthesise ALL FIVE frameworks — do not treat them separately. The power is in the convergence.\n'
-      + '— When multiple frameworks point to the same dynamic, name that convergence explicitly — it is the most significant signal.\n'
-      + '— When frameworks diverge (e.g. numerology says compatible, astrology shows tension), name the paradox and explain what it means.\n'
-      + '— Be honest about challenges. Do not flatten or spiritually bypass difficulty.\n'
-      + '— Planetary positions are approximate mean longitudes — always label as such.\n'
-      + '— End with genuine engagement: a question, a practice, an invitation to go deeper.\n'
+      + '— Address ' + nameA + ' directly. Use both names. Never "Person A" or "Person B".\n'
+      + '— Synthesise ALL SIX frameworks. When multiple frameworks agree on a dynamic, name that convergence explicitly — it is the most reliable signal.\n'
+      + '— When frameworks diverge, name the paradox and explain what it means for this specific relationship.\n'
+      + '— Chinese astrology: these are solar year signs (corrected for Chinese New Year date). Note the affinity/clash type where relevant.\n'
+      + '— Be honest about challenges. Do not spiritually bypass difficulty.\n'
+      + '— Planetary positions are approximate mean longitudes — label as such.\n'
       + '— RESPOND ONLY WITH VALID JSON. No markdown, no preamble.\n'
-      + '— Scholarly sources: Greene (1976) Saturn; Arroyo (1978); Sasportas (1989); Tarnas (2006); Drayer (2002); Millman (1993); Arguelles (1987).';
+      + '— Sources: Greene (1976); Arroyo (1978); Tarnas (2006); Drayer (2002); Millman (1993); Arguelles (1987); Brady (1999).';
+
+    const chineseAStr = chineseA ? chineseA.element + ' ' + chineseA.animal : 'unknown';
+    const chineseBStr = chineseB ? chineseB.element + ' ' + chineseB.animal : 'unknown';
+    const chineseCStr = chineseCompat ? chineseCompat.t + ' — ' + chineseCompat.q : 'see data';
 
     const user = 'PERSON A — ' + nameA + ':\n'
       + formatNatal(natalA, kinA, numA, moonPhaseA, pA) + '\n'
+      + (chineseA ? 'Chinese sign: ' + chineseAStr + '\n' : '')
       + ctxA + '\n\n'
       + 'PERSON B — ' + nameB + ':\n'
       + formatNatal(natalB, kinB, numB, moonPhaseB, pB) + '\n'
+      + (chineseB ? 'Chinese sign: ' + chineseBStr + '\n' : '')
       + ctxB + '\n\n'
       + 'ASTROLOGICAL CROSS-ASPECTS (approximate, Meeus 1998):\n' + aspList + '\n\n'
       + numCrossText + '\n\n'
       + dreamspellCrossText + '\n\n'
       + moonPhaseCrossText + '\n\n'
       + (bioText ? bioText + '\n\n' : '')
+      + chineseText + '\n\n'
       + 'TOPIC: ' + topicDesc + '\n'
       + userCtx + '\n\n'
-      + 'Generate the compatibility reading as valid JSON. This is a landmark document — the most multi-layered compatibility reading available anywhere. Every section must synthesise multiple frameworks, not just one:\n'
+      + 'Generate the compatibility reading as valid JSON. Every section must draw on multiple frameworks:\n'
       + '{\n'
-      + '  "headline": "<One sentence capturing the essential truth of this connection — specific, evocative, grounded in the data>",\n'
-      + '  "synthesis": "<4-5 sentence opening synthesising ALL frameworks. Name the convergences — where multiple frameworks point to the same dynamic. What is this connection fundamentally about?>",\n'
-      + '  "framework_convergence": "<2-3 paragraphs. Where do the five frameworks AGREE? This is the most reliable signal. Name it explicitly. Then: where do they diverge, and what does that paradox mean?>",\n'
-      + '  "gifts": {\n'
-      + '    "headline": "<The genuine strengths of this connection>",\n'
-      + '    "body": "<3 rich paragraphs: (1) The primary gift — named across multiple frameworks. (2) How they bring out the best in each other specifically re: ' + topicDesc + '. (3) What this connection uniquely offers.>"\n'
-      + '  },\n'
-      + '  "tensions": {\n'
-      + '    "headline": "<The growth edges — honest>",\n'
-      + '    "body": "<3 paragraphs: (1) Primary tension named across frameworks — where do multiple systems signal friction? (2) What that tension is asking both people to develop. (3) Specific, practical ways to work with it.>"\n'
-      + '  },\n'
-      + '  "topic_specific": {\n'
-      + '    "headline": "<' + topicDesc + '>",\n'
-      + '    "body": "<4 substantial paragraphs grounded in specific cross-framework data. Concrete. Day-to-day. Not archetypes — actual guidance.>"\n'
-      + '  },\n'
-      + '  "key_aspects": [\n'
-      + '    ' + aspJSON + '\n'
-      + '  ],\n'
-      + '  "biorhythm_today": "<2 paragraphs: what their biorhythm positions say about their dynamics TODAY specifically. Physical synchrony or friction, emotional alignment or divergence, intellectual resonance. What is today good for in this relationship, and what to navigate carefully?>",\n'
-      + '  "dreamspell_connection": "<2 paragraphs: ' + kinAStr + ' and ' + kinBStr + '. The chromatic relationship, tonal dynamic, combined Kin ' + (dreamspellCross ? dreamspellCross.combinedFull : '') + ', and what their Dreamspell synastry says about the galactic purpose of this connection.>",\n'
-      + '  "numerology_connection": "<2 paragraphs: Life Path ' + lpAStr + ' (' + lpAnm + ') and ' + lpBStr + ' (' + lpBnm + '). The compatibility dynamic, Personal Year interaction, combined frequency. What the numbers say about timing, purpose, and what this partnership is here to build.>",\n'
-      + '  "natal_moon_connection": "<2 paragraphs: how their natal moon phases — their birth emotional archetypes — interact. What this means for how they feel, receive love, and process experience together.>",\n'
+      + '  "headline": "<One sentence capturing the essential truth — specific, grounded in the data>",\n'
+      + '  "synthesis": "<4-5 sentences synthesising ALL SIX frameworks. Name convergences explicitly.>",\n'
+      + '  "framework_convergence": "<2-3 paragraphs. Where do the six frameworks AGREE? Name it. Then: where do they diverge and what does that mean?>",\n'
+      + '  "chinese_connection": "<2 paragraphs: ' + chineseAStr + ' and ' + chineseBStr + '. The ' + chineseCStr + ' relationship. How does this Chinese layer confirm or nuance the other frameworks? What does it reveal about the underlying dynamic that the other systems approach differently? Note: solar year signs, CNY-corrected.>",\n'
+      + '  "gifts": { "headline": "<The genuine strengths>", "body": "<3 rich paragraphs drawing on all six frameworks>" },\n'
+      + '  "tensions": { "headline": "<Growth edges — honest>", "body": "<3 paragraphs naming where multiple frameworks signal friction>" },\n'
+      + '  "topic_specific": { "headline": "<' + topicDesc + '>", "body": "<4 paragraphs. Concrete. Cross-framework. Practical.>" },\n'
+      + '  "key_aspects": [\n    ' + aspJSON + '\n  ],\n'
+      + '  "biorhythm_today": "<2 paragraphs: biorhythm positions TODAY — what is good, what to navigate>",\n'
+      + '  "dreamspell_connection": "<2 paragraphs: ' + kinAStr + ' and ' + kinBStr + '. Chromatic, tonal, combined Kin.>",\n'
+      + '  "numerology_connection": "<2 paragraphs: LP ' + lpAStr + ' (' + lpAnm + ') and ' + lpBStr + ' (' + lpBnm + ').>",\n'
+      + '  "natal_moon_connection": "<2 paragraphs: how their birth moon phases interact emotionally.>",\n'
       + '  "for_them": {\n'
-      + '    "for_a": "<4 sentences for ' + nameA + ' — not advice, but genuine insight. What do they most need to understand about ' + nameB + ' that they likely do not yet see? What is their specific growth edge in this relationship?>",\n'
-      + '    "for_b": "<4 sentences for ' + nameB + ' — same depth, same honesty.>"\n'
+      + '    "for_a": "<4 sentences for ' + nameA + ' — genuine insight, not advice>",\n'
+      + '    "for_b": "<4 sentences for ' + nameB + '>"\n'
       + '  },\n'
       + '  "a_question_to_sit_with": "<One question for them both — not rhetorical, but genuinely open. The question that, if they sat with it honestly together, would unlock something important. It should feel slightly uncomfortable to ask.>",\n'
       + '  "closing": "<One final sentence — the deepest truth of this connection. Warm, precise, honest.>",\n'
       + '  "sources": "Astrology: approximate natal positions Meeus (1998) Astronomical Algorithms. Synastry: Greene (1976); Arroyo (1978); Sasportas (1989); Tarnas (2006). Numerology: Drayer (2002); Millman (1993). Dreamspell: Arguelles (1987) modern system. Biorhythms: Teltscher, Fliess, Swoboda (classical three-cycle theory). Natal moon phase archetypes."\n'
       + '}';
 
-    const raw = await callAPI('claude-sonnet-4-6', 12000, sys, user);
+    const raw = await callAPI('claude-sonnet-4-5-20250514', 12000, sys, user);
     let reading;
     try {
       const cleaned = raw.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
@@ -1443,6 +1643,7 @@ app.post('/api/compatibility', async (req, res) => {
       natalB: natalB ? natalB.slice(0, 7) : null,
       kinA, kinB, numA, numB,
       moonPhaseA, moonPhaseB,
+      chineseA, chineseB, chineseCompat,
       bioA: bioA ? { physical: bioA.physical, emotional: bioA.emotional, intellectual: bioA.intellectual, composite: bioA.composite } : null,
       bioB: bioB ? { physical: bioB.physical, emotional: bioB.emotional, intellectual: bioB.intellectual, composite: bioB.composite } : null,
       bioSynastry,
@@ -1457,5 +1658,75 @@ app.post('/api/compatibility', async (req, res) => {
   }
 });
 
+// ── HEALTH ENDPOINT — used by frontend wake check and Railway monitors ──
+app.get('/api/debug/:jobId', (req, res) => {
+  const job = jobs.get(req.params.jobId);
+  if (!job) return res.status(404).json({ status: 'not_found' });
+  res.json({
+    status: job.status,
+    error: job.error || null,
+    elapsed: job.startedAt ? Math.round((Date.now() - job.startedAt)/1000) + 's' : null,
+    phase1: job.phase1 ? 'present' : null,
+    resultKeys: job.result ? Object.keys(job.result) : null,
+    readingKeys: job.result?.reading ? Object.keys(job.result.reading) : null,
+  });
+});
+
+app.get('/api/test', async (req, res) => {
+  const start = Date.now();
+  try {
+    const result = await callAPI('claude-haiku-4-5-20251001', 50,
+      'Respond with exactly: {"ok":true}',
+      'Say {"ok":true} and nothing else.');
+    const ms = Date.now() - start;
+    res.json({ ok: true, ms, response: result.slice(0,50) });
+  } catch(e) {
+    res.json({ ok: false, error: e.message, ms: Date.now()-start });
+  }
+});
+
+app.get('/api/health', (req, res) => {
+  const hasKey = !!(process.env.ANTHROPIC_API_KEY);
+  res.json({
+    status: 'ok',
+    version: 'CDP v7 Beta2',
+    time: new Date().toISOString(),
+    apiKey: hasKey ? 'present' : 'MISSING — readings will fail',
+    jobs: jobs.size,
+    uptime: Math.round(process.uptime()) + 's'
+  });
+});
+
+// ── SELF-PING KEEPALIVE — prevents Railway hobby plan sleeping ──
+// Pings own health endpoint every 10 minutes
+const SELF_URL = process.env.RAILWAY_PUBLIC_DOMAIN
+  ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}/api/health`
+  : null;
+
+if (SELF_URL) {
+  setInterval(() => {
+    https.get(SELF_URL, (res) => {
+      res.resume(); // drain response
+      console.log(`Keepalive ping → ${res.statusCode}`);
+    }).on('error', (e) => {
+      console.warn('Keepalive ping failed:', e.message);
+    });
+  }, 10 * 60 * 1000); // every 10 minutes
+  console.log(`Keepalive enabled → ${SELF_URL}`);
+}
+
+// ── JOB CLEANUP — remove completed/errored jobs after 4 hours ──
+setInterval(() => {
+  const cutoff = Date.now() - (4 * 60 * 60 * 1000);
+  let cleaned = 0;
+  for (const [id, job] of jobs.entries()) {
+    if (job.startedAt < cutoff) { jobs.delete(id); cleaned++; }
+  }
+  if (cleaned > 0) console.log(`Cleaned ${cleaned} stale jobs`);
+}, 30 * 60 * 1000); // every 30 minutes
+
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`CDP v7 Beta2 — streaming — port ${PORT}`));
+app.listen(PORT, () => {
+  console.log(`CDP v7 Beta2 — port ${PORT}`);
+  console.log(`API key: ${process.env.ANTHROPIC_API_KEY ? 'present ✓' : 'MISSING ✗ — readings will fail'}`);
+});

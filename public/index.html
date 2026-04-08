@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>✦</text></svg>">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
 <title>Cosmic Daily Planner — Your Personalised Daily Oracle</title>
 <meta name="description" content="A daily Oracle unlike anything else. Swiss Ephemeris astrology, Pythagorean numerology, Dreamspell, lunar cycles and biorhythms synthesised into one deeply personal reading. Written for where you actually are in your life.">
@@ -89,7 +90,7 @@ body.light{--bg:#F5F0E8;--bg2:#EDE6D6;--bg3:#E4DBC8;--bg4:#F8F4EC;
 .screen{display:none}.screen.on{display:block}
 
 /* ══ READING SCREEN ══ */
-#sr{max-width:840px;margin:0 auto;padding:0 16px 120px}
+#sr{max-width:840px;margin:0 auto;padding:0 10px 120px}
 .r-head{text-align:center;padding:40px 0 28px;border-bottom:1px solid var(--div);margin-bottom:28px}
 .r-meta{font-size:15px;letter-spacing:.35em;text-transform:uppercase;color:var(--text3);margin-bottom:10px}
 .r-date{font-family:'Cormorant Garamond',serif;font-size:clamp(32px,5vw,48px);color:var(--gold);
@@ -373,7 +374,7 @@ body.light{--bg:#F5F0E8;--bg2:#EDE6D6;--bg3:#E4DBC8;--bg4:#F8F4EC;
 .modal-open-btn:hover{background:var(--gold4)}
 
 /* ══ HISTORY SCREEN ══ */
-#shist{max-width:840px;margin:0 auto;padding:0 24px 80px}
+#shist{max-width:840px;margin:0 auto;padding:0 12px 80px}
 .hist-head{text-align:center;padding:36px 0 24px}
 .hist-title{font-family:'Cormorant Garamond',serif;font-size:28px;color:var(--gold);font-weight:300;margin-bottom:8px}
 .hist-sub{font-size:12px;color:var(--text3);line-height:1.6}
@@ -492,6 +493,79 @@ body.light{--bg:#F5F0E8;--bg2:#EDE6D6;--bg3:#E4DBC8;--bg4:#F8F4EC;
 /* ── COSMIC CONTEXT PAGE ── */
 .ctx-section{border:1px solid var(--div);background:var(--bg2);border-radius:3px;
   padding:22px 24px;margin-bottom:18px}
+
+
+/* ── SHAREABLE CARD ─────────────────────────────────────── */
+.share-card-overlay{position:fixed;inset:0;background:rgba(5,12,22,0.88);z-index:200;
+  display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(8px)}
+.share-card-box{background:var(--bg);border:1px solid var(--gold3);border-radius:4px;
+  max-width:440px;width:100%;overflow:hidden}
+#synthCardPreview{background:linear-gradient(160deg,#0D1E33 0%,#0a1628 60%,#071020 100%);
+  padding:32px 28px;position:relative;overflow:hidden}
+#synthCardPreview::before{content:'';position:absolute;top:-40px;right:-40px;
+  width:180px;height:180px;border-radius:50%;
+  background:radial-gradient(circle,rgba(201,160,80,0.06) 0%,transparent 70%)}
+.sc-date{font-size:11px;letter-spacing:.35em;text-transform:uppercase;
+  color:rgba(201,160,80,0.6);margin-bottom:16px;font-family:'EB Garamond',serif}
+.sc-synth{font-family:'Cormorant Garamond',serif;font-size:clamp(15px,3.5vw,18px);
+  color:rgba(240,230,204,0.92);line-height:1.75;font-style:italic;margin-bottom:20px}
+.sc-meta{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:16px}
+.sc-chip{font-size:11px;letter-spacing:.18em;text-transform:uppercase;
+  color:rgba(240,230,204,0.45);padding:4px 10px;border:1px solid rgba(240,230,204,0.12);
+  border-radius:2px;font-family:'EB Garamond',serif}
+.sc-brand{font-size:11px;letter-spacing:.4em;text-transform:uppercase;
+  color:rgba(201,160,80,0.4);font-family:'Cormorant Garamond',serif}
+.share-card-actions{padding:16px 20px;background:var(--bg2);border-top:1px solid var(--div);
+  display:flex;gap:10px;flex-wrap:wrap}
+.sc-action{flex:1;min-width:120px;padding:10px;background:none;border:1px solid var(--div);
+  border-radius:3px;color:var(--text2);font-family:'EB Garamond',serif;font-size:14px;
+  cursor:pointer;transition:border-color .2s,color .2s;text-align:center}
+.sc-action:hover{border-color:var(--gold);color:var(--gold)}
+.sc-action.primary{background:rgba(201,160,80,0.08);border-color:var(--gold3);color:var(--gold)}
+
+/* ── AFTERNOON CHECK-IN ──────────────────────────────────── */
+.checkin-bar{position:fixed;bottom:0;left:0;right:0;z-index:150;
+  background:var(--bg2);border-top:1px solid var(--teal2);
+  padding:14px 20px;display:flex;align-items:center;gap:14px;
+  transform:translateY(100%);transition:transform .4s cubic-bezier(0.34,1.56,0.64,1)}
+.checkin-bar.visible{transform:translateY(0)}
+.checkin-moon{font-size:22px;flex-shrink:0}
+
+/* ── PRESENCE BAR — slides in from top on return visit ── */
+.presence-bar{position:fixed;top:52px;left:0;right:0;z-index:95;
+  background:rgba(8,30,51,0.97);border-bottom:1px solid rgba(129,205,182,0.2);
+  padding:10px 20px;display:flex;align-items:center;gap:12px;
+  transform:translateY(-100%);transition:transform .4s cubic-bezier(0.34,1.56,0.64,1);
+  backdrop-filter:blur(12px)}
+.presence-bar.visible{transform:translateY(0)}
+.presence-emoji{font-size:18px;flex-shrink:0}
+.presence-text-wrap{flex:1;min-width:0}
+.presence-main{font-size:14px;color:var(--text2);line-height:1.4;font-style:italic;font-family:'Cormorant Garamond',serif}
+.presence-action-text{font-size:12px;color:var(--teal);margin-top:2px;opacity:.8}
+.presence-btns{display:flex;gap:6px;flex-shrink:0}
+.presence-btn{padding:6px 12px;background:none;border:1px solid rgba(129,205,182,0.3);
+  border-radius:2px;color:var(--teal);font-family:'EB Garamond',serif;font-size:12px;cursor:pointer;white-space:nowrap}
+.presence-btn.dismiss{border-color:var(--div2);color:var(--text3)}
+
+/* ── CITATION BADGES — tappable inline source references ── */
+.citation-badge{display:inline-block;font-size:10px;letter-spacing:.06em;
+  color:var(--teal);border:1px solid var(--teal2);border-radius:2px;
+  padding:1px 5px;margin-left:4px;cursor:pointer;vertical-align:middle;
+  font-family:'EB Garamond',serif;opacity:.65;transition:opacity .2s;white-space:nowrap}
+.citation-badge:hover{opacity:1}
+
+/* ── DECISION ENGINE chip ── */
+.chip-decision{border-color:rgba(201,160,80,0.4)!important;
+  color:var(--gold)!important;background:rgba(201,160,80,0.06)!important}
+.checkin-text{flex:1;min-width:0}
+.checkin-prompt{font-size:15px;color:var(--text2);line-height:1.5;font-style:italic;
+  font-family:'Cormorant Garamond',serif}
+.checkin-sub{font-size:12px;color:var(--text3);margin-top:2px}
+.checkin-btns{display:flex;gap:8px;flex-shrink:0}
+.checkin-btn{padding:8px 14px;background:none;border:1px solid var(--teal2);
+  border-radius:3px;color:var(--teal);font-family:'EB Garamond',serif;
+  font-size:13px;cursor:pointer;white-space:nowrap}
+.checkin-btn.dismiss{border-color:var(--div);color:var(--text3)}
 
 /* ── SKELETON LOADING ANIMATION ── */
 @keyframes skPulse{0%{opacity:.35}50%{opacity:.7}100%{opacity:.35}}
@@ -981,7 +1055,7 @@ body.print-card-mode{background:#0D1E33}
     <button class="npill on" onclick="showScreen('sr',this);if(!currentReading)showModeSelector()">Reading</button>
     <button class="npill" onclick="showScreen('scard',this);renderCard()">Card</button>
     <button class="npill" onclick="showScreen('sc',this)">Calendar</button>
-    <button class="npill" onclick="showScreen('sctx',this);renderContext()">Year Energy</button>
+    <button class="npill" onclick="showScreen('sctx',this);renderContext()">My Energy</button>
     <button class="npill" onclick="showScreen('scompat',this);initCompatScreen()">Compat</button>
     <button class="npill" onclick="showScreen('sp',this)">Profile</button>
     <button class="npill" onclick="showScreen('shist',this);renderHistory()">History</button>
@@ -995,12 +1069,15 @@ body.print-card-mode{background:#0D1E33}
     <button class="npill on" onclick="showScreen('sr',this);if(!currentReading)showModeSelector();closeMobileNav()">Reading</button>
     <button class="npill" onclick="showScreen('scard',this);renderCard();closeMobileNav()">Card</button>
     <button class="npill" onclick="showScreen('sc',this);closeMobileNav()">Calendar</button>
-    <button class="npill" onclick="showScreen('sctx',this);renderContext();closeMobileNav()">Year Energy</button>
+    <button class="npill" onclick="showScreen('sctx',this);renderContext();closeMobileNav()">My Energy</button>
     <button class="npill" onclick="showScreen('scompat',this);initCompatScreen();closeMobileNav()">Compat</button>
     <button class="npill" onclick="showScreen('sp',this);closeMobileNav()">Profile</button>
     <button class="npill" onclick="showScreen('shist',this);renderHistory();closeMobileNav()">History</button>
   </div>
-  <div class="topbar-right">
+  <div id="readingProgressDot" style="display:none;width:7px;height:7px;border-radius:50%;
+  background:var(--teal);animation:pulse 1.5s ease-in-out infinite;margin-right:4px;flex-shrink:0"
+  title="Reading is loading in background…"></div>
+<div class="topbar-right">
     <div id="authBtnArea">
       <button class="signin-btn" onclick="openAuth()">Sign In</button>
     </div>
@@ -1374,6 +1451,50 @@ body.print-card-mode{background:#0D1E33}
   </div>
 </div>
 
+
+<!-- SHARE CARD MODAL -->
+<div id="shareCardOverlay" class="share-card-overlay" style="display:none;opacity:0;transition:opacity .25s" onclick="if(event.target===this)closeShareCard()">
+  <div class="share-card-box">
+    <div id="synthCardPreview">
+      <div class="sc-date" id="scDate"></div>
+      <div class="sc-synth" id="scSynth"></div>
+      <div class="sc-meta" id="scMeta"></div>
+      <div class="sc-brand">✦ Cosmic Daily Planner</div>
+    </div>
+    <div class="share-card-actions">
+      <button class="sc-action primary" onclick="copyShareCard(this)">⎘ Copy Image</button>
+      <button class="sc-action" onclick="shareNative()">↗ Share</button>
+      <button class="sc-action dismiss" onclick="closeShareCard()">✕ Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- AFTERNOON CHECK-IN BAR -->
+<div id="checkinBar" class="checkin-bar">
+  <div class="checkin-moon" id="checkinMoon">☽</div>
+  <div class="checkin-text">
+    <div class="checkin-prompt" id="checkinPrompt">How is your day unfolding?</div>
+    <div class="checkin-sub" id="checkinSub">Your morning energy is still with you</div>
+  </div>
+  <div class="checkin-btns">
+    <button class="checkin-btn" onclick="openCheckinReading()">Open Reading</button>
+    <button class="checkin-btn dismiss" onclick="dismissCheckin()">✕</button>
+  </div>
+</div>
+
+<!-- PRESENCE BAR — mid-day orientation prompt, slides from top -->
+<div id="presenceBar" class="presence-bar">
+  <div class="presence-emoji" id="presenceEmoji">◑</div>
+  <div class="presence-text-wrap">
+    <div class="presence-main" id="presenceText">Your energy is shifting…</div>
+    <div class="presence-action-text" id="presenceAction"></div>
+  </div>
+  <div class="presence-btns">
+    <button class="presence-btn" onclick="openPresenceReading()">Reading</button>
+    <button class="presence-btn dismiss" onclick="dismissPresence()">✕</button>
+  </div>
+</div>
+
 <!-- MODE SELECTOR -->
 <div id="modeSelector">
   <div class="mode-box">
@@ -1544,7 +1665,7 @@ body.print-card-mode{background:#0D1E33}
   </div>
 </div>
 
-<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+<script>
 // ══════════════════════════════════════════════════════════
 // STARS
 // ══════════════════════════════════════════════════════════
@@ -1607,31 +1728,70 @@ let recentReadingHistory = [];
 
 const NUM_DATA = {
   1:{n:'New Beginnings',k:'Initiation · leadership · independence',
-    m:'A day to start fresh and lead with confidence. Your actions today carry unusual weight — begin something new, assert your direction.'},
+    m:'A day to start fresh and lead with confidence. Your actions today carry unusual weight — begin something new, assert your direction.',
+    morning:'Morning calls for bold initiation. Begin something; assert your direction.',
+    afternoon:'Afternoon sustains the initiating impulse. Push independently through resistance.',
+    evening:'Evening: reflect on what you started and what true leadership asks of you.'},
   2:{n:'Partnership',k:'Cooperation · balance · receptivity',
-    m:'Everything about union and togetherness. A natural day for collaboration, listening, and tending relationships. Gentle and receptive energy.'},
+    m:'Everything about union and togetherness. A natural day for collaboration, listening, and tending relationships. Gentle and receptive energy.',
+    morning:'Morning asks for deep listening. Collaborate, do not compete.',
+    afternoon:'Afternoon favours sensitive negotiations and partnership decisions.',
+    evening:'Evening is for tending relationships — what balance needs restoring?'},
   3:{n:'Creative Expression',k:'Joy · communication · creative flow',
-    m:'A day for inspired communication, creative work, and authentic expression. What wants to be said or made today? Let it out.'},
+    m:'A day for inspired communication, creative work, and authentic expression. What wants to be said or made today? Let it out.',
+    morning:'Morning overflows with creative potential. Speak, write, create — the channel is open.',
+    afternoon:'Afternoon sustains expressive momentum. Ideas multiply with sharing.',
+    evening:'Evening calls for joyful communication — connect, share what is alive in you.'},
   4:{n:'Foundation & Order',k:'Structure · discipline · patient building',
-    m:'A day for careful, methodical work. Systems, plans, and steady effort are rewarded. Build something that will last.'},
+    m:'A day for careful, methodical work. Systems, plans, and steady effort are rewarded. Build something that will last.',
+    morning:'Morning energy is grounded and methodical. Lay foundations, build systems.',
+    afternoon:'Afternoon rewards steady focus. Practical effort accumulates.',
+    evening:'Evening consolidates what was built. Honour the discipline of the day.'},
   5:{n:'Freedom & Change',k:'Adventure · versatility · expansion',
-    m:'An energetic, changeable day. Stay adaptable, embrace the unexpected. Rigidity will frustrate — flexibility opens doors.'},
+    m:'An energetic, changeable day. Stay adaptable, embrace the unexpected. Rigidity will frustrate — flexibility opens doors.',
+    morning:'Morning sparks restlessness. Stay adaptable; the unexpected is the gift.',
+    afternoon:'Afternoon accelerates change. Navigate rather than control.',
+    evening:'Evening asks: what does freedom mean right now? Release rigidity.'},
   6:{n:'Love & Responsibility',k:'Harmony · family · service · care',
-    m:'A day centred on relationship, care, and responsibility to others. Home, family, and community call for attention.'},
+    m:'A day centred on relationship, care, and responsibility to others. Home, family, and community call for attention.',
+    morning:'Morning centres on care and responsibility. Home and relationship call for attention.',
+    afternoon:'Afternoon sustains the energy of service and harmony.',
+    evening:'Evening is deeply relational. Tend to those who matter most.'},
   7:{n:'Wisdom & Introspection',k:'Analysis · spiritual depth · truth-seeking',
-    m:'A day for inner work, research, and deep thinking. Slow down, go inward. Answers come through reflection rather than action.'},
+    m:'A day for inner work, research, and deep thinking. Slow down, go inward. Answers come through reflection rather than action.',
+    morning:'Morning is introspective and quiet. Inner work and research are rewarded.',
+    afternoon:'Afternoon opens the philosophical channel. Question beneath the surface.',
+    evening:'Evening is for silence and contemplation. Answers come inward.'},
   8:{n:'Power & Abundance',k:'Authority · material mastery · accountability',
-    m:'The axis of cause and effect made visible. An exceptional day for business, projects, and decisions with material consequence. Speak with authority.'},
-  9:{n:'Completion & Compassion',k:'Wisdom · generosity · release',
-    m:'Cosmic energies are fully open. A very special day for rest, channelling higher sources, and allowing things to complete naturally. Special meetings arrive unbidden.'},
-  11:{n:'Master Illuminator',k:'Spiritual vision · intuition · higher purpose',
-    m:'Master Number Day — the portals are wide open. A rare, intense day that can be either challenging or transcendent. Listen to your intuition. Something important is available to you if you are still enough to receive it.',master:true},
-  22:{n:'Master Builder',k:'Large-scale vision · practical idealism · manifestation',
-    m:'Master Number Day — the portals are open. This carries the energy of 4 amplified to civilisational scale. Your practical idealism can take concrete form today. Major projects respond to clear, committed focus.',master:true},
-  33:{n:'Master Teacher',k:'Healing · compassionate leadership · selfless guidance',
-    m:'Master Number Day — the portals are open. An extraordinary day for compassionate service, healing, and teaching. Whatever you give freely today returns magnified.',master:true},
-  44:{n:'Master Organiser',k:'Systemic mastery · material achievement · divine structure',
-    m:'Master Number Day — the portals are open. Deep structural work and material achievement are supported. Pay close attention to intuition around business, money, and long-term systems.',master:true},
+    m:'The axis of cause and effect made visible. An exceptional day for business, projects, and decisions with material consequence. Speak with authority.',
+    morning:'Morning carries authority and material weight. Decisions today have consequence.',
+    afternoon:'Afternoon amplifies executive capacity. Speak clearly, act decisively.',
+    evening:'Evening is for taking stock — what has been built, what has been earned?'},
+  9:{n:'Completion & Compassion',k:'Wisdom · generosity · release · universal love',
+    m:'Cosmic energies are fully open. A very special day for rest, channelling higher sources, and allowing things to complete naturally. Special meetings arrive unbidden.',
+    morning:'Morning is open and cosmic. Special encounters and completions arrive unbidden.',
+    afternoon:'Afternoon calls for generosity and letting go of what is finished.',
+    evening:'Evening is for release. Close cycles, forgive, prepare for what is next.'},
+  11:{n:'Master Illuminator',k:'Spiritual vision · intuition · higher purpose',master:true,
+    m:'Master Number Day — the portals are wide open. A rare, intense day that can be either challenging or transcendent. Listen to your intuition. Something important is available to you if you are still enough to receive it.',
+    morning:'Master Morning — spiritual insight and high intuition before the noise of the day begins.',
+    afternoon:'Master Afternoon — unusual clarity and vision. What is offered is rare.',
+    evening:'Master Evening — integration of the day\'s revelations. Be still enough to receive.'},
+  22:{n:'Master Builder',k:'Large-scale vision · practical idealism · manifestation',master:true,
+    m:'Master Number Day — the portals are open. This carries the energy of 4 amplified to civilisational scale. Your practical idealism can take concrete form today. Major projects respond to clear, committed focus.',
+    morning:'Master Morning — practical idealism at its peak. Major projects respond to clear focus.',
+    afternoon:'Master Afternoon — civilisational-scale energy. Build with deep intention.',
+    evening:'Master Evening — reflect on what you are truly building over the long arc.'},
+  33:{n:'Master Teacher',k:'Healing · compassionate leadership · selfless guidance',master:true,
+    m:'Master Number Day — the portals are open. An extraordinary day for compassionate service, healing, and teaching. Whatever you give freely today returns magnified.',
+    morning:'Master Morning — compassionate service and healing are amplified.',
+    afternoon:'Master Afternoon — teach, guide, and give freely.',
+    evening:'Master Evening — what has your generosity created today?'},
+  44:{n:'Master Organiser',k:'Systemic mastery · material achievement · divine structure',master:true,
+    m:'Master Number Day — the portals are open. Deep structural work and material achievement are supported. Pay close attention to intuition around business, money, and long-term systems.',
+    morning:'Master Morning — structural clarity and material achievement are supported.',
+    afternoon:'Master Afternoon — deep systems thinking opens. Attend to business and money.',
+    evening:'Master Evening — review the architecture of your long-term vision.'},
 };
 
 // ══════════════════════════════════════════════════════════
@@ -1639,13 +1799,24 @@ const NUM_DATA = {
 // ══════════════════════════════════════════════════════════
 function showScreen(id, btn) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('on'));
-  document.querySelectorAll('.npill').forEach(b => b.classList.remove('on'));
-  document.getElementById(id).classList.add('on');
-  if (btn) btn.classList.add('on');
-  if (id === 'sc') renderCalendar();
-  if (id === 'sp') updateProfileSummary();
-  if (id === 'sctx') renderContext();
+  document.getElementById(id)?.classList.add('on');
+  if (btn) {
+    document.querySelectorAll('.npill').forEach(b => b.classList.remove('on'));
+    btn.classList.add('on');
+  }
   updateHamburgerLabel(id);
+  if (id === 'sr' && !currentReading && !pollingTimer) {
+    const saved = sessionStorage.getItem('cdp_active_job');
+    if (saved) {
+      try {
+        const job = JSON.parse(saved);
+        if (job.jobId && (Date.now() - job.startedAt) < 600000) {
+          activeJobId = job.jobId;
+          startPolling(job.jobId, job.dateStr||TODAY, job.tier||'oracle', job.startedAt||Date.now());
+        }
+      } catch(e) { sessionStorage.removeItem('cdp_active_job'); }
+    }
+  }
 }
 
 // ══════════════════════════════════════════════════════════
@@ -1706,7 +1877,7 @@ function renderContext() {
 
   // ── Chinese Zodiac (year of birth + current year) ────────
   const CHINESE_ANIMALS = ['Rat','Ox','Tiger','Rabbit','Dragon','Snake','Horse','Goat','Monkey','Rooster','Dog','Pig'];
-  const CHINESE_ELEMENTS = ['Wood','Wood','Fire','Fire','Earth','Earth','Metal','Metal','Water','Water'];
+  const CHINESE_ELEMENTS = ['Metal','Metal','Water','Water','Wood','Wood','Fire','Fire','Earth','Earth']; // Correct Heavenly Stems: 0,1=Metal 2,3=Water 4,5=Wood 6,7=Fire 8,9=Earth
   // CNY dates (month, day) for birth-year correction
   const CNY_DATES = {
     1950:[1,27],1951:[2,6],1952:[1,27],1953:[2,14],1954:[2,3],
@@ -1987,6 +2158,133 @@ function renderContext() {
     </div>`;
   });
   html += `</div>`;
+
+  // ═══ SECTION 5: YOUR NATURAL DIRECTION ═══
+  if (hasBirth) {
+    const lpVocData = {
+      1:{drive:'Leading, initiating, pioneering',strengths:'Initiative, courage, decisiveness, originality',env:'Requires independence and ownership. Thrives when building from scratch. Suffocates under micromanagement.',shadow:'Can bypass collaboration; difficulty asking for help',career:'Entrepreneurship, leadership, innovation, independent practice'},
+      2:{drive:'Supporting, connecting, harmonising',strengths:'Empathy, diplomacy, attention to detail, mediation',env:'Thrives in collaborative environments with clear relational purpose. Suffers in aggressive or transactional cultures.',shadow:'Tendency to defer rather than lead; absorbs others\u2019 stress',career:'Counselling, partnership roles, HR, healthcare, diplomacy'},
+      3:{drive:'Creating, communicating, expressing',strengths:'Communication, creativity, optimism, social intelligence',env:'Needs creative latitude and social stimulation. Suffocates in rigid or purely operational roles.',shadow:'Can scatter energy; difficulty with sustained discipline',career:'Writing, speaking, marketing, arts, education, media'},
+      4:{drive:'Building, organising, stabilising',strengths:'Reliability, methodical thinking, practical skill, integrity',env:'Thrives with systems, structure, and tangible outcomes. Suffocates in ambiguous or constantly shifting environments.',shadow:'Can become rigid; difficulty adapting when plans change',career:'Engineering, architecture, finance, project management, law'},
+      5:{drive:'Exploring, adapting, catalysing change',strengths:'Versatility, communication, risk appetite, cultural intelligence',env:'Requires variety, freedom, and stimulation. Suffocates in repetitive or tightly controlled environments.',shadow:'Difficulty committing; may leave before seeing things through',career:'Consulting, sales, travel, journalism, entrepreneurship, politics'},
+      6:{drive:'Caring, teaching, serving, creating beauty',strengths:'Responsibility, warmth, artistic sensibility, deep loyalty',env:'Thrives when serving a cause or community. Needs to feel their work matters to real people.',shadow:'Can over-give; difficulty setting boundaries',career:'Education, healthcare, design, social work, coaching, community leadership'},
+      7:{drive:'Investigating, understanding, seeking truth',strengths:'Analysis, research, precision, spiritual intelligence',env:'Requires depth, solitude, and intellectual challenge. Suffocates in surface-level or socially intensive work.',shadow:'Can withdraw; difficulty with teamwork or marketing oneself',career:'Research, philosophy, writing, technology, psychology, strategy'},
+      8:{drive:'Achieving, leading, building material impact',strengths:'Executive capacity, financial intelligence, authority, resilience',env:'Thrives with authority, large stakes, and visible results. Needs to feel in command of consequential decisions.',shadow:'Can prioritise achievement over relationship; power dynamics',career:'Business leadership, investment, law, medicine, large-scale entrepreneurship'},
+      9:{drive:'Serving humanity, completing cycles, creating meaning',strengths:'Universal compassion, wisdom, creative breadth, inspiration',env:'Thrives when work connects to larger purpose. Suffers in purely commercial or narrow-scope roles.',shadow:'Can neglect the personal for the universal; difficulty finishing',career:'Arts, healing, international work, spiritual leadership, philanthropy'},
+      11:{drive:'Inspiring, illuminating, bridging the seen and unseen',strengths:'Visionary insight, spiritual intelligence, creative inspiration',env:'High sensitivity requires meaningful work. Suffocates in purely material or harsh environments.',shadow:'Extremes of brilliance and doubt; can be paralysed by perfectionism',career:'Counselling, teaching, creative arts, spiritual direction, innovation'},
+      22:{drive:'Building systems that transform society at scale',strengths:'Visionary practicality, organisational mastery, systemic thinking',env:'Requires a large canvas. Suffocates in small-scale or purely administrative roles.',shadow:'Can overextend; immense pressure from the gap between vision and reality',career:'Architecture, large organisations, government, major entrepreneurship, global NGOs'},
+      33:{drive:'Healing, teaching, serving with unconditional compassion',strengths:'Compassion, healing intelligence, leadership through service',env:'Requires genuine contribution to human wellbeing. Suffers in exploitative environments.',shadow:'Can sacrifice self for others; must be careful of martyrdom',career:'Medicine, teaching, spiritual direction, humanitarian leadership'},
+      44:{drive:'Mastering material reality and structural systems',strengths:'Material mastery, systemic thinking, practical genius',env:'Needs high-stakes, complex, structured challenges. Suffocates in disorganised or low-accountability environments.',shadow:'Can become inflexible; difficulty with emotional complexity',career:'Systems leadership, finance, technology infrastructure, large-scale operations'},
+    };
+    const sealArchData = {
+      'Dragon':'The Nurturer \u2014 called to protect, initiate, and hold space for what is being born',
+      'Wind':'The Communicator \u2014 natural channel for ideas, words, and connection across minds',
+      'Night':'The Dreamer \u2014 gifts in intuition, abundance thinking, and deep inner knowing',
+      'Seed':'The Developer \u2014 natural capacity to identify potential and cultivate growth over time',
+      'Serpent':'The Embodied Knower \u2014 instinctive intelligence; wisdom that arrives through the body',
+      'World-Bridger':'The Transformer \u2014 called to facilitate endings, transitions, and threshold crossings',
+      'Hand':'The Healer \u2014 natural capacity to complete, heal, and bring things to right conclusion',
+      'Star':'The Artist \u2014 sees beauty as a form of intelligence; creates coherence through aesthetic',
+      'Moon':'The Flow Master \u2014 moves with natural cycles; facilitates emotional intelligence and flow',
+      'Dog':'The Heart-Centred Leader \u2014 loyalty, love, and service as the primary compass',
+      'Monkey':'The Sacred Trickster \u2014 playful intelligence that sees through illusion to deeper truth',
+      'Human':'The Free Agent \u2014 strong individual will; here to exercise discernment and authentic choice',
+      'Skywalker':'The Explorer \u2014 expands possibility and horizon; connects earth and sky',
+      'Wizard':'The Receptive Channel \u2014 enchants through presence; natural capacity for magical alignment',
+      'Eagle':'The Visionary \u2014 sees the large pattern; gifts in strategic and creative vision',
+      'Warrior':'The Intelligence Officer \u2014 questions fearlessly; strategic and disciplined',
+      'Earth':'The Navigator \u2014 reads signs and synchronicities; grounds higher intelligence into practical reality',
+      'Mirror':'The Reflector \u2014 shows others themselves; gifts in clarity, truth-telling, and discernment',
+      'Storm':'The Catalyst \u2014 disrupts stagnation; natural agent of transformation and renewal',
+      'Sun':'The Enlightener \u2014 life-force distilled; called to illuminate and radiate universal fire',
+    };
+    const chineseProData = {
+      Rat:'Sharp strategic mind. Excellent at spotting opportunity early and adapting quickly. Natural networker.',
+      Ox:'Steady, methodical, and reliable. Builds slowly but durably. Exceptional under sustained pressure.',
+      Tiger:'Bold, magnetic, and willing to take risks. Natural leader and initiator. Strongest in new ventures.',
+      Rabbit:'Diplomatic, perceptive, and aesthetically intelligent. Thrives in roles requiring sensitivity and refinement.',
+      Dragon:'Visionary and charismatic. Built for high-visibility roles requiring presence and ambitious scope.',
+      Snake:'Deeply intuitive and strategic. Prefers quality over speed; sees what others miss.',
+      Horse:'Energetic, independent, and persuasive. Excels in roles requiring movement, communication, and freedom.',
+      Goat:'Creative, gentle, and attuned to beauty. Thrives in roles allowing artistic expression and collaboration.',
+      Monkey:'Brilliant, versatile, and quick-learning. Excellent problem-solver; most adaptable person in the room.',
+      Rooster:'Analytical, organised, and precision-oriented. Excellent at systems, detail, and professional presentation.',
+      Dog:'Loyal, honest, and principled. Thrives in roles with genuine purpose and reliable team structures.',
+      Pig:'Generous, warm, and sincere. Excels in roles that serve others; strong business sense when aligned with values.',
+    };
+
+    const lpVoc = lpVocData[lifePath] || {};
+    const sealArch = sealArchData[birthKinSeal] || '';
+    const chinesePro = birthChinese ? (chineseProData[birthChinese.animal] || '') : '';
+
+    // Build direction context string for AI
+    const dirCtxParts = [
+      firstName ? 'Name: ' + firstName + '.' : '',
+      'Life Path ' + lifePath + ' (' + lpD.n + '). Drive: ' + (lpVoc.drive||'') + '. Strengths: ' + (lpVoc.strengths||'') + '. Shadow: ' + (lpVoc.shadow||'') + '.',
+      birthKinNum ? 'Birth Kin ' + birthKinNum + ' (' + birthKinFull + '). Archetype: ' + sealArch + '.' : '',
+      birthChinese ? 'Chinese sign: ' + birthChinese.element + ' ' + birthChinese.animal + '. ' + chinesePro : '',
+      personalYear ? 'Currently in Personal Year ' + personalYear + ' (' + ((NUM_DATA[personalYear]||{}).n||'') + ').' : '',
+    ].filter(Boolean).join(' ');
+
+    // Store for drawer helper
+    window._dirCtx = dirCtxParts;
+    window._dirLP = lifePath;
+    window._dirLPName = lpD.n;
+    window._dirBirthChinese = birthChinese;
+    window._dirKinNum = birthKinNum;
+    window._dirKinFull = birthKinFull;
+    window._dirPY = personalYear;
+
+    let dHtml = '<div class="ctx-section" id="ctx-direction">';
+    dHtml += '<div class="ctx-section-label">Your Natural Direction \u2014 career &amp; life path</div>';
+    dHtml += '<div style="font-size:13px;color:var(--text3);font-style:italic;margin-bottom:18px;line-height:1.5">Based on your Life Path, Birth Kin, and Chinese sign \u2014 your natural professional profile. Not a prescription: a mirror. The goal is recognition, not instruction.</div>';
+
+    // Life Path card
+    dHtml += '<div style="background:var(--bg2);border:1px solid var(--div);border-radius:3px;margin-bottom:12px;overflow:hidden">';
+    dHtml += '<div style="background:var(--bg3);padding:12px 16px;display:flex;align-items:center;gap:14px;border-bottom:1px solid var(--div)">';
+    dHtml += '<div style="font-family:\'Cormorant Garamond\',serif;font-size:32px;color:var(--gold);line-height:1">' + lifePath + ([11,22,33,44].includes(lifePath)?'\u2605':'') + '</div>';
+    dHtml += '<div><div style="font-size:10px;letter-spacing:.25em;text-transform:uppercase;color:var(--text3)">Life Path</div><div style="font-family:\'Cormorant Garamond\',serif;font-size:18px;color:var(--text)">' + lpD.n + '</div></div></div>';
+    dHtml += '<div style="padding:14px 16px">';
+    const lpRows = [['What drives you', lpVoc.drive, 'font-style:italic'], ['Natural strengths', lpVoc.strengths, ''], ['Where you thrive', lpVoc.env, ''], ['The shadow to know', lpVoc.shadow, 'font-style:italic;color:var(--text3)'], ['Natural domains', lpVoc.career, 'color:var(--gold)']];
+    lpRows.forEach(([label, val, extra]) => {
+      if (!val) return;
+      dHtml += '<div style="font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--text3);margin-bottom:5px">' + label + '</div>';
+      dHtml += '<div style="font-size:14px;color:var(--text2);margin-bottom:13px;line-height:1.6;' + extra + '">' + val + '</div>';
+    });
+    dHtml += '</div></div>';
+
+    // Dreamspell archetype
+    if (sealArch) {
+      dHtml += '<div style="background:var(--bg2);border:1px solid var(--div);border-radius:3px;margin-bottom:12px;padding:14px 16px">';
+      dHtml += '<div style="font-size:10px;letter-spacing:.25em;text-transform:uppercase;color:var(--teal);margin-bottom:8px">Dreamspell Archetype \u00b7 Birth Kin ' + birthKinNum + '</div>';
+      dHtml += '<div style="font-family:\'Cormorant Garamond\',serif;font-size:18px;color:var(--text);margin-bottom:6px">' + birthKinSeal + '</div>';
+      dHtml += '<div style="font-size:15px;color:var(--text2);font-style:italic;line-height:1.65">' + sealArch + '</div>';
+      dHtml += '<div style="font-size:11px;color:var(--text3);margin-top:8px">Argu\u00e9lles (1987) Dreamspell \u2014 modern system</div></div>';
+    }
+
+    // Chinese professional instinct
+    if (chinesePro && birthChinese) {
+      dHtml += '<div style="background:var(--bg2);border:1px solid var(--div);border-radius:3px;margin-bottom:14px;padding:14px 16px">';
+      dHtml += '<div style="font-size:10px;letter-spacing:.25em;text-transform:uppercase;color:var(--gold);margin-bottom:8px">Chinese Sign \u00b7 ' + birthChinese.element + ' ' + birthChinese.animal + '</div>';
+      dHtml += '<div style="font-size:15px;color:var(--text2);font-style:italic;line-height:1.65">' + chinesePro + '</div></div>';
+    }
+
+    // Expandable AI full synthesis
+    dHtml += '<div id="directionExpanded" style="display:none"><div style="background:var(--bg2);border:1px solid var(--div);border-radius:3px;padding:16px;margin-bottom:12px"><div id="directionResult" style="font-size:15px;color:var(--text2);line-height:1.88"><div style="text-align:center;padding:20px;color:var(--text3);font-style:italic">\u263d The Oracle is synthesising your direction\u2026</div></div></div></div>';
+
+    // Expand button
+    dHtml += '<button id="directionExpandBtn" onclick="loadDirectionSynthesis(this)"';
+    dHtml += ' data-ctx="' + encodeURIComponent(dirCtxParts) + '"';
+    dHtml += ' style="width:100%;padding:12px;background:none;border:1px solid var(--gold3);color:var(--gold);font-family:\'EB Garamond\',serif;font-size:14px;letter-spacing:.15em;text-transform:uppercase;border-radius:2px;cursor:pointer;transition:all .2s;margin-bottom:10px"';
+    dHtml += ' onmouseover="this.style.background=\'var(--gold4)\'" onmouseout="this.style.background=\'none\'">\u2726 Get Your Full Direction Reading</button>';
+
+    // Ask drawer button
+    dHtml += '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">';
+    dHtml += '<button class="tap-cta" style="font-size:12px" onclick="openDirDrawer()">Ask the Oracle about your direction \u2192</button></div>';
+    dHtml += '<div style="font-size:11px;color:var(--text3);margin-top:4px;font-style:italic;line-height:1.5">Sources: Drayer (2002) Numerology \u00b7 Kahn (2001) Pythagoras \u00b7 Argu\u00e9lles (1987) Dreamspell \u00b7 Chinese solar year signs</div>';
+    dHtml += '</div>';
+    html += dHtml;
+  }
 
   el.innerHTML = html;
 }
@@ -2447,6 +2745,20 @@ function loadProfileUI() {
 function saveProfileField(key, val) {
   profile[key] = val;
   localStorage.setItem('cdp_profile', JSON.stringify(profile));
+  // Show name meaning when name/nickname is entered
+  if ((key === 'name' || key === 'nickname') && val) {
+    const firstName = val.split(' ')[0];
+    const meaning = getNameMeaning(firstName);
+    const card = document.getElementById('nameMeaningCard');
+    if (card && meaning) {
+      card.style.display = 'block';
+      card.innerHTML = `<div style="font-size:11px;letter-spacing:.3em;text-transform:uppercase;color:var(--teal);margin-bottom:8px">Meaning of Your Name</div>
+        <div style="font-size:20px;color:var(--gold);font-weight:500;margin-bottom:4px">${firstName}</div>
+        <div style="font-size:13px;color:var(--text3);margin-bottom:8px">${meaning.origin} origin</div>
+        <div style="font-size:15px;color:var(--text2);margin-bottom:6px"><strong>Meaning:</strong> ${meaning.meaning}</div>
+        <div style="font-size:15px;color:var(--text2);font-style:italic">${meaning.interp}</div>`;
+    } else if (card) { card.style.display = 'none'; }
+  }
   // Visual confirmation
   const indicator = document.getElementById('profileSaveIndicator');
   if (indicator) {
@@ -2707,6 +3019,97 @@ const TIER_STAGES = {
   ]
 };
 
+
+// ── NAME MEANING DICTIONARY (client-side, no API call) ────────────
+const NAME_MEANINGS = {
+  // A
+  'adam':{'origin':'Hebrew','meaning':'Earth, man','interp':'Grounded presence, the one who names things'},
+  'alice':{'origin':'Germanic','meaning':'Noble, of noble kind','interp':'Natural leadership and clarity of purpose'},
+  'amelia':{'origin':'Germanic','meaning':'Work, industrious','interp':'Sustained effort that transforms into something lasting'},
+  'anna':{'origin':'Hebrew','meaning':'Grace, favour','interp':'Effortless giving; the quality of presence that asks nothing in return'},
+  'aurora':{'origin':'Latin','meaning':'Dawn','interp':'The moment before full illumination; harbinger of new cycles'},
+  // B
+  'ben':{'origin':'Hebrew','meaning':'Son of the right hand','interp':'Strength in support; the power that comes from being trusted'},
+  'benjamin':{'origin':'Hebrew','meaning':'Son of the right hand','interp':'Strength in support; the power that comes from being trusted'},
+  // C
+  'catherine':{'origin':'Greek','meaning':'Pure','interp':'Clarity unclouded by accumulation; the distilled essence'},
+  'charlotte':{'origin':'French/Germanic','meaning':'Free woman, strength','interp':'Independence of spirit expressed through care for others'},
+  'claire':{'origin':'Latin','meaning':'Clear, bright','interp':'Illumination that makes things visible to others as well as oneself'},
+  // D
+  'daniel':{'origin':'Hebrew','meaning':'God is my judge','interp':'Integrity in the absence of external validation'},
+  'david':{'origin':'Hebrew','meaning':'Beloved','interp':'The one who is loved; also the one who loves without calculation'},
+  // E
+  'edward':{'origin':'Old English','meaning':'Wealthy guardian','interp':'Stewardship of what matters; protection through generosity'},
+  'eleanor':{'origin':'Old French/Greek','meaning':'Bright, shining one','interp':'Light that guides others without diminishing itself'},
+  'emily':{'origin':'Latin','meaning':'Rival, eager','interp':'Driven by inner standard rather than external comparison'},
+  'emma':{'origin':'Germanic','meaning':'Whole, universal','interp':'The tendency to see the complete picture; wholeness as a value'},
+  // F
+  'florence':{'origin':'Latin','meaning':'Flourishing, flowering','interp':'Growth that is visible; vitality that cannot be contained'},
+  // G
+  'george':{'origin':'Greek','meaning':'Farmer, earthworker','interp':'Patient cultivation; trust in process over speed'},
+  'grace':{'origin':'Latin','meaning':'Goodness, generosity','interp':'The quality of giving that transforms the giver as much as the recipient'},
+  // H
+  'hannah':{'origin':'Hebrew','meaning':'Favour, grace','interp':'The kind of presence that makes others feel seen'},
+  'harry':{'origin':'Germanic','meaning':'Army ruler, home power','interp':'Strength that protects rather than dominates'},
+  // I
+  'isabella':{'origin':'Hebrew/Italian','meaning':'Devoted to God, pledged','interp':'Deep commitment; the capacity for sustained devotion'},
+  // J
+  'james':{'origin':'Hebrew','meaning':'Supplanter, one who follows','interp':'The willingness to learn by closely following what works'},
+  'jessica':{'origin':'Hebrew','meaning':'God beholds, foresight','interp':'Perception that goes beyond the visible'},
+  'john':{'origin':'Hebrew','meaning':'God is gracious','interp':'The grace that comes through rather than from the person'},
+  'julia':{'origin':'Latin','meaning':'Youthful, downy','interp':'Freshness that renews itself; perennial curiosity'},
+  // K
+  'kate':{'origin':'Greek','meaning':'Pure','interp':'Simplicity that is not simplistic; essence without excess'},
+  'katherine':{'origin':'Greek','meaning':'Pure','interp':'Clarity unclouded by accumulation; the distilled essence'},
+  // L
+  'laura':{'origin':'Latin','meaning':'Laurel, victory','interp':'Achievement that is recognised; mastery made visible'},
+  'lily':{'origin':'Latin/Old English','meaning':'Lily flower, purity','interp':'Beauty that does not compete; radiance without effort'},
+  'lucas':{'origin':'Latin/Greek','meaning':'Light, illumination','interp':'The one who makes things visible; clarity as a gift to others'},
+  'lucy':{'origin':'Latin','meaning':'Light','interp':'Illumination; the natural tendency to make things clear'},
+  // M
+  'mark':{'origin':'Latin','meaning':'Of Mars, warrior','interp':'Decisive action; the courage to begin'},
+  'mary':{'origin':'Hebrew','meaning':'Beloved, wished-for child','interp':'The depth that comes from being truly wanted; love as foundation'},
+  'matthew':{'origin':'Hebrew','meaning':'Gift of God','interp':'The sense that one’s presence is itself a contribution'},
+  'michael':{'origin':'Hebrew','meaning':'Who is like God?','interp':'The question as identity; power held in humility'},
+  // N
+  'natalia':{'origin':'Latin','meaning':'Born on Christmas Day, birth','interp':'New beginnings; the energy of arrival and fresh potential'},
+  'nicholas':{'origin':'Greek','meaning':'Victory of the people','interp':'Success that belongs to the collective, not the individual'},
+  // O
+  'olivia':{'origin':'Latin','meaning':'Olive tree, peace','interp':'The capacity to sustain peace through steady presence'},
+  // P
+  'paul':{'origin':'Latin','meaning':'Small, humble','interp':'The paradox of great influence from a simple foundation'},
+  'peter':{'origin':'Greek','meaning':'Rock, stone','interp':'Reliability; the quality of being constant when others shift'},
+  'philip':{'origin':'Greek','meaning':'Lover of horses, freedom','interp':'The love of what cannot be fully contained or controlled'},
+  // R
+  'rachel':{'origin':'Hebrew','meaning':'Ewe, lamb','interp':'Gentleness as strength; the power of patient waiting'},
+  'richard':{'origin':'Germanic','meaning':'Brave ruler','interp':'Courage in leadership; authority that does not need to assert itself'},
+  'robert':{'origin':'Germanic','meaning':'Bright fame','interp':'Recognition that comes from genuine contribution'},
+  'rose':{'origin':'Latin','meaning':'Rose flower','interp':'Beauty that is also a process; the unfolding that is itself the point'},
+  // S
+  'samuel':{'origin':'Hebrew','meaning':'God has heard','interp':'The deep sense of being received; being heard as a spiritual act'},
+  'sarah':{'origin':'Hebrew','meaning':'Princess, noblewoman','interp':'Dignity that comes from within; the quiet authority of one who knows their worth'},
+  'simon':{'origin':'Hebrew','meaning':'One who hears','interp':'The gift of true listening; understanding that precedes speaking'},
+  'sofia':{'origin':'Greek','meaning':'Wisdom','interp':'Clarity, insight, and inner knowing; the intelligence of the soul'},
+  'sophia':{'origin':'Greek','meaning':'Wisdom','interp':'Clarity, insight, and inner knowing; the intelligence of the soul'},
+  'sonia':{'origin':'Greek/Slavic','meaning':'Wisdom','interp':'The capacity to see through the surface to what is essential'},
+  'stephanie':{'origin':'Greek','meaning':'Crown, wreath','interp':'Achievement worn lightly; honour as a way of being, not a goal'},
+  'susan':{'origin':'Hebrew','meaning':'Lily','interp':'Purity that is not fragile; beauty that persists across conditions'},
+  // T
+  'thomas':{'origin':'Aramaic','meaning':'Twin','interp':'The one who holds paradox; two natures in one person'},
+  // V
+  'victoria':{'origin':'Latin','meaning':'Victory','interp':'The triumph that comes not from defeating others but from meeting one’s own standard'},
+  // W
+  'william':{'origin':'Germanic','meaning':'Resolute protector','interp':'Strength directed entirely toward the protection of what is loved'},
+  // Z
+  'zoe':{'origin':'Greek','meaning':'Life','interp':'Vitality as an orientation; the quality of being fully alive'}
+};
+
+function getNameMeaning(name) {
+  if (!name) return null;
+  const key = name.toLowerCase().trim().split(' ')[0]; // first name only
+  return NAME_MEANINGS[key] || null;
+}
+
 async function loadReading(dateStr, tier) {
   const activeTier = tier || currentTier || 'oracle';
   const cont = document.getElementById('readingContent');
@@ -2867,12 +3270,62 @@ async function loadReading(dateStr, tier) {
     console.error('Skeleton render error:', skErr.message);
   }
 
+  // ── WAKE CHECK — ensure Railway server is awake before starting ──
+  // Railway hobby plan sleeps after inactivity; first ping wakes it (~5–15s)
+  const skStatusText = document.getElementById('skStatusText');
+  const skProgressBar = document.getElementById('skProgressBar');
+  try {
+    const wakeRes = await Promise.race([
+      fetch(API_BASE + '/api/health'),
+      new Promise((_, rej) => setTimeout(() => rej(new Error('wake_timeout')), 20000))
+    ]);
+    if (!wakeRes.ok) throw new Error('server_not_ok');
+    const wakeData = await wakeRes.json();
+    // Check for missing API key — surface immediately rather than waiting 8 minutes
+    if (wakeData.apiKey && wakeData.apiKey.includes('MISSING')) {
+      if (skStatusText) skStatusText.textContent = '⚠ Server configuration issue — contact support';
+      console.error('ANTHROPIC_API_KEY is missing from Railway environment variables');
+      return;
+    }
+    console.log('Server awake ✓', wakeData.version, '— uptime:', wakeData.uptime);
+  } catch(wakeErr) {
+    if (wakeErr.message === 'wake_timeout') {
+      // Server is waking up — show friendly message and retry once
+      if (skStatusText) skStatusText.textContent = 'Server waking up — this takes about 15 seconds on first load…';
+      if (skProgressBar) skProgressBar.style.width = '5%';
+      await new Promise(r => setTimeout(r, 8000));
+      try {
+        const retry = await fetch(API_BASE + '/api/health');
+        if (!retry.ok) throw new Error('still_not_ready');
+        if (skStatusText) skStatusText.textContent = 'Server ready — composing your reading…';
+      } catch(retryErr) {
+        // Server truly unreachable — show clear error
+        const sd = document.getElementById('stageDisplay');
+        if (sd) {
+          sd.style.opacity = '0';
+          setTimeout(() => {
+            if (sd) {
+              sd.innerHTML = '<div style="text-align:center;padding:20px 0">'
+                + '<div style="font-size:15px;color:var(--text2);margin-bottom:14px">The server appears to be offline.<br>This usually means Railway needs a moment to restart.</div>'
+                + '<button onclick="location.reload()" style="background:none;border:1px solid var(--gold3);border-radius:3px;color:var(--gold);padding:10px 20px;cursor:pointer;font-family:\'EB Garamond\',serif;font-size:14px">↺ Refresh and try again</button></div>';
+              sd.style.opacity = '1';
+            }
+          }, 400);
+        }
+        return;
+      }
+    }
+    // Other wake errors — proceed anyway, start will catch failures
+    console.warn('Wake check skipped:', wakeErr.message);
+  }
+
   try {
     const intention = localStorage.getItem('cdp_intention') || '';
 
     // Beta 2: fetch recent reading history for Oracle continuity
     recentReadingHistory = await fetchRecentHistory();
 
+    let jobId = null;
     const startRes = await fetch(API_BASE + '/api/reading/start', {
       method: 'POST', headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({
@@ -2883,13 +3336,33 @@ async function loadReading(dateStr, tier) {
         recentHistory: recentReadingHistory
       })
     });
-    if (!startRes.ok) throw new Error('Could not start reading');
-    const { jobId } = await startRes.json();
+    if (!startRes.ok) {
+      // Auto-retry once on 5xx (server may have just woken)
+      if (startRes.status >= 500) {
+        await new Promise(r => setTimeout(r, 3000));
+        const retryRes = await fetch(API_BASE + '/api/reading/start', {
+          method: 'POST', headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({
+            date: dateStr,
+            profile: {...profile, intention, cycleContext: getCycleContext()},
+            tier: activeTier,
+            user_id: currentUser?.id || null,
+            recentHistory: recentReadingHistory
+          })
+        });
+        if (!retryRes.ok) throw new Error('Server returned ' + retryRes.status + ' — please try again');
+        const retryData = await retryRes.json();
+        jobId = retryData.jobId;
+      } else {
+        throw new Error('Could not start reading (' + startRes.status + ')');
+      }
+    } else {
+      const startData = await startRes.json();
+      jobId = startData.jobId;
+    }
+    if (!jobId) throw new Error('No job ID returned from server');
     activeJobId = jobId;
-
-    sessionStorage.setItem('cdp_active_job', JSON.stringify({
-      jobId, dateStr, tier: activeTier, startedAt: Date.now()
-    }));
+    sessionStorage.setItem('cdp_active_job', JSON.stringify({ jobId, dateStr, tier: activeTier, startedAt: Date.now() }));
 
     const startedAt = Date.now();
     // Kill switch — if no response after 8 minutes, show clear error
@@ -2900,6 +3373,14 @@ async function loadReading(dateStr, tier) {
         if (Date.now() - startedAt > maxWait) {
           clearInterval(pollingTimer); pollingTimer = null;
           sessionStorage.removeItem('cdp_active_job');
+          // If Phase 1 already rendered, finalise it as the reading rather than showing error
+          if (window._phase1Rendered && currentReading) {
+            clearInterval(stageTimer);
+            const _sb = document.getElementById('skeletonStatusBar');
+            if (_sb) { _sb.style.transition='opacity .4s'; _sb.style.opacity='0'; setTimeout(()=>_sb.remove(),400); }
+            fillAISections(currentReading, dateStr);
+            return;
+          }
           cont.innerHTML = '<div style="max-width:560px;margin:0 auto;padding:60px 24px;text-align:center">'
             + '<div style="font-size:2rem;margin-bottom:20px;opacity:.4">☽</div>'
             + '<div style="font-family:\'Cormorant Garamond\',serif;font-size:22px;color:var(--text2);margin-bottom:12px">The Oracle is taking longer than expected</div>'
@@ -2909,6 +3390,37 @@ async function loadReading(dateStr, tier) {
           return;
         }
         const pollRes = await fetch(API_BASE + `/api/reading/status/${jobId}`);
+
+        // ── Handle 404: server restarted, job lost — don't hammer ──
+        if (pollRes.status === 404) {
+          clearInterval(pollingTimer); pollingTimer = null;
+          clearInterval(stageTimer);
+          sessionStorage.removeItem('cdp_active_job');
+          // Show a clean retry prompt rather than an error
+          const sd = document.getElementById('stageDisplay');
+          if (sd) {
+            sd.style.opacity = '0';
+            setTimeout(() => {
+              if (sd) {
+                sd.innerHTML = `<div style="text-align:center">
+                  <div style="font-size:15px;color:var(--text2);margin-bottom:14px">
+                    The server was updated while your reading was composing.
+                  </div>
+                  <button onclick="loadReading(dateStr,'${activeTier}')" style="background:none;
+                    border:1px solid var(--gold3);border-radius:3px;color:var(--gold);
+                    padding:10px 20px;cursor:pointer;font-family:'EB Garamond',serif;font-size:14px">
+                    ✦ Start a fresh reading
+                  </button>
+                </div>`;
+                sd.style.opacity = '1';
+              }
+            }, 400);
+          }
+          const sb = document.getElementById('skeletonStatusBar');
+          if (sb) { sb.style.transition='opacity .4s'; sb.style.opacity='0'; setTimeout(()=>sb?.remove(),400); }
+          return;
+        }
+
         const poll = await pollRes.json();
 
         const elapsed = Math.round((Date.now() - startedAt) / 1000);
@@ -2916,6 +3428,7 @@ async function loadReading(dateStr, tier) {
         const pct = Math.min(96, Math.round((elapsed / maxSec) * 100));
         const mins = Math.floor(elapsed/60), secs = elapsed % 60;
         const timeStr = (mins > 0 ? mins+'m ' : '') + secs + 's';
+        window._pollErrors = 0; // reset error counter on successful response
         // Update skeleton progress bar only (stage cycling handled by pbTimer)
         const skBar = document.getElementById('skProgressBar');
         if (skBar) skBar.style.width = pct + '%';
@@ -2940,6 +3453,8 @@ async function loadReading(dateStr, tier) {
           if (skTxt) skTxt.textContent = 'Priorities ready — deep analysis composing…';
           // Fill in phase 1 sections with fade
           fillPhase1Sections(p1);
+          // Store phase1 as currentReading so timeout fallback can finalise it
+          currentReading = { reading: p1, planets: poll.planets, moon: poll.moon, kin: poll.kin, num: poll.num };
         }
 
         if (poll.status === 'complete') {
@@ -2956,14 +3471,34 @@ async function loadReading(dateStr, tier) {
             document.title = '✶ Your Oracle Reading is Ready';
             setTimeout(() => { document.title = 'Cosmic Daily Planner'; }, 5000);
           }
-        } else if (poll.status === 'error') {
+        } else if (poll.status === 'error' || poll.status === 'not_found') {
           clearInterval(pollingTimer); pollingTimer = null;
           clearInterval(stageTimer);
           sessionStorage.removeItem('cdp_active_job');
-          throw new Error(poll.error || 'Reading generation failed');
+          const sd = document.getElementById('stageDisplay');
+          const sb = document.getElementById('skeletonStatusBar');
+          if (sb) { sb.style.opacity='0'; setTimeout(()=>sb?.remove(),400); }
+          if (poll.status === 'not_found') {
+            if (sd) { sd.style.opacity='0'; setTimeout(()=>{ if(sd){ sd.innerHTML='<div style="color:var(--text2);font-size:15px">Session expired. <button onclick="loadReading(\''+dateStr+'\',\''+activeTier+'\')" style="background:none;border:1px solid var(--gold3);border-radius:2px;color:var(--gold);padding:6px 14px;cursor:pointer">Start again ✶</button></div>'; sd.style.opacity='1'; } },400); }
+          } else {
+            const errMsg = poll.error || 'Reading generation failed';
+            console.error('Reading error from server:', errMsg);
+            if (sd) { sd.style.opacity='0'; setTimeout(()=>{ if(sd){ sd.innerHTML='<div style="color:var(--text2);font-size:15px;text-align:center"><div style="margin-bottom:12px;color:#ff9999">⚠ ' + errMsg.slice(0,120) + '</div><button onclick="loadReading(\''+dateStr+'\',\''+activeTier+'\')" style="background:none;border:1px solid var(--gold3);border-radius:2px;color:var(--gold);padding:6px 14px;cursor:pointer">Try again ✶</button></div>'; sd.style.opacity='1'; } },400); }
+          }
         }
       } catch(pollErr) {
-        console.warn('Poll error (will retry):', pollErr.message);
+        window._pollErrors = (window._pollErrors||0) + 1;
+        if (window._pollErrors > 5) {
+          clearInterval(pollingTimer); pollingTimer = null;
+          clearInterval(stageTimer);
+          sessionStorage.removeItem('cdp_active_job');
+          window._pollErrors = 0;
+          console.warn('Polling stopped after 5 consecutive errors:', pollErr.message);
+          const sd = document.getElementById('stageDisplay');
+          if (sd) { sd.innerHTML = '<div style="color:var(--text2);font-size:15px">Connection issue. <button onclick="window._pollErrors=0;loadReading(\'' + dateStr + '\',\'' + activeTier + '\')" style="background:none;border:1px solid var(--gold3);border-radius:2px;color:var(--gold);padding:6px 14px;cursor:pointer">Try again ✶</button></div>'; sd.style.opacity='1'; }
+        } else {
+          console.warn('Poll error (will retry):', pollErr.message);
+        }
       }
     }, 2000);
 
@@ -3454,7 +3989,7 @@ document.addEventListener('click', e => {
 
 // ── Update hamburger label to show current page ──────────────
 function updateHamburgerLabel(screenId) {
-  const labels = {sr:'Reading',scard:'Card',sc:'Calendar',shist:'History',scompat:'Compat',sctx:'Year Energy',sp:'Profile'};
+  const labels = {sr:'Reading',scard:'Card',sc:'Calendar',shist:'History',scompat:'Compat',sctx:'My Energy',sp:'Profile'};
   const lbl = document.getElementById('hamburgerLabel');
   if (lbl) lbl.textContent = labels[screenId] || 'Menu';
 }
@@ -3511,8 +4046,8 @@ function renderSkeletonReading(dateStr, tier) {
   const lunarCycle = 29.53058867;
   const moonAge = ((today - knownNew) / 86400000 % lunarCycle + lunarCycle) % lunarCycle;
   const toNew = lunarCycle - moonAge;
-  const isBlack = toNew >= 0.6 && toNew <= 2.6;
-  const isShiva = moonAge >= 1.0 && moonAge <= 2.5;
+  const isBlack = toNew >= 0 && toNew <= 2.0;
+  const isShiva = moonAge >= 0.5 && moonAge <= 2.5;
   const moonPhase = moonAge < 1.85 ? 'New Moon' : moonAge < 7.38 ? 'Waxing Crescent'
     : moonAge < 9.22 ? 'First Quarter' : moonAge < 14.77 ? 'Waxing Gibbous'
     : moonAge < 16.61 ? 'Full Moon' : moonAge < 22.15 ? 'Waning Gibbous'
@@ -3544,13 +4079,27 @@ function renderSkeletonReading(dateStr, tier) {
         ${bioVals.map(b => {
           const bw = Math.abs(b.pct), bc = b.isCrit ? 'var(--gold)' : b.pct > 0 ? 'var(--teal)' : '#e08080';
           const sign = b.pct > 0 ? '+' : '';
-          return `<div style="background:var(--bg3);border:1px solid var(--div2);border-radius:2px;padding:10px 12px">
+          const bioDesc = b.label==='Physical' ? 'vitality, strength, coordination, stamina' : b.label==='Emotional' ? 'mood, sensitivity, creativity, intuition' : 'reasoning, memory, decision-making, alertness';
+          const fn = getFirstName();
+          const bioTitle = b.label + ' Biorhythm · ' + sign + b.pct + '%';
+          const bioQuestion = b.label + ' biorhythm today: ' + sign + b.pct + '% (' + b.phase + '). ' + bioDesc + '. ' + fn + ' was born ' + (profile.birthDay||'?') + '/' + (profile.birthMonth||'?') + '/' + (profile.birthYear||'?') + '. How does this ' + b.label.toLowerCase() + ' cycle specifically affect their capacity for work, decisions, and relationships today? What should they do or avoid?';
+          const bioChips = JSON.stringify([
+            {q:'What decisions should ' + fn + ' make or avoid today given this ' + b.label.toLowerCase() + ' level?', l:'Decisions today'},
+            {q:'How does this ' + b.label.toLowerCase() + ' cycle affect ' + fn + '\u2019s relationships right now?', l:'Relationships'},
+            {q:'What practices best support ' + b.label.toLowerCase() + ' recovery at ' + b.pct + '%?', l:'Recovery practices'}
+          ]);
+          return `<div class="tappable" style="background:var(--bg3);border:1px solid var(--div2);border-radius:2px;padding:10px 12px;cursor:pointer"
+            onclick="openDrawer(this.dataset.title, this.dataset.q, JSON.parse(this.dataset.chips))"
+            data-title="${bioTitle.replace(/"/g,'&quot;')}"
+            data-q="${bioQuestion.replace(/"/g,'&quot;').replace(/'/g,'&#39;')}"
+            data-chips="${bioChips.replace(/"/g,'&quot;')}">
             <div style="font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:var(--text3);margin-bottom:5px">${b.label}</div>
             <div style="font-family:'Cormorant Garamond',serif;font-size:24px;color:${b.col};line-height:1">${sign}${b.pct}%</div>
             <div style="height:2px;background:var(--div);border-radius:1px;margin:6px 0;overflow:hidden">
               <div style="height:100%;width:${bw}%;background:${bc};border-radius:1px;${b.pct<0?'margin-left:'+(100-bw)+'%':''}"></div>
             </div>
             <div style="font-size:11px;color:var(--text3)">${b.phase}</div>
+            <div style="font-size:10px;color:var(--gold);margin-top:5px;text-align:right">↗ Tap</div>
           </div>`;
         }).join('')}
       </div>
@@ -3597,6 +4146,14 @@ function renderSkeletonReading(dateStr, tier) {
   const dispNum = pd||ud;
   const dispD   = NUM_DATA[dispNum] || {n:'—',m:''};
   const isMD    = [11,22,33,44].includes(dispNum);
+  // Day Number (day digit only, reduced)
+  const [_yr, _mo, _dy] = dateStr.split('-').map(Number);
+  let dayNum = _dy; while(dayNum>9&&![11,22,33,44].includes(dayNum)) dayNum=String(dayNum).split('').reduce((a,b)=>a+parseInt(b),0);
+  const dayNumD = NUM_DATA[dayNum]||{n:'—'};
+  // Day+Month Number
+  let dayMonthNum = _dy+_mo; while(dayMonthNum>9&&![11,22,33,44].includes(dayMonthNum)) dayMonthNum=String(dayMonthNum).split('').reduce((a,b)=>a+parseInt(b),0);
+  const dayMonthD = NUM_DATA[dayMonthNum]||{n:'—'};
+  // Full date = ud (already computed)
 
   // Pass stages into the skeleton for cycling display
   const _skStages = TIER_STAGES[tier] || TIER_STAGES.oracle;
@@ -3682,6 +4239,44 @@ function renderSkeletonReading(dateStr, tier) {
   // Biorhythms (real data)
   if (bioHtml) html += bioHtml;
 
+  // Numerology (real data)
+  html += `<div id="sk-numerology">
+    <div class="sec-label">Numerology of the Day</div>
+    <div class="sec-hl" style="margin-bottom:12px">${isMD?'<span class=\"master-badge\">\u2605 </span>':''} Universal Day ${dispNum} — ${dispD.n}</div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:0 0 14px">
+      <div class="tappable" style="background:var(--bg3);border:1px solid var(--div);border-radius:3px;padding:10px 8px;text-align:center;cursor:pointer"
+        onclick="tapDayNumber(${dayNum}, ${ud})">
+        <div style="font-size:9px;letter-spacing:.28em;text-transform:uppercase;color:var(--text3);margin-bottom:4px">Day</div>
+        <div style="font-size:24px;color:${[11,22,33,44].includes(dayNum)?'var(--master)':'var(--gold)'};font-weight:500">${dayNum}</div>
+        <div style="font-size:12px;color:var(--text2);margin-top:3px">${dayNumD.n||''}</div>
+        <div style="font-size:10px;color:var(--gold);margin-top:4px">↗</div>
+      </div>
+      <div class="tappable" style="background:var(--bg3);border:1px solid var(--div);border-radius:3px;padding:10px 8px;text-align:center;cursor:pointer"
+        onclick="tapDayMonthNumber(${dayMonthNum}, ${_dy}, ${_mo})">
+        <div style="font-size:9px;letter-spacing:.28em;text-transform:uppercase;color:var(--text3);margin-bottom:4px">Day · Month</div>
+        <div style="font-size:24px;color:${[11,22,33,44].includes(dayMonthNum)?'var(--master)':'var(--gold)'};font-weight:500">${dayMonthNum}</div>
+        <div style="font-size:12px;color:var(--text2);margin-top:3px">${dayMonthD.n||''}</div>
+        <div style="font-size:10px;color:var(--gold);margin-top:4px">↗</div>
+      </div>
+      <div class="tappable" style="background:var(--bg3);border:1px solid var(--gold3);border-radius:3px;padding:10px 8px;text-align:center;cursor:pointer"
+        onclick="tapNumerology(${ud})">
+        <div style="font-size:9px;letter-spacing:.28em;text-transform:uppercase;color:var(--text3);margin-bottom:4px">Full Date</div>
+        <div style="font-size:24px;color:${[11,22,33,44].includes(ud)?'var(--master)':'var(--gold)'};font-weight:500">${ud}</div>
+        <div style="font-size:12px;color:var(--text2);margin-top:3px">${(NUM_DATA[ud]||{}).n||''}</div>
+        <div style="font-size:10px;color:var(--gold);margin-top:4px">↗</div>
+      </div>
+    </div>
+    <div class="sec-hook">The <em>Universal Day number</em> is today’s collective frequency. ${pd?`Your <em>Personal Day ${pd}</em> is the intersection of that frequency with your unique numerological blueprint.`:''}</div>
+    <div class="sec-body" id="ai-numerology-body"><p>${dispD.m||''}</p></div>
+    <div class="energies">${energyHtml}</div>
+    <div style="margin-top:12px">
+      <button class="tap-cta" onclick="tapNumerology(${dispNum})">
+        How does today’s number energy work for me? <span class="cta-arrow">→</span>
+      </button>
+    </div>
+  </div>`;
+
+
   // AI priorities placeholder
   html += `<div class="r-section sk-section" id="ai-priorities">
     <div class="sec-label">Today’s Priorities</div>
@@ -3698,25 +4293,6 @@ function renderSkeletonReading(dateStr, tier) {
   html += `<div class="two-col sk-section" id="ai-focus" style="margin-bottom:20px">
     <div class="col-card">${Array.from({length:3},(_,i)=>`<div class="sk-line" style="width:${[70,60,75][i]}%;animation-delay:${i*0.1}s"></div>`).join('')}</div>
     <div class="col-card">${Array.from({length:3},(_,i)=>`<div class="sk-line" style="width:${[65,75,55][i]}%;animation-delay:${i*0.12}s"></div>`).join('')}</div>
-  </div>`;
-
-  // Numerology (real data)
-  html += `<div class="r-section" id="sk-numerology">
-    <div class="sec-label">Numerology of the Day</div>
-    <div class="sec-hl">${isMD?'★ ':''} Universal Day ${dispNum} — ${dispD.n}</div>
-    <div class="sec-hook">The <em>Universal Day number</em> is today’s collective frequency. ${pd?`Your <em>Personal Day ${pd}</em> is the intersection of that frequency with your unique numerological blueprint.`:''}</div>
-    <div class="sec-body"><p>${dispD.m||''}</p>
-      ${pd?`<p>Personal Day ${pd} (${(NUM_DATA[pd]||{}).n||''}): ${(NUM_DATA[pd]||{}).m||''}</p>`:''}
-    </div>
-    <div style="font-size:13px;color:var(--text3);font-style:italic;margin:4px 0 12px">
-      Morning — your <em>day</em> energy &nbsp;·&nbsp; Afternoon — your <em>month</em> energy &nbsp;·&nbsp; Evening — your <em>year</em> energy
-    </div>
-    <div class="energies">${energyHtml}</div>
-    <div style="margin-top:12px">
-      <button class="tap-cta" onclick="tapNumerology(${dispNum},'${(dispD.n||'').replace(/'/g,"\'")}')" style="font-size:12px">
-        How does today’s number energy work for me? <span class="cta-arrow">→</span>
-      </button>
-    </div>
   </div>`;
 
   // Moon (real data + AI placeholder body)
@@ -3870,6 +4446,227 @@ function renderSkeletonReading(dateStr, tier) {
   }, 1000);
 }
 
+function startPolling(jobId, dateStr, tier, startedAt) {
+  if (pollingTimer) return;
+  // Show progress dot in topbar so user knows reading is loading while on other tabs
+  const _dot = document.getElementById('readingProgressDot');
+  if (_dot) _dot.style.display = 'block';
+  pollingTimer = setInterval(async () => {
+    try {
+      const elapsed = Math.round((Date.now() - startedAt) / 1000);
+      const pollRes = await fetch(API_BASE + '/api/reading/status/' + jobId);
+      const poll = await pollRes.json();
+      const maxSec = {free:60,seeker:120,initiate:180,mystic:240,oracle:360}[tier]||300;
+      const pct = Math.min(96, Math.round((elapsed/maxSec)*100));
+      const skBar = document.getElementById('skProgressBar');
+      if (skBar) skBar.style.width = pct + '%';
+      if (poll.status === 'phase1_complete' && poll.phase1 && !window._phase1Rendered) {
+        window._phase1Rendered = true;
+        fillPhase1Sections(poll.phase1);
+      }
+      if (poll.status === 'complete') {
+        clearInterval(pollingTimer); pollingTimer = null;
+        sessionStorage.removeItem('cdp_active_job');
+        window._phase1Rendered = false;
+        currentReading = poll.result;
+        // Hide progress dot — reading complete
+        const _d2 = document.getElementById('readingProgressDot');
+        if (_d2) _d2.style.display = 'none';
+        saveToHistory(dateStr, poll.result);
+        const sb = document.getElementById('skeletonStatusBar');
+        if (sb) { sb.style.opacity='0'; setTimeout(()=>sb.remove(),400); }
+        fillAISections(poll.result, dateStr);
+      } else if (poll.status === 'error') {
+        clearInterval(pollingTimer); pollingTimer = null;
+        sessionStorage.removeItem('cdp_active_job');
+        const _d3 = document.getElementById('readingProgressDot');
+        if (_d3) _d3.style.display = 'none';
+      }
+    } catch(e) { /* polling error, continue */ }
+  }, 2000);
+}
+
+
+// ── SHAREABLE SYNTHESIS CARD ──────────────────────────────────────
+function openShareCard() {
+  // Handle both reading data structures
+  const r = currentReading?.reading?.reading || currentReading?.reading;
+  const synth = r?.synthesis || currentReading?.reading?.synthesis;
+  if (!synth) { console.warn('No synthesis available for share card'); return; }
+
+  const overlay = document.getElementById('shareCardOverlay');
+  const scDate  = document.getElementById('scDate');
+  const scSynth = document.getElementById('scSynth');
+  const scMeta  = document.getElementById('scMeta');
+  if (!overlay || !scDate || !scSynth || !scMeta) return;
+
+  const d = new Date((currentDate || TODAY) + 'T12:00:00Z');
+  scDate.textContent = d.toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+
+  const synthClean = String(synth||'')
+    .replace(/\*\*(.*?)\*\*/g,'$1').replace(/\*(.*?)\*/g,'$1')
+    .replace(/^[_*]+|[_*]+$/g,'').trim();
+  scSynth.textContent = synthClean;
+
+  const chips = [];
+  if (currentReading?.kin?.full) chips.push(currentReading.kin.full);
+  if (currentReading?.moon?.phase) chips.push(currentReading.moon.phase);
+  const ud = currentReading?.num?.ud;
+  if (ud) chips.push('Universal Day ' + ud);
+  scMeta.innerHTML = chips.map(t => `<span class="sc-chip">${t}</span>`).join('');
+
+  overlay.style.display = 'flex';
+  setTimeout(() => overlay.style.opacity = '1', 10);
+}
+
+function closeShareCard() {
+  const overlay = document.getElementById('shareCardOverlay');
+  overlay.style.opacity = '0';
+  setTimeout(() => { overlay.style.display = 'none'; }, 260);
+}
+
+async function copyShareCard(btnEl) {
+  const preview = document.getElementById('synthCardPreview');
+  const btn = btnEl || event?.target || document.querySelector('.sc-action.primary');
+  if (btn) btn.textContent = 'Generating…';
+
+  try {
+    if (typeof html2canvas !== 'undefined') {
+      const canvas = await html2canvas(preview, {
+        backgroundColor: '#0D1E33',
+        scale: 2,
+        useCORS: true,
+        logging: false
+      });
+      canvas.toBlob(async blob => {
+        try {
+          // Try clipboard API first
+          await navigator.clipboard.write([new ClipboardItem({'image/png': blob})]);
+          btn.textContent = '✓ Copied to clipboard';
+        } catch(e) {
+          // Fallback: download
+          const a = document.createElement('a');
+          a.href = URL.createObjectURL(blob);
+          a.download = 'cosmic-reading-' + (currentDate||TODAY) + '.png';
+          a.click();
+          btn.textContent = '✓ Downloaded';
+        }
+        setTimeout(() => { btn.textContent = '⎘ Copy Image'; }, 2500);
+      }, 'image/png');
+    } else {
+      // No html2canvas — copy text fallback
+      const scSynth = document.getElementById('scSynth');
+      const scDate  = document.getElementById('scDate');
+      const text = scDate.textContent + '\n\n' + scSynth.textContent + '\n\n✦ cosmicdailyplanner.com';
+      await navigator.clipboard.writeText(text);
+      btn.textContent = '✓ Text copied';
+      setTimeout(() => { btn.textContent = '⎘ Copy Image'; }, 2000);
+    }
+  } catch(e) {
+    btn.textContent = 'Try share →';
+    shareNative();
+  }
+}
+
+async function shareNative() {
+  const scSynth = document.getElementById('scSynth');
+  const scDate  = document.getElementById('scDate');
+  const text = scDate.textContent + '\n\n' + scSynth.textContent + '\n\ncosmicdailyplanner.com';
+  if (navigator.share) {
+    try {
+      await navigator.share({ title: 'My Cosmic Daily Reading', text, url: 'https://cosmicdailyplanner.com' });
+    } catch(e) { /* user cancelled */ }
+  } else {
+    // Fallback: copy text
+    navigator.clipboard.writeText(text).then(() => {
+      const btn = document.querySelector('.sc-action:not(.primary):not(.dismiss)');
+      if (btn) { btn.textContent = '✓ Copied'; setTimeout(()=>{ btn.textContent='↗ Share'; },2000); }
+    });
+  }
+}
+
+// ── AFTERNOON / EVENING CHECK-IN ─────────────────────────────────
+let checkinShown = false;
+let checkinTimer = null;
+
+function scheduleCheckin(r, dateStr) {
+  // Don't show twice in same day
+  const lastCheckin = localStorage.getItem('cdp_last_checkin');
+  if (lastCheckin === TODAY) return;
+  if (checkinShown) return;
+
+  // Determine delay: 3 hours after reading generated (simulated as 3-5s for demo)
+  // In production: check current time vs morning session time
+  const now = new Date();
+  const hour = now.getHours();
+
+  let delay, promptText, subText, moonEmoji;
+
+  if (hour >= 6 && hour < 12) {
+    // Morning reading generated — check in at noon (3-6 hour delay)
+    delay = Math.max(5000, (12 - hour) * 3600000);
+    promptText = 'Midday check-in — how is your morning energy holding?';
+    subText = 'Your Universal Day is still with you';
+    moonEmoji = '◑';
+  } else if (hour >= 12 && hour < 17) {
+    // Afternoon — check in at 6pm
+    delay = Math.max(5000, (18 - hour) * 3600000);
+    promptText = 'Your afternoon energy is shifting. How are you navigating it?';
+    subText = 'Open your reading to see what the evening brings';
+    moonEmoji = '🌙';
+  } else if (hour >= 17) {
+    // Evening — check in now with closing prompt
+    delay = 4000;
+    promptText = 'The day is closing. What was the best moment?';
+    subText = 'Your evening numerology energy is ' + (r?.numerology?.three_energies?.evening?.name || 'active');
+    moonEmoji = '☽';
+  } else {
+    return; // Middle of night, skip
+  }
+
+  // Personalise prompt with morning's main theme
+  if (r?.priorities?.[0]?.title) {
+    promptText = 'Priority 1 this morning: “' + r.priorities[0].title + '”. How did that land?';
+  }
+
+  if (checkinTimer) clearTimeout(checkinTimer);
+  checkinTimer = setTimeout(() => {
+    showCheckin(moonEmoji, promptText, subText);
+  }, delay);
+}
+
+function showCheckin(emoji, prompt, sub) {
+  if (checkinShown) return;
+  checkinShown = true;
+  const bar  = document.getElementById('checkinBar');
+  const moon = document.getElementById('checkinMoon');
+  const text = document.getElementById('checkinPrompt');
+  const subEl= document.getElementById('checkinSub');
+  if (!bar) return;
+  if (moon) moon.textContent = emoji;
+  if (text) text.textContent = prompt;
+  if (subEl) subEl.textContent = sub;
+  bar.classList.add('visible');
+}
+
+function dismissCheckin() {
+  const bar = document.getElementById('checkinBar');
+  if (bar) bar.classList.remove('visible');
+  localStorage.setItem('cdp_last_checkin', TODAY);
+}
+
+function openCheckinReading() {
+  dismissCheckin();
+  // Show the reading tab and scroll to synthesis
+  const readingBtn = document.querySelector('.npill');
+  showScreen('sr', readingBtn);
+  setTimeout(() => {
+    const synth = document.getElementById('ai-synthesis');
+    if (synth) synth.scrollIntoView({behavior:'smooth', block:'start'});
+  }, 300);
+}
+
+
 // ── Fill Phase 1 sections (actionable core, ~25s) ─────────────────
 function fillPhase1Sections(p1) {
   function fadeIn(el, html) {
@@ -3972,7 +4769,24 @@ function fillAISections(data, dateStr) {
   const synthEl = document.getElementById('ai-synthesis');
   if (synthEl && r?.synthesis) {
     const synthText = String(r.synthesis||'').replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/\*(.*?)\*/g,'$1').trim();
-    fadeIn(synthEl, `<div class="synthesis tappable" onclick="tapSynthesis()" title="Tap for deeper insight">${synthText}<div class="tap-hint">↗ Go deeper</div></div>`);
+    fadeIn(synthEl, `<div class="synthesis tappable" onclick="tapSynthesis()" title="Tap for deeper insight">${synthText}<div class="tap-hint">↗ Go deeper</div></div>
+      <div style="text-align:center;margin-top:14px">
+        <button onclick="openShareCard()" style="background:none;border:1px solid rgba(201,160,80,0.35);
+          border-radius:3px;color:rgba(201,160,80,0.75);padding:8px 18px;cursor:pointer;
+          font-family:'EB Garamond',serif;font-size:13px;letter-spacing:.12em;
+          transition:border-color .2s,color .2s"
+          onmouseover="this.style.borderColor='var(--gold)';this.style.color='var(--gold)'"
+          onmouseout="this.style.borderColor='rgba(201,160,80,0.35)';this.style.color='rgba(201,160,80,0.75)'">
+          ✦ Share Today’s Reading
+        </button>
+      </div>`);
+    scheduleCheckin(r, dateStr);
+    // Habit loop: tomorrow preview, evening reflection, streak
+    setTimeout(() => injectTomorrowPreview(dateStr), 1000);
+    if (dateStr === TODAY) {
+      showEveningReflection();
+      showStreakBadge(getStreak());
+    }
   }
 
   // Priorities
@@ -4768,6 +5582,34 @@ function tapSynthesis() {
   ]);
 }
 
+function tapDayNumber(dayNum, fullDateNum) {
+  const firstName = getFirstName();
+  const numData = NUM_DATA[dayNum] || {n:'—', k:''};
+  openDrawer(
+    'Day Number · ' + dayNum,
+    'The Day Number ' + dayNum + ' (' + numData.n + ') is the pure energy of this calendar day — the day of the month reduced to its numerical essence. The Full Date number is ' + fullDateNum + '. ' + getUserContext() + ' What does the number ' + dayNum + ' bring as a specific quality to today? How does it interact with the Full Date energy of ' + fullDateNum + '?',
+    [
+      {q: 'How does Day Number ' + dayNum + ' (' + numData.n + ') interact with the Full Date ' + fullDateNum + ' for ' + firstName + ' today?', l: 'Day × Full Date'},
+      {q: 'What specifically does the number ' + dayNum + ' ask of ' + firstName + ' on this day of the month?', l: 'What it asks today'},
+      {q: 'How does the ' + numData.n + ' energy of ' + dayNum + ' shape ' + firstName + '’s best use of the morning?', l: 'Using this morning well'},
+    ]
+  );
+}
+
+function tapDayMonthNumber(dayMonthNum, day, month) {
+  const firstName = getFirstName();
+  const numData = NUM_DATA[dayMonthNum] || {n:'—', k:''};
+  openDrawer(
+    'Day · Month · ' + dayMonthNum,
+    'The Day+Month number ' + dayMonthNum + ' (' + numData.n + ') combines the energy of the ' + day + 'th with month ' + month + '. This mid-range lens shows the pulse of this particular day within this particular month — a more specific frequency than the Full Date. ' + getUserContext() + ' What does this Day+Month combination of ' + dayMonthNum + ' specifically mean for ' + firstName + '’s interactions and decisions today?',
+    [
+      {q: 'How does the Day+Month energy ' + dayMonthNum + ' (' + numData.n + ') shape the quality of conversations and decisions today for ' + firstName + '?', l: 'Conversations today'},
+      {q: 'What does ' + dayMonthNum + ' reveal about today that the Full Date number misses?', l: 'What this adds'},
+      {q: 'Is the Day+Month energy ' + dayMonthNum + ' in harmony or tension with ' + firstName + '’s Personal Month energy?', l: 'Harmony or tension'},
+    ]
+  );
+}
+
 function tapNumerology(num, name) {
   const firstName = getFirstName();
   openDrawer(`Numerology · ${num} ${name}`, `Today's Universal Day is ${num} (${name}). ${firstName}'s Personal Day is ${currentReading?.num?.pd||num}. ${getUserContext()} What does this number specifically ask of ${firstName} today? How does it interact with their Life Path ${currentReading?.num?.lp||''}?`, [
@@ -4857,6 +5699,496 @@ function tapClosing(closing) {
   ]);
 }
 
+// ══════════════════════════════════════════════════════════
+// DECISION ENGINE — "Should I act today or wait?"
+// Routes a specific decision through all four frameworks.
+// JTBD: High-performer needs timing intelligence.
+// ══════════════════════════════════════════════════════════
+function openDecisionEngine() {
+  let modal = document.getElementById('decisionEngineModal');
+  if (modal) { modal.style.display = 'flex'; return; }
+  modal = document.createElement('div');
+  modal.id = 'decisionEngineModal';
+  modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;z-index:300;background:rgba(5,12,22,0.93);display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(12px)';
+  modal.innerHTML = `
+    <div style="background:var(--bg2);border:1px solid rgba(201,160,80,0.25);border-radius:4px;
+      max-width:520px;width:100%;max-height:88vh;overflow-y:auto;padding:28px 28px 24px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px">
+        <div>
+          <div style="font-family:'Cormorant Garamond',serif;font-size:22px;color:var(--gold);margin-bottom:4px">⏱ Decision Timing Engine</div>
+          <div style="font-size:13px;color:var(--text3);line-height:1.5">Route your decision through all four frameworks.<br>Get a timing verdict: act now, wait, or prepare.</div>
+        </div>
+        <button onclick="closeDecisionEngine()" style="background:none;border:none;color:var(--text3);font-size:24px;cursor:pointer;padding:0 0 0 12px;line-height:1">×</button>
+      </div>
+      <div style="margin-bottom:16px">
+        <label style="font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:var(--text3);display:block;margin-bottom:8px">What decision are you considering?</label>
+        <textarea id="deInput" rows="3" placeholder="e.g. Send the investor proposal today · Make the call to the BD partner · Have the difficult conversation · Sign the contract"
+          style="width:100%;background:var(--bg3);border:1px solid var(--div);color:var(--text);
+          font-family:'EB Garamond',serif;font-size:15px;padding:12px 14px;border-radius:2px;
+          resize:none;line-height:1.6;outline:none;transition:border-color .2s"
+          oninput="this.style.borderColor='var(--gold3)'"></textarea>
+      </div>
+      <div style="margin-bottom:20px">
+        <label style="font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:var(--text3);display:block;margin-bottom:8px">Compare with alternative date? (optional)</label>
+        <input type="date" id="deAltDate"
+          style="background:var(--bg3);border:1px solid var(--div);color:var(--text3);
+          font-family:'EB Garamond',serif;font-size:14px;padding:9px 12px;border-radius:2px;outline:none">
+        <span style="font-size:12px;color:var(--text3);margin-left:8px">vs today</span>
+      </div>
+      <button id="deRunBtn" onclick="runDecisionEngine()"
+        style="width:100%;padding:13px;background:none;border:1px solid var(--gold);
+        color:var(--gold);font-family:'EB Garamond',serif;font-size:15px;letter-spacing:.15em;
+        border-radius:2px;cursor:pointer;transition:all .2s"
+        onmouseover="this.style.background='rgba(201,160,80,0.08)'"
+        onmouseout="this.style.background='none'">
+        ✦ Consult the Oracle on Timing
+      </button>
+      <div id="deResult" style="margin-top:20px"></div>
+    </div>`;
+  document.body.appendChild(modal);
+}
+
+function closeDecisionEngine() {
+  const m = document.getElementById('decisionEngineModal');
+  if (m) m.style.display = 'none';
+}
+
+async function runDecisionEngine() {
+  const decision = document.getElementById('deInput')?.value?.trim();
+  if (!decision) {
+    document.getElementById('deResult').innerHTML = '<p style="color:var(--gold);font-size:14px">Please describe the decision you are considering.</p>';
+    return;
+  }
+  const altDate = document.getElementById('deAltDate')?.value;
+  const btn = document.getElementById('deRunBtn');
+  const result = document.getElementById('deResult');
+  if (btn) { btn.disabled = true; btn.textContent = '☽ Consulting the cosmic data…'; }
+  result.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text3);font-style:italic;font-size:15px">Routing through four frameworks…</div>';
+
+  const firstName = getFirstName();
+  const num = currentReading?.num || {};
+  const moon = currentReading?.moon || {};
+  const kin = currentReading?.kin || {};
+  const planets = currentReading?.planets || [];
+
+  const todaySummary = [
+    'TODAY: ' + TODAY,
+    'Universal Day ' + (num.ud||'?') + ' (' + (NUM_DATA[num.ud]?.n||'') + ')',
+    'Personal Day ' + (num.pd||'?') + ' (' + (NUM_DATA[num.pd]?.n||'') + ')',
+    'Moon: ' + (moon.phase||'?') + ' — day ' + (moon.cycle||'?') + ', ' + (moon.toNew||'?') + 'd to New Moon',
+    moon.isBlack ? '⚠️ BLACK MOON — threshold. Avoid major launches.' : '',
+    moon.isShiva ? '✨ SHIVA MOON — auspicious for new beginnings.' : '',
+    'Kin: ' + (kin.full||'?') + (kin.isGAP ? ' ★ GAP Portal' : ''),
+    'Mercury: ' + (planets[2]?.degStr||'?'),
+    'Mars: ' + (planets[4]?.degStr||'?'),
+  ].filter(Boolean).join('\n');
+
+  let altSummary = '';
+  if (altDate) {
+    const altMoon = clientMoon(altDate);
+    const altKin = clientKin(altDate);
+    const altUD = clientUD(altDate);
+    const [ay,am,ad] = altDate.split('-').map(Number);
+    let altPD = null;
+    if (profile.birthDay) {
+      const ayR = String(ay).split('').reduce((a,b)=>a+parseInt(b),0);
+      let altPY = numReduce(profile.birthDay+profile.birthMonth+numReduce(ayR));
+      let altPM = numReduce(altPY+am);
+      altPD = numReduce(altPM+ad);
+    }
+    altSummary = '\n\nCOMPARISON DATE: ' + altDate
+      + '\nUniversal Day ' + altUD + ' (' + (NUM_DATA[altUD]?.n||'') + ')'
+      + (altPD ? '\nPersonal Day '+altPD+' ('+(NUM_DATA[altPD]?.n||'')+')' : '')
+      + '\nMoon: ' + altMoon.phase + ' — day ' + parseFloat(altMoon.cyc).toFixed(1)
+      + (altMoon.isBlack ? '\n⚠️ BLACK MOON' : altMoon.isShiva ? '\n✨ SHIVA MOON' : '')
+      + '\nKin: ' + altKin.col + ' ' + altKin.tone + ' ' + altKin.seal + (altKin.isGAP ? ' ★ GAP' : '');
+  }
+
+  try {
+    const RAIL = 'https://cdp-server-production.up.railway.app';
+    const response = await fetch(RAIL + '/api/ask', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({
+        question: 'DECISION TIMING REQUEST for ' + firstName + ':\n\nDecision: "' + decision + '"\n\n' + todaySummary + altSummary + '\n\nProfile: ' + getUserContext() + '\nLife Path: ' + (num.lp||'?') + ' | Personal Year: ' + (num.py||'?') + '\n\nGive a direct timing verdict — act today, wait, or prepare now and act on [specific date]. Ground every statement in the actual framework data above. Reference: Drayer (2002) for numerology timing, Brady (1999) Predictive Astrology for lunar timing, Hand (2002) Planets in Transit for planetary timing. 3-4 paragraphs. End with one concrete action.',
+        profile,
+        context: todaySummary,
+        readingData: currentReading?.reading || {}
+      })
+    });
+    const data = await response.json();
+    if (data.answer) {
+      result.innerHTML = '<div style="border-top:1px solid var(--div);padding-top:16px">'
+        + '<div style="font-size:10px;letter-spacing:.3em;text-transform:uppercase;color:var(--teal);margin-bottom:12px">Oracle Verdict</div>'
+        + data.answer.split('\n').filter(l=>l.trim()).map(p=>'<p style="margin-bottom:12px;font-size:16px;color:var(--text2);line-height:1.85">'+p+'</p>').join('')
+        + '<div style="margin-top:14px;padding:10px 14px;background:var(--bg3);border:1px solid var(--div2);border-radius:2px;font-size:11px;color:var(--text3);line-height:1.5">Sources: Drayer (2002) Numerology · Brady (1999) Predictive Astrology · Hand (2002) Planets in Transit · Tarnas (2006) Cosmos & Psyche</div>'
+        + '</div>';
+    } else {
+      result.innerHTML = '<p style="color:var(--red);font-size:14px">The Oracle could not be reached. Please try again.</p>';
+    }
+  } catch(e) {
+    result.innerHTML = '<p style="color:var(--red);font-size:14px">Connection issue: ' + e.message + '</p>';
+  }
+  if (btn) { btn.disabled = false; btn.textContent = '✦ Consult the Oracle on Timing'; }
+}
+
+// ══════════════════════════════════════════════════════════
+// PRESENCE LAYER — time-of-day micro-prompt on return
+// Fires when user returns to tab/window if reading is loaded
+// ══════════════════════════════════════════════════════════
+function showPresencePrompt() {
+  if (!currentReading?.reading) return;
+  const slot = localStorage.getItem('cdp_presence_' + TODAY);
+  const now = new Date();
+  const hour = now.getHours();
+  const curSlot = hour < 12 ? 'morning' : hour < 15 ? 'midday' : hour < 19 ? 'afternoon' : 'evening';
+  if (slot === curSlot) return;
+
+  const num = currentReading.num || {};
+  const r = currentReading.reading || {};
+  const firstName = getFirstName();
+
+  const slots = {
+    morning: {
+      emoji: '🌅',
+      text: () => { const n = NUM_DATA[num.pd||num.ud]||{}; return 'Morning · ' + (num.pd||num.ud) + ' ' + n.n + '. ' + (n.morning||n.k||'').slice(0,80); },
+      action: () => r.priorities?.[0]?.action || ('Focus: ' + (r.focus_on?.[0]||'your highest priority'))
+    },
+    midday: {
+      emoji: '☀️',
+      text: () => { const p1 = r.priorities?.[0]?.title||''; return p1 ? 'Priority 1: "' + p1.slice(0,55) + (p1.length>55?'…':'') + '" — how is it landing?' : 'Midday · ' + (NUM_DATA[num.pm||num.mEn]?.n||''); },
+      action: () => '2 minutes to breathe before the afternoon'
+    },
+    afternoon: {
+      emoji: '◑',
+      text: () => {
+        const n = NUM_DATA[num.pm||num.mEn]||{};
+        const mNote = currentReading.moon?.isBlack ? ' Black Moon: stay inward.' : currentReading.moon?.isShiva ? ' Shiva Moon: act on intentions.' : '';
+        return 'Afternoon · ' + n.n + '.' + mNote + ' ' + (n.afternoon||'').slice(0,60);
+      },
+      action: () => (r.time_windows?.afternoon||'Review what shifted since morning').slice(0,80)
+    },
+    evening: {
+      emoji: '🌙',
+      text: () => { const n = NUM_DATA[num.py||num.yEn]||{}; return 'Evening · ' + (num.py||num.yEn) + ' ' + n.n + '. ' + (n.evening||n.k||'').slice(0,70); },
+      action: () => (r.time_windows?.evening||'Close the day — what was the one best moment?').slice(0,80)
+    }
+  };
+
+  const s = slots[curSlot];
+  if (!s) return;
+  const bar = document.getElementById('presenceBar');
+  if (!bar) return;
+  document.getElementById('presenceEmoji').textContent = s.emoji;
+  document.getElementById('presenceText').textContent = s.text();
+  document.getElementById('presenceAction').textContent = '→ ' + s.action();
+  bar.classList.add('visible');
+  localStorage.setItem('cdp_presence_' + TODAY, curSlot);
+}
+
+function dismissPresence() {
+  document.getElementById('presenceBar')?.classList.remove('visible');
+}
+function openPresenceReading() {
+  dismissPresence();
+  showScreen('sr', document.querySelector('.npill'));
+  setTimeout(() => {
+    const tw = document.getElementById('ai-timewindows');
+    const el = tw || document.getElementById('ai-synthesis');
+    el?.scrollIntoView({behavior:'smooth', block:'start'});
+  }, 300);
+}
+
+// Trigger presence on page return
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') setTimeout(showPresencePrompt, 1200);
+});
+window.addEventListener('focus', () => setTimeout(showPresencePrompt, 800));
+
+// ══════════════════════════════════════════════════════════
+// DYNAMIC CHIPS — day-specific, built from actual reading
+// ══════════════════════════════════════════════════════════
+function buildChips(r) {
+  const firstName = getFirstName();
+  const num = currentReading?.num || {};
+  const moon = currentReading?.moon || {};
+  const kin = currentReading?.kin || {};
+  const rd = r || {};
+  const hour = new Date().getHours();
+  const chips = [];
+
+  // 1. Universal Day — specific to today's number
+  if (num.ud) {
+    const udName = NUM_DATA[num.ud]?.n || '';
+    chips.push({l:'UD ' + num.ud + ' · ' + udName, q:'Today is Universal Day ' + num.ud + ' (' + udName + '). Personal Day ' + (num.pd||num.ud) + '. ' + getUserContext() + ' How does this specific number frequency directly affect ' + firstName + '\'s work and decisions right now? Be specific — not general numerology theory, but how it interacts with what they are actually doing today.'});
+  }
+
+  // 2. Time-of-day energy
+  const timeOfDay = hour < 12 ? 'morning' : hour < 17 ? 'afternoon' : 'evening';
+  const energyNum = hour < 12 ? (num.pd||num.ud) : hour < 17 ? (num.pm||num.mEn) : (num.py||num.yEn);
+  chips.push({l: (hour<12?'🌅 Morning':hour<17?'☀️ Now':'🌙 Evening') + ' · ' + energyNum, q: 'It is currently ' + timeOfDay + '. The ' + timeOfDay + ' energy for ' + firstName + ' is ' + energyNum + ' (' + (NUM_DATA[energyNum]?.n||'') + '). What is the single most important thing ' + firstName + ' should do or be aware of in the next 2-3 hours? ' + getUserContext()});
+
+  // 3. Moon — specific to phase and special status
+  if (moon.phase) {
+    const moonSign = currentReading?.planets?.[1]?.sign || '';
+    const special = moon.isBlack ? '(Black Moon — 2 days before New Moon)' : moon.isShiva ? '(Shiva Moon — 2 days after New Moon)' : '';
+    chips.push({l:(moon.emoji||'☽') + ' ' + moon.phase + (special?' · Special':''), q:'Moon: ' + moon.phase + (moonSign?' in '+moonSign:'') + ' ' + special + '. Day ' + moon.cycle + ' of cycle, ' + moon.toNew + 'd to New Moon. ' + getUserContext() + ' What does this lunar moment ask of ' + firstName + ' in their body, relationships, and decisions today?' + (moon.isBlack?' What specifically should NOT be initiated today?':'') + (moon.isShiva?' What should specifically be planted or started?':'')});
+  }
+
+  // 4. Dreamspell Kin
+  if (kin.full) {
+    chips.push({l:'◈ ' + kin.seal + (kin.isGAP?' ★ Portal':''), q:'Dreamspell Kin today: ' + kin.full + '. Tone ' + kin.toneNum + ' (' + kin.tone + ') of the ' + kin.seal + '. ' + (kin.isGAP?'Galactic Activation Portal day.':'') + ' What specific quality does the ' + kin.seal + ' invite ' + firstName + ' to embody today — not abstract symbolism, but as a concrete way of showing up? (Argüelles 1987 Dreamspell — modern system)'});
+  }
+
+  // 5. Priority 1 deep-dive
+  if (rd.priorities?.[0]?.title) {
+    const p1 = rd.priorities[0];
+    chips.push({l:'↗ Priority 1: "' + (p1.title||'').slice(0,28) + (p1.title?.length>28?'…':'') + '"', q:firstName + '\'s top priority today: "' + p1.title + '". Rationale: ' + (p1.rationale||'') + '. Action: ' + (p1.action||'') + '. Get specific — what does this look like in the next 3 hours? What resistance will ' + firstName + ' most likely encounter, and how do they work with it rather than against it?'});
+  }
+
+  // 6. Shadow work
+  if (rd.shadow_work) {
+    chips.push({l:'Shadow: "' + (rd.shadow_work||'').slice(0,30) + '…"', q:'Shadow question for ' + firstName + ': "' + rd.shadow_work + '". What is this actually pointing to? What does ' + firstName + ' gain by keeping this unconscious? What would honest engagement look like in practice today?'});
+  }
+
+  // 7. Saturn-Neptune civilisational context
+  chips.push({l:'Saturn-Neptune & your situation', q:'Saturn and Neptune conjunct in Aries in 2026 — historically significant (Tarnas 2006: last conjunction 1952, then 1989 Berlin Wall fall). What does this civilisational-scale dissolution of structures mean specifically for ' + firstName + '\'s work in ' + (Array.isArray(profile.active_threads)?profile.active_threads.slice(0,2).join(' and '):profile.context||'their current professional situation') + '? How is this macro-cycle showing up in their daily reality right now?'});
+
+  // 8. GAP portal specifics
+  if (kin.isGAP) {
+    chips.push({l:'★ GAP: what arrives today', q:'GAP Portal Kin ' + kin.kin + '. The veil is thinner; synchronicities amplified. What specific types of arrivals, encounters, or insights should ' + firstName + ' be receptive to today? ' + getUserContext() + ' What would be a waste of this portal day for them?'});
+  }
+
+  // 9. Decision Engine
+  chips.push({l:'⏱ Time a decision', q:'__DECISION_ENGINE__'});
+
+  return chips.map(c => {
+    if (c.q === '__DECISION_ENGINE__') return '<button class="chip chip-decision" onclick="openDecisionEngine()">⏱ Time a decision</button>';
+    const esc = c.q.replace(/'/g,"\\'").replace(/\n/g,' ');
+    return '<button class="chip" onclick="askChip(\'' + esc + '\')">' + c.l + '</button>';
+  }).join('');
+}
+
+// ══════════════════════════════════════════════════════════
+// INLINE SOURCE CITATIONS — tappable scholarly references
+// ══════════════════════════════════════════════════════════
+const CDP_SOURCES = {
+  tarnas:{label:'Tarnas 2006',full:'Tarnas, R. (2006). Cosmos and Psyche. Viking Penguin.',context:'Richard Tarnas\'s Cosmos and Psyche is the most comprehensive scholarly treatment of planetary cycle correlations with historical events. His analysis of the Saturn-Neptune cycle (pp. 234-251) provides the intellectual foundation for CDP\'s civilisational-context readings. The data-driven case for why these cycles matter — not as mysticism, but as demonstrable historical pattern — is his singular contribution.'},
+  greene:{label:'Greene 1976',full:'Greene, L. (1976). Saturn: A New Look at an Old Devil. Weiser Books.',context:'Liz Greene\'s Saturn fundamentally changed how Western astrology approaches difficult transits. Her Jungian framework for Saturn as teacher — constraint and difficulty as developmental, not punitive — is the foundation of CDP\'s psychological astrological voice.'},
+  hand:{label:'Hand 2002',full:'Hand, R. (2002). Planets in Transit. Whitford Press.',context:'Robert Hand\'s Planets in Transit is the most rigorous technical reference in contemporary Western astrology. CDP uses Hand\'s orb tables, aspect timings, and interpretive frameworks for all transit analysis.'},
+  drayer:{label:'Drayer 2002',full:'Drayer, R. (2002). Numerology: The Power in Numbers. Square One Publishers.',context:'Ruth Drayer\'s work provides the most academically tractable formulation of Pythagorean numerology. CDP\'s number meanings — Life Path, Personal Year, Universal Day — are calibrated against Drayer\'s framework, itself traceable to Kahn (2001) Pythagoras and the Pythagoreans.'},
+  arguelles:{label:'Argüelles 1987',full:'Argüelles, J. (1987). The Mayan Factor: Path Beyond Technology. Bear & Company.',context:'CDP always labels Dreamspell as the Argüelles (1987) modern 20th-century system — explicitly distinct from the ancient K\'iche\' Maya tzolk\'in maintained by contemporary Guatemalan daykeepers (Tedlock 1992). This distinction is scholarly and ethical. CDP\'s transparency on this is a deliberate USP differentiator.'},
+  sprajc:{label:'Šprajc 2023',full:'Šprajc, I., Inomata, T. & Aveni, A. (2023). Science Advances, doi:10.1126/sciadv.abq7675.',context:'The most significant recent peer-reviewed revision to Maya calendrics, pushing the origin of the 260-day calendar to 1100–750 BCE. CDP cites this to demonstrate that its Dreamspell framework rests on a legitimate astronomical foundation, even while being transparent that Dreamspell itself is a modern synthesis.'},
+  brady:{label:'Brady 1999',full:'Brady, B. (1999). Predictive Astrology: The Eagle and the Lark. Weiser Books.',context:'Bernadette Brady\'s Predictive Astrology provides the interpretive framework CDP uses for long-cycle transit analysis and biographical timing. CDP\'s Decision Engine uses Brady\'s lunar cycle timing principles.'},
+  usno:{label:'USNO',full:'United States Naval Observatory — aa.usno.navy.mil',context:'CDP\'s lunar cycle calculations are anchored to USNO-verified new moon times. The MOON_ANCHOR (January 17, 2026, 02:02 UTC) is sourced from USNO data. This is why CDP\'s Black Moon and Shiva Moon detections are astronomically precise.'},
+  swiss:{label:'Swiss Ephemeris',full:'Koch, W. & Treindl, R. Swiss Ephemeris. Astrodienst AG. Based on NASA/JPL DE431.',context:'CDP\'s planetary positions are sourced from the Swiss Ephemeris ae_2026.pdf published by Astrodienst AG, based on NASA/JPL\'s DE431 planetary model. The same data source used by professional astrologers and academic researchers. CDP\'s positions are authoritative — not approximated or AI-generated.'}
+};
+
+function openCitation(key) {
+  const src = CDP_SOURCES[key];
+  if (!src) return;
+  const firstName = getFirstName();
+  openDrawer('Source · ' + src.label, src.context, [
+    {q:'How does the work of ' + src.label.split(' ')[0] + ' specifically apply to today\'s reading for ' + firstName + '?', l:src.label.split(' ')[0] + ' & today'},
+    {q:'What does ' + src.label.split(' ')[0] + '\'s framework suggest ' + firstName + ' should pay most attention to right now?', l:'Practical application'}
+  ]);
+}
+
+// ══════════════════════════════════════════════════════════
+// DIRECTION SYNTHESIS — AI full career/life direction reading
+// ══════════════════════════════════════════════════════════
+async function loadDirectionSynthesis(btn) {
+  const expanded = document.getElementById('directionExpanded');
+  const result   = document.getElementById('directionResult');
+  if (!expanded || !result) return;
+  if (expanded.style.display !== 'none' && result.dataset.loaded === '1') {
+    expanded.style.display = 'none';
+    btn.textContent = '\u2726 Get Your Full Direction Reading';
+    return;
+  }
+  expanded.style.display = 'block';
+  btn.textContent = '\u263d Consulting the Oracle\u2026';
+  btn.disabled = true;
+  const ctx = decodeURIComponent(btn.dataset.ctx || '');
+  const firstName = getFirstName();
+  const sys = `You are the Oracle at Cosmic Daily Planner — expert in translating multi-framework birth data into meaningful professional and life direction guidance.
+YOUR VOICE: Warm, precise, direct. Like the wisest mentor they have ever had. Not a careers advisor giving a list — a genuine mirror showing them something true about themselves.
+RULES:
+— Address ${firstName} directly by name throughout
+— 4-5 rich paragraphs. No bullet points. No markdown.
+— Start with what drives them at the deepest level — not what they should do, but what they are built for
+— Be honest about the shadow patterns — this is where the most value lies
+— End with one concrete question for them to sit with
+— Draw on: Drayer (2002) Numerology; Kahn (2001) Pythagoras; Arguelles (1987) Dreamspell`;
+  const userMsg = `Profile:\n${ctx}\n\nSynthesise this person's natural professional direction, working style, and life path orientation. What are they genuinely built for — not in terms of job titles, but in terms of the quality of engagement, the environments that unlock their best, and the work that gives them meaning? Be specific to this exact combination of frameworks. Be honest about what drains them and the shadow patterns most likely to show up professionally. End with one question that, if they sat with it honestly, would clarify their next move.`;
+  try {
+    const RAIL = 'https://cdp-server-production.up.railway.app';
+    const resp = await fetch(RAIL + '/api/ask', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ question: userMsg, profile, context: ctx, readingData: {} })
+    });
+    const data = await resp.json();
+    if (data.answer) {
+      result.innerHTML = data.answer.split('\n').filter(l=>l.trim())
+        .map(p=>`<p style="margin-bottom:14px">${p}</p>`).join('');
+      result.dataset.loaded = '1';
+      btn.textContent = '\u2191 Collapse direction reading';
+      btn.disabled = false;
+    } else {
+      result.innerHTML = '<p style="color:var(--red)">Could not reach the Oracle. Please try again.</p>';
+      btn.textContent = '\u2726 Get Your Full Direction Reading';
+      btn.disabled = false;
+    }
+  } catch(e) {
+    result.innerHTML = `<p style="color:var(--red)">Connection issue: ${e.message}</p>`;
+    btn.textContent = '\u2726 Get Your Full Direction Reading';
+    btn.disabled = false;
+  }
+}
+
+function openChineseCompatDrawer() {
+  const d = window._chineseDrawerData;
+  if (!d) return;
+  const q = (d.chBody || (d.chineseA.element + ' ' + d.chineseA.animal + ' and ' + d.chineseB.element + ' ' + d.chineseB.animal + '. Relationship type: ' + d.chType + '. ' + d.chQual + '. ' + d.chDyn + ' How does this Chinese system layer confirm or nuance what the other frameworks show about this connection?'));
+  openDrawer(
+    '☯ Chinese Astrology · ' + d.chineseA.animal + ' & ' + d.chineseB.animal,
+    q,
+    [
+      {q: 'How should ' + d.nameA + ' and ' + d.nameB + ' work practically with their ' + d.chType + ' Chinese sign dynamic?', l: 'Practical application'},
+      {q: 'What does the ' + d.chType + ' relationship mean for timing decisions and important conversations?', l: 'Timing and decisions'},
+      {q: 'How does the ' + d.chineseA.element + ' element of ' + d.nameA + ' interact with the ' + d.chineseB.element + ' element of ' + d.nameB + '?', l: 'Element interaction'},
+      {q: 'What is the growth edge this Chinese pairing creates for both ' + d.nameA + ' and ' + d.nameB + '?', l: 'Growth edge'},
+    ]
+  );
+}
+
+function openDirDrawer() {
+  const firstName = getFirstName();
+  const lp = window._dirLP;
+  const lpName = window._dirLPName || '';
+  const birthChinese = window._dirBirthChinese;
+  const kinNum = window._dirKinNum;
+  const kinFull = window._dirKinFull || '';
+  const py = window._dirPY;
+  const ctx = window._dirCtx || '';
+  const q = 'What professional paths, environments, and working styles are most aligned with Life Path ' + lp + ' (' + lpName + ')' + (birthChinese ? ', ' + birthChinese.element + ' ' + birthChinese.animal : '') + (kinNum ? ', Birth Kin ' + kinNum : '') + '? Give specific, named directions. Be honest about both the gifts and the environments that drain this person. ' + (firstName !== 'you' ? 'Name: ' + firstName + '.' : '') + (py ? ' Currently in Personal Year ' + py + '.' : '') + ' Context: ' + ctx;
+  openDrawer('Your Natural Direction', q, [
+    {q:'What specific career pivots or roles would best suit this combination right now?', l:'Career paths for right now'},
+    {q:'What working environments should this person specifically seek or avoid?', l:'Environments to seek or avoid'},
+    {q:'What professional shadow patterns is this person most likely to face?', l:'Professional shadow patterns'},
+    {q:'What would a meaningful career transition look like at this point in their Personal Year cycle?', l:'Career transition guidance'},
+  ]);
+}
+
+// ══════════════════════════════════════════════════════════
+// HABIT LOOP — five features for daily return
+// 1. Tomorrow's Preview   2. Evening Reflection
+// 3. Streak badge         4. Progress dot on tab change
+// ══════════════════════════════════════════════════════════
+
+// 1. Tomorrow's Preview — injected at bottom of reading
+function injectTomorrowPreview(dateStr) {
+  const container = document.getElementById('ai-week');
+  if (!container || container.querySelector('#tomorrowPreview')) return;
+  const tom = new Date(dateStr + 'T12:00:00Z');
+  tom.setUTCDate(tom.getUTCDate() + 1);
+  const tds = tom.toISOString().slice(0,10);
+  const tMoon = clientMoon(tds);
+  const tKin  = clientKin(tds);
+  const tUD   = clientUD(tds);
+  const tLabel = tom.toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'});
+  const isMaster = [11,22,33,44].includes(tUD);
+  const mCol = tUD===11?'#C8A0FF':tUD===22?'#C9A050':tUD===33?'#4DB8A8':tUD===44?'#D4922A':'var(--text2)';
+  const signal = isMaster
+    ? '\u2605 Master Number ' + tUD + ' \u2014 ' + (NUM_DATA[tUD]?.n||'')
+    : tKin.isGAP ? '\u2605 GAP Portal \u2014 ' + tKin.col + ' ' + tKin.tone + ' ' + tKin.seal
+    : tMoon.isNewMoon ? '\uD83C\uDF11 New Moon \u2014 set intentions'
+    : tMoon.isFullMoon ? '\uD83C\uDF15 Full Moon \u2014 peak illumination'
+    : 'UD ' + tUD + ' \u00b7 ' + (NUM_DATA[tUD]?.n||'') + ' \u00b7 ' + tMoon.phase;
+  const el = document.createElement('div');
+  el.id = 'tomorrowPreview';
+  el.style.cssText = 'background:var(--bg2);border:1px solid var(--div);border-radius:3px;padding:14px 16px;margin-top:14px;cursor:pointer;transition:border-color .2s';
+  el.onmouseover = () => el.style.borderColor = 'var(--gold3)';
+  el.onmouseout  = () => el.style.borderColor = 'var(--div)';
+  el.onclick = () => openDayModal(tds);
+  el.innerHTML = '<div style="font-size:10px;letter-spacing:.28em;text-transform:uppercase;color:var(--text3);margin-bottom:6px">Tomorrow \u00b7 ' + tLabel + '</div>'
+    + '<div style="font-size:16px;color:' + mCol + ';margin-bottom:4px">' + signal + '</div>'
+    + '<div style="font-size:12px;color:var(--text3)">' + tMoon.emoji + ' ' + tMoon.phase + ' \u00b7 Kin ' + tKin.kin + '</div>'
+    + '<div style="font-size:11px;color:var(--gold);margin-top:8px;opacity:.7">\u2192 Tap to preview · Return tomorrow for your full reading</div>';
+  container.appendChild(el);
+}
+
+// 2. Evening reflection — slides in after 6pm with memory + tomorrow intent
+function showEveningReflection() {
+  if (!currentReading?.reading) return;
+  if (new Date().getHours() < 18) return;
+  if (localStorage.getItem('cdp_reflection_' + TODAY)) return;
+  const p1 = currentReading.reading?.priorities?.[0]?.title || '';
+  // Check yesterday's tomorrow-intent for follow-up
+  const yestDate = new Date(TODAY + 'T12:00:00Z');
+  yestDate.setUTCDate(yestDate.getUTCDate()-1);
+  const ystData = JSON.parse(localStorage.getItem('cdp_reflection_' + yestDate.toISOString().slice(0,10)) || 'null');
+  const ystIntent = ystData?.tomorrowIntent || '';
+  const followUp = ystIntent ? '<div style="background:rgba(129,205,182,0.08);border:1px solid rgba(129,205,182,0.2);border-radius:3px;padding:10px 12px;margin-bottom:12px;font-size:13px;color:var(--teal);font-style:italic">Yesterday you wanted: \u201c' + ystIntent + '\u201d \u2014 how did that go?</div>' : '';
+  setTimeout(() => {
+    const rc = document.getElementById('readingContent');
+    if (!rc || document.getElementById('eveningReflection')) return;
+    const bar = document.createElement('div');
+    bar.id = 'eveningReflection';
+    bar.style.cssText = 'background:var(--bg2);border:1px solid rgba(129,205,182,0.2);border-radius:3px;padding:16px 18px;margin-top:16px';
+    bar.innerHTML = '<div style="font-size:10px;letter-spacing:.25em;text-transform:uppercase;color:var(--text3);margin-bottom:10px">\u263d Evening reflection</div>'
+      + followUp
+      + '<div style="font-size:15px;color:var(--text2);margin-bottom:12px;font-style:italic">' + (p1 ? 'Priority 1 today: \u201c' + p1.slice(0,60) + '\u201d \u2014 how did it land?' : 'How did today align with the reading?') + '</div>'
+      + '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">'
+      + ['\u2726 Aligned', '\u25c8 Mixed', '\u263d Difficult'].map((lbl,i) =>
+          `<button onclick="recordReflection(${i},this)" style="padding:8px 14px;background:none;border:1px solid var(--div);color:var(--text3);font-family:'EB Garamond',serif;font-size:13px;border-radius:2px;cursor:pointer;transition:all .2s" onmouseover="this.style.borderColor='var(--teal)';this.style.color='var(--teal)'" onmouseout="this.style.borderColor='var(--div)';this.style.color='var(--text3)'">${lbl}</button>`
+        ).join('')
+      + '</div>'
+      + '<div style="border-top:1px solid var(--div2);padding-top:12px">'
+      + '<div style="font-size:13px;color:var(--text3);margin-bottom:8px">What would be most useful for tomorrow?</div>'
+      + '<input id="tomorrowIntent" placeholder="What would be most useful tomorrow?" style="width:100%;background:var(--bg3);border:1px solid var(--div);color:var(--text);font-size:14px;padding:9px 12px;border-radius:2px;outline:none" oninput="this.style.borderColor=\'var(--gold3)\'">' 
+      + '<div style="font-size:11px;color:var(--text3);margin-top:6px;font-style:italic">The Oracle will check in on this tomorrow evening.</div>'
+      + '</div>';
+    rc.appendChild(bar);
+    bar.scrollIntoView({behavior:'smooth',block:'nearest'});
+  }, 3500);
+}
+
+function recordReflection(score, btn) {
+  const intent = document.getElementById('tomorrowIntent')?.value?.trim() || '';
+  localStorage.setItem('cdp_reflection_' + TODAY, JSON.stringify({score, date:TODAY, tomorrowIntent:intent, p1: currentReading?.reading?.priorities?.[0]?.title||''}));
+  const bar = document.getElementById('eveningReflection');
+  if (bar) {
+    const msg = intent ? '\u2713 Saved. Tomorrow: \u201c' + intent.slice(0,50) + '\u201d' : '\u2713 Recorded. The Oracle remembers. See you tomorrow.';
+    bar.innerHTML = '<div style="font-size:14px;color:var(--teal);font-style:italic;text-align:center;padding:4px">' + msg + '</div>';
+    setTimeout(() => { bar.style.transition='opacity .6s'; bar.style.opacity='0'; }, 2500);
+    setTimeout(() => bar.remove(), 3200);
+  }
+}
+
+// 3. Reading streak
+function getStreak() {
+  let sd = JSON.parse(localStorage.getItem('cdp_streak') || '{"count":0,"last":""}');
+  const yest = new Date(TODAY + 'T12:00:00Z');
+  yest.setUTCDate(yest.getUTCDate()-1);
+  const ys = yest.toISOString().slice(0,10);
+  if (sd.last === TODAY) return sd;
+  sd.count = (sd.last === ys) ? sd.count + 1 : 1;
+  sd.last = TODAY;
+  localStorage.setItem('cdp_streak', JSON.stringify(sd));
+  return sd;
+}
+
+function showStreakBadge(streak) {
+  if (streak.count < 2) return;
+  const rc = document.getElementById('readingContent');
+  if (!rc || rc.querySelector('#streakBadge')) return;
+  const b = document.createElement('div');
+  b.id = 'streakBadge';
+  b.style.cssText = 'text-align:right;padding:6px 0 0;font-size:12px;color:var(--text3);letter-spacing:.08em';
+  b.textContent = '\u2726 ' + streak.count + '-day streak';
+  rc.prepend(b);
+}
+
 async function submitAsk() {
   const inp = document.getElementById('askInput');
   const q = inp?.value?.trim();
@@ -4913,12 +6245,23 @@ function clientMoon(ds){
   const d=new Date(ds+'T12:00:00Z');
   const days=((d-MOON_A)/86400000);
   const cyc=((days%LUNAR_C)+LUNAR_C)%LUNAR_C;
-  let emoji='🌑';
-  if(cyc<1.5)emoji='🌑';else if(cyc<7.5)emoji='🌒';else if(cyc<8.5)emoji='🌓';
-  else if(cyc<14.5)emoji='🌔';else if(cyc<16.5)emoji='🌕';else if(cyc<22.5)emoji='🌖';
-  else if(cyc<23.5)emoji='🌗';else emoji='🌘';
-  return{emoji,cyc,isBlack:cyc>27.53,isShiva:cyc>=1.5&&cyc<=3.5,
-    isNew:cyc<1.5||cyc>28.5,isFull:cyc>=14.0&&cyc<=16.0};
+  let emoji='🌑',phase='New Moon';
+  if(cyc<1.5){emoji='🌑';phase='New Moon';}
+  else if(cyc<7.5){emoji='🌒';phase='Waxing Crescent';}
+  else if(cyc<8.5){emoji='🌓';phase='First Quarter';}
+  else if(cyc<14.5){emoji='🌔';phase='Waxing Gibbous';}
+  else if(cyc<16.5){emoji='🌕';phase='Full Moon';}
+  else if(cyc<22.5){emoji='🌖';phase='Waning Gibbous';}
+  else if(cyc<23.5){emoji='🌗';phase='Last Quarter';}
+  else{emoji='🌘';phase='Waning Crescent';}
+  const toNew=cyc<0.5?0:LUNAR_C-cyc;
+  // BLACK MOON: 2 days before new moon — toNew <= 2.0 days
+  const isBlack=toNew>=0&&toNew<=2.0;
+  // SHIVA MOON: 2 days after new moon — cyc 0.5-2.5 days
+  const isShiva=cyc>=0.5&&cyc<=2.5;
+  const isNewMoon=cyc<0.5||cyc>29.0;
+  const isFullMoon=cyc>=14.0&&cyc<=16.0;
+  return{emoji,phase,cyc,toNew,isBlack,isShiva,isNewMoon,isFullMoon};
 }
 
 function clientKin(ds){
@@ -4971,18 +6314,25 @@ function renderCalendar(){
 
     let badges='';
     if(kinD.isGAP) badges+=`<span class="cal-mini-badge" style="background:var(--teal3);color:var(--teal);border:1px solid var(--teal2)">GAP</span>`;
-    if(isMaster) badges+=`<span class="cal-mini-badge" style="background:rgba(200,160,255,0.1);color:var(--master);border:1px solid rgba(200,160,255,0.3)">${ud}</span>`;
-    if(moon.isBlack) badges+=`<span class="cal-mini-badge" style="color:#ff9999">⚠️</span>`;
-    else if(moon.isShiva) badges+=`<span class="cal-mini-badge" style="color:var(--teal)">✨</span>`;
-    if(moon.isNew) badges+=`<span class="cal-mini-badge" style="color:var(--text3)">NM</span>`;
-    if(moon.isFull) badges+=`<span class="cal-mini-badge" style="color:var(--gold)">FM</span>`;
+    if(isMaster){
+      const mc=ud===11?'#C8A0FF':ud===22?'#C9A050':ud===33?'#4DB8A8':'#D4922A';
+      badges+=`<span class="cal-mini-badge" style="background:rgba(200,200,255,0.08);color:${mc};border:1px solid ${mc}44">${ud}★</span>`;
+    }
+    if(moon.isBlack) badges+=`<span class="cal-mini-badge" style="color:#ff9999;font-size:9px">⚠️BM</span>`;
+    else if(moon.isShiva) badges+=`<span class="cal-mini-badge" style="color:var(--teal);font-size:9px">✨SM</span>`;
+    else if(moon.isNewMoon) badges+=`<span class="cal-mini-badge" style="color:var(--text3);font-size:9px">NM</span>`;
+    else if(moon.isFullMoon) badges+=`<span class="cal-mini-badge" style="color:var(--gold);font-size:9px">FM</span>`;
+    // Special days 7 and 9 (non-master but noteworthy)
+    if(!isMaster&&(ud===7||ud===9)) badges+=`<span class="cal-mini-badge" style="color:var(--gold3);border:1px solid var(--gold3);font-size:9px">${ud}✧</span>`;
 
+    const masterCol=ud===11?'#C8A0FF':ud===22?'#C9A050':ud===33?'#4DB8A8':ud===44?'#D4922A':'';
     html+=`<div class="${cls}" onclick="openDayModal('${ds}')">
       <div style="display:flex;justify-content:space-between;align-items:flex-start">
         <span class="cal-dn">${d}</span>
         <span class="cal-moon">${moon.emoji}</span>
       </div>
-      <div class="cal-ud" style="${isMaster?'color:var(--master)':''}">${ud}${isMaster?'★':''} · ${kinD.col[0]}</div>
+      <div class="cal-ud" style="${isMaster?'color:'+masterCol:ud===7||ud===9?'color:var(--gold)':''}">
+        ${ud}${isMaster?'★':ud===7||ud===9?'✧':''}</div>
       <div><span class="cal-kin-dot" style="background:${kinD.colorCode}"></span></div>
       <div class="cal-badges">${badges}</div>
     </div>`;
@@ -4990,6 +6340,177 @@ function renderCalendar(){
   grid.innerHTML=html;
 }
 
+// ── Day modal drawer helpers — called from onclick attributes ──
+let _dayModalData = {}; // store computed values for drawer access
+
+function openDayMoonDrawer() {
+  const d = _dayModalData;
+  if (!d.dLabel) return;
+  const fn = d.firstName;
+  openDrawer(
+    'Moon Phase \u00b7 ' + d.moonPhase,
+    d.moonQ || ('The Moon is ' + d.moonPhase + ' on ' + d.dLabel + '. Day ' + d.moonCycle + ' of the lunar cycle, ' + d.moonToNew + ' days to the New Moon. ' + (d.moonIsBlack ? 'BLACK MOON.' : d.moonIsShiva ? 'SHIVA MOON.' : '') + ' What does this lunar position ask of ' + fn + ' today in their body, energy, and relationships?'),
+    [
+      {q: 'How does the ' + d.moonPhase + ' affect ' + fn + ' on ' + d.dLabel + ' \u2014 body, energy, sleep?', l: 'Body & energy'},
+      {q: 'What does this lunar phase ask ' + fn + ' to release or build right now?', l: 'Release or build'},
+      {q: 'What is the shadow invitation of the ' + d.moonPhase + ' for ' + fn + '?', l: 'Shadow invitation'},
+      d.moonIsBlack ? {q: 'What specifically should ' + fn + ' NOT initiate today on this Black Moon threshold?', l: '\u26a0\ufe0f Black Moon \u2014 what not to do'} : null,
+      d.moonIsShiva ? {q: 'What specific intention should ' + fn + ' plant in the next 48 hours on this Shiva Moon?', l: '\u2728 Shiva Moon \u2014 what to plant'} : null,
+    ].filter(Boolean)
+  );
+}
+
+function openDayUDDrawer() {
+  const d = _dayModalData;
+  if (!d.dLabel) return;
+  const fn = d.firstName;
+  openDrawer(
+    'Universal Day ' + d.ud + ' \u00b7 ' + d.udName,
+    d.udQ || ('Universal Day ' + d.ud + ' (' + d.udName + ') on ' + d.dLabel + '. ' + (d.udK||'') + ' What does this number energy mean for ' + fn + ' today?'),
+    [
+      {q: 'How does Universal Day ' + d.ud + ' specifically affect ' + fn + '\u2019s work and decisions on ' + d.dLabel + '?', l: 'Work & decisions'},
+      {q: 'What does ' + d.ud + ' ask ' + fn + ' to focus on or avoid on ' + d.dLabel + '?', l: 'Focus & avoid'},
+      {q: 'What is the shadow side of ' + d.ud + ' energy ' + fn + ' should watch for?', l: 'Shadow of ' + d.ud},
+      d.isMaster ? {q: 'How should ' + fn + ' best use this Master Number ' + d.ud + ' day?', l: 'Using Master ' + d.ud} : null,
+    ].filter(Boolean)
+  );
+}
+
+function openDayMyDrawer() {
+  const d = _dayModalData;
+  if (!d.dLabel) return;
+  const fn = d.firstName;
+  const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  openDrawer(
+    'Month ' + d.m + ' \u00b7 Year ' + d.y,
+    'Month ' + d.m + ' energy: ' + d.mEn + ' (' + d.mEnName + '). Year ' + d.y + ' energy: ' + d.yEn + ' (' + d.yEnName + '). How do these background frequencies shape what ' + fn + ' is navigating in ' + months[d.m-1] + ' ' + d.y + '?',
+    [
+      {q: 'How does the Month ' + d.mEn + ' (' + d.mEnName + ') background energy shape ' + fn + '\u2019s experience in ' + months[d.m-1] + '?', l: 'Month energy depth'},
+      {q: 'What does Year ' + d.y + ' (Universal Year ' + d.yEn + ' \u00b7 ' + d.yEnName + ') want from ' + fn + ' right now?', l: 'Year energy depth'},
+    ]
+  );
+}
+
+function openDayKinDrawer() {
+  const d = _dayModalData;
+  if (!d.dLabel) return;
+  const chips = [
+    {q: 'What is the gift and the shadow of the ' + d.seal + ' for ' + d.firstName + ' on ' + d.dLabel + '?', l: 'Gift & shadow'},
+    {q: 'How does Tone ' + d.toneNum + ' (' + d.tone + ') shape ' + d.firstName + '\u2019s approach on ' + d.dLabel + '?', l: 'Tone in practice'},
+  ];
+  if (d.isGAP) chips.push({q: 'What specific synchronicities should ' + d.firstName + ' watch for on this GAP day?', l: '\u2605 GAP arrivals'});
+  openDrawer('Dreamspell \u00b7 ' + d.kinFull, d.kinQ || ('Dreamspell Kin ' + d.kinFull + ' on ' + d.dLabel + '. What does this Kin specifically invite ' + d.firstName + ' to embody?'), chips);
+}
+
+function openDayEnergyDrawer(mode, num) {
+  const d = _dayModalData;
+  const nd = NUM_DATA[num] || {n:'—', m:''};
+  const modeLabel = mode==='morning'?'Morning':mode==='afternoon'?'Afternoon':'Evening';
+  openDrawer(
+    modeLabel+' Energy · '+num+' '+nd.n,
+    modeLabel+' energy on '+d.dLabel+': '+num+' ('+nd.n+'). '+(nd.m||nd.k||'')+' What specifically does this '+mode+' energy invite '+d.firstName+' to do or be?',
+    [
+      {q:'What is the single most important thing '+d.firstName+' should do this '+mode+' on '+d.dLabel+'?', l:'Priority this '+mode},
+      {q:'What should '+d.firstName+' avoid this '+mode+'?', l:'What to avoid'},
+    ]
+  );
+}
+
+function openPersonalNumDrawer(scope, num) {
+  const d = _dayModalData;
+  const nd = NUM_DATA[num] || {n:'—', m:''};
+  openDrawer(
+    'Personal '+scope.charAt(0).toUpperCase()+scope.slice(1)+' · '+num+' '+nd.n,
+    'Personal '+scope+' number '+num+' ('+nd.n+') for '+d.firstName+' on '+d.dLabel+'. '+(nd.m||'')+' What does this Personal '+scope+' energy specifically mean for '+d.firstName+' right now?',
+    [
+      {q:'How does Personal '+scope+' '+num+' shape '+d.firstName+' approach on '+d.dLabel+'?', l:'In practice today'},
+      {q:'What does Personal '+scope+' '+num+' reveal about where '+d.firstName+' is in their cycle?', l:'In the cycle'},
+    ]
+  );
+}
+
+// ── Day card save-as-image ──────────────────────────────────────
+async function saveDayCardImage(ds) {
+  const card = document.getElementById('dayCardCapture');
+  const btn = document.getElementById('dayCardSaveBtn');
+  if (!card) return;
+  if (btn) { btn.textContent = 'Capturing…'; btn.disabled = true; }
+  try {
+    if (typeof html2canvas !== 'undefined') {
+      const canvas = await html2canvas(card, {
+        backgroundColor: '#0D1E33',
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        ignoreElements: el => el.classList.contains('no-capture')
+      });
+      canvas.toBlob(async blob => {
+        try {
+          await navigator.clipboard.write([new ClipboardItem({'image/png': blob})]);
+          if (btn) { btn.textContent = '✓ Copied to clipboard'; setTimeout(()=>{ btn.textContent='⎘ Save as Image'; btn.disabled=false; }, 2500); }
+        } catch(e) {
+          // Clipboard API not available — download instead
+          const a = document.createElement('a');
+          a.href = URL.createObjectURL(blob);
+          a.download = 'cosmic-day-' + ds + '.png';
+          a.click();
+          if (btn) { btn.textContent = '✓ Downloaded'; setTimeout(()=>{ btn.textContent='⎘ Save as Image'; btn.disabled=false; }, 2500); }
+        }
+      }, 'image/png');
+    } else {
+      if (btn) { btn.textContent = '⎘ Save as Image'; btn.disabled = false; }
+      alert('Image capture library not loaded. Try saving as PDF instead.');
+    }
+  } catch(e) {
+    if (btn) { btn.textContent = '⎘ Save as Image'; btn.disabled = false; }
+  }
+}
+
+function saveDayCardPDF(ds, dLabel) {
+  const card = document.getElementById('dayCardCapture');
+  if (!card) return;
+  const w = window.open('', '_blank', 'width=600,height=800');
+  if (!w) { alert('Please allow pop-ups to save as PDF.'); return; }
+  w.document.write(`<!DOCTYPE html><html><head>
+    <meta charset="UTF-8">
+    <title>Cosmic Daily Planner · ${dLabel}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=EB+Garamond:ital,wght@0,400;1,400&display=swap" rel="stylesheet">
+    <style>
+      *{box-sizing:border-box;margin:0;padding:0}
+      body{background:#07111a;color:#E8DCC8;font-family:'EB Garamond',Georgia,serif;font-size:11pt;padding:20px}
+      .card{background:#0D1E33;border:1px solid rgba(201,160,80,0.3);border-radius:4px;padding:20px 22px;max-width:480px;margin:0 auto}
+      .card-brand{font-family:'Cormorant Garamond',serif;font-size:9pt;letter-spacing:.4em;text-transform:uppercase;color:#C9A050;margin-bottom:12px;opacity:.7}
+      .card-date{font-family:'Cormorant Garamond',serif;font-size:18pt;color:#E8C878;margin-bottom:16px;font-weight:300}
+      .grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
+      .box{background:#0a1825;border:1px solid rgba(201,160,80,0.12);border-radius:3px;padding:10px 11px}
+      .box-label{font-size:7pt;letter-spacing:.25em;text-transform:uppercase;color:#7A8FAA;margin-bottom:4px}
+      .box-val{font-family:'Cormorant Garamond',serif;font-size:20pt;color:#C9A050;line-height:1}
+      .box-sub{font-size:9pt;color:#9bb3c9;margin-top:3px}
+      .box-note{font-size:8pt;color:#5a7a9a;margin-top:4px;font-style:italic;line-height:1.4}
+      .energies{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:12px}
+      .en-card{background:#0a1825;border:1px solid rgba(201,160,80,0.12);border-radius:3px;padding:8px;text-align:center}
+      .en-label{font-size:7pt;color:#7A8FAA;margin-bottom:3px}
+      .en-num{font-family:'Cormorant Garamond',serif;font-size:18pt;color:#E8DCC8;line-height:1}
+      .en-name{font-size:8pt;color:#9bb3c9;margin-top:2px}
+      .alert{border-radius:3px;padding:9px 12px;margin-bottom:12px;font-size:9.5pt;line-height:1.5}
+      .footer{font-size:7.5pt;color:#4a6a8a;text-align:center;margin-top:14px;letter-spacing:.08em}
+      .print-btn{position:fixed;top:12px;right:12px;background:#0D1E33;border:1px solid #C9A050;
+        color:#C9A050;font-family:'EB Garamond',serif;font-size:11px;padding:8px 16px;
+        border-radius:2px;cursor:pointer;letter-spacing:.15em}
+      @media print{.print-btn{display:none}body{padding:0}}
+      @page{margin:10mm;size:A5 portrait}
+    </style>
+  </head><body>
+  <button class="print-btn" onclick="window.print()">⎙ Save as PDF</button>
+  <div class="card">
+    ${card.innerHTML.replace(/class="no-capture[^"]*"/g,'').replace(/<button[^>]*>.*?<\/button>/gs,'').replace(/onclick="[^"]*"/g,'')}
+  </div>
+  <div class="footer">✦ cosmicdailyplanner.com · Generated ${new Date().toLocaleDateString('en-GB')}</div>
+  </body></html>`);
+  w.document.close();
+}
+
+// ── Open day modal with tappable cards ──────────────────────────
 function openDayModal(ds){
   const moon=clientMoon(ds);
   const kinD=clientKin(ds);
@@ -4997,48 +6518,209 @@ function openDayModal(ds){
   const date=new Date(ds+'T12:00:00Z');
   const dLabel=date.toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
   const isMaster=[11,22,33,44].includes(ud);
-  const udD=NUM_DATA[ud]||{n:'—',m:''};
+  const isSpecial=!isMaster&&[7,9].includes(ud);
+  const udD=NUM_DATA[ud]||{n:'—',m:'',k:''};
+  const masterCol=ud===11?'#C8A0FF':ud===22?'#C9A050':ud===33?'#4DB8A8':ud===44?'#D4922A':'';
 
-  let pd=null;
+  const [y,m,d2]=ds.split('-').map(Number);
+  const mEn=numReduce(m);
+  const mEnD=NUM_DATA[mEn]||{n:'—'};
+  const yRaw=String(y).split('').reduce((a,b)=>a+parseInt(b),0);
+  const yEn=numReduce(yRaw);
+  const yEnD=NUM_DATA[yEn]||{n:'—'};
+
+  let pd=null,pm=null,py=null,pdD={},pmD={},pyD={};
   if(profile.birthDay&&profile.birthMonth&&profile.birthYear){
-    const[y,m,d2]=ds.split('-').map(Number);
-    const yRaw=String(y).split('').reduce((a,b)=>a+parseInt(b),0);
-    let py=profile.birthDay+profile.birthMonth+numReduce(yRaw);
-    py=numReduce(py);
-    let pm=py+m; pm=numReduce(pm);
+    const yR=String(y).split('').reduce((a,b)=>a+parseInt(b),0);
+    py=numReduce(profile.birthDay+profile.birthMonth+numReduce(yR));
+    pm=numReduce(py+m);
     pd=numReduce(pm+d2);
+    pdD=NUM_DATA[pd]||{}; pmD=NUM_DATA[pm]||{}; pyD=NUM_DATA[py]||{};
   }
+
+  const morning=pd||ud, afternoon=pm||mEn, evening=py||yEn;
+  const kinCol=kinD.col==='Red'?'#c0392b':kinD.col==='White'?'#9bb3c9':kinD.col==='Blue'?'#2980b9':'#c9a050';
+  const firstName=getFirstName();
+
+  // Populate shared data for ALL drawer helper functions
+  _dayModalData = {
+    ds, dLabel, firstName,
+    m, y,
+    ud, udName: udD.n||'', udK: udD.k||'', isMaster,
+    mEn, mEnName: mEnD.n||'', yEn, yEnName: yEnD.n||'',
+    moonPhase: moon.phase, moonEmoji: moon.emoji,
+    moonCycle: parseFloat(moon.cyc).toFixed(1),
+    moonToNew: parseFloat(moon.toNew).toFixed(1),
+    moonIsBlack: moon.isBlack, moonIsShiva: moon.isShiva,
+    kinFull: kinD.col+' '+kinD.tone+' '+kinD.seal,
+    seal: kinD.seal, tone: kinD.tone, toneNum: (kinD.kin-1)%13+1,
+    isGAP: kinD.isGAP, kinQ: '',
+    moonQ: '', udQ: '', myQ: ''
+  };
+
+  // Pre-compute drawer questions — stored in _dayModalData for helper functions
+  const moonQ = moon.phase + ' — day ' + parseFloat(moon.cyc).toFixed(1) + ' of the lunar cycle, ' + parseFloat(moon.toNew).toFixed(1) + ' days to the New Moon. ' + (moon.isBlack?'BLACK MOON — threshold day.':moon.isShiva?'SHIVA MOON — auspicious.':'') + ' What does this lunar position ask of ' + firstName + ' on ' + dLabel + '?';
+  const kinQ = 'Dreamspell Kin ' + kinD.kin + ' — ' + kinD.col + ' ' + kinD.tone + ' ' + kinD.seal + '. Tone ' + ((kinD.kin-1)%13+1) + '. ' + (kinD.isGAP?'GALACTIC ACTIVATION PORTAL. ':'') + 'What does this Kin specifically invite ' + firstName + ' to embody on ' + dLabel + '? (Arguelles 1987)';
+  _dayModalData.kinQ = kinQ;
+  const udQ = 'Universal Day ' + ud + ' (' + udD.n + '). ' + (udD.k||'') + ' What does this number energy mean for ' + firstName + ' on ' + dLabel + '? How does it shape the quality of the day?';
+  const myQ = 'Month ' + m + ' energy: ' + mEn + ' (' + mEnD.n + '). Year ' + y + ' energy: ' + yEn + ' (' + yEnD.n + '). How do these background frequencies shape what ' + firstName + ' is navigating right now?';
+  const masterQ = isMaster ? 'Master Number ' + ud + ' (' + udD.n + ') — ' + (udD.m||'') + ' What does this Master Number day mean for ' + firstName + ' specifically? How should they use this energy well?' : '';
+
+  const moonAlert=moon.isBlack
+    ?'⚠️ <strong>Black Moon</strong> — two days before the New Moon. Move carefully: avoid launching anything significant. Rest, observe, and let intuition guide.'
+    :moon.isShiva
+    ?'✨ <strong>Shiva Moon</strong> — two days after the New Moon. What you plant in the next 48 hours takes root. Act with intention.'
+    :moon.isNewMoon?'🌑 <strong>New Moon</strong> — the cycle resets. Set intentions in silence.'
+    :moon.isFullMoon?'🌕 <strong>Full Moon</strong> — peak illumination. What is ready to be seen?'
+    :'';
 
   const cont=document.getElementById('dayModalContent');
   cont.innerHTML=`
-    <button class="modal-close" onclick="closeModal()">×</button>
+    <button class="modal-close no-capture" onclick="closeModal()">×</button>
     <div class="modal-date">${dLabel}</div>
+
+    <!-- Capture zone starts here -->
+    <div id="dayCardCapture" style="background:var(--bg);border-radius:4px;padding:4px 0 8px">
+
+    ${(moon.isBlack||moon.isShiva||moon.isNewMoon||moon.isFullMoon)?`
+    <div style="background:${moon.isBlack?'rgba(80,0,0,0.3)':moon.isShiva?'rgba(0,60,80,0.3)':'rgba(201,160,80,0.08)'};border:1px solid ${moon.isBlack?'rgba(200,80,80,0.3)':moon.isShiva?'rgba(80,200,180,0.25)':'rgba(201,160,80,0.2)'};border-radius:4px;padding:11px 14px;margin-bottom:14px;font-size:14px;line-height:1.6;color:var(--text2)">${moonAlert}</div>`:''}
+
+    ${isMaster?`<div class="tappable" style="background:rgba(${ud===11?'200,160,255':ud===22?'201,160,80':ud===33?'77,184,168':'212,146,42'},0.08);border:1px solid ${masterCol}44;border-radius:4px;padding:12px 16px;margin-bottom:14px;font-size:14px;color:${masterCol};cursor:pointer"
+      data-title="Master Number ${ud} — ${udD.n}"
+      data-q="${masterQ}"
+      onclick="closeModal();openDrawer(this.dataset.title, this.dataset.q, [{q:'How should ${firstName} specifically use this Master Number energy today?',l:'How to use this energy'},{q:'What is the shadow or risk of Master ${ud} energy that ${firstName} should watch for?',l:'Shadow of ${ud}'}])">
+      ★ <strong>Master Number ${ud} Day — ${udD.n}</strong>
+      <br><span style="font-size:12px;opacity:.8">${udD.m||''}</span>
+      <div style="font-size:10px;color:${masterCol};margin-top:6px;opacity:.7">↗ Tap for deeper insight</div>
+    </div>`:''}
+
+    ${isSpecial?`<div style="background:rgba(201,160,80,0.07);border:1px solid rgba(201,160,80,0.18);border-radius:4px;padding:10px 14px;margin-bottom:14px;font-size:13px;color:var(--gold)">✧ <strong>Day ${ud} — ${udD.n}</strong> — a day of particular ${ud===7?'introspective depth':'completion and compassion'}.</div>`:''}
+
+    ${kinD.isGAP?`<div style="background:var(--teal3);border:1px solid var(--teal2);border-radius:4px;padding:10px 14px;margin-bottom:14px;font-size:13px;color:var(--teal)">★ <strong>Galactic Activation Portal</strong> — heightened sensitivity, synchronicities amplified. (Argüelles 1987)</div>`:''}
+
     <div class="modal-grid">
-      <div class="modal-item">
-        <div class="modal-item-label">Moon</div>
-        <div class="modal-item-val">${moon.emoji} ${moon.isBlack?'⚠️ Black Moon':moon.isShiva?'✨ Shiva Moon':''}</div>
-        <div class="modal-item-sub">${moon.cyc.toFixed(1)}d cycle</div>
-        <div class="modal-item-meaning">${moon.isBlack?'Two days before the New Moon — a tricky threshold. Move carefully, avoid major launches.':moon.isShiva?'Two days after the New Moon — blissful and generative energy. Auspicious for fresh starts.':''}</div>
+
+      <!-- MOON — tappable -->
+      <div class="modal-item tappable" style="cursor:pointer"
+        data-title="Moon Phase · ${moon.phase}"
+        data-q="${moonQ}"
+        onclick="closeModal();openDayMoonDrawer()">
+        <div class="modal-item-label">Moon Phase</div>
+        <div class="modal-item-val" style="font-size:22px">${moon.emoji}</div>
+        <div class="modal-item-sub" style="font-weight:500">${moon.phase}</div>
+        <div class="modal-item-meaning">Day ${parseFloat(moon.cyc).toFixed(1)} · ${parseFloat(moon.toNew).toFixed(1)}d to New Moon</div>
+        <div style="font-size:10px;color:var(--teal);margin-top:6px;opacity:.7">↗ Tap for insight</div>
       </div>
-      <div class="modal-item">
-        <div class="modal-item-label">Universal Day${isMaster?' · Master Number':''}</div>
-        <div class="modal-item-val" style="${isMaster?'color:var(--master)':''}">${ud}${isMaster?'★':''}</div>
+
+      <!-- DREAMSPELL — tappable -->
+      <div class="modal-item tappable" style="cursor:pointer"
+        onclick="openDayKinDrawer()">
+        <div class="modal-item-label">Dreamspell · ${kinD.isGAP?'★ Portal':'Kin '+kinD.kin}</div>
+        <div class="modal-item-val" style="color:${kinCol};font-size:13px">Kin ${kinD.kin}</div>
+        <div class="modal-item-sub" style="color:${kinCol}">${kinD.col} ${kinD.tone} ${kinD.seal}</div>
+        <div class="modal-item-meaning" style="font-size:10px">Tone ${(kinD.kin-1)%13+1} · <a href="https://www.tortuga.com/oracle/" target="_blank" style="color:var(--teal)" onclick="event.stopPropagation()">tortuga.com/oracle</a></div>
+        <div style="font-size:10px;color:var(--teal);margin-top:6px;opacity:.7">↗ Tap for insight</div>
+      </div>
+
+      <!-- UNIVERSAL DAY — tappable -->
+      <div class="modal-item tappable" style="cursor:pointer"
+        data-title="Universal Day ${ud} · ${udD.n}"
+        data-q="${udQ}"
+        onclick="closeModal();openDayUDDrawer()">
+        <div class="modal-item-label">Universal Day Energy</div>
+        <div class="modal-item-val" style="${isMaster?'color:'+masterCol:''};">${ud}${isMaster?'★':''}</div>
         <div class="modal-item-sub">${udD.n}</div>
-        <div class="modal-item-meaning">${udD.m}</div>
+        <div class="modal-item-meaning">${udD.k||''}</div>
+        <div style="font-size:10px;color:var(--gold);margin-top:6px;opacity:.7">↗ Tap for insight</div>
       </div>
-      <div class="modal-item" style="grid-column:1/-1">
-        <div class="modal-item-label">Dreamspell · ${kinD.isGAP?'★ GALACTIC ACTIVATION PORTAL':'Law of Time (Argüelles 1987)'}</div>
-        <div class="modal-item-val" style="color:${kinD.colorCode}">Kin ${kinD.kin} — ${kinD.col} ${kinD.tone} ${kinD.seal}</div>
-        <div class="modal-item-sub">${kinD.isGAP?'Portal day — the veil is thinner. Pay attention to what arrives.':'Verify: tortuga.com/oracle'}</div>
+
+      <!-- MONTH & YEAR ENERGY — tappable -->
+      <div class="modal-item tappable" style="cursor:pointer"
+        data-title="Month ${m} · Year ${y}"
+        data-q="${myQ}"
+        onclick="closeModal();openDayMyDrawer()">
+        <div class="modal-item-label">Month · Year Energy</div>
+        <div class="modal-item-val" style="font-size:15px">${mEn} · ${yEn}</div>
+        <div class="modal-item-sub">${mEnD.n} · ${yEnD.n}</div>
+        <div class="modal-item-meaning" style="font-size:10px">Month ${m}: reduce=${mEn} · Year ${y}: reduce=${yEn}</div>
+        <div style="font-size:10px;color:var(--gold);margin-top:6px;opacity:.7">↗ Tap for insight</div>
       </div>
-      ${pd?`<div class="modal-item">
-        <div class="modal-item-label">Your Personal Day</div>
-        <div class="modal-item-val" style="${[11,22,33,44].includes(pd)?'color:var(--master)':''}">${pd}${[11,22,33,44].includes(pd)?'★':''}</div>
-        <div class="modal-item-sub">${(NUM_DATA[pd]||{n:'—'}).n}</div>
-        <div class="modal-item-meaning">${(NUM_DATA[pd]||{m:''}).m}</div>
-      </div>`:''}
+
     </div>
-    <button class="modal-open-btn" onclick="closeModal();showScreen('sr',document.querySelectorAll('.npill')[0]);loadReading('${ds}')">Open Full Oracle Reading for this Day →</button>`;
+
+    <!-- THREE ENERGIES — each tappable -->
+    <div style="margin:14px 0 8px;font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--text3)">Three Energies of the Day</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px">
+      ${['🌅 Morning','☀️ Afternoon','🌙 Evening'].map((label,i)=>{
+        const num=[morning,afternoon,evening][i];
+        const mode=['morning','afternoon','evening'][i];
+        const nd=NUM_DATA[num]||{n:'—',m:''};
+        const isM=[11,22,33,44].includes(num);
+        const mc=num===11?'#C8A0FF':num===22?'#C9A050':num===33?'#4DB8A8':num===44?'#D4922A':'var(--gold)';
+        const q = mode + ' energy on ' + dLabel + ': ' + num + ' (' + (nd.n||'') + '). ' + (nd.m||nd.k||'') + ' What specifically does this ' + mode + ' energy invite ' + firstName + ' to do or be on this day?';
+        return `<div class="tappable" style="background:var(--bg2);border:1px solid var(--div);border-radius:4px;padding:10px;text-align:center;cursor:pointer"
+          onclick="closeModal();openDayEnergyDrawer('${mode}', ${num})">
+          <div style="font-size:10px;color:var(--text3);margin-bottom:4px">${label}</div>
+          <div style="font-size:24px;font-family:'Cormorant Garamond',serif;color:${isM?mc:'var(--text)'}">${num}${isM?'★':''}</div>
+          <div style="font-size:11px;color:${isM?mc:'var(--text2)'};margin-top:2px">${nd.n}</div>
+          <div style="font-size:9px;color:var(--gold);margin-top:5px;opacity:.6">↗ Tap</div>
+        </div>`;
+      }).join('')}
+    </div>
+
+    <!-- ENERGY GUIDE -->
+    <div style="background:var(--bg2);border:1px solid var(--div);border-radius:4px;padding:12px 14px;margin-bottom:12px">
+      <div style="font-size:11px;color:var(--text3);margin-bottom:8px;letter-spacing:.1em;text-transform:uppercase">Energy Guide</div>
+      ${[['🌅 Morning',morning,NUM_DATA[morning]?.m||NUM_DATA[morning]?.k||''],
+         ['☀️ Afternoon',afternoon,NUM_DATA[afternoon]?.m||NUM_DATA[afternoon]?.k||''],
+         ['🌙 Evening',evening,NUM_DATA[evening]?.m||NUM_DATA[evening]?.k||'']
+      ].map(([lbl,n,desc])=>`<div style="display:flex;gap:8px;padding:5px 0;border-bottom:1px solid var(--div2);font-size:13px;line-height:1.5">
+        <span style="color:var(--text3);min-width:80px">${lbl}</span>
+        <span style="color:var(--text2)">${desc}</span>
+      </div>`).join('')}
+    </div>
+
+    ${pd?`<!-- PERSONAL NUMBERS — each tappable -->
+    <div style="margin:12px 0 8px;font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--text3)">Your Personal Numbers</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px">
+      ${[['Personal Day',pd,pdD,'day'],['Personal Month',pm,pmD,'month'],['Personal Year',py,pyD,'year']].map(([lbl,n,nd,scope])=>{
+        const isM=[11,22,33,44].includes(n);
+        const mc=n===11?'#C8A0FF':n===22?'#C9A050':n===33?'#4DB8A8':n===44?'#D4922A':'var(--text)';
+        const pq = 'Personal ' + scope + ' number ' + n + ' (' + (nd?.n||'') + ') for ' + firstName + ' on ' + dLabel + '. ' + (NUM_DATA[n]?.m||'') + ' What does this Personal ' + scope + ' energy specifically mean for ' + firstName + ' right now?';
+        return `<div class="tappable" style="background:var(--bg2);border:1px solid var(--div);border-radius:4px;padding:10px;text-align:center;cursor:pointer"
+          onclick="closeModal();openPersonalNumDrawer('${scope}', ${n})">
+          <div style="font-size:10px;color:var(--text3);margin-bottom:4px">${lbl}</div>
+          <div style="font-size:22px;font-family:'Cormorant Garamond',serif;color:${isM?mc:'var(--text)'}">${n||'—'}${isM?'★':''}</div>
+          <div style="font-size:11px;color:var(--text2);margin-top:2px">${nd?.n||'—'}</div>
+          <div style="font-size:9px;color:var(--gold);margin-top:5px;opacity:.6">↗ Tap</div>
+        </div>`;
+      }).join('')}
+    </div>`:''}
+
+    </div><!-- end dayCardCapture -->
+
+    <!-- ACTION BUTTONS -->
+    <div class="no-capture" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
+      <button id="dayCardSaveBtn"
+        onclick="saveDayCardImage('${ds}')"
+        style="padding:9px;background:none;border:1px solid var(--div);color:var(--text3);
+        font-family:'EB Garamond',serif;font-size:13px;letter-spacing:.1em;border-radius:2px;
+        cursor:pointer;transition:all .2s"
+        onmouseover="this.style.borderColor='var(--teal)';this.style.color='var(--teal)'"
+        onmouseout="this.style.borderColor='var(--div)';this.style.color='var(--text3)'">
+        ⎘ Save as Image
+      </button>
+      <button onclick="saveDayCardPDF('${ds}', '${dLabel.replace(/'/g,"\'")}' )"
+        style="padding:9px;background:none;border:1px solid var(--div);color:var(--text3);
+        font-family:'EB Garamond',serif;font-size:13px;letter-spacing:.1em;border-radius:2px;
+        cursor:pointer;transition:all .2s"
+        onmouseover="this.style.borderColor='var(--gold)';this.style.color='var(--gold)'"
+        onmouseout="this.style.borderColor='var(--div)';this.style.color='var(--text3)'">
+        ⎙ Save as PDF
+      </button>
+    </div>
+
+    <button class="modal-open-btn no-capture" onclick="closeModal();showScreen('sr',document.querySelectorAll('.npill')[0]);loadReading('${ds}')">Open Full Oracle Reading for this Day →</button>`;
   document.getElementById('dayModal').classList.add('open');
 }
 
@@ -5687,7 +7369,7 @@ function initCompatScreen() {
       for (let y=new Date().getFullYear();y>=1930;y--) el.add(new Option(y,y));
     }
   });
-  // Pre-fill from profile
+  // Pre-fill Person A from profile
   if (profile.name || profile.nickname) {
     const nameEl = document.getElementById('cA_name');
     if (nameEl && !nameEl.value) nameEl.value = profile.nickname || profile.name || '';
@@ -5697,6 +7379,22 @@ function initCompatScreen() {
   fillSelect('cA_year', profile.birthYear);
   if (profile.birthTime) { const el=document.getElementById('cA_time'); if(el&&!el.value) el.value=profile.birthTime; }
   if (profile.birthLocation) { const el=document.getElementById('cA_location'); if(el&&!el.value) el.value=profile.birthLocation; }
+
+  // Pre-fill Person B from last saved compat person
+  const lastB = JSON.parse(localStorage.getItem('cdp_last_compat_b') || 'null');
+  if (lastB) {
+    const bName = document.getElementById('cB_name');
+    if (bName && !bName.value && lastB.name) bName.value = lastB.name;
+    fillSelect('cB_day', lastB.birthDay);
+    fillSelect('cB_month', lastB.birthMonth);
+    fillSelect('cB_year', lastB.birthYear);
+    if (lastB.birthTime) { const el=document.getElementById('cB_time'); if(el&&!el.value) el.value=lastB.birthTime; }
+    if (lastB.birthLocation) { const el=document.getElementById('cB_location'); if(el&&!el.value) el.value=lastB.birthLocation; }
+    if (lastB.context) { const el=document.getElementById('cB_context'); if(el&&!el.value) el.value=lastB.context; }
+    // Show subtle "last used" indicator
+    const label = document.querySelector('.compat-person.person-b .compat-person-label');
+    if (label && lastB.name) label.innerHTML = 'Person B &nbsp;<span style="font-size:10px;color:var(--teal);opacity:.7;text-transform:none;letter-spacing:0">last: ' + lastB.name + '</span>';
+  }
 }
 
 function selectCompatTopic(btn) {
@@ -5741,6 +7439,17 @@ async function generateCompatibility() {
     return;
   }
 
+  // Save Person B for next visit — auto-repopulates the form
+  localStorage.setItem('cdp_last_compat_b', JSON.stringify({
+    name: personB.name,
+    birthDay: personB.birthDay,
+    birthMonth: personB.birthMonth,
+    birthYear: personB.birthYear,
+    birthTime: personB.birthTime || '',
+    birthLocation: personB.birthLocation || '',
+    context: personB.context || '',
+  }));
+
   if (btn) { btn.disabled = true; btn.textContent = '☽ The Oracle is reading your connection…'; }
   result.classList.add('show');
   result.innerHTML = `<div style="text-align:center;padding:52px 24px">
@@ -5767,10 +7476,31 @@ async function generateCompatibility() {
     if (data.error) throw new Error(data.error);
     renderCompatResult(data);
   } catch(e) {
+    const isOverload = e.message && (e.message.toLowerCase().includes('overload') || e.message.includes('529') || e.message.includes('503'));
+    if (isOverload && (window._compatRetries||0) < 2) {
+      // Auto-retry on overload
+      window._compatRetries = (window._compatRetries||0) + 1;
+      result.innerHTML = `<div style="text-align:center;padding:32px 24px">
+        <div class="load-moon">☽</div>
+        <div style="font-size:16px;color:var(--text3);margin-top:16px;font-style:italic">
+          High demand — your reading is in the queue. Retrying automatically…
+        </div>
+        <div style="font-size:13px;color:var(--teal);margin-top:6px">Attempt ${window._compatRetries + 1} of 3</div>
+      </div>`;
+      setTimeout(() => generateCompatibility(), 4000);
+      if (btn) { btn.disabled = false; btn.textContent = '✦ Read Our Compatibility'; }
+      return;
+    }
+    window._compatRetries = 0;
+    const friendlyMsg = isOverload
+      ? 'The Oracle is handling high demand. Please try again in a moment.'
+      : e.message?.includes('pattern') || e.message?.includes('validation')
+        ? 'Please check the date of birth fields and try again.'
+        : 'Something went wrong. Please try again.';
     result.innerHTML = `<div style="background:rgba(80,0,0,.2);border:1px solid rgba(200,80,80,.3);
       color:#ff9999;padding:16px 18px;border-radius:2px;font-size:15px">
-      The Oracle encountered an issue: ${e.message}
-      <br><button onclick="generateCompatibility()" style="margin-top:12px;background:none;
+      ${friendlyMsg}
+      <br><button onclick="window._compatRetries=0;generateCompatibility()" style="margin-top:12px;background:none;
       border:1px solid #ff9999;color:#ff9999;padding:8px 16px;border-radius:2px;
       cursor:pointer;font-family:'EB Garamond',serif;font-size:13px">Try Again ↺</button>
     </div>`;
@@ -5782,25 +7512,48 @@ function renderCompatResult(data) {
   const { reading: r, natalA, natalB, kinA, kinB, numA, numB,
     moonPhaseA, moonPhaseB, bioA, bioB, bioSynastry,
     numCross, dreamspellCross, moonPhaseCross,
+    chineseA, chineseB, chineseCompat,
     synAspects, nameA, nameB } = data;
   if (!r) return;
 
   const st = n => '●'.repeat(Math.max(0,n)) + '○'.repeat(Math.max(0,5-n));
 
+  // Helper: open compat drawer
+  function compatDrawer(topic, question, chips) {
+    const ctx = [
+      r.synthesis || '',
+      numCross ? `LP ${numCross.lpA} + ${numCross.lpB}: ${numCross.quality}` : '',
+      chineseA && chineseB ? `Chinese: ${chineseA.element} ${chineseA.animal} + ${chineseB.element} ${chineseB.animal}` : '',
+    ].filter(Boolean).join('. ');
+    openDrawer(topic,
+      question + ' [Reading context: ' + ctx.slice(0,400) + ']',
+      chips || []);
+  }
+
   let html = `<div style="background:var(--bg2);border:1px solid rgba(201,160,80,0.2);border-radius:3px;overflow:hidden;margin-bottom:20px">`;
 
-  // Headline
-  if (r.headline) html += `<div class="compat-headline">${r.headline}</div>`;
+  // Headline — tappable
+  if (r.headline) {
+    const safeH = (r.headline||'').replace(/'/g,"\\'").slice(0,200);
+    html += `<div class="compat-headline tappable" style="cursor:pointer"
+      onclick="openDrawer('Connection · Headline','${safeH} — Go deeper: what is the single most important thing ${(nameA||'').replace(/'/g,"\\'")} and ${(nameB||'').replace(/'/g,"\\'")} most need to understand about this connection right now?',[{q:'What does this connection want from both people?',l:'What this connection wants'},{q:'What is the greatest risk if they ignore what this connection is asking?',l:'The risk of not listening'}])">${r.headline}</div>`;
+  }
 
-  // Synthesis
-  if (r.synthesis) html += `<div class="compat-synthesis">${r.synthesis}</div>`;
+  // Synthesis — tappable
+  if (r.synthesis) {
+    const safeS = (r.synthesis||'').replace(/'/g,"\\'").slice(0,300);
+    html += `<div class="compat-synthesis tappable" style="cursor:pointer"
+      onclick="openDrawer('Opening Synthesis','${safeS} — Expand on this. What is the underlying dynamic that all six frameworks are pointing to?',[{q:'Where exactly do the six frameworks most agree about this connection?',l:'Where all frameworks agree'},{q:'What would change if both people fully understood what this synthesis is saying?',l:'The change this insight asks for'}])">${r.synthesis}<div style="font-size:11px;color:var(--gold);margin-top:8px;letter-spacing:.1em;text-transform:uppercase">↗ Go deeper</div></div>`;
+  }
 
-  // Framework convergence — the centrepiece
+  // Framework convergence
   if (r.framework_convergence) {
+    const safeFW = (r.framework_convergence||'').replace(/'/g,"\\'").slice(0,300);
     html += `<div style="padding:0 24px 20px">
       <div style="font-size:10px;letter-spacing:.35em;text-transform:uppercase;color:var(--teal);
-        margin-bottom:12px;display:flex;align-items:center;gap:10px">
-        Where Five Frameworks Converge
+        margin-bottom:12px;display:flex;align-items:center;gap:10px;cursor:pointer"
+        onclick="openDrawer('Where Six Frameworks Converge','${safeFW} — Which single convergence across all six frameworks is most significant for this relationship right now?',[{q:'If they could only act on one convergence signal, what should it be?',l:'The one signal to act on'}])">
+        Where Six Frameworks Converge ↗
         <span style="flex:1;height:1px;background:var(--teal2);display:inline-block"></span>
       </div>
       <div style="font-size:16px;color:var(--text2);line-height:1.85">
@@ -5809,12 +7562,94 @@ function renderCompatResult(data) {
     </div>`;
   }
 
-  // Biorhythm snapshot today
-  if (bioSynastry && bioSynastry.length) {
+  // ── CHINESE ASTROLOGY SECTION (new 6th framework) ──
+  if (chineseA && chineseB) {
+    const chType = chineseCompat?.t || 'Neutral';
+    const chQual = chineseCompat?.q || '';
+    const chDyn  = chineseCompat?.d || '';
+    const typeCol = chType === 'Best Match' ? 'var(--teal)' : chType === 'Affinity' ? 'var(--gold)' : chType === 'Clash' ? '#ff9999' : 'var(--text3)';
+    const typeBg  = chType === 'Best Match' ? 'rgba(129,205,182,0.08)' : chType === 'Affinity' ? 'rgba(201,160,80,0.08)' : chType === 'Clash' ? 'rgba(200,80,80,0.08)' : 'var(--bg3)';
+    const chBody  = r.chinese_connection || '';
+
+    // Animal emoji map
+    const ANIMAL_EMOJI = {Rat:'🐀',Ox:'🐂',Tiger:'🐅',Rabbit:'🐇',Dragon:'🐉',Snake:'🐍',Horse:'🐴',Goat:'🐐',Monkey:'🐒',Rooster:'🐓',Dog:'🐕',Pig:'🐖'};
+    const emojiA = ANIMAL_EMOJI[chineseA.animal] || '☯';
+    const emojiB = ANIMAL_EMOJI[chineseB.animal] || '☯';
+
+    // Element colour map
+    const EL_COL = {Metal:'#b0c4d8',Water:'#6eb5d4',Wood:'#7db87d',Fire:'#d4724a',Earth:'#c9a050'};
+    const elColA = EL_COL[chineseA.element] || 'var(--text2)';
+    const elColB = EL_COL[chineseB.element] || 'var(--text2)';
+
+    // Build the open drawer call without inline template expressions
+    const chDrawerQ = (chBody || (chineseA.element+' '+chineseA.animal+' and '+chineseB.element+' '+chineseB.animal+'. '+chQual+'. '+chDyn)).replace(/'/g,"\\'").slice(0,300);
+    const safeNA = (nameA||'').replace(/'/g,"\\'");
+    const safeNB = (nameB||'').replace(/'/g,"\\'");
+
     html += `<div style="padding:0 24px 20px">
       <div style="font-size:10px;letter-spacing:.35em;text-transform:uppercase;color:var(--gold);
-        margin-bottom:12px;display:flex;align-items:center;gap:10px">
-        Biorhythms Today
+        margin-bottom:14px;display:flex;align-items:center;gap:10px;cursor:pointer"
+        onclick="openChineseCompatDrawer()">
+        ☯ Chinese Astrology ↗
+        <span style="flex:1;height:1px;background:var(--gold3);display:inline-block"></span>
+        <span style="font-size:9px;color:var(--text3);text-transform:none;letter-spacing:0;font-style:italic">Solar year signs · CNY-corrected</span>
+      </div>
+
+      <!-- Visual animal cards -->
+      <div style="display:grid;grid-template-columns:1fr auto 1fr;gap:10px;align-items:center;margin-bottom:14px">
+
+        <!-- Person A card -->
+        <div style="background:var(--bg3);border:1px solid var(--div);border-radius:3px;padding:14px 16px;text-align:center">
+          <div style="font-size:10px;color:var(--text3);letter-spacing:.2em;text-transform:uppercase;margin-bottom:8px">${nameA}</div>
+          <div style="font-size:40px;line-height:1;margin-bottom:8px">${emojiA}</div>
+          <div style="font-family:'Cormorant Garamond',serif;font-size:18px;color:${elColA};margin-bottom:4px">${chineseA.animal}</div>
+          <div style="font-size:12px;color:var(--text3)">${chineseA.element}</div>
+          <div style="margin-top:8px;height:3px;border-radius:2px;background:${elColA};opacity:.4"></div>
+        </div>
+
+        <!-- Relationship badge -->
+        <div style="text-align:center;padding:8px 0">
+          <div style="width:40px;height:40px;border-radius:50%;background:${typeBg};border:1px solid ${typeCol};
+            display:flex;align-items:center;justify-content:center;margin:0 auto">
+            <span style="font-size:16px">${chType === 'Best Match' ? '✦' : chType === 'Affinity' ? '◈' : chType === 'Clash' ? '⚡' : '○'}</span>
+          </div>
+          <div style="font-size:10px;color:${typeCol};margin-top:6px;letter-spacing:.08em;text-transform:uppercase;white-space:nowrap">${chType}</div>
+        </div>
+
+        <!-- Person B card -->
+        <div style="background:var(--bg3);border:1px solid var(--div);border-radius:3px;padding:14px 16px;text-align:center">
+          <div style="font-size:10px;color:var(--text3);letter-spacing:.2em;text-transform:uppercase;margin-bottom:8px">${nameB}</div>
+          <div style="font-size:40px;line-height:1;margin-bottom:8px">${emojiB}</div>
+          <div style="font-family:'Cormorant Garamond',serif;font-size:18px;color:${elColB};margin-bottom:4px">${chineseB.animal}</div>
+          <div style="font-size:12px;color:var(--text3)">${chineseB.element}</div>
+          <div style="margin-top:8px;height:3px;border-radius:2px;background:${elColB};opacity:.4"></div>
+        </div>
+
+      </div>
+
+      <!-- Quality + Dynamic -->
+      <div style="background:${typeBg};border:1px solid ${typeCol}33;border-radius:3px;padding:12px 14px;margin-bottom:12px">
+        <div style="font-size:14px;color:${typeCol};font-style:italic;margin-bottom:6px">${chQual}</div>
+        ${chDyn ? `<div style="font-size:13px;color:var(--text2);line-height:1.65">${chDyn}</div>` : ''}
+      </div>
+
+      ${chBody ? `<div style="font-size:15px;color:var(--text2);line-height:1.85">${chBody.split('\n').filter(l=>l.trim()).map(p=>`<p style="margin-bottom:8px">${p}</p>`).join('')}</div>` : ''}
+
+      <div style="margin-top:8px;font-size:11px;color:var(--text3);font-style:italic">Chinese solar year signs, corrected for Chinese New Year date.</div>
+    </div>`;
+
+    // Store for drawer helper
+    window._chineseDrawerData = {chineseA, chineseB, chType, chQual, chDyn, nameA, nameB, chBody};
+  }
+
+  // Biorhythm snapshot today
+  if (bioSynastry && bioSynastry.length) {
+    const safeBio = (r.biorhythm_today||'').replace(/'/g,"\\'").slice(0,200);
+    html += `<div style="padding:0 24px 20px">
+      <div style="font-size:10px;letter-spacing:.35em;text-transform:uppercase;color:var(--gold);
+        margin-bottom:12px;display:flex;align-items:center;gap:10px;cursor:pointer"
+        onclick="openDrawer('Biorhythms Today','${safeBio || 'What do the biorhythm cycles of '+nameA+' and '+nameB+' say about their dynamic today?'}',[{q:'How should ${(nameA||'').replace(/'/g,"\\'")} and ${(nameB||'').replace(/'/g,"\\'")} plan their week around their biorhythm cycles?',l:'Planning around cycles'},{q:'When are their biorhythm peaks most aligned this month?',l:'When to align energy'}])">
+        Biorhythms Today ↗
         <span style="flex:1;height:1px;background:var(--gold3);display:inline-block"></span>
         <span style="font-size:9px;color:var(--text3);letter-spacing:.05em;text-transform:none;font-style:italic">Physical 23d · Emotional 28d · Intellectual 33d</span>
       </div>
@@ -5824,12 +7659,8 @@ function renderCompatResult(data) {
       const bCol = b.bPct > 20 ? 'var(--teal)' : b.bPct < -20 ? '#ff9999' : 'var(--text3)';
       html += `<div style="background:var(--bg3);border:1px solid var(--div2);border-radius:2px;padding:10px 12px">
         <div style="font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:var(--text3);margin-bottom:6px">${b.cycle}</div>
-        <div style="font-size:12px;margin-bottom:4px">
-          <span style="color:${aCol}">${nameA}: ${b.aPct > 0 ? '+' : ''}${b.aPct}%</span>
-        </div>
-        <div style="font-size:12px;margin-bottom:6px">
-          <span style="color:${bCol}">${nameB}: ${b.bPct > 0 ? '+' : ''}${b.bPct}%</span>
-        </div>
+        <div style="font-size:12px;margin-bottom:4px"><span style="color:${aCol}">${nameA}: ${b.aPct > 0 ? '+' : ''}${b.aPct}%</span></div>
+        <div style="font-size:12px;margin-bottom:6px"><span style="color:${bCol}">${nameB}: ${b.bPct > 0 ? '+' : ''}${b.bPct}%</span></div>
         <div style="font-size:11px;color:var(--text3);line-height:1.5">${b.dynamic}</div>
       </div>`;
     });
@@ -5848,27 +7679,22 @@ function renderCompatResult(data) {
         <span style="font-size:9px;color:var(--text3);letter-spacing:.05em;text-transform:none;font-style:italic">Approximate mean longitudes · Meeus (1998)</span>
       </div>
       <div class="compat-natal">`;
-    [[natalA, nameA, kinA, numA, moonPhaseA], [natalB, nameB, kinB, numB, moonPhaseB]].forEach(([natal, name, kin, num, moonPh]) => {
+    [[natalA, nameA, kinA, numA, moonPhaseA, chineseA], [natalB, nameB, kinB, numB, moonPhaseB, chineseB]].forEach(([natal, name, kin, num, moonPh, chinese]) => {
       if (!natal) return;
       html += `<div class="compat-natal-card">
         <div class="compat-natal-name">${name}</div>`;
       natal.slice(0,7).forEach(p => {
-        html += `<div class="compat-natal-row">
-          <span class="compat-natal-planet">${p.name}</span>
-          <span class="compat-natal-pos">${p.degStr}</span>
-        </div>`;
+        html += `<div class="compat-natal-row"><span class="compat-natal-planet">${p.name}</span><span class="compat-natal-pos">${p.degStr}</span></div>`;
       });
       if (kin) html += `<div style="font-size:12px;color:var(--teal);margin-top:7px;line-height:1.4">${kin.full}${kin.isGAP ? ' ★' : ''}</div>`;
       if (num && num.lp) html += `<div style="font-size:12px;color:var(--gold);margin-top:3px">LP ${num.lp} · PY ${num.py || '?'}</div>`;
+      if (chinese) html += `<div style="font-size:11px;color:var(--text3);margin-top:3px">☯ ${chinese.element} ${chinese.animal}</div>`;
       if (moonPh) html += `<div style="font-size:11px;color:var(--text3);margin-top:3px;font-style:italic">${moonPh.phase}</div>`;
       html += `</div>`;
     });
     html += `</div>`;
-
-    // Natal moon phase synastry
     if (moonPhaseCross) {
-      html += `<div style="margin-top:10px;background:var(--bg3);border:1px solid var(--div2);
-        border-radius:2px;padding:12px 14px">
+      html += `<div style="margin-top:10px;background:var(--bg3);border:1px solid var(--div2);border-radius:2px;padding:12px 14px">
         <div style="font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:var(--text3);margin-bottom:6px">Natal Moon Phase Archetypes</div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
           <div style="font-size:13px;color:var(--text2)"><strong style="color:var(--gold)">${nameA}:</strong> ${moonPhaseCross.phaseA}<br><span style="font-size:11px;color:var(--text3);font-style:italic">${moonPhaseCross.archetypeA}</span></div>
@@ -5880,7 +7706,7 @@ function renderCompatResult(data) {
     html += `</div>`;
   }
 
-  // Key aspects
+  // Key aspects — each tappable
   if (r.key_aspects && r.key_aspects.length) {
     html += `<div style="padding:0 24px 20px">
       <div style="font-size:10px;letter-spacing:.35em;text-transform:uppercase;color:var(--text3);
@@ -5891,10 +7717,14 @@ function renderCompatResult(data) {
       <div class="compat-aspects">`;
     r.key_aspects.forEach((a, i) => {
       const raw = synAspects && synAspects[i];
-      html += `<div class="compat-aspect-item">
+      const safeAsp = (a.aspect||'').replace(/'/g,"\\'").slice(0,100);
+      const safeInt = (a.interpretation||'').replace(/'/g,"\\'").slice(0,200);
+      html += `<div class="compat-aspect-item tappable" style="cursor:pointer"
+        onclick="openDrawer('Aspect · ${safeAsp}','${safeInt} — Go deeper on what this cross-aspect means for ${(nameA||'').replace(/'/g,"\\'")} and ${(nameB||'').replace(/'/g,"\\'")} day to day.',[{q:'How does this aspect show up in daily life for ${(nameA||'').replace(/'/g,"\\'")} and ${(nameB||'').replace(/'/g,"\\'")}?',l:'In daily life'},{q:'What is the growth opportunity in this aspect tension?',l:'Growth opportunity'}])">
         <div class="compat-aspect-dots">${st(raw ? raw.str : 3)}</div>
         <div class="compat-aspect-label">${a.aspect || (raw ? raw.label : '')}</div>
         <div class="compat-aspect-interp">${a.interpretation || ''}</div>
+        <div style="font-size:11px;color:var(--gold);margin-top:4px;letter-spacing:.08em">↗ Go deeper</div>
       </div>`;
     });
     html += `</div></div>`;
@@ -5902,25 +7732,33 @@ function renderCompatResult(data) {
 
   html += `</div>`; // close main card
 
-  // Gifts / Tensions / Topic sections
-  [[r.gifts, 'var(--teal2)', '✦ '], [r.tensions, 'rgba(200,80,80,.3)', '⚡ '], [r.topic_specific, 'var(--gold3)', '◈ ']].forEach(([section, borderColor, icon]) => {
+  // Gifts / Tensions / Topic sections — each tappable
+  [[r.gifts,'var(--teal2)','✦ '],[r.tensions,'rgba(200,80,80,.3)','⚡ '],[r.topic_specific,'var(--gold3)','◈ ']].forEach(([section, borderColor, icon]) => {
     if (!section || !section.headline) return;
-    html += `<div class="r-section" style="border-left:2px solid ${borderColor};margin-bottom:14px">
+    const safeHL = (section.headline||'').replace(/'/g,"\\'").slice(0,100);
+    const safeBody = (section.body||'').replace(/'/g,"\\'").slice(0,300);
+    html += `<div class="r-section tappable" style="border-left:2px solid ${borderColor};margin-bottom:14px;cursor:pointer"
+      onclick="openDrawer('${icon.trim()} ${safeHL}','${safeHL}. ${safeBody} — Go deeper: what is the single most actionable insight here for ${(nameA||'').replace(/'/g,"\\'")} and ${(nameB||'').replace(/'/g,"\\'")} right now?',[{q:'What is the one most practical thing they can do this week based on this?',l:'One thing this week'},{q:'Where does this theme show up most in daily life?',l:'In daily life'}])">
       <div class="sec-hl" style="font-size:20px">${icon}${section.headline}</div>
       <div class="sec-body">${prose(section.body)}</div>
+      <div style="font-size:11px;color:var(--gold);margin-top:8px;letter-spacing:.08em">↗ Go deeper</div>
     </div>`;
   });
 
-  // Dreamspell + Numerology + Natal Moon (Oracle text)
+  // Framework deep-dives — each tappable
   [
     ['Dreamspell Connection', r.dreamspell_connection, '◈'],
     ['Numerology Connection', r.numerology_connection, ''],
     ['Natal Moon Archetypes', r.natal_moon_connection, '☽'],
   ].forEach(([label, body, icon]) => {
     if (!body) return;
-    html += `<div class="r-section" style="margin-bottom:14px">
+    const safeLabel = label.replace(/'/g,"\\'");
+    const safeBody = body.replace(/'/g,"\\'").slice(0,300);
+    html += `<div class="r-section tappable" style="margin-bottom:14px;cursor:pointer"
+      onclick="openDrawer('${icon ? icon+' ' : ''}${safeLabel}','${safeBody} — What does this framework specifically reveal about how ${(nameA||'').replace(/'/g,"\\'")} and ${(nameB||'').replace(/'/g,"\\'")} can practically use this understanding?',[{q:'How does ${safeLabel.toLowerCase()} specifically affect their communication?',l:'Communication'},{q:'What does this reveal about the timing of this relationship?',l:'Timing'}])">
       <div class="sec-label">${icon ? icon + ' ' : ''}${label}</div>
       <div class="sec-body">${prose(body)}</div>
+      <div style="font-size:11px;color:var(--gold);margin-top:8px;letter-spacing:.08em">↗ Go deeper</div>
     </div>`;
   });
 
@@ -5929,16 +7767,26 @@ function renderCompatResult(data) {
     html += `<div class="r-section" style="margin-bottom:14px">
       <div style="font-size:10px;letter-spacing:.35em;text-transform:uppercase;color:var(--text3);margin-bottom:14px">Specific Guidance</div>
       <div class="compat-for-them">
-        ${r.for_them.for_a ? `<div class="compat-for-card"><div class="compat-for-label">For ${nameA}</div><div class="compat-for-text">${r.for_them.for_a}</div></div>` : ''}
-        ${r.for_them.for_b ? `<div class="compat-for-card"><div class="compat-for-label">For ${nameB}</div><div class="compat-for-text">${r.for_them.for_b}</div></div>` : ''}
+        ${r.for_them.for_a ? `<div class="compat-for-card tappable" style="cursor:pointer"
+          onclick="openDrawer('For ${(nameA||'').replace(/'/g,"\\'")}','${(r.for_them.for_a||'').replace(/'/g,"\\'").slice(0,300)} — Go deeper: what is the single most important thing ${(nameA||'').replace(/'/g,"\\'")} needs to hear and act on?',[{q:'What specifically makes it hard for ${(nameA||'').replace(/'/g,"\\'")} to embody what this reading asks of them?',l:'What makes it hard'},{q:'What would change most quickly if ${(nameA||'').replace(/'/g,"\\'")} acted on this?',l:'The fastest change'}])">
+          <div class="compat-for-label">For ${nameA} ↗</div>
+          <div class="compat-for-text">${r.for_them.for_a}</div>
+        </div>` : ''}
+        ${r.for_them.for_b ? `<div class="compat-for-card tappable" style="cursor:pointer"
+          onclick="openDrawer('For ${(nameB||'').replace(/'/g,"\\'")}','${(r.for_them.for_b||'').replace(/'/g,"\\'").slice(0,300)} — What is the single most important thing ${(nameB||'').replace(/'/g,"\\'")} needs to hear and act on?',[{q:'What specifically makes it hard for ${(nameB||'').replace(/'/g,"\\'")} to embody what this reading asks of them?',l:'What makes it hard'},{q:'What would change most quickly if ${(nameB||'').replace(/'/g,"\\'")} acted on this?',l:'The fastest change'}])">
+          <div class="compat-for-label">For ${nameB} ↗</div>
+          <div class="compat-for-text">${r.for_them.for_b}</div>
+        </div>` : ''}
       </div>
     </div>`;
   }
 
-  // The question to sit with
+  // The question to sit with — tappable
   if (r.a_question_to_sit_with) {
-    html += `<div class="shadow-box" style="margin-bottom:14px">
-      <div style="font-size:10px;letter-spacing:.3em;text-transform:uppercase;color:var(--text3);margin-bottom:8px">A Question to Sit With Together</div>
+    const safeQ = r.a_question_to_sit_with.replace(/'/g,"\\'").slice(0,200);
+    html += `<div class="shadow-box tappable" style="margin-bottom:14px;cursor:pointer"
+      onclick="openDrawer('A Question to Sit With Together','${safeQ} — Help ${(nameA||'').replace(/'/g,"\\'")} and ${(nameB||'').replace(/'/g,"\\'")} go deeper on this. What does sitting with this question honestly look like in practice?',[{q:'What would change if they asked each other this question directly?',l:'Asking it directly'},{q:'What is the fear that makes this question hard to sit with?',l:'The fear beneath the question'}])">
+      <div style="font-size:10px;letter-spacing:.3em;text-transform:uppercase;color:var(--text3);margin-bottom:8px">A Question to Sit With Together ↗</div>
       <div class="shadow-text">${r.a_question_to_sit_with}</div>
     </div>`;
   }
@@ -5948,8 +7796,9 @@ function renderCompatResult(data) {
 
   // Numerology cross pre-computed data
   if (numCross) {
-    html += `<div class="r-section" style="margin-bottom:14px">
-      <div class="sec-label">Life Path Cross-Analysis</div>
+    html += `<div class="r-section tappable" style="margin-bottom:14px;cursor:pointer"
+      onclick="openDrawer('Life Path Cross-Analysis','LP ${numCross.lpA} and ${numCross.lpB}: ${(numCross.quality||'').replace(/'/g,"\\'")}. ${(numCross.dynamic||'').replace(/'/g,"\\'").slice(0,200)} — What does this specific Life Path pairing mean for how ${(nameA||'').replace(/'/g,"\\'")} and ${(nameB||'').replace(/'/g,"\\'")} navigate decisions, conflict, and long-term planning together?',[{q:'How do LP ${numCross.lpA} and LP ${numCross.lpB} handle conflict differently, and how can they bridge it?',l:'Conflict and bridge'},{q:'What does their combined frequency ${numCross.combined} say about what they are here to build together?',l:'What they are here to build'}])">
+      <div class="sec-label">Life Path Cross-Analysis ↗</div>
       <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px">
         <div style="background:var(--bg3);border:1px solid var(--div2);border-radius:2px;padding:10px 14px">
           <div style="font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:var(--text3);margin-bottom:4px">LP Pairing</div>
@@ -5969,8 +7818,9 @@ function renderCompatResult(data) {
 
   // Dreamspell cross pre-computed data
   if (dreamspellCross) {
-    html += `<div class="r-section" style="margin-bottom:14px">
-      <div class="sec-label">◈ Dreamspell Synastry</div>
+    html += `<div class="r-section tappable" style="margin-bottom:14px;cursor:pointer"
+      onclick="openDrawer('◈ Dreamspell Synastry','Chromatic: ${(dreamspellCross.chromaticDesc||'').replace(/'/g,"\\'").slice(0,150)}. Tonal: ${(dreamspellCross.toneRelation||'').replace(/'/g,"\\'").slice(0,100)}. Combined Kin: ${(dreamspellCross.combinedFull||'').replace(/'/g,"\\'")}. What does this Dreamspell connection mean for the shared purpose and galactic arc of this relationship?',[{q:'What is the higher purpose encoded in their combined Kin ${(dreamspellCross.combinedFull||'').replace(/'/g,"\\'")}?',l:'Their combined Kin purpose'},{q:'How does the chromatic relationship shape how they process and express energy together?',l:'How they process energy'}])">
+      <div class="sec-label">◈ Dreamspell Synastry ↗</div>
       <div style="font-size:13px;color:var(--text3);margin-bottom:6px">${dreamspellCross.chromaticDesc}</div>
       <div style="font-size:13px;color:var(--text3);margin-bottom:6px">Tonal relationship: ${dreamspellCross.toneRelation}</div>
       ${dreamspellCross.bothGAP ? `<div style="font-size:13px;color:var(--teal);margin-bottom:6px">Both born on Galactic Activation Portal days.</div>` : ''}
@@ -5981,10 +7831,7 @@ function renderCompatResult(data) {
 
   // Sources
   if (r.sources) {
-    html += `<div class="r-section">
-      <div class="sec-label">Sources and Methodology</div>
-      <div class="sources-text">${r.sources}</div>
-    </div>`;
+    html += `<div class="r-section"><div class="sec-label">Sources and Methodology</div><div class="sources-text">${r.sources}</div></div>`;
   }
 
   // Engagement chips -- built with string concatenation to avoid nested template literal issues
