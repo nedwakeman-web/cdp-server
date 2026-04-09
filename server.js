@@ -838,7 +838,7 @@ app.post('/api/reading/start', async (req, res) => {
         const moonNote = moon.isBlack?'BLACK MOON — do not initiate.':moon.isShiva?'SHIVA MOON — plant with intention.':'';
         const weekAhead = getWeekAhead(ds);
         const weekCtx = weekAhead.slice(1).map(w => w.dayStr+': UD'+w.ud+(w.isGAP?' GAP★':'')+' '+w.kin).join(', ');
-        const qdSys = 'You are the Oracle at Cosmic Daily Planner. Respond ONLY with valid JSON, no markdown, no preamble. Schema: {"synthesis":"string","priorities":[{"title":"string","action":"string"},{"title":"string","action":"string"},{"title":"string","action":"string"}],"shadow":"string","focus_on":["string","string","string","string"],"ease_off":["string","string","string","string"],"time_windows":{"morning":"string","afternoon":"string","evening":"string"},"week_notes":["string","string","string","string","string","string"],"next_tier_teaser":"string"}. week_notes: exactly 6 one-sentence notes for the days provided (in order). next_tier_teaser: 1-2 compelling sentences about what a Monthly Arc reading would additionally reveal for this person this month — end with a curiosity hook. Max 1200 tokens. Be specific.';
+        const qdSys = 'You are the Oracle at Cosmic Daily Planner. Respond ONLY with valid JSON, no markdown, no preamble. Schema: {"synthesis":"string","priorities":[{"title":"string","action":"string"},{"title":"string","action":"string"},{"title":"string","action":"string"}],"shadow":"string","focus_on":["string","string","string","string"],"ease_off":["string","string","string","string"],"time_windows":{"morning":"string","afternoon":"string","evening":"string"},"week_notes":["string","string","string","string","string","string"],"next_tier_teaser":"string"}. week_notes: exactly 6 notes (2 sentences each): what the day energy means + one specific implication for the person. next_tier_teaser: 1-2 compelling sentences about what a Monthly Arc reading would additionally reveal for this person this month — end with a curiosity hook. Max 1200 tokens. Be specific.';
         const weekDateList = weekAhead.slice(1).map((w,i)=>(i+1)+'. '+w.dayStr+' (UD'+w.ud+(w.isGAP?' GAP':'')+' '+w.kin+')').join('; ');
         const qdUser = 'Person: '+fn+'. Date: '+ds+'. Moon: '+moon.phase+(moonNote?' ('+moonNote+')':'')+'. UD: '+num.ud+(num.udM&&num.udM.n?' ('+num.udM.n+')':'')+', PD: '+(num.pd||num.ud)+'. LP: '+(num.lp||'?')+', PY: '+(num.py||'?')+'. Kin: '+kin.full+(kin.isGAP?' GALACTIC ACTIVATION PORTAL':'')+'. '+ctx+'. Next 6 days (in order for week_notes): '+weekDateList+'. Saturn-Neptune Aries 2026 (Tarnas 2006). Write personal daily reading for '+fn+'. week_notes must have exactly 6 strings in same order as the dates above.';
         let qdRaw;
@@ -859,11 +859,6 @@ app.post('/api/reading/start', async (req, res) => {
         const qdJob = jobs.get(jobId);
         if (qdJob) {
           qdJob.status = 'complete';
-          if (qdReading.week_notes && Array.isArray(qdReading.week_notes) && weekAhead.length > 1) {
-            qdReading.week_ahead = weekAhead.slice(1).map((w, i) => ({
-              date: w.date, dayStr: w.dayStr, note: qdReading.week_notes[i] || ''
-            }));
-          }
           if (qdReading.week_notes && Array.isArray(qdReading.week_notes) && weekAhead.length > 1) {
             qdReading.week_ahead = weekAhead.slice(1).map((w, i) => ({
               date: w.date, dayStr: w.dayStr, note: qdReading.week_notes[i] || ''
