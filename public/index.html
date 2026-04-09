@@ -26,7 +26,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400;1,600&family=EB+Garamond:ital,wght@0,400;0,500;1,400;1,500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-<script defer data-domain="cosmicdailyplanner.com" src="https://plausible.io/js/script.js"></script>
+<!-- Plausible analytics: active on cosmicdailyplanner.com only -->
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 :root{
@@ -1520,7 +1520,7 @@ body.print-card-mode{background:#0D1E33}
           </div>
           <div class="mode-btn-desc">All four frameworks — numerology, astrology, Dreamspell, priorities, focus and ease</div>
         </div>
-        <div class="mode-btn-time">~2 min</div>
+        <div class="mode-btn-time" style="color:var(--teal)">~15s ✓</div>
       </button>
       <button class="mode-btn mode-standard" id="modeStandard" onclick="selectMode('standard')">
         <div class="mode-btn-icon">☽</div>
@@ -1530,7 +1530,7 @@ body.print-card-mode{background:#0D1E33}
           </div>
           <div class="mode-btn-desc">Full reading plus lunation map, wavespell arc, monthly shadow themes and growth edges</div>
         </div>
-        <div class="mode-btn-time">~3 min</div>
+        <div class="mode-btn-time">2–4 min</div>
       </button>
       <button class="mode-btn mode-standard" id="modeMystic" onclick="selectMode('mystic')">
         <div class="mode-btn-icon">◉</div>
@@ -1540,7 +1540,7 @@ body.print-card-mode{background:#0D1E33}
           </div>
           <div class="mode-btn-desc">Full natal chart integration, yearly arc, personal numerology cycles, major transit themes</div>
         </div>
-        <div class="mode-btn-time">~4 min</div>
+        <div class="mode-btn-time">3–5 min</div>
       </button>
       <button class="mode-btn mode-deep" id="modeDeep" onclick="selectMode('deep')">
         <div class="mode-btn-icon">◈</div>
@@ -1550,7 +1550,7 @@ body.print-card-mode{background:#0D1E33}
           </div>
           <div class="mode-btn-desc">Everything — Hellenistic lots, full aspects, closing reflection, complete week ahead</div>
         </div>
-        <div class="mode-btn-time">~8 min</div>
+        <div class="mode-btn-time">5–10 min</div>
       </button>
     </div>
     <div style="font-size:12px;color:var(--text3);text-align:center;margin:0 0 12px;
@@ -3407,6 +3407,31 @@ async function loadReading(dateStr, tier) {
   try {
     const intention = localStorage.getItem('cdp_intention') || '';
 
+    // ── QUICK READ FIRST — get synthesis+priorities in ~12s via Haiku ──
+    // Fires immediately; full reading runs in parallel
+    (async () => {
+      try {
+        const qr = await fetch(API_BASE + '/api/quickread', {
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({date: dateStr, profile})
+        });
+        if (!qr.ok) return;
+        const qd = await qr.json();
+        if (qd.reading && qd.reading.synthesis && !window._phase1Rendered && !currentReading) {
+          window._phase1Rendered = true;
+          // Store quick read as currentReading so taps work immediately
+          currentReading = {reading: qd.reading, planets: qd.planets, moon: qd.moon, kin: qd.kin, num: qd.num};
+          fillPhase1Sections(qd.reading);
+          // Update status bar
+          const skTxt = document.getElementById('skStatusText');
+          if (skTxt) skTxt.textContent = 'Core reading ready — deep analysis composing…';
+          const sd = document.getElementById('stageDisplay');
+          if (sd) { sd.style.opacity='0'; setTimeout(()=>{ if(sd){ sd.textContent='Deep analysis and synthesis in progress…'; sd.style.opacity='1'; } },400); }
+          console.log('Quick read rendered in ' + (qd.ms||'?') + 'ms');
+        }
+      } catch(qe) { console.warn('Quick read failed (non-critical):', qe.message); }
+    })();
+
     // Beta 2: fetch recent reading history for Oracle continuity
     recentReadingHistory = await fetchRecentHistory();
 
@@ -3476,33 +3501,22 @@ async function loadReading(dateStr, tier) {
         }
         const pollRes = await fetch(API_BASE + `/api/reading/status/${jobId}`);
 
-        // ── Handle 404: server restarted, job lost — don't hammer ──
+        // ── Handle 404: server restarted, job lost ──
         if (pollRes.status === 404) {
           clearInterval(pollingTimer); pollingTimer = null;
           clearInterval(stageTimer);
           sessionStorage.removeItem('cdp_active_job');
-          // Show a clean retry prompt rather than an error
-          const sd = document.getElementById('stageDisplay');
-          if (sd) {
-            sd.style.opacity = '0';
-            setTimeout(() => {
-              if (sd) {
-                sd.innerHTML = `<div style="text-align:center">
-                  <div style="font-size:15px;color:var(--text2);margin-bottom:14px">
-                    The server was updated while your reading was composing.
-                  </div>
-                  <button onclick="loadReading(dateStr,'${activeTier}')" style="background:none;
-                    border:1px solid var(--gold3);border-radius:3px;color:var(--gold);
-                    padding:10px 20px;cursor:pointer;font-family:'EB Garamond',serif;font-size:14px">
-                    ✦ Start a fresh reading
-                  </button>
-                </div>`;
-                sd.style.opacity = '1';
-              }
-            }, 400);
-          }
+          // Show prominent retry — server redeployed mid-read
           const sb = document.getElementById('skeletonStatusBar');
-          if (sb) { sb.style.transition='opacity .4s'; sb.style.opacity='0'; setTimeout(()=>sb?.remove(),400); }
+          if (sb) {
+            sb.innerHTML = '<div style="display:flex;align-items:center;gap:12px;padding:9px 20px">'
+              + '<div style="font-size:14px;color:var(--text2)">Server updated — please start a fresh reading</div>'
+              + '<button id="retryReadingBtn" style="background:none;border:1px solid var(--gold);color:var(--gold);padding:7px 18px;border-radius:2px;cursor:pointer;font-family:\'EB Garamond\',serif;font-size:13px;white-space:nowrap">✦ Retry now</button>'
+              + '</div>';
+            sb.style.opacity = '1';
+          }
+          const sd = document.getElementById('stageDisplay');
+          if (sd) { sd.innerHTML = ''; }
           return;
         }
 
@@ -3568,7 +3582,7 @@ async function loadReading(dateStr, tier) {
           } else {
             const errMsg = poll.error || 'Reading generation failed';
             console.error('Reading error from server:', errMsg);
-            if (sd) { sd.style.opacity='0'; setTimeout(()=>{ if(sd){ sd.innerHTML='<div style="color:var(--text2);font-size:15px;text-align:center"><div style="margin-bottom:12px;color:#ff9999">⚠ ' + errMsg.slice(0,120) + '</div><button onclick="loadReading(\''+dateStr+'\',\''+activeTier+'\')" style="background:none;border:1px solid var(--gold3);border-radius:2px;color:var(--gold);padding:6px 14px;cursor:pointer">Try again ✶</button></div>'; sd.style.opacity='1'; } },400); }
+            if (sd) { sd.style.opacity='0'; setTimeout(()=>{ if(sd){ sd.innerHTML='<div style="color:var(--text2);font-size:15px;text-align:center"><div style="margin-bottom:12px;color:#ff9999">⚠ ' + errMsg.includes('overloaded') ? '⚠ Anthropic API is under load — this happens during peak times. Try Full Reading (faster) or wait 30 seconds and retry.' : errMsg.slice(0,120) + '</div><button onclick="loadReading(\''+dateStr+'\',\''+activeTier+'\')" style="background:none;border:1px solid var(--gold3);border-radius:2px;color:var(--gold);padding:6px 14px;cursor:pointer">Try again ✶</button></div>'; sd.style.opacity='1'; } },400); }
           }
         }
       } catch(pollErr) {
