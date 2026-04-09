@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>✦</text></svg>">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Cosmic Daily Planner — Your Personalised Daily Oracle</title>
 <meta name="description" content="A daily Oracle unlike anything else. Swiss Ephemeris astrology, Pythagorean numerology, Dreamspell, lunar cycles and biorhythms synthesised into one deeply personal reading. Written for where you actually are in your life.">
 <meta name="keywords" content="daily oracle, personalised astrology, numerology reading, dreamspell, cosmic planner, daily horoscope, biorhythms, lunar cycle">
@@ -142,6 +142,24 @@ body.light{--bg:#F5F0E8;--bg2:#EDE6D6;--bg3:#E4DBC8;--bg4:#F8F4EC;
 .energy-guidance{font-size:16px;color:var(--text3);line-height:1.75}
 .two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px}
 @media(max-width:600px){.two-col{grid-template-columns:1fr}}
+/* ── WIDE SCREEN (1200px+) ────────────────────────────────── */
+@media(min-width:1200px){
+  .widgets{gap:18px;margin-bottom:28px}
+  .r-section{padding:32px 36px}
+  .r-head{padding:48px 0 32px}
+  .energies{gap:16px}
+  .ne-cards{gap:16px}
+  .two-col{gap:20px}
+  .week-day{padding:14px 10px}
+  .pri-num{font-size:52px}
+  .sec-label{font-size:12px}
+  .mode-box{max-width:720px}
+}
+@media(min-width:1400px){
+  .widgets{gap:22px}
+  .r-section{padding:36px 44px}
+}
+
 .col-card{border:1px solid var(--div);background:var(--bg3);padding:16px;border-radius:2px}
 .col-head{font-size:13px;letter-spacing:.25em;text-transform:uppercase;color:var(--text2);margin-bottom:12px;font-weight:600}
 .col-item{font-size:17px;color:var(--text2);margin-bottom:9px;padding-left:16px;
@@ -644,7 +662,7 @@ body.light{--bg:#F5F0E8;--bg2:#EDE6D6;--bg3:#E4DBC8;--bg4:#F8F4EC;
   background:rgba(6,13,24,0.94);backdrop-filter:blur(12px);
   opacity:0;transition:opacity .4s ease;pointer-events:none}
 #modeSelector.visible{opacity:1;pointer-events:all}
-.mode-box{max-width:520px;width:100%;text-align:center}
+.mode-box{max-width:680px;width:100%;text-align:center}
 .mode-eyebrow{font-size:12px;letter-spacing:.5em;text-transform:uppercase;color:var(--text3);margin-bottom:16px}
 .mode-title{font-family:'Cormorant Garamond',serif;font-size:clamp(26px,5vw,38px);
   color:var(--gold);font-weight:300;margin-bottom:8px;line-height:1.25}
@@ -4648,11 +4666,9 @@ function startPolling(jobId, dateStr, tier, startedAt) {
 
 // ── SHAREABLE SYNTHESIS CARD ──────────────────────────────────────
 function openShareCard() {
-  // Handle both reading data structures
   const r = currentReading?.reading?.reading || currentReading?.reading;
   const synth = r?.synthesis || currentReading?.reading?.synthesis;
   if (!synth) {
-    // Show feedback rather than silent fail
     const btn = event?.target || document.querySelector('[onclick*="openShareCard"]');
     if (btn) {
       const orig = btn.textContent;
@@ -4684,6 +4700,21 @@ function openShareCard() {
   if (ud) chips.push('Universal Day ' + ud);
   scMeta.innerHTML = chips.map(t => `<span class="sc-chip">${t}</span>`).join('');
 
+  // Replace the dark synthCardPreview with a live canvas render
+  const preview = document.getElementById('synthCardPreview');
+  if (preview) {
+    try {
+      const cv = buildShareCanvas();
+      cv.style.cssText = 'width:100%;height:auto;display:block;border-radius:4px 4px 0 0';
+      preview.innerHTML = '';
+      preview.style.padding = '0';
+      preview.style.background = 'none';
+      preview.appendChild(cv);
+    } catch(e) {
+      // Keep existing HTML preview as fallback
+    }
+  }
+
   overlay.style.display = 'flex';
   setTimeout(() => overlay.style.opacity = '1', 10);
 }
@@ -4694,50 +4725,122 @@ function closeShareCard() {
   setTimeout(() => { overlay.style.display = 'none'; }, 260);
 }
 
+function buildShareCanvas() {
+  // Build share image using native Canvas API — no external deps, works everywhere
+  const scDate  = document.getElementById('scDate');
+  const scSynth = document.getElementById('scSynth');
+  const scMeta  = document.getElementById('scMeta');
+  const dateText  = scDate?.textContent  || '';
+  const synthText = scSynth?.textContent || '';
+  const chips = scMeta ? Array.from(scMeta.querySelectorAll('.sc-chip')).map(c=>c.textContent).join('  ·  ') : '';
+
+  const W = 880, PAD = 52;
+  const canvas = document.createElement('canvas');
+  canvas.width  = W;
+
+  // Measure text wrapping first to get correct height
+  const ctx = canvas.getContext('2d');
+  function wrapLines(text, font, maxW) {
+    ctx.font = font;
+    const words = text.split(' ');
+    const lines = []; let cur = '';
+    for (const w of words) {
+      const test = cur ? cur + ' ' + w : w;
+      if (ctx.measureText(test).width > maxW && cur) { lines.push(cur); cur = w; }
+      else cur = test;
+    }
+    if (cur) lines.push(cur);
+    return lines;
+  }
+
+  const synthFont  = '300 22px Georgia, serif';
+  const synthLines = wrapLines(synthText, synthFont, W - PAD*2);
+  const H = 88 + 40 + (synthLines.length * 34) + (chips ? 60 : 0) + 60;
+  canvas.height = H;
+  const cx = canvas.getContext('2d');
+
+  // Background
+  cx.fillStyle = '#0D1E33';
+  cx.fillRect(0, 0, W, H);
+
+  // Top accent line
+  cx.fillStyle = '#c9a050';
+  cx.fillRect(PAD, 28, 60, 1.5);
+
+  // Date
+  cx.fillStyle = 'rgba(201,160,80,0.7)';
+  cx.font = '400 13px Arial, sans-serif';
+  cx.letterSpacing = '0.2em';
+  cx.fillText(dateText.toUpperCase(), PAD, 52);
+  cx.letterSpacing = '0';
+
+  // Synthesis text
+  cx.fillStyle = '#e8e4da';
+  cx.font = synthFont;
+  let y = 88;
+  for (const line of synthLines) { cx.fillText(line, PAD, y); y += 34; }
+
+  // Chips / meta
+  if (chips) {
+    cx.fillStyle = 'rgba(232,228,218,0.38)';
+    cx.font = '400 12px Arial, sans-serif';
+    cx.letterSpacing = '0.1em';
+    cx.fillText(chips, PAD, y + 32);
+    cx.letterSpacing = '0';
+  }
+
+  // Brand
+  cx.fillStyle = 'rgba(201,160,80,0.55)';
+  cx.font = '400 12px Arial, sans-serif';
+  cx.letterSpacing = '0.15em';
+  cx.fillText('✦  COSMIC DAILY PLANNER', PAD, H - 22);
+  cx.letterSpacing = '0';
+
+  // Bottom accent
+  cx.fillStyle = '#c9a050';
+  cx.fillRect(W - PAD - 60, H - 28, 60, 1.5);
+
+  return canvas;
+}
+
 async function copyShareCard(btnEl) {
   const btn = btnEl || document.querySelector('.sc-action.primary');
   const scSynth = document.getElementById('scSynth');
   const scDate  = document.getElementById('scDate');
   const scMeta  = document.getElementById('scMeta');
-  if (!scSynth || !scDate) return;
+  if (!scSynth?.textContent && !scDate?.textContent) {
+    if (btn) { btn.textContent = 'Reading not ready yet'; setTimeout(()=>{btn.textContent='⎘ Copy Image'},2000); }
+    return;
+  }
+  if (btn) btn.textContent = 'Generating…';
 
-  const dateText = scDate.textContent || '';
-  const synthText = scSynth.textContent || '';
+  const dateText  = scDate?.textContent  || '';
+  const synthText = scSynth?.textContent || '';
   const chips = scMeta ? Array.from(scMeta.querySelectorAll('.sc-chip')).map(c=>c.textContent).join(' · ') : '';
   const shareText = dateText + '\n\n' + synthText + (chips ? '\n\n' + chips : '') + '\n\n✦ cosmicdailyplanner.com';
 
-  if (btn) btn.textContent = 'Copying…';
-
-  // Try image first via html2canvas
   try {
-    if (typeof html2canvas !== 'undefined') {
-      const preview = document.getElementById('synthCardPreview');
-      preview.style.position = 'relative';
-      const canvas = await html2canvas(preview, {
-        backgroundColor: '#0D1E33', scale: 2, useCORS: true, logging: false,
-        allowTaint: true, foreignObjectRendering: false
-      });
-      canvas.toBlob(async blob => {
-        if (!blob) { copyTextFallback(btn, shareText); return; }
-        // Try clipboard image
-        try {
-          await navigator.clipboard.write([new ClipboardItem({'image/png': blob})]);
-          if (btn) { btn.textContent = '✓ Image copied'; setTimeout(()=>{btn.textContent='⎘ Copy Image'},2500); }
-        } catch(e) {
-          // Clipboard image blocked — download instead
-          const a = document.createElement('a');
-          a.href = URL.createObjectURL(blob);
-          a.download = 'cosmic-reading-' + (currentDate||TODAY) + '.png';
-          document.body.appendChild(a); a.click(); document.body.removeChild(a);
-          if (btn) { btn.textContent = '✓ Downloaded'; setTimeout(()=>{btn.textContent='⎘ Copy Image'},2500); }
-        }
-      }, 'image/png');
-      return;
-    }
-  } catch(e) { console.warn('html2canvas failed:', e.message); }
-
-  // Fallback: copy text
-  copyTextFallback(btn, shareText);
+    const canvas = buildShareCanvas();
+    canvas.toBlob(async blob => {
+      if (!blob) { copyTextFallback(btn, shareText); return; }
+      // Try clipboard image (requires HTTPS + user gesture)
+      try {
+        await navigator.clipboard.write([new ClipboardItem({'image/png': blob})]);
+        if (btn) { btn.textContent = '✓ Image copied'; setTimeout(()=>{btn.textContent='⎘ Copy Image'},2500); }
+      } catch(clipErr) {
+        // Clipboard blocked — download the image file instead
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = 'cdp-' + (currentDate||TODAY) + '.png';
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(url), 5000);
+        if (btn) { btn.textContent = '✓ Saved to Downloads'; setTimeout(()=>{btn.textContent='⎘ Copy Image'},3000); }
+      }
+    }, 'image/png', 0.95);
+  } catch(e) {
+    console.warn('Canvas share failed:', e.message);
+    copyTextFallback(btn, shareText);
+  }
 }
 
 async function copyTextFallback(btn, text) {
