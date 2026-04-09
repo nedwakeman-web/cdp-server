@@ -95,7 +95,7 @@ body.light{--bg:#F5F0E8;--bg2:#EDE6D6;--bg3:#E4DBC8;--bg4:#F8F4EC;
 .screen{display:none}.screen.on{display:block}
 
 /* ══ READING SCREEN ══ */
-#sr{max-width:1400px;margin:0 auto;padding:0 24px 120px}
+#sr{max-width:1400px;margin:0 auto;padding:0 24px 120px;scroll-padding-top:120px}
 .r-head{text-align:center;padding:40px 0 28px;border-bottom:1px solid var(--div);margin-bottom:28px}
 .r-meta{font-size:15px;letter-spacing:.35em;text-transform:uppercase;color:var(--text3);margin-bottom:10px}
 .r-date{font-family:'Cormorant Garamond',serif;font-size:clamp(32px,5vw,48px);color:var(--gold);
@@ -1522,9 +1522,9 @@ body.print-card-mode{background:#0D1E33}
       </div>
     </div>
     <div class="share-card-actions">
-      <button class="sc-action primary" id="scCopyBtn" onclick="copyShareCard(this)">⬇ Save Image</button>
-      <button class="sc-action" onclick="shareNative()">↗ Share</button>
-      <button class="sc-action" onclick="copyShareText(this)">⎘ Copy Text</button>
+      <button class="sc-action primary" id="scCopyBtn" onclick="copyShareCard(this)">⬇ Download Image</button>
+      <button class="sc-action" id="scShareBtn" onclick="shareNative()">↗ Share</button>
+      <button class="sc-action" id="scCopyTextBtn" onclick="copyShareText(this)">⎘ Copy Text</button>
       <button class="sc-action dismiss" onclick="closeShareCard()">✕</button>
     </div>
   </div>
@@ -1579,7 +1579,7 @@ body.print-card-mode{background:#0D1E33}
           <div class="mode-btn-title">Full Reading
             <span style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--text3);font-family:'EB Garamond',serif;margin-left:6px">Seeker · £9/mo</span>
           </div>
-          <div class="mode-btn-desc">All four frameworks — numerology, astrology, Dreamspell, priorities, focus and ease</div>
+          <div class="mode-btn-desc">All four frameworks · Priorities · Shadow work · Focus/Ease · Week Ahead · Locked preview of Monthly Arc</div>
         </div>
         <div class="mode-btn-time" style="color:var(--teal)">~15s ✓</div>
       </button>
@@ -1589,7 +1589,7 @@ body.print-card-mode{background:#0D1E33}
           <div class="mode-btn-title">Monthly Arc
             <span style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--teal);font-family:'EB Garamond',serif;margin-left:6px">Initiate · £29/mo</span>
           </div>
-          <div class="mode-btn-desc">Full reading plus lunation map, wavespell arc, monthly shadow themes and growth edges</div>
+          <div class="mode-btn-desc">Full monthly arc · Lunation map · Wavespell arc · Monthly shadow themes · Richer week ahead notes</div>
         </div>
         <div class="mode-btn-time">2–4 min</div>
       </button>
@@ -1599,7 +1599,7 @@ body.print-card-mode{background:#0D1E33}
           <div class="mode-btn-title">Yearly Reading
             <span style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--master);font-family:'EB Garamond',serif;margin-left:6px">Mystic · £79/mo</span>
           </div>
-          <div class="mode-btn-desc">Full natal chart integration, yearly arc, personal numerology cycles, major transit themes</div>
+          <div class="mode-btn-desc">Natal chart integration · Yearly arc · Personal numerology cycles · Major transit themes</div>
         </div>
         <div class="mode-btn-time">3–5 min</div>
       </button>
@@ -1609,7 +1609,7 @@ body.print-card-mode{background:#0D1E33}
           <div class="mode-btn-title">Oracle Deep Dive
             <span style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);font-family:'EB Garamond',serif;margin-left:6px">Oracle · Maximum depth</span>
           </div>
-          <div class="mode-btn-desc">Everything — Hellenistic lots, full aspects, closing reflection, complete week ahead</div>
+          <div class="mode-btn-desc">Full depth · All frameworks · Hellenistic lots · Complete week ahead · Daily gift · Oracle drawer</div>
         </div>
         <div class="mode-btn-time">5–10 min</div>
       </button>
@@ -4881,30 +4881,68 @@ function getShareText() {
 
 async function copyShareCard(btnEl) {
   const btn = btnEl || document.getElementById('scCopyBtn');
-  if (!document.getElementById('scSynth')?.textContent) {
-    if (btn) { btn.textContent = 'Reading not ready'; setTimeout(()=>{btn.textContent='⬇ Save Image'},2000); }
+  const scSynth = document.getElementById('scSynth');
+  const scDate  = document.getElementById('scDate');
+  const scMeta  = document.getElementById('scMeta');
+  if (!scSynth?.textContent && !scDate?.textContent) {
+    if (btn) { btn.textContent = 'Reading not ready'; setTimeout(()=>{btn.textContent='⬇ Download Image'},2000); }
     return;
   }
   if (btn) btn.textContent = 'Building…';
+
+  const dateText  = (scDate?.textContent||'').toUpperCase();
+  const synthText = scSynth?.textContent || '';
+  const chips = scMeta ? Array.from(scMeta.querySelectorAll('.sc-chip')).map(el=>el.textContent).join('  ·  ') : '';
+
+  // Build canvas
   try {
-    const cv = buildShareCanvas();
+    const W = 900, PAD = 52, LINE_H = 30;
+    const cv = document.createElement('canvas');
+    cv.width = W;
+    const cx = cv.getContext('2d');
+
+    // Measure synth lines
+    cx.font = '300 20px Georgia,serif';
+    const words = synthText.split(' ');
+    const synthLines = [];
+    let cur = '';
+    for (const w of words) {
+      const test = cur ? cur+' '+w : w;
+      if (cx.measureText(test).width > W-PAD*2 && cur) { synthLines.push(cur); cur=w; }
+      else cur = test;
+    }
+    if (cur) synthLines.push(cur);
+
+    const H = 80 + 20 + (synthLines.length*LINE_H) + (chips?44:0) + 50;
+    cv.height = H;
+
+    cx.fillStyle = '#0D1E33'; cx.fillRect(0,0,W,H);
+    cx.fillStyle = '#c9a050'; cx.fillRect(PAD,24,50,1);
+    cx.fillStyle = 'rgba(201,160,80,0.75)'; cx.font='400 11px Arial,sans-serif'; cx.fillText(dateText,PAD,48);
+    cx.fillStyle = '#e8e4da'; cx.font='300 20px Georgia,serif';
+    let y = 80;
+    for (const line of synthLines) { cx.fillText(line,PAD,y); y+=LINE_H; }
+    if (chips) { cx.fillStyle='rgba(232,228,218,0.4)'; cx.font='400 11px Arial,sans-serif'; cx.fillText(chips,PAD,y+20); }
+    cx.fillStyle='rgba(201,160,80,0.5)'; cx.font='400 10px Arial,sans-serif';
+    cx.fillText('COSMIC DAILY PLANNER  cosmicdailyplanner.com',PAD,H-18);
+    cx.fillStyle='#c9a050'; cx.fillRect(W-PAD-50,H-24,50,1);
+
+    // Always download - most reliable cross-browser
     cv.toBlob(blob => {
       if (!blob) { copyTextFallback(btn, getShareText()); return; }
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
-      a.href = url;
-      a.download = 'cosmic-reading-' + (currentDate||TODAY) + '.png';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      setTimeout(() => URL.revokeObjectURL(url), 5000);
-      if (btn) { btn.textContent = '✓ Saved'; setTimeout(()=>{btn.textContent='⬇ Save Image'},3000); }
-    }, 'image/png');
+      a.href=url; a.download='cdp-reading-'+(currentDate||TODAY)+'.png';
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      setTimeout(()=>URL.revokeObjectURL(url),5000);
+      if (btn) { btn.textContent='✓ Downloaded'; setTimeout(()=>{btn.textContent='⬇ Download Image'},3000); }
+    },'image/png');
   } catch(e) {
-    console.warn('Canvas error:', e.message);
+    console.warn('Canvas error:',e.message);
     copyTextFallback(btn, getShareText());
   }
 }
+
 
 async function copyShareText(btnEl) {
   const btn = btnEl;
@@ -5100,11 +5138,12 @@ function fillPhase1Sections(p1) {
     }
   }
 
-  // Shadow work
-  if (p1.shadow_work) {
+  // Shadow work — accepts either key (quickread uses 'shadow', phase1 uses 'shadow_work')
+  const _sw_text = p1.shadow_work || p1.shadow || '';
+  if (_sw_text) {
     const swEl = document.getElementById('ai-shadow');
     if (swEl) {
-      const sw = p1.shadow_work;
+      const sw = _sw_text;
       fadeIn(swEl, `<div class="shadow-box tappable" onclick="tapShadow('${sw.replace(/'/g,"\'").slice(0,200)}')">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:9px">
           <div style="font-size:11px;letter-spacing:.35em;text-transform:uppercase;color:rgba(240,237,230,0.55)">Shadow Work</div>
@@ -5376,18 +5415,44 @@ function fillAISections(data, dateStr) {
     dsEl.innerHTML = prose(r.dreamspell.body);
   }
 
-  // Week ahead
+  // Week ahead — rich grid matching fillPhase1 style
   const wkEl = document.getElementById('ai-week');
   if (wkEl && r?.week_ahead?.length) {
-    let wh = '<div class="r-section"><div class="sec-label">The Week Ahead</div><div class="week-grid">';
+    let wh = '<div class="r-section"><div class="sec-label">The Week Ahead <span style="font-size:11px;color:var(--text3);font-style:italic;font-weight:400;text-transform:none;letter-spacing:.05em">· tap any day for deeper insight</span></div>';
+    wh += '<div style="display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-top:12px">';
     r.week_ahead.forEach(d => {
-      const ud = clientUD(d.date||'');
-      const udD = NUM_DATA[ud]||{n:''};
-      wh += `<div class="week-day tappable" onclick="tapWeekDay('${(d.day||'').replace(/'/g,"\'")}','${(d.kin||'').replace(/'/g,"\'")}',${ud},'${(d.note||'').replace(/'/g,"\'").slice(0,100)}')">
-        <div class="week-day-name">${(d.day||'').substring(0,3)}</div>
-        <div class="week-ud" style="${[11,22,33,44].includes(ud)?'color:var(--master)':''}">${ud}</div>
-        <div class="week-ud-label">${udD.n||''}</div>
-        <div style="font-size:11px;color:var(--text3);margin-top:4px">${(d.kin||'').split(' ').slice(0,2).join(' ')}</div>
+      const dateStr = d.date || '';
+      const ud = dateStr ? clientUD(dateStr) : 0;
+      if (!ud || isNaN(ud)) return;
+      const udD = NUM_DATA[ud] || {n:'',k:''};
+      const kinData = dateStr ? clientKin(dateStr) : {seal:'',isGAP:false};
+      const moonData = dateStr ? clientMoon(dateStr) : {emoji:'',phase:''};
+      const isMaster = [11,22,33,44].includes(ud);
+      const isGAP = kinData.isGAP;
+      const dt = new Date(dateStr + 'T12:00:00Z');
+      const dayShort = dt.toLocaleDateString('en-GB', {weekday:'short'});
+      const dayLabel = dt.toLocaleDateString('en-GB', {weekday:'long', day:'numeric', month:'short'});
+      const note = d.note || d.message || '';
+      const noteClean = note ? cleanText(note) : '';
+      const udKw = (udD.k||'').split('·')[0].trim();
+      const borderCol = isGAP ? 'var(--teal)' : isMaster ? 'var(--master)' : 'var(--div)';
+      const safeNote = noteClean.replace(/'/g,"\'").slice(0,150);
+      const safeKin = (kinData.seal||d.kin||'').replace(/'/g,"\'");
+      wh += `<div class="week-day tappable" onclick="tapWeekDay('${dayLabel}','${safeKin}',${ud},'${safeNote}')"
+        style="border-color:${borderCol}">
+        <div style="font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold3);margin-bottom:6px">${dayShort}</div>
+        <div style="font-family:'Cormorant Garamond',serif;font-size:34px;color:${isMaster?'var(--master)':'var(--gold)'};line-height:1;margin-bottom:3px">${ud}${isMaster?'<span style="font-size:18px">★</span>':''}</div>
+        <div style="font-size:12px;color:var(--text);font-weight:500;margin-bottom:3px;line-height:1.3">${udD.n||''}</div>
+        <div style="font-size:11px;color:var(--text3);margin-bottom:6px;font-style:italic">${udKw}</div>
+        ${isGAP ? '<div style="font-size:9px;color:var(--teal);letter-spacing:.15em;text-transform:uppercase;margin-bottom:5px;border:1px solid rgba(129,205,182,.3);border-radius:2px;padding:2px 4px;display:inline-block">★ Portal</div>' : ''}
+        <div style="font-size:11px;color:var(--text3);margin-bottom:4px">${moonData.emoji} <span style="font-size:10px">${moonData.phase}</span></div>
+        <div style="font-size:10px;color:var(--teal2);margin-bottom:6px;line-height:1.3">${kinData.seal||d.kin||''}</div>
+        <div style="flex:1"></div>
+        ${noteClean
+          ? `<div style="font-size:12px;color:var(--text2);line-height:1.55;font-style:italic;border-top:1px solid var(--div2);padding-top:7px;margin-top:4px;text-align:left">${noteClean.slice(0,120)}${noteClean.length>120?'…':''}</div>`
+          : (udD.m ? `<div style="font-size:11px;color:var(--text3);font-style:italic;border-top:1px solid var(--div2);padding-top:6px;margin-top:4px;text-align:left">${udD.m.slice(0,80)}…</div>` : '')
+        }
+        <div style="font-size:10px;color:var(--gold3);margin-top:6px;text-align:right;letter-spacing:.08em">↗ ask oracle</div>
       </div>`;
     });
     wh += '</div></div>';
