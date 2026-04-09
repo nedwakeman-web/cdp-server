@@ -843,7 +843,7 @@ app.post('/api/reading/start', async (req, res) => {
         let qdRaw;
         for (let attempt = 0; attempt < 3; attempt++) {
           try {
-            qdRaw = await callAPI('claude-haiku-4-5-20251001', 900, qdSys, qdUser);
+            qdRaw = await callAPI('claude-haiku-4-5-20251001', 1400, qdSys, qdUser);
             break;
           } catch(e) {
             if (e.message.includes('overloaded') && attempt < 2) {
@@ -1736,7 +1736,7 @@ app.post('/api/quickread', async (req, res) => {
   const user = 'Person: '+fn+'. Date: '+ds+'. Moon: '+moon.phase+(moonNote?' '+moonNote:'')+'. UD: '+num.ud+' ('+((num.udM&&num.udM.n)||'')+'), PD: '+(num.pd||num.ud)+'. Kin: '+kin.full+(kin.isGAP?' GAP PORTAL':'')+'. '+ctx+'. Saturn-Neptune Aries 2026 (Tarnas). Generate the daily reading for '+fn+'.';
   try {
     const start = Date.now();
-    const raw = await callAPI('claude-haiku-4-5-20251001', 900, sys, user);
+    const raw = await callAPI('claude-haiku-4-5-20251001', 1400, sys, user);
     const ms = Date.now()-start;
     console.log('Quick read '+ms+'ms');
     const cleaned = raw.replace(/```json\n?/g,'').replace(/```\n?/g,'').trim();

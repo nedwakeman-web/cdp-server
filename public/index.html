@@ -4286,8 +4286,27 @@ function renderSkeletonReading(dateStr, tier) {
   html += `<div id="sr-inner" style="max-width:840px;margin:0 auto;padding:0 24px 100px">`;
 
   // Header
+  const _tierBadge = {
+    free: {label:'Daily Snapshot', col:'var(--teal)', desc:''},
+    seeker: {label:'Full Reading', col:'var(--teal)', desc:'· priorities · shadow · week ahead'},
+    initiate: {label:'Monthly Arc', col:'var(--gold)', desc:'· lunation · wavespell'},
+    mystic: {label:'Yearly Reading', col:'var(--master)', desc:'· natal · yearly arc'},
+    oracle: {label:'Oracle Deep Dive', col:'var(--gold)', desc:'· full depth'}
+  }[tier] || {label:'Reading', col:'var(--text3)', desc:''};
+
   html += `<div class="r-head">
     <div class="r-meta">Your Daily Reading</div>
+    <div style="display:inline-flex;align-items:center;gap:8px;margin:6px 0 4px">
+      <span style="font-size:10px;letter-spacing:.22em;text-transform:uppercase;
+        color:${_tierBadge.col};border:1px solid ${_tierBadge.col};
+        padding:3px 10px;border-radius:20px;opacity:.85">${_tierBadge.label}</span>
+      <span style="font-size:12px;color:var(--text3);font-style:italic">${_tierBadge.desc}</span>
+      <button onclick="changeModeAndReload()" style="background:none;border:none;
+        font-size:11px;color:var(--gold3);cursor:pointer;padding:0;letter-spacing:.1em;
+        text-transform:uppercase;text-decoration:underline;text-underline-offset:2px">
+        change depth
+      </button>
+    </div>
     <div class="r-date">${dateLabel}</div>
     <div class="r-loc">${(profile.location||'').toUpperCase()}</div>
   </div>`;
@@ -4632,7 +4651,17 @@ function openShareCard() {
   // Handle both reading data structures
   const r = currentReading?.reading?.reading || currentReading?.reading;
   const synth = r?.synthesis || currentReading?.reading?.synthesis;
-  if (!synth) { console.warn('No synthesis available for share card'); return; }
+  if (!synth) {
+    // Show feedback rather than silent fail
+    const btn = event?.target || document.querySelector('[onclick*="openShareCard"]');
+    if (btn) {
+      const orig = btn.textContent;
+      btn.textContent = 'Reading still composing — try again in a moment';
+      btn.style.opacity = '0.6';
+      setTimeout(() => { btn.textContent = orig; btn.style.opacity = ''; }, 3000);
+    }
+    return;
+  }
 
   const overlay = document.getElementById('shareCardOverlay');
   const scDate  = document.getElementById('scDate');
@@ -4927,6 +4956,52 @@ function fillPhase1Sections(p1) {
 }
 
 // ── Fill in AI sections when the Oracle completes ──────────────────
+function injectUpsellNudge(tier) {
+  // Only show for lower tiers — no upsell on Oracle
+  const nudge = {
+    free: {
+      title: 'Want personalised priorities for tomorrow?',
+      body: 'Full Reading adds 3 personalised priorities, shadow work, focus/ease guidance, and a 7-day week ahead — specific to you, not generic.',
+      cta: 'Try Full Reading',
+      mode: 'quick', col: 'var(--teal)'
+    },
+    seeker: {
+      title: 'Want to see how this month shapes up?',
+      body: 'Monthly Arc adds the lunation map, wavespell arc, monthly shadow themes — plus richer notes for every day in your week ahead.',
+      cta: 'Try Monthly Arc',
+      mode: 'standard', col: 'var(--gold)'
+    },
+    initiate: {
+      title: 'Want to see your year arc?',
+      body: 'Yearly Reading integrates your natal chart, personal numerology cycles, and maps the major transit themes shaping your year.',
+      cta: 'Try Yearly Reading',
+      mode: 'mystic', col: 'var(--master)'
+    }
+  }[tier];
+  if (!nudge) return; // oracle or unknown — no nudge
+
+  // Don't show if already dismissed today
+  const key = 'cdp_upsell_dismissed_' + TODAY;
+  if (sessionStorage.getItem(key)) return;
+
+  // Find insertion point — after the synthesis+share section
+  const synthEl = document.getElementById('ai-synthesis');
+  if (!synthEl) return;
+
+  const nudgeDiv = document.createElement('div');
+  nudgeDiv.id = 'upsellNudge';
+  nudgeDiv.style.cssText = 'background:var(--bg2);border:1px solid ' + nudge.col + '33;border-radius:3px;padding:14px 18px;margin:0 0 16px;display:flex;align-items:flex-start;gap:14px;animation:fadeIn .6s ease both';
+  nudgeDiv.innerHTML = '<div style="flex:1">'
+    + '<div style="font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:' + nudge.col + ';margin-bottom:5px">' + nudge.title + '</div>'
+    + '<div style="font-size:14px;color:var(--text3);line-height:1.6;margin-bottom:10px">' + nudge.body + '</div>'
+    + '<div style="display:flex;gap:10px;align-items:center">'
+    + '<button onclick="selectMode(\'' + nudge.mode + '\');startWithMode()" style="background:none;border:1px solid ' + nudge.col + ';color:' + nudge.col + ';padding:7px 16px;border-radius:2px;cursor:pointer;font-family:\'EB Garamond\',serif;font-size:13px;letter-spacing:.08em">' + nudge.cta + ' →</button>'
+    + '<button onclick="sessionStorage.setItem(\'' + key + '\',\'1\');this.closest(\'#upsellNudge\').remove()" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:12px;padding:4px">Not now</button>'
+    + '</div></div>';
+
+  synthEl.after(nudgeDiv);
+}
+
 function fillAISections(data, dateStr) {
   const { reading: r, planets, moon, kin, num, aspects } = data;
   const moonSign = planets ? (planets[1]?.sign||'') : '';
@@ -4958,6 +5033,8 @@ function fillAISections(data, dateStr) {
     scheduleCheckin(r, dateStr);
     // Habit loop: tomorrow preview, evening reflection, streak
     setTimeout(() => injectTomorrowPreview(dateStr), 1000);
+    // Upsell nudge — shown after reading, contextual to current tier
+    setTimeout(() => injectUpsellNudge(currentTier), 2000);
     if (dateStr === TODAY) {
       showEveningReflection();
       showStreakBadge(getStreak());
