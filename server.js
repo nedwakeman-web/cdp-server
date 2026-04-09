@@ -330,6 +330,22 @@ function callAPI(model, maxTok, sys, user) {
       let fullText = '';
       let resolved = false;
 
+      // Check for non-200 HTTP status (overloaded, auth error etc)
+      if (res.statusCode !== 200) {
+        let errBody = '';
+        res.on('data', d => errBody += d.toString());
+        res.on('end', () => {
+          if (!resolved) {
+            resolved = true;
+            const msg = res.statusCode === 529 ? 'overloaded'
+              : res.statusCode === 401 ? 'invalid_api_key'
+              : `http_${res.statusCode}`;
+            reject(new Error(msg + ': ' + errBody.slice(0, 100)));
+          }
+        });
+        return;
+      }
+
       res.on('data', chunk => {
         buffer += chunk.toString();
         const lines = buffer.split('\n');
@@ -346,7 +362,7 @@ function callAPI(model, maxTok, sys, user) {
             } else if (evt.type === 'message_stop') {
               if (!resolved) { resolved = true; resolve(fullText); }
             } else if (evt.error) {
-              if (!resolved) { resolved = true; reject(new Error(evt.error.message)); }
+              if (!resolved) { resolved = true; reject(new Error(evt.error.message || JSON.stringify(evt.error))); }
             }
           } catch(e) { /* partial JSON line, skip */ }
         }
@@ -822,7 +838,18 @@ app.post('/api/reading/start', async (req, res) => {
         const moonNote = moon.isBlack?'BLACK MOON — do not initiate.':moon.isShiva?'SHIVA MOON — plant with intention.':'';
         const qdSys = 'You are the Oracle at Cosmic Daily Planner. Respond ONLY with valid JSON, no markdown, no preamble. Schema: {"synthesis":"string","priorities":[{"title":"string","action":"string"},{"title":"string","action":"string"},{"title":"string","action":"string"}],"shadow":"string","focus_on":["string","string","string","string"],"ease_off":["string","string","string","string"],"time_windows":{"morning":"string","afternoon":"string","evening":"string"}}. Max 800 tokens. Be specific and personal.';
         const qdUser = 'Person: '+fn+'. Date: '+ds+'. Moon: '+moon.phase+(moonNote?' ('+moonNote+')':'')+'. UD: '+num.ud+(num.udM&&num.udM.n?' ('+num.udM.n+')':'')+', PD: '+(num.pd||num.ud)+'. LP: '+(num.lp||'?')+', PY: '+(num.py||'?')+'. Kin: '+kin.full+(kin.isGAP?' GALACTIC ACTIVATION PORTAL':'')+'. '+ctx+'. Saturn-Neptune Aries 2026 (Tarnas 2006). Write a specific personal daily reading for '+fn+'.';
-        const qdRaw = await callAPI('claude-haiku-4-5-20251001', 900, qdSys, qdUser);
+        let qdRaw;
+        for (let attempt = 0; attempt < 3; attempt++) {
+          try {
+            qdRaw = await callAPI('claude-haiku-4-5-20251001', 900, qdSys, qdUser);
+            break;
+          } catch(e) {
+            if (e.message.includes('overloaded') && attempt < 2) {
+              console.log(`Job ${jobId} overloaded, retry ${attempt+1}...`);
+              await new Promise(r => setTimeout(r, 4000 + attempt * 3000));
+            } else throw e;
+          }
+        }
         const qdCleaned = qdRaw.replace(/```json[\n]?/g,'').replace(/```[\n]?/g,'').trim();
         let qdReading;
         try { qdReading = JSON.parse(qdCleaned); } catch(e) { qdReading = {synthesis:qdRaw,raw:true}; }
