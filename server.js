@@ -836,8 +836,10 @@ app.post('/api/reading/start', async (req, res) => {
           p.birthDay?('Born '+p.birthDay+'/'+p.birthMonth+'/'+p.birthYear):null
         ].filter(Boolean).join('. ');
         const moonNote = moon.isBlack?'BLACK MOON — do not initiate.':moon.isShiva?'SHIVA MOON — plant with intention.':'';
-        const qdSys = 'You are the Oracle at Cosmic Daily Planner. Respond ONLY with valid JSON, no markdown, no preamble. Schema: {"synthesis":"string","priorities":[{"title":"string","action":"string"},{"title":"string","action":"string"},{"title":"string","action":"string"}],"shadow":"string","focus_on":["string","string","string","string"],"ease_off":["string","string","string","string"],"time_windows":{"morning":"string","afternoon":"string","evening":"string"}}. Max 800 tokens. Be specific and personal.';
-        const qdUser = 'Person: '+fn+'. Date: '+ds+'. Moon: '+moon.phase+(moonNote?' ('+moonNote+')':'')+'. UD: '+num.ud+(num.udM&&num.udM.n?' ('+num.udM.n+')':'')+', PD: '+(num.pd||num.ud)+'. LP: '+(num.lp||'?')+', PY: '+(num.py||'?')+'. Kin: '+kin.full+(kin.isGAP?' GALACTIC ACTIVATION PORTAL':'')+'. '+ctx+'. Saturn-Neptune Aries 2026 (Tarnas 2006). Write a specific personal daily reading for '+fn+'.';
+        const weekAhead = getWeekAhead(ds);
+        const weekCtx = weekAhead.slice(1).map(w => w.dayStr+': UD'+w.ud+(w.isGAP?' GAP★':'')+' '+w.kin).join(', ');
+        const qdSys = 'You are the Oracle at Cosmic Daily Planner. Respond ONLY with valid JSON, no markdown, no preamble. Schema: {"synthesis":"string","priorities":[{"title":"string","action":"string"},{"title":"string","action":"string"},{"title":"string","action":"string"}],"shadow":"string","focus_on":["string","string","string","string"],"ease_off":["string","string","string","string"],"time_windows":{"morning":"string","afternoon":"string","evening":"string"},"week_ahead":[{"date":"string","note":"string"},{"date":"string","note":"string"},{"date":"string","note":"string"},{"date":"string","note":"string"},{"date":"string","note":"string"},{"date":"string","note":"string"}]}. week_ahead = next 6 days after today, one sentence each, grounded in UD+Kin+moon energy. Max 1000 tokens. Be specific.';
+        const qdUser = 'Person: '+fn+'. Date: '+ds+'. Moon: '+moon.phase+(moonNote?' ('+moonNote+')':'')+'. UD: '+num.ud+(num.udM&&num.udM.n?' ('+num.udM.n+')':'')+', PD: '+(num.pd||num.ud)+'. LP: '+(num.lp||'?')+', PY: '+(num.py||'?')+'. Kin: '+kin.full+(kin.isGAP?' GALACTIC ACTIVATION PORTAL':'')+'. '+ctx+'. Week ahead cosmic data: '+weekCtx+'. Saturn-Neptune Aries 2026 (Tarnas 2006). Write a specific personal daily reading for '+fn+' including one-sentence notes for each of the 6 days ahead.';
         let qdRaw;
         for (let attempt = 0; attempt < 3; attempt++) {
           try {
@@ -856,7 +858,7 @@ app.post('/api/reading/start', async (req, res) => {
         const qdJob = jobs.get(jobId);
         if (qdJob) {
           qdJob.status = 'complete';
-          qdJob.result = { reading: qdReading, planets, moon, kin, num, aspects };
+          qdJob.result = { reading: qdReading, planets, moon, kin, num, aspects, weekAhead };
           qdJob.completedAt = Date.now();
           console.log(`Job ${jobId} ${activeTier} complete (${((Date.now()-qdJob.startedAt)/1000).toFixed(1)}s)`);
         }

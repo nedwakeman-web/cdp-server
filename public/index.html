@@ -3420,7 +3420,7 @@ async function loadReading(dateStr, tier) {
         if (qd.reading && qd.reading.synthesis && !window._phase1Rendered && !currentReading) {
           window._phase1Rendered = true;
           // Store quick read as currentReading so taps work immediately
-          currentReading = {reading: qd.reading, planets: qd.planets, moon: qd.moon, kin: qd.kin, num: qd.num};
+          currentReading = {reading: qd.reading, planets: qd.planets, moon: qd.moon, kin: qd.kin, num: qd.num, weekAhead: qd.weekAhead || []};
           fillPhase1Sections(qd.reading);
           // Update status bar
           const skTxt = document.getElementById('skStatusText');
@@ -4887,6 +4887,41 @@ function fillPhase1Sections(p1) {
         <div class="col-card"><div class="col-head">Focus On</div>${(p1.focus_on||[]).map(i=>`<div class="col-item">${i}</div>`).join('')}</div>
         <div class="col-card"><div class="col-head">Ease Off</div>${(p1.ease_off||[]).map(i=>`<div class="col-item">${i}</div>`).join('')}</div>
       </div>`);
+    }
+  }
+
+  // Week ahead — lite version for Seeker (AI notes + client-side UD/Kin/moon per day)
+  if (p1.week_ahead?.length) {
+    const wkEl = document.getElementById('ai-week');
+    if (wkEl) {
+      let wh = '<div class="r-section"><div class="sec-label">The Week Ahead <span style="font-size:11px;color:var(--text3);letter-spacing:.08em;text-transform:none;font-weight:400;font-style:italic">· tap any day for Oracle insight</span></div>';
+      wh += '<div class="week-grid">';
+      p1.week_ahead.forEach(w => {
+        if (!w.date) return;
+        const ud = clientUD(w.date);
+        const udD = NUM_DATA[ud] || {n:''};
+        const kinData = clientKin(w.date);
+        const moonData = clientMoon(w.date);
+        const isMaster = [11,22,33,44].includes(ud);
+        const isGAP = kinData.isGAP;
+        const d = new Date(w.date + 'T12:00:00Z');
+        const dayLabel = d.toLocaleDateString('en-GB', {weekday:'short', day:'numeric', month:'short'});
+        const safeNote = (w.note||'').replace(/'/g,"\\'").slice(0,120);
+        const safeKin = (kinData.full||'').replace(/'/g,"\\'");
+        wh += `<div class="week-day tappable" onclick="tapWeekDay('${dayLabel}','${safeKin}',${ud},'${safeNote}')" style="${isGAP?'border-color:var(--teal2)':''}">
+          <div class="week-day-name" style="display:flex;align-items:center;gap:4px">
+            <span>${dayLabel}</span>
+            ${isGAP ? '<span style="color:var(--teal);font-size:10px">★</span>' : ''}
+          </div>
+          <div class="week-ud" style="${isMaster?'color:var(--master)':''}">${ud}${isMaster?'★':''}</div>
+          <div class="week-ud-label">${udD.n||''}</div>
+          <div style="font-size:11px;color:var(--text3);margin:4px 0">${moonData.emoji} ${moonData.phase}</div>
+          <div style="font-size:11px;color:var(--teal);margin-bottom:4px">${kinData.seal}</div>
+          ${w.note ? `<div style="font-size:12px;color:var(--text2);line-height:1.5;margin-top:4px;font-style:italic">${w.note}</div>` : ''}
+        </div>`;
+      });
+      wh += '</div></div>';
+      fadeIn(wkEl, wh);
     }
   }
 }
