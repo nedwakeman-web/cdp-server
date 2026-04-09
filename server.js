@@ -811,25 +811,39 @@ app.post('/api/reading/start', async (req, res) => {
       const num = getNumerology(ds, profile?.birthDay, profile?.birthMonth, profile?.birthYear);
       const aspects = getAspects(planets);
 
+      if (activeTier === 'free' || activeTier === 'seeker') {
+        // Free/Seeker: use the fast quickread path (Haiku, ~12s)
+        const p = profile || {};
+        const fn = p.nickname || (p.name ? p.name.split(' ')[0] : 'you');
+        const ctx = [p.context,p.building,p.chapter,
+          p.active_threads?(Array.isArray(p.active_threads)?p.active_threads.join(', '):p.active_threads):null,
+          p.birthDay?('Born '+p.birthDay+'/'+p.birthMonth+'/'+p.birthYear):null
+        ].filter(Boolean).join('. ');
+        const moonNote = moon.isBlack?'BLACK MOON — do not initiate.':moon.isShiva?'SHIVA MOON — plant with intention.':'';
+        const qdSys = 'You are the Oracle at Cosmic Daily Planner. Respond ONLY with valid JSON, no markdown, no preamble. Schema: {"synthesis":"string","priorities":[{"title":"string","action":"string"},{"title":"string","action":"string"},{"title":"string","action":"string"}],"shadow":"string","focus_on":["string","string","string","string"],"ease_off":["string","string","string","string"],"time_windows":{"morning":"string","afternoon":"string","evening":"string"}}. Max 800 tokens. Be specific and personal.';
+        const qdUser = 'Person: '+fn+'. Date: '+ds+'. Moon: '+moon.phase+(moonNote?' ('+moonNote+')':'')+'. UD: '+num.ud+(num.udM&&num.udM.n?' ('+num.udM.n+')':'')+', PD: '+(num.pd||num.ud)+'. LP: '+(num.lp||'?')+', PY: '+(num.py||'?')+'. Kin: '+kin.full+(kin.isGAP?' GALACTIC ACTIVATION PORTAL':'')+'. '+ctx+'. Saturn-Neptune Aries 2026 (Tarnas 2006). Write a specific personal daily reading for '+fn+'.';
+        const qdRaw = await callAPI('claude-haiku-4-5-20251001', 900, qdSys, qdUser);
+        const qdCleaned = qdRaw.replace(/```json[\n]?/g,'').replace(/```[\n]?/g,'').trim();
+        let qdReading;
+        try { qdReading = JSON.parse(qdCleaned); } catch(e) { qdReading = {synthesis:qdRaw,raw:true}; }
+        const qdJob = jobs.get(jobId);
+        if (qdJob) {
+          qdJob.status = 'complete';
+          qdJob.result = { reading: qdReading, planets, moon, kin, num, aspects };
+          qdJob.completedAt = Date.now();
+          console.log(`Job ${jobId} ${activeTier} complete (${((Date.now()-qdJob.startedAt)/1000).toFixed(1)}s)`);
+        }
+        return;
+      }
+
       if (activeTier !== 'free') {
-        // Phase 1 — fast actionable core
+        // Phase 1 — fast actionable core for initiate/mystic/oracle
         const p1 = await generatePhase1(ds, profile || {}, activeTier, planets, moon, kin, num, aspects);
         const job = jobs.get(jobId);
         if (job) {
           job.phase1 = p1;
           job.status = 'phase1_complete';
           console.log(`Job ${jobId} Phase 1 complete (${((Date.now() - job.startedAt)/1000).toFixed(1)}s)`);
-        }
-        // Seeker: Phase 1 IS the full reading — skip Phase 2 to avoid timeout
-        if (activeTier === 'seeker') {
-          const seekerJob = jobs.get(jobId);
-          if (seekerJob) {
-            seekerJob.status = 'complete';
-            seekerJob.result = { reading: p1, planets, moon, kin, num, aspects };
-            seekerJob.completedAt = Date.now();
-            console.log(`Job ${jobId} Seeker complete via Phase 1 (${((Date.now() - seekerJob.startedAt)/1000).toFixed(1)}s)`);
-          }
-          return;
         }
       }
 
@@ -1673,6 +1687,38 @@ app.get('/api/debug/:jobId', (req, res) => {
     readingKeys: job.result?.reading ? Object.keys(job.result.reading) : null,
   });
 });
+
+// ── QUICK READ — fast Haiku reading ──
+app.post('/api/quickread', async (req, res) => {
+  const {date, profile} = req.body;
+  const ds = date || new Date().toISOString().slice(0,10);
+  const p = profile || {};
+  const fn = p.nickname || (p.name ? p.name.split(' ')[0] : 'you');
+  const planets = buildPlanets(ds);
+  const moon = getMoon(ds);
+  const kin = getKin(ds);
+  const num = getNumerology(ds, p.birthDay, p.birthMonth, p.birthYear);
+  const ctx = [p.context,p.building,p.chapter,
+    p.active_threads?(Array.isArray(p.active_threads)?p.active_threads.join(', '):p.active_threads):null,
+    p.birthDay?('Born '+p.birthDay+'/'+p.birthMonth+'/'+p.birthYear):null
+  ].filter(Boolean).join('. ');
+  const moonNote = moon.isBlack?'BLACK MOON — do not initiate.':moon.isShiva?'SHIVA MOON — plant with intention.':'';
+  const sys = 'You are the Oracle at Cosmic Daily Planner. Respond ONLY with valid JSON. No markdown, no preamble. JSON schema: {"synthesis":"string","priorities":[{"title":"string","action":"string"},{"title":"string","action":"string"},{"title":"string","action":"string"}],"shadow":"string","focus_on":["string","string","string"],"ease_off":["string","string","string"]}. Max 700 tokens. Be specific to the person by name.';
+  const user = 'Person: '+fn+'. Date: '+ds+'. Moon: '+moon.phase+(moonNote?' '+moonNote:'')+'. UD: '+num.ud+' ('+((num.udM&&num.udM.n)||'')+'), PD: '+(num.pd||num.ud)+'. Kin: '+kin.full+(kin.isGAP?' GAP PORTAL':'')+'. '+ctx+'. Saturn-Neptune Aries 2026 (Tarnas). Generate the daily reading for '+fn+'.';
+  try {
+    const start = Date.now();
+    const raw = await callAPI('claude-haiku-4-5-20251001', 900, sys, user);
+    const ms = Date.now()-start;
+    console.log('Quick read '+ms+'ms');
+    const cleaned = raw.replace(/```json\n?/g,'').replace(/```\n?/g,'').trim();
+    let reading;
+    try { reading = JSON.parse(cleaned); } catch(e) { reading = {synthesis:raw,raw:true}; }
+    res.json({reading, planets, moon, kin, num, ms});
+  } catch(e) {
+    res.status(500).json({error:e.message});
+  }
+});
+
 
 app.get('/api/test', async (req, res) => {
   const start = Date.now();
