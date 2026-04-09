@@ -117,18 +117,20 @@ body.light{--bg:#F5F0E8;--bg2:#EDE6D6;--bg3:#E4DBC8;--bg4:#F8F4EC;
 .load-stage.done{opacity:0;transform:translateY(-8px)}
 #stageList{position:relative;height:2.4em;overflow:hidden;margin-top:28px}
 .r-section{background:var(--bg2);border:1px solid var(--div);border-radius:2px;
-  padding:28px 32px;margin-bottom:20px}
+  padding:28px 32px;margin-bottom:20px;scroll-margin-top:70px}
 @media(max-width:600px){.r-section{padding:20px 18px}}
 .sec-label{font-size:11px;letter-spacing:.35em;text-transform:uppercase;color:rgba(240,237,230,0.55);
   margin-bottom:16px;display:flex;align-items:center;gap:10px}
 .sec-label::after{content:'';flex:1;height:1px;background:var(--div)}
-.sec-hl{font-family:'Cormorant Garamond',serif;font-size:28px;color:var(--gold);
-  font-weight:400;margin-bottom:16px;line-height:1.35}
-.sec-body{color:var(--text2);font-size:18px;line-height:2.05}
-.sec-body p{margin-bottom:1.15rem}.sec-body p:last-child{margin-bottom:0}
-.synthesis{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:1.4rem;
-  line-height:1.85;color:var(--text);text-align:center;padding:36px 28px;
-  border-bottom:1px solid var(--div);margin-bottom:28px}
+.sec-hl{font-family:'Cormorant Garamond',serif;font-size:clamp(20px,2.5vw,26px);
+  color:var(--gold);font-weight:400;margin-bottom:16px;line-height:1.4;
+  padding-left:14px;border-left:2px solid rgba(201,160,80,0.4)}
+.sec-body{color:var(--text2);font-size:17px;line-height:1.85}
+.sec-body p{margin-bottom:1em}.sec-body p:last-child{margin-bottom:0}
+.sec-body p:first-child{font-size:18px;line-height:1.9;color:var(--text)}
+.synthesis{font-family:'EB Garamond',serif;font-size:clamp(17px,2vw,20px);
+  line-height:1.95;padding:28px 32px;text-align:center;font-style:italic;
+  border-bottom:1px solid var(--div);margin-bottom:4px}
 .moon-badge{display:inline-block;padding:6px 16px;font-size:12px;
   letter-spacing:.15em;text-transform:uppercase;border-radius:2px;margin-bottom:16px}
 .badge-black{background:rgba(80,0,0,0.4);border:1px solid rgba(200,80,80,0.3);color:#ff9999}
@@ -1064,6 +1066,22 @@ body.print-card-mode{background:#0D1E33}
   .intention-input{font-size:14px;padding:8px 11px}
 }
 
+
+.locked-preview{background:var(--bg2);border:1px solid rgba(201,160,80,0.2);
+  border-radius:3px;padding:20px 24px;margin-bottom:16px;position:relative;overflow:hidden}
+.locked-preview-label{font-size:10px;letter-spacing:.3em;text-transform:uppercase;
+  color:rgba(201,160,80,0.6);margin-bottom:10px}
+.locked-preview-title{font-family:'Cormorant Garamond',serif;font-size:18px;
+  color:var(--gold3);margin-bottom:10px}
+.locked-preview-text{font-size:15px;color:var(--text2);line-height:1.8;
+  filter:blur(3.5px);user-select:none;pointer-events:none;margin-bottom:14px}
+.locked-preview-cta{display:inline-block;background:none;
+  border:1px solid rgba(201,160,80,0.4);color:var(--gold);
+  font-family:'EB Garamond',serif;font-size:13px;letter-spacing:.12em;
+  padding:8px 18px;border-radius:2px;cursor:pointer;transition:all .2s}
+.locked-preview-cta:hover{border-color:var(--gold);background:rgba(201,160,80,0.06)}
+.locked-overlay{position:absolute;inset:0;display:flex;align-items:center;
+  justify-content:center;background:rgba(8,19,31,0.3)}
 </style>
 </head>
 <body>
@@ -3797,6 +3815,28 @@ function renderHistory() {
     <button class="hist-clear-btn" onclick="clearHistory()">Clear History</button>
   </div>`;
   cont.innerHTML = html;
+
+  // Wire tap handlers after DOM is set
+  const reflEl = cont.querySelector('#cardReflectEl');
+  if (reflEl) {
+    reflEl.onclick = () => {
+      const mode = reflEl.dataset.mode || 'day';
+      const label = mode==='morning'?'MORNING REFLECTION':mode==='afternoon'?'AFTERNOON REFLECTION':'EVENING REFLECTION';
+      const text = Array.from(reflEl.childNodes).find(n=>n.nodeType===3)?.textContent?.trim() || reflEl.firstChild?.textContent?.trim() || '';
+      openDrawer(label, text + ' ' + getUserContext() + ' What does this ' + mode + ' energy specifically ask of ' + (getFirstName()||'you') + ' today?',
+        [{q:'What should I focus on in the next 2 hours?',l:'Next 2 hours'},{q:'What should I avoid this ' + mode + '?',l:'What to avoid'}]);
+    };
+  }
+  const numEl = cont.querySelector('#cardNumEl');
+  if (numEl) {
+    numEl.onclick = () => {
+      const num = numEl.dataset.num||'';
+      const name = numEl.dataset.name||'';
+      const label = numEl.dataset.label||'Numerology';
+      openDrawer(label + ' · ' + name, label + ' ' + num + ' (' + name + '). ' + getUserContext() + ' How does this number shape decisions and timing today?',
+        [{q:'What is the gift of ' + num + ' energy today?',l:'The gift'},{q:'What is the shadow to watch for?',l:'The shadow'}]);
+    };
+  }
 }
 
 function loadReadingFromHistory(dateStr) {
@@ -4999,7 +5039,13 @@ function fillPhase1Sections(p1) {
   if (p1.synthesis) {
     const synthEl = document.getElementById('ai-synthesis');
     if (synthEl) {
-      const synthText = String(p1.synthesis).replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/\*(.*?)\*/g,'$1').trim();
+      let _p1Synth = String(p1.synthesis||'').trim();
+      // Strip JSON fences/raw JSON
+      _p1Synth = _p1Synth.replace(/^```json\s*/i,'').replace(/^```\s*/,'').replace(/```\s*$/,'');
+      if (_p1Synth.startsWith('{')) {
+        try { const _pj=JSON.parse(_p1Synth); _p1Synth=_pj.synthesis||''; } catch(e){ _p1Synth=''; }
+      }
+      const synthText = _p1Synth.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/\*(.*?)\*/g,'$1').trim();
       // Show phase 1 synthesis in the stage display area  
       const sd = document.getElementById('stageDisplay');
       if (sd) {
@@ -5067,16 +5113,31 @@ function fillPhase1Sections(p1) {
     }
   }
 
+  // Next-tier teaser — locked preview showing what the upgrade reveals
+  if (p1.next_tier_teaser && currentTier === 'seeker') {
+    const wkEl2 = document.getElementById('ai-week');
+    if (wkEl2) {
+      const teaserDiv = document.createElement('div');
+      teaserDiv.className = 'locked-preview';
+      teaserDiv.innerHTML = '<div class="locked-preview-label">Monthly Arc · Initiate Tier</div>'
+        + '<div class="locked-preview-title">What this month\'s lunation map reveals for you</div>'
+        + '<div class="locked-preview-text">' + cleanText(p1.next_tier_teaser) + ' The wavespell arc running through April shows a pattern of…</div>'
+        + '<button class="locked-preview-cta" onclick="selectMode(\'standard\');startWithMode()">Unlock with Monthly Arc · £29/mo →</button>';
+      wkEl2.before(teaserDiv);
+    }
+  }
+
   // Week ahead — lite version for Seeker (AI notes + client-side UD/Kin/moon per day)
   if (p1.week_ahead?.length) {
     const wkEl = document.getElementById('ai-week');
     if (wkEl) {
-      let wh = '<div class="r-section"><div class="sec-label">The Week Ahead <span style="font-size:11px;color:var(--text3);letter-spacing:.08em;text-transform:none;font-weight:400;font-style:italic">· tap any day for Oracle insight</span></div>';
+      let wh = '<div class="r-section"><div class="sec-label">The Week Ahead <span style="font-size:11px;color:var(--text3);font-style:italic;font-weight:400;text-transform:none;letter-spacing:.05em">· tap any day for deeper insight</span></div>';
+      wh += '<div style="display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-top:12px">';
       p1.week_ahead.forEach(w => {
         if (!w.date) return;
         const ud = clientUD(w.date);
         if (isNaN(ud)) return;
-        const udD = NUM_DATA[ud] || {n:''};
+        const udD = NUM_DATA[ud] || {n:'',k:''};
         const kinData = clientKin(w.date);
         const moonData = clientMoon(w.date);
         const isMaster = [11,22,33,44].includes(ud);
@@ -5086,21 +5147,21 @@ function fillPhase1Sections(p1) {
         const dayShort = d.toLocaleDateString('en-GB', {weekday:'short'});
         const safeNote = (w.note||'').replace(/'/g,"\\'").slice(0,150);
         const safeKin = (kinData.seal||'').replace(/'/g,"\\'");
-        wh += `<div class="week-row tappable" onclick="tapWeekDay('${dayLabel}','${safeKin}',${ud},'${safeNote}')">
-          <div class="week-date">
-            <div style="font-size:13px;font-weight:500;color:var(--gold)">${dayShort}</div>
-            <div style="font-family:'Cormorant Garamond',serif;font-size:28px;${isMaster?'color:var(--master)':''};line-height:1">${ud}${isMaster?'★':''}</div>
-            <div style="font-size:11px;color:var(--text3);letter-spacing:.1em">${udD.n||''}</div>
-            <div style="font-size:11px;color:var(--text3);margin-top:3px">${moonData.emoji}</div>
-          </div>
-          <div class="week-note">
-            ${isGAP ? '<span style="font-size:10px;color:var(--teal);letter-spacing:.15em;text-transform:uppercase">★ Portal · </span>' : ''}
-            ${w.note ? cleanText(w.note) : '<em style="color:var(--text3)">' + kinData.seal + '</em>'}
-          </div>
+        const borderCol = isGAP ? 'var(--teal)' : isMaster ? 'var(--master)' : 'var(--div)';
+        const noteClean = w.note ? cleanText(w.note) : '';
+        wh += `<div class="week-day tappable" onclick="tapWeekDay('${dayLabel}','${safeKin}',${ud},'${safeNote}')"
+          style="border-color:${borderCol};cursor:pointer">
+          <div style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--gold3);margin-bottom:5px">${dayShort}</div>
+          <div style="font-family:'Cormorant Garamond',serif;font-size:30px;color:${isMaster?'var(--master)':'var(--gold)'};line-height:1;margin-bottom:2px">${ud}${isMaster?'★':''}</div>
+          <div style="font-size:11px;color:var(--text2);margin-bottom:5px">${udD.n||''}</div>
+          ${isGAP ? '<div style="font-size:9px;color:var(--teal);letter-spacing:.15em;text-transform:uppercase;margin-bottom:4px">★ Portal</div>' : ''}
+          <div style="font-size:11px;color:var(--text3);margin-bottom:5px">${moonData.emoji} ${moonData.phase}</div>
+          <div style="font-size:10px;color:var(--teal2);margin-bottom:5px">${kinData.seal}</div>
+          ${noteClean ? `<div style="font-size:12px;color:var(--text2);line-height:1.5;font-style:italic;border-top:1px solid var(--div);padding-top:5px;margin-top:3px">${noteClean.slice(0,110)}${noteClean.length>110?'…':''}</div>` : ''}
+          <div style="font-size:9px;color:var(--gold3);margin-top:5px;text-align:right">↗</div>
         </div>`;
       });
-      wh += '</div>';
-      fadeIn(wkEl, wh);
+      wh += '</div></div>';
     }
   }
 }
@@ -5152,6 +5213,43 @@ function injectUpsellNudge(tier) {
   synthEl.after(nudgeDiv);
 }
 
+
+function injectReadingNav(tier) {
+    btn.style.cssText = "background:none;border:1px solid var(--div);color:var(--text3);font-family:'EB Garamond',serif;font-size:12px;letter-spacing:.12em;text-transform:uppercase;padding:5px 12px;border-radius:2px;cursor:pointer;transition:all .2s";
+  if (!synthEl || document.getElementById('readingNavBar')) return;
+
+  const sections = [
+    {id:'ai-priorities', label:'Priorities'},
+    {id:'ai-shadow', label:'Shadow'},
+    {id:'sk-numerology', label:'Numerology'},
+    {id:'ai-moon-body', label:'Moon'},
+    {id:'ai-astrology', label:'Astrology'},
+    {id:'ai-dreamspell', label:'Dreamspell'},
+    {id:'ai-week', label:'Week Ahead'},
+  ].filter(s => document.getElementById(s.id));
+
+  if (sections.length < 3) return;
+
+  const nav = document.createElement('div');
+  nav.id = 'readingNavBar';
+  nav.style.cssText = 'display:flex;flex-wrap:wrap;gap:6px;padding:12px 0;border-bottom:1px solid var(--div);margin-bottom:16px';
+
+  sections.forEach(s => {
+    const btn = document.createElement('button');
+    btn.textContent = s.label;
+    btn.style.cssText = "background:none;border:1px solid var(--div);color:var(--text3);font-size:12px;letter-spacing:.12em;text-transform:uppercase;padding:5px 12px;border-radius:2px;cursor:pointer;transition:all .2s";
+    btn.onmouseover = () => { btn.style.borderColor='var(--gold3)'; btn.style.color='var(--gold)'; };
+    btn.onmouseout = () => { btn.style.borderColor='var(--div)'; btn.style.color='var(--text3)'; };
+    btn.onclick = () => {
+      const el = document.getElementById(s.id);
+      if (el) el.scrollIntoView({behavior:'smooth', block:'start'});
+    };
+    nav.appendChild(btn);
+  });
+
+  synthEl.after(nav);
+}
+
 function fillAISections(data, dateStr) {
   const { reading: r, planets, moon, kin, num, aspects } = data;
   const moonSign = planets ? (planets[1]?.sign||'') : '';
@@ -5193,6 +5291,8 @@ function fillAISections(data, dateStr) {
     setTimeout(() => injectTomorrowPreview(dateStr), 1000);
     // Upsell nudge — shown after reading, contextual to current tier
     setTimeout(() => injectUpsellNudge(currentTier), 2000);
+    // Inject reading navigation for easy skim
+    injectReadingNav(currentTier);
     if (dateStr === TODAY) {
       showEveningReflection();
       showStreakBadge(getStreak());
@@ -6363,7 +6463,7 @@ function showPresencePrompt() {
         const mNote = currentReading.moon?.isBlack ? ' Black Moon: stay inward.' : currentReading.moon?.isShiva ? ' Shiva Moon: act on intentions.' : '';
         return 'Afternoon · ' + n.n + '.' + mNote + ' ' + (n.afternoon||'').slice(0,60);
       },
-      action: () => (r.time_windows?.afternoon||'Review what shifted since morning').slice(0,80)
+      action: () => { const t = r.time_windows?.afternoon||'Review what shifted since morning'; return t.split('.')[0].slice(0,70) + '.'; }
     },
     evening: {
       emoji: '🌙',
