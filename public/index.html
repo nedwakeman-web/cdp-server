@@ -1245,6 +1245,15 @@ body.print-card-mode{background:#0D1E33}
 <!-- PROFILE SCREEN -->
 <div id="sctx" class="screen">
   <div id="sctxContent" style="max-width:1400px;margin:0 auto;padding:0 16px 100px">
+    <div style="text-align:right;padding:12px 0 0;margin-bottom:-16px">
+      <button onclick="printMyEnergy()" style="background:none;border:1px solid var(--div);color:var(--text3);
+        padding:7px 16px;border-radius:2px;cursor:pointer;font-family:'EB Garamond',serif;font-size:13px;
+        letter-spacing:.1em;text-transform:uppercase;transition:all .2s"
+        onmouseover="this.style.borderColor='var(--gold)';this.style.color='var(--gold)'"
+        onmouseout="this.style.borderColor='var(--div)';this.style.color='var(--text3)'">
+        ⬇ Save as PDF
+      </button>
+    </div>
     <div style="text-align:center;padding:40px 0 28px;border-bottom:1px solid var(--div);margin-bottom:28px">
       <div style="font-size:11px;letter-spacing:.35em;text-transform:uppercase;color:var(--text3);margin-bottom:10px">Your Cosmic Context</div>
       <div style="font-family:'Cormorant Garamond',serif;font-size:clamp(26px,4vw,38px);color:var(--gold);font-weight:300;letter-spacing:.04em">The Long View</div>
@@ -1473,16 +1482,22 @@ body.print-card-mode{background:#0D1E33}
 <!-- SHARE CARD MODAL -->
 <div id="shareCardOverlay" class="share-card-overlay" style="display:none;opacity:0;transition:opacity .25s" onclick="if(event.target===this)closeShareCard()">
   <div class="share-card-box">
-    <div id="synthCardPreview">
-      <div class="sc-date" id="scDate"></div>
-      <div class="sc-synth" id="scSynth"></div>
-      <div class="sc-meta" id="scMeta"></div>
-      <div class="sc-brand">✦ Cosmic Daily Planner</div>
+    <div id="synthCardPreview" style="padding:32px 28px;position:relative;overflow:hidden;
+      background:linear-gradient(160deg,#0D1E33 0%,#0a1628 60%,#071020 100%)">
+      <div style="width:40px;height:1px;background:#c9a050;margin-bottom:20px;opacity:.7"></div>
+      <div class="sc-date" id="scDate" style="font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:rgba(201,160,80,0.7);margin-bottom:14px"></div>
+      <div class="sc-synth" id="scSynth" style="font-family:'Cormorant Garamond',serif;font-size:19px;line-height:1.75;color:#e8e4da;margin-bottom:18px"></div>
+      <div class="sc-meta" id="scMeta" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px"></div>
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div class="sc-brand" style="font-size:11px;letter-spacing:.28em;text-transform:uppercase;color:rgba(201,160,80,0.5)">✦ Cosmic Daily Planner</div>
+        <div style="width:30px;height:1px;background:#c9a050;opacity:.4"></div>
+      </div>
     </div>
     <div class="share-card-actions">
-      <button class="sc-action primary" onclick="copyShareCard(this)">⎘ Copy Image</button>
+      <button class="sc-action primary" id="scCopyBtn" onclick="copyShareCard(this)">⬇ Save Image</button>
       <button class="sc-action" onclick="shareNative()">↗ Share</button>
-      <button class="sc-action dismiss" onclick="closeShareCard()">✕ Close</button>
+      <button class="sc-action" onclick="copyShareText(this)">⎘ Copy Text</button>
+      <button class="sc-action dismiss" onclick="closeShareCard()">✕</button>
     </div>
   </div>
 </div>
@@ -3907,7 +3922,10 @@ function renderCard() {
   }
   html += `<div class="card-hr"></div>`;
   html += `<div class="card-label">${timeIcon} ${timeLabel}</div>
-  <div class="card-reflection">${reflection}</div>`;
+  <div class="card-reflection tappable" style="cursor:pointer" id="cardReflectEl" data-mode="${mode}">
+    ${reflection}
+    <div style="font-size:10px;color:var(--gold3);margin-top:8px;text-align:right;letter-spacing:.1em">↗ Ask the Oracle</div>
+  </div>`;
   if (forToday) {
     html += `<div class="card-hr"></div>
     <div class="card-hr-dot">●</div>
@@ -3915,12 +3933,13 @@ function renderCard() {
     <div class="card-for-today">${forToday}</div>`;
   }
   html += `<div class="card-hr"></div>
-  <div class="card-num-strip">
+  <div class="card-num-strip tappable" style="cursor:pointer" id="cardNumEl" data-num="${displayNum}" data-name="${numData.n}" data-label="${numLabel}">
     <div class="card-num-circle" style="${isMasterNum?'border-color:var(--master);color:var(--master)':''}">${displayNum||'—'}</div>
     <div class="card-num-text">
       <div class="card-num-label">${numLabel}${isMasterNum?' · Master Number':''}</div>
       <div class="card-num-name" style="${isMasterNum?'color:var(--master)':''}">${numData.n}</div>
       <div class="card-num-meaning">${numData.m}</div>
+      <div style="font-size:10px;color:var(--gold3);margin-top:4px;letter-spacing:.08em">↗ Ask the Oracle</div>
     </div>
   </div>`;
   html += `<div class="card-hr"></div>
@@ -4035,7 +4054,18 @@ function stars(n) { return '●'.repeat(Math.max(0,n)) + '○'.repeat(Math.max(0
 
 function cleanText(t) {
   if (!t) return '';
-  return String(t).trim()
+  let s = String(t).trim();
+  // Strip JSON fences and raw JSON objects that leaked into display
+  s = s.replace(/^```json\s*/i,'').replace(/^```\s*/,'').replace(/```\s*$/,'');
+  // If it still looks like raw JSON, extract synthesis field or return empty
+  if (s.startsWith('{') || s.startsWith('{"synthesis"')) {
+    try {
+      const parsed = JSON.parse(s);
+      if (parsed.synthesis) s = String(parsed.synthesis);
+      else return '';
+    } catch(e) { return ''; }
+  }
+  return s.trim()
     .replace(/^[_*]+|[_*]+$/g, '')
     .replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>')
     .replace(/\*(.*?)\*/g,'<em>$1</em>')
@@ -4700,21 +4730,6 @@ function openShareCard() {
   if (ud) chips.push('Universal Day ' + ud);
   scMeta.innerHTML = chips.map(t => `<span class="sc-chip">${t}</span>`).join('');
 
-  // Replace the dark synthCardPreview with a live canvas render
-  const preview = document.getElementById('synthCardPreview');
-  if (preview) {
-    try {
-      const cv = buildShareCanvas();
-      cv.style.cssText = 'width:100%;height:auto;display:block;border-radius:4px 4px 0 0';
-      preview.innerHTML = '';
-      preview.style.padding = '0';
-      preview.style.background = 'none';
-      preview.appendChild(cv);
-    } catch(e) {
-      // Keep existing HTML preview as fallback
-    }
-  }
-
   overlay.style.display = 'flex';
   setTimeout(() => overlay.style.opacity = '1', 10);
 }
@@ -4726,120 +4741,120 @@ function closeShareCard() {
 }
 
 function buildShareCanvas() {
-  // Build share image using native Canvas API — no external deps, works everywhere
   const scDate  = document.getElementById('scDate');
   const scSynth = document.getElementById('scSynth');
   const scMeta  = document.getElementById('scMeta');
-  const dateText  = scDate?.textContent  || '';
+  const dateText  = (scDate?.textContent || '').toUpperCase();
   const synthText = scSynth?.textContent || '';
-  const chips = scMeta ? Array.from(scMeta.querySelectorAll('.sc-chip')).map(c=>c.textContent).join('  ·  ') : '';
+  const chips = scMeta ? Array.from(scMeta.querySelectorAll('.sc-chip')).map(el=>el.textContent).join('  ·  ') : '';
 
-  const W = 880, PAD = 52;
-  const canvas = document.createElement('canvas');
-  canvas.width  = W;
+  const W = 900, PAD = 52, LINE_H = 30;
+  const cv = document.createElement('canvas');
+  cv.width = W;
+  const cx = cv.getContext('2d');
 
-  // Measure text wrapping first to get correct height
-  const ctx = canvas.getContext('2d');
-  function wrapLines(text, font, maxW) {
-    ctx.font = font;
-    const words = text.split(' ');
-    const lines = []; let cur = '';
-    for (const w of words) {
-      const test = cur ? cur + ' ' + w : w;
-      if (ctx.measureText(test).width > maxW && cur) { lines.push(cur); cur = w; }
-      else cur = test;
-    }
-    if (cur) lines.push(cur);
-    return lines;
+  // Measure synth lines
+  cx.font = '300 20px Georgia,serif';
+  const words = synthText.split(' ');
+  const synthLines = [];
+  let cur = '';
+  for (const w of words) {
+    const test = cur ? cur + ' ' + w : w;
+    if (cx.measureText(test).width > W - PAD*2 && cur) { synthLines.push(cur); cur = w; }
+    else cur = test;
   }
+  if (cur) synthLines.push(cur);
 
-  const synthFont  = '300 22px Georgia, serif';
-  const synthLines = wrapLines(synthText, synthFont, W - PAD*2);
-  const H = 88 + 40 + (synthLines.length * 34) + (chips ? 60 : 0) + 60;
-  canvas.height = H;
-  const cx = canvas.getContext('2d');
+  const H = 80 + 20 + (synthLines.length * LINE_H) + (chips ? 40 : 0) + 50;
+  cv.height = H;
 
   // Background
   cx.fillStyle = '#0D1E33';
   cx.fillRect(0, 0, W, H);
 
-  // Top accent line
-  cx.fillStyle = '#c9a050';
-  cx.fillRect(PAD, 28, 60, 1.5);
+  // Top line
+  cx.fillStyle = '#c9a050'; cx.fillRect(PAD, 24, 50, 1);
 
   // Date
-  cx.fillStyle = 'rgba(201,160,80,0.7)';
-  cx.font = '400 13px Arial, sans-serif';
-  cx.letterSpacing = '0.2em';
-  cx.fillText(dateText.toUpperCase(), PAD, 52);
-  cx.letterSpacing = '0';
+  cx.fillStyle = 'rgba(201,160,80,0.75)';
+  cx.font = '400 11px Arial,sans-serif';
+  cx.fillText(dateText, PAD, 48);
 
-  // Synthesis text
+  // Synthesis
   cx.fillStyle = '#e8e4da';
-  cx.font = synthFont;
-  let y = 88;
-  for (const line of synthLines) { cx.fillText(line, PAD, y); y += 34; }
+  cx.font = '300 20px Georgia,serif';
+  let y = 80;
+  for (const line of synthLines) { cx.fillText(line, PAD, y); y += LINE_H; }
 
-  // Chips / meta
+  // Chips
   if (chips) {
-    cx.fillStyle = 'rgba(232,228,218,0.38)';
-    cx.font = '400 12px Arial, sans-serif';
-    cx.letterSpacing = '0.1em';
-    cx.fillText(chips, PAD, y + 32);
-    cx.letterSpacing = '0';
+    cx.fillStyle = 'rgba(232,228,218,0.4)';
+    cx.font = '400 11px Arial,sans-serif';
+    cx.fillText(chips, PAD, y + 20);
+    y += 40;
   }
 
-  // Brand
-  cx.fillStyle = 'rgba(201,160,80,0.55)';
-  cx.font = '400 12px Arial, sans-serif';
-  cx.letterSpacing = '0.15em';
-  cx.fillText('✦  COSMIC DAILY PLANNER', PAD, H - 22);
-  cx.letterSpacing = '0';
+  // Brand line
+  cx.fillStyle = 'rgba(201,160,80,0.5)';
+  cx.font = '400 10px Arial,sans-serif';
+  cx.fillText('COSMIC DAILY PLANNER  cosmicdailyplanner.com', PAD, H - 18);
 
-  // Bottom accent
-  cx.fillStyle = '#c9a050';
-  cx.fillRect(W - PAD - 60, H - 28, 60, 1.5);
+  // Bottom line
+  cx.fillStyle = '#c9a050'; cx.fillRect(W - PAD - 50, H - 24, 50, 1);
 
-  return canvas;
+  return cv;
+}
+
+function getShareText() {
+  const scDate  = document.getElementById('scDate');
+  const scSynth = document.getElementById('scSynth');
+  const scMeta  = document.getElementById('scMeta');
+  const dateText  = scDate?.textContent || '';
+  const synthText = scSynth?.textContent || '';
+  const chips = scMeta ? Array.from(scMeta.querySelectorAll('.sc-chip')).map(el=>el.textContent).join(' · ') : '';
+  return dateText + '\n\n' + synthText + (chips ? '\n\n' + chips : '') + '\n\ncosmicdailyplanner.com';
 }
 
 async function copyShareCard(btnEl) {
-  const btn = btnEl || document.querySelector('.sc-action.primary');
-  const scSynth = document.getElementById('scSynth');
-  const scDate  = document.getElementById('scDate');
-  const scMeta  = document.getElementById('scMeta');
-  if (!scSynth?.textContent && !scDate?.textContent) {
-    if (btn) { btn.textContent = 'Reading not ready yet'; setTimeout(()=>{btn.textContent='⎘ Copy Image'},2000); }
+  const btn = btnEl || document.getElementById('scCopyBtn');
+  if (!document.getElementById('scSynth')?.textContent) {
+    if (btn) { btn.textContent = 'Reading not ready'; setTimeout(()=>{btn.textContent='⬇ Save Image'},2000); }
     return;
   }
-  if (btn) btn.textContent = 'Generating…';
-
-  const dateText  = scDate?.textContent  || '';
-  const synthText = scSynth?.textContent || '';
-  const chips = scMeta ? Array.from(scMeta.querySelectorAll('.sc-chip')).map(c=>c.textContent).join(' · ') : '';
-  const shareText = dateText + '\n\n' + synthText + (chips ? '\n\n' + chips : '') + '\n\n✦ cosmicdailyplanner.com';
-
+  if (btn) btn.textContent = 'Building…';
   try {
-    const canvas = buildShareCanvas();
-    canvas.toBlob(async blob => {
-      if (!blob) { copyTextFallback(btn, shareText); return; }
-      // Try clipboard image (requires HTTPS + user gesture)
-      try {
-        await navigator.clipboard.write([new ClipboardItem({'image/png': blob})]);
-        if (btn) { btn.textContent = '✓ Image copied'; setTimeout(()=>{btn.textContent='⎘ Copy Image'},2500); }
-      } catch(clipErr) {
-        // Clipboard blocked — download the image file instead
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url; a.download = 'cdp-' + (currentDate||TODAY) + '.png';
-        document.body.appendChild(a); a.click(); document.body.removeChild(a);
-        setTimeout(() => URL.revokeObjectURL(url), 5000);
-        if (btn) { btn.textContent = '✓ Saved to Downloads'; setTimeout(()=>{btn.textContent='⎘ Copy Image'},3000); }
-      }
-    }, 'image/png', 0.95);
+    const cv = buildShareCanvas();
+    cv.toBlob(blob => {
+      if (!blob) { copyTextFallback(btn, getShareText()); return; }
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'cosmic-reading-' + (currentDate||TODAY) + '.png';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 5000);
+      if (btn) { btn.textContent = '✓ Saved'; setTimeout(()=>{btn.textContent='⬇ Save Image'},3000); }
+    }, 'image/png');
   } catch(e) {
-    console.warn('Canvas share failed:', e.message);
-    copyTextFallback(btn, shareText);
+    console.warn('Canvas error:', e.message);
+    copyTextFallback(btn, getShareText());
+  }
+}
+
+async function copyShareText(btnEl) {
+  const btn = btnEl;
+  const text = getShareText();
+  try {
+    await navigator.clipboard.writeText(text);
+    if (btn) { btn.textContent = '✓ Copied'; setTimeout(()=>{btn.textContent='⎘ Copy Text'},2000); }
+  } catch(e) {
+    const ta = document.createElement('textarea');
+    ta.value = text; ta.style.cssText = 'position:fixed;top:-999px';
+    document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); if(btn){btn.textContent='✓ Copied';setTimeout(()=>{btn.textContent='⎘ Copy Text'},2000);} }
+    catch(e2) { if(btn) btn.textContent = 'Copy failed'; }
+    document.body.removeChild(ta);
   }
 }
 
@@ -5068,7 +5083,7 @@ function fillPhase1Sections(p1) {
           <div class="week-ud-label">${udD.n||''}</div>
           <div style="font-size:11px;color:var(--text3);margin:4px 0">${moonData.emoji} ${moonData.phase}</div>
           <div style="font-size:11px;color:var(--teal);margin-bottom:4px">${kinData.seal}</div>
-          ${w.note ? `<div style="font-size:12px;color:var(--text2);line-height:1.5;margin-top:4px;font-style:italic">${w.note}</div>` : ''}
+          ${w.note ? `<div style="font-size:12px;color:var(--text2);line-height:1.5;margin-top:4px;font-style:italic">${cleanText(w.note)}</div>` : ''}
         </div>`;
       });
       wh += '</div></div>';
@@ -5140,8 +5155,16 @@ function fillAISections(data, dateStr) {
   // Synthesis
   const synthEl = document.getElementById('ai-synthesis');
   if (synthEl && r?.synthesis) {
-    const synthText = String(r.synthesis||'').replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/\*(.*?)\*/g,'$1').trim();
-    fadeIn(synthEl, `<div class="synthesis tappable" onclick="tapSynthesis()" title="Tap for deeper insight">${synthText}<div class="tap-hint">↗ Go deeper</div></div>
+    let _synthRaw = String(r.synthesis||'').trim();
+    // Strip JSON prefix if it leaked through
+    _synthRaw = _synthRaw.replace(/^```json\s*/i,'').replace(/^```\s*/,'').replace(/```\s*$/,'');
+    if (_synthRaw.startsWith('{')) {
+      try { const _p=JSON.parse(_synthRaw); _synthRaw = _p.synthesis||''; } catch(e){ _synthRaw=''; }
+    }
+    const synthText = _synthRaw.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/\*(.*?)\*/g,'$1').trim();
+    fadeIn(synthEl, `<div class="synthesis tappable" onclick="tapSynthesis()" title="Tap for deeper insight">
+      <div style="font-size:clamp(16px,1.8vw,20px);line-height:1.85;color:var(--text2);font-style:italic;letter-spacing:.01em">${synthText.split('. ').filter(s=>s.trim()).map(s=>'<p style=\"margin-bottom:0.7em\">'+(s.endsWith('.')?s:s+'.')+'</p>').join('')}</div>
+      <div class="tap-hint">↗ Go deeper</div></div>
       <div style="text-align:center;margin-top:14px">
         <button onclick="openShareCard()" style="background:none;border:1px solid rgba(201,160,80,0.35);
           border-radius:3px;color:rgba(201,160,80,0.75);padding:8px 18px;cursor:pointer;
@@ -8698,6 +8721,58 @@ document.addEventListener('DOMContentLoaded', ()=>{
     }
   };
 })();
+
+function printMyEnergy() {
+  const el = document.getElementById('sctxContent');
+  if (!el) return;
+  const printWin = window.open('', '_blank', 'width=900,height=700');
+  if (!printWin) { window.print(); return; }
+  printWin.document.write('<!DOCTYPE html><html><head><title>My Cosmic Energy</title>');
+  printWin.document.write('<style>body{font-family:Georgia,serif;color:#111;background:#fff;padding:36px 48px;max-width:800px;margin:0 auto;font-size:15px;line-height:1.7}');
+  printWin.document.write('h1,h2{font-family:Georgia,serif;color:#333}');
+  printWin.document.write('.ctx-section{margin-bottom:28px;page-break-inside:avoid}');
+  printWin.document.write('.ctx-section-label{font-size:10px;letter-spacing:.3em;text-transform:uppercase;color:#999;margin-bottom:6px}');
+  printWin.document.write('.ctx-section-title{font-size:20px;margin-bottom:10px;color:#222}');
+  printWin.document.write('@media print{button,.tap-cta{display:none!important}}');
+  printWin.document.write('</style></head><body>');
+  const clone = el.cloneNode(true);
+  clone.querySelectorAll('button,.tap-cta,.tier-upgrade-btn,[onclick]').forEach(b => { b.removeAttribute('onclick'); b.style.cursor='default'; });
+  clone.querySelectorAll('button,.tap-cta,.tier-upgrade-btn').forEach(b => b.remove());
+  printWin.document.write('<h2 style="font-size:11px;letter-spacing:.3em;text-transform:uppercase;color:#999;margin-bottom:4px">Cosmic Daily Planner</h2>');
+  printWin.document.write('<h1 style="font-size:28px;margin-bottom:4px">My Cosmic Energy Profile</h1>');
+  printWin.document.write('<p style="color:#999;font-size:13px;margin-bottom:32px;border-bottom:1px solid #eee;padding-bottom:16px">cosmicdailyplanner.com</p>');
+  printWin.document.write(clone.innerHTML);
+  printWin.document.write('</body></html>');
+  printWin.document.close();
+  setTimeout(() => printWin.print(), 600);
+}
+
+
+// ── Card element click handlers (data-attribute approach) ──
+document.addEventListener('click', function(e) {
+  const reflectEl = e.target.closest('#cardReflectEl');
+  if (reflectEl) {
+    const mode = reflectEl.dataset.mode || 'day';
+    const timeLabel = mode === 'morning' ? 'MORNING REFLECTION' : mode === 'afternoon' ? 'AFTERNOON REFLECTION' : 'EVENING REFLECTION';
+    const text = reflectEl.childNodes[0]?.textContent?.trim() || '';
+    openDrawer(timeLabel,
+      text + ' ' + getUserContext() + ' What does this ' + mode + ' energy specifically ask of ' + (getFirstName()||'you') + ' today?',
+      [{q:'What should I focus on in the next 2 hours?',l:'Next 2 hours'},
+       {q:'What should I avoid this ' + mode + '?',l:'What to avoid'}]);
+    return;
+  }
+  const numEl = e.target.closest('#cardNumEl');
+  if (numEl) {
+    const num = numEl.dataset.num || '';
+    const name = numEl.dataset.name || '';
+    const label = numEl.dataset.label || 'Numerology';
+    openDrawer(label + ' · ' + name,
+      label + ' ' + num + ': ' + name + '. ' + getUserContext() + ' How does this number energy shape decisions and timing today?',
+      [{q:'What is the gift of ' + num + ' energy today?',l:'The gift'},
+       {q:'What is the shadow of ' + num + ' to watch for?',l:'The shadow'}]);
+  }
+});
+
 </script>
 </body>
 </html>
