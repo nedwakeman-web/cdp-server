@@ -84,6 +84,11 @@ body.light{--bg:#F5F0E8;--bg2:#EDE6D6;--bg3:#E4DBC8;--bg4:#F8F4EC;
   .nav-hamburger{display:block}
   .topbar{padding:10px 16px}
   .brand{font-size:12px;letter-spacing:.3em}
+  #skeletonStatusBar{top:52px}
+  #skeletonStatusBar span[style*="letter-spacing:.2em"]{
+    font-size:9px!important;letter-spacing:.12em!important;
+    max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap
+  }
 }
 
 /* ── SCREENS ── */
@@ -559,14 +564,14 @@ body.light{--bg:#F5F0E8;--bg2:#EDE6D6;--bg3:#E4DBC8;--bg4:#F8F4EC;
 /* ── PRESENCE BAR — slides in from top on return visit ── */
 .presence-bar{position:fixed;top:52px;left:0;right:0;z-index:95;
   background:rgba(8,30,51,0.97);border-bottom:1px solid rgba(129,205,182,0.2);
-  padding:10px 20px;display:flex;align-items:center;gap:12px;
+  padding:8px 20px 8px 16px;display:flex;align-items:center;max-width:calc(100% - 160px);gap:12px;
   transform:translateY(-100%);transition:transform .4s cubic-bezier(0.34,1.56,0.64,1);
   backdrop-filter:blur(12px)}
 .presence-bar.visible{transform:translateY(0)}
 .presence-emoji{font-size:18px;flex-shrink:0}
 .presence-text-wrap{flex:1;min-width:0}
 .presence-main{font-size:14px;color:var(--text2);line-height:1.4;font-style:italic;font-family:'Cormorant Garamond',serif}
-.presence-action-text{font-size:12px;color:var(--teal);margin-top:2px;opacity:.8}
+.presence-action-text{font-size:12px;color:var(--teal);margin-top:2px;opacity:.8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .presence-btns{display:flex;gap:6px;flex-shrink:0}
 .presence-btn{padding:6px 12px;background:none;border:1px solid rgba(129,205,182,0.3);
   border-radius:2px;color:var(--teal);font-family:'EB Garamond',serif;font-size:12px;cursor:pointer;white-space:nowrap}
@@ -3480,7 +3485,10 @@ async function loadReading(dateStr, tier) {
           fillPhase1Sections(qd.reading);
           // Update status bar
           const skTxt = document.getElementById('skStatusText');
-          if (skTxt) skTxt.textContent = 'Core reading ready — deep analysis composing…';
+          if (skTxt) {
+            skTxt.style.opacity = '0';
+            setTimeout(() => { skTxt.textContent = 'Core reading ready — deep analysis composing…'; skTxt.style.transition='opacity .4s'; skTxt.style.opacity='1'; }, 300);
+          }
           const sd = document.getElementById('stageDisplay');
           if (sd) { sd.style.opacity='0'; setTimeout(()=>{ if(sd){ sd.textContent='Deep analysis and synthesis in progress…'; sd.style.opacity='1'; } },400); }
           console.log('Quick read rendered in ' + (qd.ms||'?') + 'ms');
@@ -3605,7 +3613,10 @@ async function loadReading(dateStr, tier) {
           if (sd) { sd.style.opacity='0'; setTimeout(()=>{ if(sd){sd.textContent='Deep analysis and cross-referencing in progress…'; sd.style.opacity='1';} },400); }
           // Update status bar
           const skTxt = document.getElementById('skStatusText');
-          if (skTxt) skTxt.textContent = 'Priorities ready — deep analysis composing…';
+          if (skTxt) {
+            skTxt.style.opacity = '0';
+            setTimeout(() => { skTxt.textContent = 'Priorities ready — deep analysis composing…'; skTxt.style.transition='opacity .4s'; skTxt.style.opacity='1'; }, 300);
+          }
           // Fill in phase 1 sections with fade
           fillPhase1Sections(p1);
           // Store phase1 as currentReading so timeout fallback can finalise it
@@ -4355,24 +4366,26 @@ function renderSkeletonReading(dateStr, tier) {
 
   let html = `<div id="skeletonStatusBar" style="position:sticky;top:52px;z-index:90;
     background:rgba(8,19,31,0.95);border-bottom:1px solid var(--gold3);
-    padding:9px 20px;display:flex;align-items:center;gap:12px;
-    transition:opacity .4s;backdrop-filter:blur(12px)">
-    <div style="font-size:16px;animation:moonSpin 3s linear infinite;flex-shrink:0;opacity:.8">☽</div>
-    <div style="flex:1;min-width:0;display:flex;align-items:center;flex-wrap:wrap;gap:4px">
-      <span style="font-size:13px;letter-spacing:.18em;text-transform:uppercase;color:var(--gold)">${_tierLabel}</span>
-      <span style="font-size:13px;color:var(--text3);margin:0 4px">·</span>
-      <span style="font-size:15px;color:var(--text2);font-family:'Cormorant Garamond',serif" id="skStatusText">${_readyTime}</span>
-      <span style="font-size:13px;color:var(--text3);margin:0 4px">·</span>
-      <span style="font-size:15px;color:var(--gold);cursor:pointer;font-family:'Cormorant Garamond',serif;
-        text-decoration:underline;text-underline-offset:3px"
-        onclick="if(pollingTimer){clearInterval(pollingTimer);pollingTimer=null;}changeModeAndReload()">change depth</span>
-    </div>
-    <div style="display:flex;align-items:center;gap:10px;flex-shrink:0">
-      <span style="font-size:15px;color:var(--text2);font-family:'Cormorant Garamond',serif" id="skElapsedTxt"></span>
-      <div style="width:80px;height:2px;background:var(--div);border-radius:1px;overflow:hidden">
-        <div id="skProgressBar" style="height:100%;width:0%;background:var(--gold);
-          border-radius:1px;transition:width 1s linear"></div>
+    padding:8px 20px 0;transition:opacity .4s;backdrop-filter:blur(12px)">
+    <div style="display:flex;align-items:center;gap:10px;padding-bottom:8px">
+      <div style="font-size:15px;animation:moonSpin 3s linear infinite;flex-shrink:0;opacity:.8">☽</div>
+      <div style="flex:1;min-width:0;overflow:hidden">
+        <div style="display:flex;align-items:baseline;gap:6px;flex-wrap:nowrap;white-space:nowrap;overflow:hidden">
+          <span style="font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--gold);flex-shrink:0">${_tierLabel}</span>
+          <span style="font-size:13px;color:var(--text2);font-family:'Cormorant Garamond',serif;
+            overflow:hidden;text-overflow:ellipsis;white-space:nowrap" id="skStatusText">${_readyTime}</span>
+        </div>
       </div>
+      <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
+        <span style="font-size:13px;color:var(--text2);font-family:'Cormorant Garamond',serif" id="skElapsedTxt"></span>
+        <span style="font-size:12px;color:var(--gold);cursor:pointer;letter-spacing:.08em;
+          text-decoration:underline;text-underline-offset:2px"
+          onclick="if(pollingTimer){clearInterval(pollingTimer);pollingTimer=null;}changeModeAndReload()">change depth</span>
+      </div>
+    </div>
+    <div style="height:2px;background:var(--div);overflow:hidden">
+      <div id="skProgressBar" style="height:100%;width:0%;background:var(--gold);
+        transition:width 1s linear"></div>
     </div>
   </div>`;
 
