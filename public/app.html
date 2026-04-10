@@ -1087,6 +1087,79 @@ body.print-card-mode{background:#0D1E33}
 .locked-preview-cta:hover{border-color:var(--gold);background:rgba(201,160,80,0.06)}
 .locked-overlay{position:absolute;inset:0;display:flex;align-items:center;
   justify-content:center;background:rgba(8,19,31,0.3)}
+
+/* ── CDP v8 ENTRY SCREEN ─────────────────────────────────────────── */
+#cdpEntry{position:fixed;inset:0;background:var(--navy,#0D1E33);z-index:9999;
+  display:flex;align-items:center;justify-content:center;padding:24px;
+  opacity:0;transition:opacity 0.4s}
+#cdpEntry.visible{opacity:1}
+.entry-box{max-width:480px;width:100%;text-align:center}
+.entry-tier-badge{display:inline-flex;align-items:center;gap:8px;
+  font-family:'Cinzel',serif;font-size:11px;letter-spacing:0.14em;
+  padding:7px 18px;border:1px solid var(--gold,#C9A84C);color:var(--gold,#C9A84C);
+  margin-bottom:10px;cursor:default}
+.entry-change{font-size:13px;color:var(--text3,#6B8BAF);margin-bottom:32px;
+  cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+.entry-change:hover{color:var(--gold,#C9A84C)}
+.entry-title{font-family:'Cormorant Garamond',serif;font-size:38px;font-weight:300;
+  color:#E8EDF4;margin-bottom:8px;line-height:1.1}
+.entry-sub{font-size:15px;color:#9EB3CC;margin-bottom:36px;line-height:1.6}
+.entry-field{margin-bottom:18px;text-align:left}
+.entry-label{font-family:'Cinzel',serif;font-size:10px;letter-spacing:0.14em;
+  color:#9EB3CC;display:block;margin-bottom:7px}
+.entry-label span{color:#6B8BAF;font-style:italic;letter-spacing:0;
+  font-family:'EB Garamond',serif;font-size:13px;margin-left:6px}
+.entry-input{width:100%;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);
+  color:#E8EDF4;font-family:'EB Garamond',serif;font-size:17px;padding:13px 16px;outline:none;
+  transition:border-color 0.2s}
+.entry-input:focus{border-color:rgba(201,168,76,0.5)}
+.entry-input::placeholder{color:#6B8BAF}
+.entry-dob-row{display:flex;align-items:center;gap:10px}
+.entry-dob-row .entry-input{flex:1}
+.entry-skip{font-size:13px;color:#6B8BAF;cursor:pointer;white-space:nowrap;
+  text-decoration:underline;text-underline-offset:3px}
+.entry-skip:hover{color:#9EB3CC}
+.entry-dob-hint{font-size:12px;color:#6B8BAF;font-style:italic;margin-top:5px}
+.entry-toggle-row{display:flex;align-items:center;justify-content:space-between;
+  padding:14px 16px;border:1px solid rgba(255,255,255,0.08);margin-bottom:24px}
+.entry-toggle-label{font-family:'Cinzel',serif;font-size:10px;letter-spacing:0.14em;color:#9EB3CC}
+.entry-toggle{display:flex;gap:0}
+.entry-toggle button{font-family:'Cinzel',serif;font-size:10px;letter-spacing:0.1em;
+  padding:7px 16px;border:1px solid rgba(255,255,255,0.12);background:none;
+  color:#6B8BAF;cursor:pointer;transition:all 0.2s}
+.entry-toggle button.active{background:rgba(201,168,76,0.12);
+  border-color:rgba(201,168,76,0.5);color:#C9A84C}
+.entry-btn{width:100%;font-family:'Cinzel',serif;font-size:12px;letter-spacing:0.18em;
+  background:#C9A84C;color:#0D1E33;border:none;padding:17px;cursor:pointer;
+  transition:background 0.2s;margin-bottom:12px}
+.entry-btn:hover{background:#E4C97A}
+
+/* Tier switcher inline (shown when clicking change tier) */
+.entry-tiers{display:flex;flex-direction:column;gap:2px;margin-bottom:20px;text-align:left}
+.entry-tier-opt{display:flex;align-items:center;gap:12px;padding:11px 14px;
+  border:1px solid rgba(255,255,255,0.06);cursor:pointer;transition:all 0.2s}
+.entry-tier-opt:hover,.entry-tier-opt.sel{border-color:var(--tc,#C9A84C);
+  background:rgba(255,255,255,0.03)}
+.entry-tier-opt.sel .eto-icon,.entry-tier-opt.sel .eto-name{color:var(--tc,#C9A84C)}
+.eto-icon{font-size:18px;color:#6B8BAF;width:24px;text-align:center}
+.eto-name{font-family:'Cormorant Garamond',serif;font-size:18px;color:#E8EDF4;flex:1}
+.eto-badge{font-family:'Cinzel',serif;font-size:9px;letter-spacing:0.1em;color:#6B8BAF}
+.eto-time{font-family:'Cinzel',serif;font-size:10px;color:#6B8BAF}
+
+/* ── CDP v8 TIER SWITCHER BAR (in app header) ──────────────────────── */
+#cdpTierBar{display:flex;align-items:center;gap:2px;padding:6px 0;
+  border-bottom:1px solid rgba(255,255,255,0.06);margin-bottom:4px;flex-wrap:wrap}
+.tsw-btn{font-family:'Cinzel',serif;font-size:10px;letter-spacing:0.1em;
+  padding:6px 14px;background:none;border:1px solid transparent;
+  color:#6B8BAF;cursor:pointer;transition:all 0.2s;display:flex;align-items:center;gap:5px}
+.tsw-btn:hover{color:#C9A84C;border-color:rgba(201,168,76,0.3)}
+.tsw-btn.active{color:var(--tc,#C9A84C);border-color:var(--tc,#C9A84C);
+  background:rgba(255,255,255,0.03)}
+.tsw-icon{font-size:14px}
+.tsw-label{display:none}
+@media(min-width:600px){.tsw-label{display:inline}}
+.tsw-sep{color:rgba(255,255,255,0.1);font-size:10px;padding:0 2px}
+
 </style>
 </head>
 <body>
@@ -1095,6 +1168,57 @@ body.print-card-mode{background:#0D1E33}
 <canvas id="starCanvas"></canvas>
 
 <!-- TOPBAR -->
+<!-- ── CDP v8 ENTRY SCREEN ────────────────────────────────────────── -->
+<div id="cdpEntry">
+  <div class="entry-box">
+    <div id="entryTierBadge" class="entry-tier-badge">⚡ Full Reading &nbsp;·&nbsp; SEEKER</div>
+    <div class="entry-change" onclick="toggleEntryTiers()">Change depth ↓</div>
+    <div id="entryTierPicker" style="display:none">
+      <div class="entry-tiers" id="entryTierList"></div>
+    </div>
+    <h2 class="entry-title">Your reading awaits.</h2>
+    <p class="entry-sub">Add your details to make it personal,<br>or skip straight in.</p>
+    <div class="entry-field">
+      <label class="entry-label">YOUR NAME <span>optional</span></label>
+      <input class="entry-input" id="entryName" placeholder="First name or nickname" autocomplete="given-name">
+    </div>
+    <div class="entry-field">
+      <label class="entry-label">DATE OF BIRTH <span>makes your reading personal</span></label>
+      <div class="entry-dob-row">
+        <input class="entry-input" id="entryDob" placeholder="DD / MM / YYYY" maxlength="10">
+        <span class="entry-skip" onclick="skipDob()">Skip for now</span>
+      </div>
+      <div class="entry-dob-hint" id="entryDobHint">Without this, you receive a universal reading. With it, your Life Path, Personal Year and natal chart are integrated.</div>
+    </div>
+    <div class="entry-field">
+      <label class="entry-label">WHAT'S ON YOUR MIND <span>optional</span></label>
+      <input class="entry-input" id="entryIntention" placeholder="A question, a feeling, something you're carrying...">
+    </div>
+    <div class="entry-toggle-row">
+      <span class="entry-toggle-label">READING LANGUAGE</span>
+      <div class="entry-toggle">
+        <button id="langAncient" class="active" onclick="setLang('ancient')">&#9672; ANCIENT</button>
+        <button id="langModern" onclick="setLang('modern')">&#9651; MODERN</button>
+      </div>
+    </div>
+    <button class="entry-btn" onclick="beginFromEntry()">&#9733; BEGIN MY READING</button>
+    <div style="font-size:13px;color:#6B8BAF;font-style:italic">All tiers open during beta &nbsp;·&nbsp; Subscription launches with Stripe</div>
+  </div>
+</div>
+
+<!-- ── CDP v8 TIER SWITCHER BAR ───────────────────────────────────── -->
+<div id="cdpTierBar" style="display:none">
+  <button class="tsw-btn" style="--tc:#A0AEC0" data-mode="free" onclick="switchTier('free')"><span class="tsw-icon">✦</span><span class="tsw-label">Free</span></button>
+  <span class="tsw-sep">·</span>
+  <button class="tsw-btn" style="--tc:#F97316" data-mode="quick" onclick="switchTier('quick')"><span class="tsw-icon">⚡</span><span class="tsw-label">Seeker</span></button>
+  <span class="tsw-sep">·</span>
+  <button class="tsw-btn" style="--tc:#2BBF8D" data-mode="standard" onclick="switchTier('standard')"><span class="tsw-icon">☽</span><span class="tsw-label">Initiate</span></button>
+  <span class="tsw-sep">·</span>
+  <button class="tsw-btn" style="--tc:#9B6DFF" data-mode="mystic" onclick="switchTier('mystic')"><span class="tsw-icon">◉</span><span class="tsw-label">Mystic</span></button>
+  <span class="tsw-sep">·</span>
+  <button class="tsw-btn" style="--tc:#C9A84C" data-mode="deep" onclick="switchTier('deep')"><span class="tsw-icon">◈</span><span class="tsw-label">Oracle</span></button>
+</div>
+
 <div class="topbar">
   <div class="brand">Cosmic Daily Planner</div>
   <div class="nav">
@@ -8972,33 +9096,159 @@ document.addEventListener('click', function(e) {
 
 
 
-// ── CDP v8 — Auto-start from landing page URL parameter ──────────────────
+// ── CDP v8 — Entry screen + tier switcher ────────────────────────────────
+
+var cdpEntryMode = 'quick'; // default
+var cdpLang = localStorage.getItem('cdp_lang') || 'ancient';
+
+var TIER_DEFS = [
+  {mode:'free',    icon:'✦', name:'Daily Snapshot', badge:'FREE',          price:'£0',      time:'Instant', tc:'#A0AEC0'},
+  {mode:'quick',   icon:'⚡', name:'Full Reading',   badge:'SEEKER · £9/MO', price:'£9/mo',  time:'~15s',    tc:'#F97316'},
+  {mode:'standard',icon:'☽', name:'Monthly Arc',    badge:'INITIATE · £29/MO',price:'£29/mo',time:'2–4 min', tc:'#2BBF8D'},
+  {mode:'mystic',  icon:'◉', name:'Yearly Reading', badge:'MYSTIC · £79/MO', price:'£79/mo', time:'3–5 min', tc:'#9B6DFF'},
+  {mode:'deep',    icon:'◈', name:'Oracle Deep Dive',badge:'ORACLE',         price:'£50k/yr', time:'5–10 min',tc:'#C9A84C'},
+];
+
+function showEntryScreen(mode) {
+  cdpEntryMode = mode || cdpEntryMode;
+  // Suppress old mode selector
+  document.getElementById('modeSelector').style.display = 'none';
+  // Update badge
+  var t = TIER_DEFS.find(function(x){return x.mode===cdpEntryMode;}) || TIER_DEFS[1];
+  document.getElementById('entryTierBadge').style.color = t.tc;
+  document.getElementById('entryTierBadge').style.borderColor = t.tc;
+  document.getElementById('entryTierBadge').textContent = t.icon + ' ' + t.name + ' · ' + t.badge;
+  // Build tier picker
+  var list = document.getElementById('entryTierList');
+  list.innerHTML = TIER_DEFS.map(function(td){
+    return '<div class="entry-tier-opt'+(td.mode===cdpEntryMode?' sel':'')+'" style="--tc:'+td.tc+'" onclick="selectEntryTier(''+td.mode+'')">'
+      +'<span class="eto-icon" style="color:'+td.tc+'">'+td.icon+'</span>'
+      +'<span class="eto-name">'+td.name+'</span>'
+      +'<span class="eto-badge">'+td.badge+'</span>'
+      +'<span class="eto-time">'+td.time+'</span>'
+      +'</div>';
+  }).join('');
+  // Restore saved name/dob
+  var savedName = localStorage.getItem('cdp_name') || '';
+  var savedDob  = localStorage.getItem('cdp_dob')  || '';
+  if (savedName) document.getElementById('entryName').value = savedName;
+  if (savedDob)  { document.getElementById('entryDob').value = savedDob; document.getElementById('entryDobHint').style.display='none'; }
+  // Set language toggle
+  setLang(cdpLang, true);
+  // Show entry screen
+  var el = document.getElementById('cdpEntry');
+  el.style.display = 'flex';
+  setTimeout(function(){ el.classList.add('visible'); }, 30);
+}
+
+function selectEntryTier(mode) {
+  cdpEntryMode = mode;
+  document.querySelectorAll('.entry-tier-opt').forEach(function(el){
+    el.classList.toggle('sel', el.onclick.toString().indexOf("'"+mode+"'") > -1);
+  });
+  var t = TIER_DEFS.find(function(x){return x.mode===mode;}) || TIER_DEFS[1];
+  document.getElementById('entryTierBadge').style.color = t.tc;
+  document.getElementById('entryTierBadge').style.borderColor = t.tc;
+  document.getElementById('entryTierBadge').textContent = t.icon + ' ' + t.name + ' · ' + t.badge;
+  // Re-render with correct sel class
+  document.querySelectorAll('.entry-tier-opt').forEach(function(el,i){
+    el.classList.toggle('sel', TIER_DEFS[i].mode === mode);
+  });
+  toggleEntryTiers(); // close picker
+}
+
+function toggleEntryTiers() {
+  var p = document.getElementById('entryTierPicker');
+  p.style.display = p.style.display === 'none' ? 'block' : 'none';
+  document.querySelector('.entry-change').textContent = p.style.display === 'none' ? 'Change depth ↓' : 'Close ↑';
+}
+
+function skipDob() {
+  document.getElementById('entryDob').value = '';
+  document.getElementById('entryDobHint').style.display = 'none';
+}
+
+function setLang(lang, silent) {
+  cdpLang = lang;
+  if (!silent) localStorage.setItem('cdp_lang', lang);
+  document.getElementById('langAncient').classList.toggle('active', lang === 'ancient');
+  document.getElementById('langModern').classList.toggle('active', lang === 'modern');
+}
+
+function beginFromEntry() {
+  var name = document.getElementById('entryName').value.trim();
+  var dob  = document.getElementById('entryDob').value.trim();
+  var intention = document.getElementById('entryIntention').value.trim();
+  // Save to localStorage so the app picks them up
+  if (name) localStorage.setItem('cdp_name', name);
+  if (dob)  localStorage.setItem('cdp_dob', dob);
+  else      localStorage.removeItem('cdp_dob');
+  if (intention) localStorage.setItem('cdp_intention', intention);
+  else           localStorage.removeItem('cdp_intention');
+  localStorage.setItem('cdp_lang', cdpLang);
+  // Parse DOB into profile fields if provided
+  if (dob) {
+    var parts = dob.replace(/\s/g,'').split(/[\/\-\.]/);
+    if (parts.length === 3) {
+      var d = parseInt(parts[0],10), mo = parseInt(parts[1],10), y = parseInt(parts[2],10);
+      if (y < 100) y += 1900;
+      localStorage.setItem('cdp_by', y);
+      localStorage.setItem('cdp_bm', mo);
+      localStorage.setItem('cdp_bd', d);
+    }
+  }
+  // Hide entry screen
+  var el = document.getElementById('cdpEntry');
+  el.classList.remove('visible');
+  setTimeout(function(){ el.style.display = 'none'; }, 400);
+  // Show tier bar
+  document.getElementById('cdpTierBar').style.display = 'flex';
+  updateTierBar(cdpEntryMode);
+  // Start reading
+  selectMode(cdpEntryMode);
+  startWithMode(true);
+}
+
+function updateTierBar(mode) {
+  document.querySelectorAll('.tsw-btn').forEach(function(btn){
+    var active = btn.getAttribute('data-mode') === mode;
+    btn.classList.toggle('active', active);
+  });
+}
+
+function switchTier(mode) {
+  var t = TIER_DEFS.find(function(x){return x.mode===mode;}) || TIER_DEFS[1];
+  if (confirm('Switch to ' + t.name + '?')) {
+    cdpEntryMode = mode;
+    updateTierBar(mode);
+    selectMode(mode);
+    startWithMode(true);
+  }
+}
+
+// Override showModeSelector to use the new entry screen
+function showModeSelector() { showEntryScreen(cdpEntryMode); }
+
+// Auto-start from landing page URL parameter
 (function(){
   try {
     var m = new URLSearchParams(window.location.search).get('mode');
-    if (!m) return;
-    if (['free','quick','standard','mystic','deep'].indexOf(m) === -1) return;
-    // Hide the mode selector immediately so it never flashes
-    var style = document.createElement('style');
-    style.textContent = '#modeSelector { display: none !important; visibility: hidden !important; }';
-    document.head.appendChild(style);
-    // Fire when ready - handles both before and after load
-    function autoStart() {
-      try {
-        selectMode(m);
-        // Remove the hide style, startWithMode will close selector properly
-        style.remove();
-        startWithMode(true);
-      } catch(e) {
-        setTimeout(autoStart, 200);
+    // Suppress old mode selector flash immediately
+    var s = document.createElement('style');
+    s.textContent = '#modeSelector{display:none!important}';
+    document.head.appendChild(s);
+    function init() {
+      if (m && ['free','quick','standard','mystic','deep'].indexOf(m) > -1) {
+        cdpEntryMode = m;
       }
+      showEntryScreen(cdpEntryMode);
     }
     if (document.readyState === 'complete') {
-      setTimeout(autoStart, 300);
+      setTimeout(init, 200);
     } else {
-      window.addEventListener('load', function(){ setTimeout(autoStart, 300); });
+      window.addEventListener('load', function(){ setTimeout(init, 200); });
     }
-  } catch(e) { console.warn('CDP autostart:', e); }
+  } catch(e){ console.warn('CDP v8 init:', e); }
 })();
 </script>
 </body>
