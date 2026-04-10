@@ -8976,13 +8976,27 @@ document.addEventListener('click', function(e) {
 (function(){
   try {
     var m = new URLSearchParams(window.location.search).get('mode');
-    if (m && ['free','quick','standard','mystic','deep'].indexOf(m) > -1) {
-      window.addEventListener('load', function() {
-        setTimeout(function() {
-          selectMode(m);
-          startWithMode(true);
-        }, 400);
-      });
+    if (!m) return;
+    if (['free','quick','standard','mystic','deep'].indexOf(m) === -1) return;
+    // Hide the mode selector immediately so it never flashes
+    var style = document.createElement('style');
+    style.textContent = '#modeSelector { display: none !important; visibility: hidden !important; }';
+    document.head.appendChild(style);
+    // Fire when ready - handles both before and after load
+    function autoStart() {
+      try {
+        selectMode(m);
+        // Remove the hide style, startWithMode will close selector properly
+        style.remove();
+        startWithMode(true);
+      } catch(e) {
+        setTimeout(autoStart, 200);
+      }
+    }
+    if (document.readyState === 'complete') {
+      setTimeout(autoStart, 300);
+    } else {
+      window.addEventListener('load', function(){ setTimeout(autoStart, 300); });
     }
   } catch(e) { console.warn('CDP autostart:', e); }
 })();
