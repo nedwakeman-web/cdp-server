@@ -590,32 +590,153 @@ footer{background:var(--navy2);padding:30px 52px;border-top:0.5px solid var(--di
 
 <!-- TIERS -->
 <section class="tiers" id="tiers">
+  <style>
+    .depth-eyebrow{font-family:'Cinzel',serif;font-size:10px;letter-spacing:0.24em;color:var(--gold);text-align:center;margin-bottom:20px}
+    .depth-title{font-family:'Cormorant Garamond',serif;font-size:clamp(34px,4vw,54px);font-weight:300;text-align:center;color:var(--text);margin-bottom:10px}
+    .depth-sub{font-size:16px;color:var(--text2);text-align:center;margin-bottom:48px;font-style:italic}
+    .depth-cards{max-width:760px;margin:0 auto;display:flex;flex-direction:column;gap:3px}
+    .depth-card{display:flex;align-items:stretch;border:1px solid var(--div2);background:rgba(255,255,255,0.02);cursor:pointer;transition:all 0.22s;position:relative;overflow:hidden}
+    .depth-card::before{content:'';position:absolute;top:0;left:0;bottom:0;width:3px;background:var(--dc,var(--gold));opacity:0;transition:opacity 0.22s}
+    .depth-card:hover{background:rgba(255,255,255,0.04);border-color:var(--dc,var(--gold));transform:translateX(3px)}
+    .depth-card:hover::before{opacity:1}
+    .depth-card:hover .depth-card-arrow{opacity:1;transform:translateX(0)}
+    .depth-icon{width:58px;min-width:58px;display:flex;align-items:center;justify-content:center;font-size:22px;color:var(--dc,var(--gold));padding:22px 0;opacity:0.85}
+    .depth-body{flex:1;padding:18px 16px 18px 4px}
+    .depth-head{display:flex;align-items:baseline;gap:10px;margin-bottom:5px}
+    .depth-label{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:500;color:var(--text)}
+    .depth-badge{font-family:'Cinzel',serif;font-size:9px;letter-spacing:0.1em;color:var(--dc,var(--gold));opacity:0.8}
+    .depth-price{font-family:'Cinzel',serif;font-size:11px;color:var(--text3);margin-left:auto}
+    .depth-desc{font-size:14px;color:var(--text2);line-height:1.55;margin-bottom:7px}
+    .depth-sci{font-size:12px;color:var(--text3);font-style:italic;line-height:1.5;padding-top:5px;border-top:0.5px solid rgba(255,255,255,0.05)}
+    .depth-sci em{color:var(--dc,var(--gold));font-style:normal}
+    .depth-meta{display:flex;align-items:center;gap:12px;margin-top:8px}
+    .depth-time{font-family:'Cinzel',serif;font-size:10px;letter-spacing:0.1em;color:var(--text3)}
+    .depth-items{display:flex;flex-wrap:wrap;gap:6px}
+    .depth-item{font-size:11px;color:var(--text3);padding:2px 9px;border:0.5px solid var(--div);border-radius:0}
+    .depth-card-arrow{font-size:16px;color:var(--dc,var(--gold));padding:0 20px;display:flex;align-items:center;opacity:0;transform:translateX(-6px);transition:all 0.22s}
+    .depth-note{text-align:center;font-size:13px;color:var(--text3);font-style:italic;margin-top:22px;max-width:600px;margin-left:auto;margin-right:auto}
+    @media(max-width:600px){.depth-card-arrow{display:none}}
+  </style>
   <div class="container">
-    <div class="sec-eyebrow">CHOOSE YOUR DEPTH</div>
-    <h2 class="sec-title">From instant to immersive.</h2>
-    <p class="sec-body" style="margin-bottom:44px">Every tier is available during beta. Subscription pricing launches with Stripe.</p>
-    <div class="tiers-grid">
-      <div class="tier"><div class="tier-name">FREE</div><div class="tier-price">£0</div><div class="tier-desc">Universal Day, moon phase and Dreamspell Kin. Instant, no account required.</div><div class="tier-items"><div class="tier-item">Universal Day</div><div class="tier-item">Moon phase</div><div class="tier-item">Kin</div><div class="tier-item">One action</div></div></div>
-      <div class="tier featured"><div class="tier-name">SEEKER</div><div class="tier-price">£9<span>/mo</span></div><div class="tier-desc">All four frameworks. Full daily reading with priorities, focus and ease, and week ahead.</div><div class="tier-items"><div class="tier-item">All four frameworks</div><div class="tier-item">Three priorities</div><div class="tier-item">Shadow work</div><div class="tier-item">Week ahead</div></div></div>
-      <div class="tier"><div class="tier-name">INITIATE</div><div class="tier-price">£29<span>/mo</span></div><div class="tier-desc">Full reading plus lunation map, wavespell arc, monthly shadow themes and growth edges.</div><div class="tier-items"><div class="tier-item">Monthly arc</div><div class="tier-item">Wavespell context</div><div class="tier-item">Monthly shadow</div><div class="tier-item">2 to 4 min</div></div></div>
-      <div class="tier"><div class="tier-name">MYSTIC</div><div class="tier-price">£79<span>/mo</span></div><div class="tier-desc">Full natal chart integration, yearly arc, personal numerology cycles, major transit themes.</div><div class="tier-items"><div class="tier-item">Natal chart</div><div class="tier-item">Yearly arc</div><div class="tier-item">Transit themes</div><div class="tier-item">3 to 5 min</div></div></div>
-      <div class="tier"><div class="tier-name">ORACLE</div><div class="tier-price">£50k<span>/yr</span></div><div class="tier-desc">Everything in Mystic plus Hellenistic lots, full aspects, an 80 to 120 page PDF, physical bound edition and annual review call.</div><div class="tier-items"><div class="tier-item">80 to 120 page PDF</div><div class="tier-item">Annual review</div><div class="tier-item">Physical edition</div><div class="tier-item">5 to 10 min</div></div></div>
+    <div class="depth-eyebrow">CHOOSE YOUR DEPTH</div>
+    <h2 class="depth-title">How deep do you want to go today?</h2>
+    <p class="depth-sub">Click any tier to begin your reading immediately</p>
+    <div class="depth-cards">
+
+      <div class="depth-card" style="--dc:#A0AEC0" onclick="goReading('free')">
+        <div class="depth-icon">✦</div>
+        <div class="depth-body">
+          <div class="depth-head">
+            <span class="depth-label">Daily Snapshot</span>
+            <span class="depth-badge">FREE</span>
+            <span class="depth-price">£0 &nbsp;·&nbsp; INSTANT</span>
+          </div>
+          <div class="depth-desc">Universal Day, moon phase and Dreamspell Kin. No account required. The single daily frame your salience network needs.</div>
+          <div class="depth-sci">The neuroscience: <em>one orienting frame</em> shifts what the brain notices for the entire day. (Broadbent 1958; Oettingen &amp; Sevincer 2023)</div>
+          <div class="depth-items">
+            <div class="depth-item">Universal Day</div>
+            <div class="depth-item">Moon phase</div>
+            <div class="depth-item">Kin</div>
+            <div class="depth-item">One action</div>
+          </div>
+        </div>
+        <div class="depth-card-arrow">›</div>
+      </div>
+
+      <div class="depth-card" style="--dc:#F97316" onclick="goReading('quick')">
+        <div class="depth-icon">⚡</div>
+        <div class="depth-body">
+          <div class="depth-head">
+            <span class="depth-label">Full Reading</span>
+            <span class="depth-badge">SEEKER · £9/MO</span>
+            <span class="depth-price">~15S ✓</span>
+          </div>
+          <div class="depth-desc">All four frameworks synthesised. Priorities, shadow work, focus and ease, week ahead. The full convergence signal.</div>
+          <div class="depth-sci">The neuroscience: <em>four convergent frameworks</em> produce stronger default mode / salience connectivity than one alone. (Bremer et al. 2022; Barrett 2017)</div>
+          <div class="depth-items">
+            <div class="depth-item">All four frameworks</div>
+            <div class="depth-item">Three priorities</div>
+            <div class="depth-item">Shadow work</div>
+            <div class="depth-item">Week ahead</div>
+          </div>
+        </div>
+        <div class="depth-card-arrow">›</div>
+      </div>
+
+      <div class="depth-card" style="--dc:#2BBF8D" onclick="goReading('standard')">
+        <div class="depth-icon">☽</div>
+        <div class="depth-body">
+          <div class="depth-head">
+            <span class="depth-label">Monthly Arc</span>
+            <span class="depth-badge">INITIATE · £29/MO</span>
+            <span class="depth-price">2–4 MIN</span>
+          </div>
+          <div class="depth-desc">Full reading plus lunation map, wavespell arc, monthly shadow themes and growth edges. The brain sees patterns across time.</div>
+          <div class="depth-sci">The neuroscience: <em>temporal pattern recognition</em> across a lunar cycle builds predictive models that reduce daily cognitive load. (Clark 2016; Mehrhof &amp; Nord 2025)</div>
+          <div class="depth-items">
+            <div class="depth-item">Monthly arc</div>
+            <div class="depth-item">Wavespell context</div>
+            <div class="depth-item">Monthly shadow</div>
+            <div class="depth-item">Richer week notes</div>
+          </div>
+        </div>
+        <div class="depth-card-arrow">›</div>
+      </div>
+
+      <div class="depth-card" style="--dc:#9B6DFF" onclick="goReading('mystic')">
+        <div class="depth-icon">◉</div>
+        <div class="depth-body">
+          <div class="depth-head">
+            <span class="depth-label">Yearly Reading</span>
+            <span class="depth-badge">MYSTIC · £79/MO</span>
+            <span class="depth-price">3–5 MIN</span>
+          </div>
+          <div class="depth-desc">Full natal chart integration, yearly arc, personal numerology cycles, major transit themes. Your complete cosmic and psychological landscape.</div>
+          <div class="depth-sci">The neuroscience: <em>natal integration</em> anchors the default mode network's self-narrative in a stable, longitudinal identity frame. (Barrett 2017; Siegel 2020)</div>
+          <div class="depth-items">
+            <div class="depth-item">Natal chart</div>
+            <div class="depth-item">Yearly arc</div>
+            <div class="depth-item">Transit themes</div>
+            <div class="depth-item">Personal cycles</div>
+          </div>
+        </div>
+        <div class="depth-card-arrow">›</div>
+      </div>
+
+      <div class="depth-card" style="--dc:#C9A84C" onclick="goReading('deep')">
+        <div class="depth-icon">◈</div>
+        <div class="depth-body">
+          <div class="depth-head">
+            <span class="depth-label">Oracle Deep Dive</span>
+            <span class="depth-badge">ORACLE · MAXIMUM DEPTH</span>
+            <span class="depth-price">5–10 MIN</span>
+          </div>
+          <div class="depth-desc">Everything in Mystic plus Hellenistic lots, full aspects, complete week ahead, daily gift and Oracle drawer. The deepest parasympathetic orienting state available.</div>
+          <div class="depth-sci">The neuroscience: <em>maximum depth reading</em> produces the fullest prefrontal-limbic integration, the optimal state for intentional action. (Doty 2024; Bremer 2022)</div>
+          <div class="depth-items">
+            <div class="depth-item">Full depth</div>
+            <div class="depth-item">Hellenistic lots</div>
+            <div class="depth-item">Complete week</div>
+            <div class="depth-item">Daily gift</div>
+            <div class="depth-item">Oracle drawer</div>
+          </div>
+        </div>
+        <div class="depth-card-arrow">›</div>
+      </div>
+
     </div>
-    <p class="tiers-note" style="margin-top:24px">All tiers available during beta. Subscription pricing launches with Stripe.</p>
+    <p class="depth-note">All tiers available during beta. Subscription pricing launches with Stripe. Every tier carries the neuroscience bridge.</p>
   </div>
 </section>
 
 <!-- CTA -->
 <section class="cta-section" id="cta">
   <div class="container">
-    <div class="sec-eyebrow">BEGIN</div>
+    <div class="sec-eyebrow">BEGIN NOW</div>
     <h2 class="sec-title">What does today carry for you?</h2>
-    <p class="sec-body" style="margin-bottom:48px">Your free reading takes 15 seconds. No account required.<br>The Oracle deepens the longer you use it.</p>
-    <div class="cta-form">
-      <input class="cta-input" type="date" id="ctaDob" placeholder="Date of birth (optional)">
-      <button class="cta-btn" onclick="openApp()">&#9733; BEGIN MY READING</button>
-    </div>
-    <p class="cta-note">Or open the full Oracle directly</p>
+    <p class="sec-body" style="margin-bottom:48px">Select a tier above to begin immediately.<br>Or start free, no account required.</p>
+    <button class="cta-btn" style="margin:0 auto;display:block;padding:18px 52px;font-size:13px;letter-spacing:0.16em" onclick="goReading('free')">&#9733; BEGIN FREE READING NOW</button>
+    <p class="cta-note" style="margin-top:16px">Your reading takes 15 seconds. The Oracle deepens the longer you use it.</p>
   </div>
 </section>
 
@@ -683,14 +804,13 @@ function expand(btn,id){
   btn.childNodes[1].textContent=isOpen?' MORE':' LESS';
 }
 
-function openApp(){
-  const dob=document.getElementById('ctaDob').value;
-  // Relative on Railway/production; absolute fallback for Netlify
-  let base = window.location.hostname.includes('netlify') ? 'https://cosmicdailyplanner.com' : '';
-  let url = base + '/app';
-  if(dob){const p=dob.split('-');url+='?by='+p[0]+'&bm='+p[1]+'&bd='+p[2];}
+function goReading(mode){
+  // mode: free | quick | standard | mystic | deep
+  const url = '/app?mode=' + (mode||'free');
   window.location.href = url;
 }
+// Legacy alias
+function openApp(){ goReading('free'); }
 
 loadCard();
 </script>

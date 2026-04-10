@@ -8970,6 +8970,22 @@ document.addEventListener('click', function(e) {
   }
 });
 
+
+
+// ── CDP v8 — Auto-start from landing page URL parameter ──────────────────
+(function(){
+  try {
+    var m = new URLSearchParams(window.location.search).get('mode');
+    if (m && ['free','quick','standard','mystic','deep'].indexOf(m) > -1) {
+      window.addEventListener('load', function() {
+        setTimeout(function() {
+          selectMode(m);
+          startWithMode(true);
+        }, 400);
+      });
+    }
+  } catch(e) { console.warn('CDP autostart:', e); }
+})();
 </script>
 </body>
 </html>
