@@ -16,7 +16,15 @@ app.use((req, res, next) => {
 });
 
 app.use(express.json());
-app.use(express.static(path.join(__dirname, 'public')));
+
+// ── PAGE ROUTES — must come before static middleware ──────────────────────
+// / → landing page (public marketing)
+// /app → Oracle application
+app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'public', 'landing.html')));
+app.get('/app', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
+
+// Static assets — index disabled so / is not auto-served from index.html
+app.use(express.static(path.join(__dirname, 'public'), { index: false }));
 
 // ══════════════════════════════════════════════════════════════════
 // SWISS EPHEMERIS 2026 — verified from Astrodienst ae_2026.pdf
@@ -1772,7 +1780,7 @@ app.get('/api/health', (req, res) => {
   const hasKey = !!(process.env.ANTHROPIC_API_KEY);
   res.json({
     status: 'ok',
-    version: 'CDP v7 Beta2',
+    version: 'CDP v8',
     time: new Date().toISOString(),
     apiKey: hasKey ? 'present' : 'MISSING — readings will fail',
     jobs: jobs.size,
