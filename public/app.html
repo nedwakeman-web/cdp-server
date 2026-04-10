@@ -8910,7 +8910,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
   var LOCK_MIN = 60;
 
   function admitted() {
-    try { var d = JSON.parse(localStorage.getItem(KEY)||'{}'); return d.ok===true && d.code===INVITE_CODE; } catch(e) { return false; }
+    return true; // CDP v8 — gate removed, landing page is the gateway
   }
   function locked() {
     try {
