@@ -9120,14 +9120,19 @@ function showEntryScreen(mode) {
   document.getElementById('entryTierBadge').textContent = t.icon + ' ' + t.name + ' · ' + t.badge;
   // Build tier picker
   var list = document.getElementById('entryTierList');
-  list.innerHTML = TIER_DEFS.map(function(td){
-    return '<div class="entry-tier-opt'+(td.mode===cdpEntryMode?' sel':'')+'" style="--tc:'+td.tc+'" onclick="selectEntryTier(''+td.mode+'')">'
-      +'<span class="eto-icon" style="color:'+td.tc+'">'+td.icon+'</span>'
+  list.innerHTML = '';
+  TIER_DEFS.forEach(function(td){
+    var div = document.createElement('div');
+    div.className = 'entry-tier-opt' + (td.mode===cdpEntryMode?' sel':'');
+    div.style.cssText = '--tc:'+td.tc;
+    div.setAttribute('data-mode', td.mode);
+    div.onclick = function(){ selectEntryTier(td.mode); };
+    div.innerHTML = '<span class="eto-icon" style="color:'+td.tc+'">'+td.icon+'</span>'
       +'<span class="eto-name">'+td.name+'</span>'
       +'<span class="eto-badge">'+td.badge+'</span>'
-      +'<span class="eto-time">'+td.time+'</span>'
-      +'</div>';
-  }).join('');
+      +'<span class="eto-time">'+td.time+'</span>';
+    list.appendChild(div);
+  });
   // Restore saved name/dob
   var savedName = localStorage.getItem('cdp_name') || '';
   var savedDob  = localStorage.getItem('cdp_dob')  || '';
