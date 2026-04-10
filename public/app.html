@@ -562,11 +562,11 @@ body.light{--bg:#F5F0E8;--bg2:#EDE6D6;--bg3:#E4DBC8;--bg4:#F8F4EC;
 .checkin-moon{font-size:22px;flex-shrink:0}
 
 /* ── PRESENCE BAR — slides in from top on return visit ── */
-.presence-bar{position:fixed;top:52px;left:0;right:0;z-index:95;
+.presence-bar{position:fixed;top:52px;left:0;right:0;z-index:99;
   background:rgba(8,30,51,0.97);border-bottom:1px solid rgba(129,205,182,0.2);
-  padding:8px 20px 8px 16px;display:flex;align-items:center;max-width:calc(100% - 160px);gap:12px;
+  padding:8px 20px 8px 16px;display:flex;align-items:center;gap:12px;
   transform:translateY(-100%);transition:transform .4s cubic-bezier(0.34,1.56,0.64,1);
-  backdrop-filter:blur(12px)}
+  backdrop-filter:blur(12px);overflow:hidden}
 .presence-bar.visible{transform:translateY(0)}
 .presence-emoji{font-size:18px;flex-shrink:0}
 .presence-text-wrap{flex:1;min-width:0}
@@ -1090,10 +1090,10 @@ body.print-card-mode{background:#0D1E33}
 
 /* ── CDP v8 ENTRY SCREEN ─────────────────────────────────────────── */
 #cdpEntry{position:fixed;inset:0;background:var(--navy,#0D1E33);z-index:9999;
-  display:flex;align-items:center;justify-content:center;padding:24px;
-  opacity:0;transition:opacity 0.4s}
+  display:flex;align-items:flex-start;justify-content:center;padding:24px;
+  opacity:0;transition:opacity 0.4s;overflow-y:auto;-webkit-overflow-scrolling:touch}
 #cdpEntry.visible{opacity:1}
-.entry-box{max-width:480px;width:100%;text-align:center}
+.entry-box{max-width:480px;width:100%;text-align:center;padding-bottom:40px;padding-top:20px}
 .entry-tier-badge{display:inline-flex;align-items:center;gap:8px;
   font-family:'Cinzel',serif;font-size:11px;letter-spacing:0.14em;
   padding:7px 18px;border:1px solid var(--gold,#C9A84C);color:var(--gold,#C9A84C);
@@ -1207,6 +1207,21 @@ select.entry-input option{background:#0D1E33;color:#E8EDF4}
         <span class="entry-skip" onclick="skipDob()">Skip</span>
       </div>
       <div class="entry-dob-hint" id="entryDobHint">Without this, you receive a universal reading. With it, your Life Path, Personal Year and natal chart are integrated.</div>
+    </div>
+    <div class="entry-field">
+      <label class="entry-label">BIRTH TIME <span>for Ascendant and natal chart</span></label>
+      <div style="display:flex;gap:8px;align-items:center">
+        <select class="entry-input" id="entryBirthHour" style="flex:1;padding:12px 10px">
+          <option value="">Hour</option>
+          <option value="0">00</option><option value="1">01</option><option value="2">02</option><option value="3">03</option><option value="4">04</option><option value="5">05</option><option value="6">06</option><option value="7">07</option><option value="8">08</option><option value="9">09</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option><option value="15">15</option><option value="16">16</option><option value="17">17</option><option value="18">18</option><option value="19">19</option><option value="20">20</option><option value="21">21</option><option value="22">22</option><option value="23">23</option>
+        </select>
+        <select class="entry-input" id="entryBirthMin" style="flex:1;padding:12px 10px">
+          <option value="">Min</option>
+          <option value="0">00</option><option value="1">01</option><option value="2">02</option><option value="3">03</option><option value="4">04</option><option value="5">05</option><option value="6">06</option><option value="7">07</option><option value="8">08</option><option value="9">09</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option><option value="15">15</option><option value="16">16</option><option value="17">17</option><option value="18">18</option><option value="19">19</option><option value="20">20</option><option value="21">21</option><option value="22">22</option><option value="23">23</option><option value="24">24</option><option value="25">25</option><option value="26">26</option><option value="27">27</option><option value="28">28</option><option value="29">29</option><option value="30">30</option><option value="31">31</option><option value="32">32</option><option value="33">33</option><option value="34">34</option><option value="35">35</option><option value="36">36</option><option value="37">37</option><option value="38">38</option><option value="39">39</option><option value="40">40</option><option value="41">41</option><option value="42">42</option><option value="43">43</option><option value="44">44</option><option value="45">45</option><option value="46">46</option><option value="47">47</option><option value="48">48</option><option value="49">49</option><option value="50">50</option><option value="51">51</option><option value="52">52</option><option value="53">53</option><option value="54">54</option><option value="55">55</option><option value="56">56</option><option value="57">57</option><option value="58">58</option><option value="59">59</option>
+        </select>
+        <span style="font-size:13px;color:#6B8BAF;white-space:nowrap">local time</span>
+      </div>
+      <div style="font-size:12px;color:#6B8BAF;font-style:italic;margin-top:5px">If unknown, leave blank. Used for Ascendant calculation.</div>
     </div>
     <div class="entry-field">
       <label class="entry-label">BIRTH LOCATION <span>for Ascendant and natal chart</span></label>
@@ -3434,8 +3449,9 @@ async function loadReading(dateStr, tier) {
         &nbsp;·&nbsp; ${{'free':'Instant','seeker':'~2 min','oracle':'~5 min','initiate':'~3 min','mystic':'~4 min'}[activeTier]||''}
       </span>
       <span style="font-size:12px;color:var(--gold3);cursor:pointer;text-decoration:underline;text-underline-offset:3px"
-        onclick="if(pollingTimer){clearInterval(pollingTimer);pollingTimer=null;}changeModeAndReload()">
-        change depth
+        onclick="if(pollingTimer){clearInterval(pollingTimer);pollingTimer=null;}changeModeAndReload()"
+        style="color:var(--gold);font-size:13px;letter-spacing:.08em;text-decoration:underline;text-underline-offset:3px">
+        Change Depth
       </span>
     </div>
 
@@ -3654,7 +3670,7 @@ async function loadReading(dateStr, tier) {
       method: 'POST', headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({
         date: dateStr,
-        profile: {...profile, intention, cycleContext: getCycleContext()},
+        profile: {...profile, intention, cycleContext: getCycleContext(), readingLang: localStorage.getItem('cdp_lang')||'ancient'},
         tier: activeTier,
         user_id: currentUser?.id || null,
         recentHistory: recentReadingHistory
@@ -4909,11 +4925,12 @@ function startPolling(jobId, dateStr, tier, startedAt) {
 
 
 // ── SHAREABLE SYNTHESIS CARD ──────────────────────────────────────
-function openShareCard() {
+function openShareCard(btnEl) {
   const r = currentReading?.reading?.reading || currentReading?.reading;
   const synth = r?.synthesis || currentReading?.reading?.synthesis;
   if (!synth) {
-    const btn = event?.target || document.querySelector('[onclick*="openShareCard"]');
+    // Try to find the button that was clicked
+    const btn = btnEl || document.querySelector('button[onclick*="openShareCard"]');
     if (btn) {
       const orig = btn.textContent;
       btn.textContent = 'Reading still composing — try again in a moment';
@@ -5403,6 +5420,8 @@ function injectUpsellNudge(tier) {
   const key = 'cdp_upsell_dismissed_' + TODAY;
   if (sessionStorage.getItem(key)) return;
 
+  // Only inject once
+  if (document.getElementById('upsellNudge')) return;
   // Find insertion point — after the synthesis+share section
   const synthEl = document.getElementById('ai-synthesis');
   if (!synthEl) return;
@@ -5485,7 +5504,7 @@ function fillAISections(data, dateStr) {
       <div style="font-size:clamp(16px,1.8vw,20px);line-height:1.85;color:var(--text2);font-style:italic;letter-spacing:.01em">${synthText.split('. ').filter(s=>s.trim()).map(s=>'<p style=\"margin-bottom:0.7em\">'+(s.endsWith('.')?s:s+'.')+'</p>').join('')}</div>
       <div class="tap-hint">↗ Go deeper</div></div>
       <div style="text-align:center;margin-top:14px">
-        <button onclick="openShareCard()" style="background:none;border:1px solid rgba(201,160,80,0.35);
+        <button onclick="openShareCard(this)" style="background:none;border:1px solid rgba(201,160,80,0.35);
           border-radius:3px;color:rgba(201,160,80,0.75);padding:8px 18px;cursor:pointer;
           font-family:'EB Garamond',serif;font-size:13px;letter-spacing:.12em;
           transition:border-color .2s,color .2s"
@@ -5565,12 +5584,18 @@ function fillAISections(data, dateStr) {
     dsEl.innerHTML = prose(r.dreamspell.body);
   }
 
-  // Week ahead — rich grid matching fillPhase1 style
+  // Week ahead — rich grid. Use AI notes if present, fallback to client-side data.
   const wkEl = document.getElementById('ai-week');
-  if (wkEl && r?.week_ahead?.length) {
+  // Build week data: prefer r.week_ahead (AI notes), fallback to data.weekAhead (client calc only)
+  const _weekSource = (r?.week_ahead?.length ? r.week_ahead : null)
+    || (data?.weekAhead?.length > 1 ? data.weekAhead.slice(1).map(w => ({date:w.date,dayStr:w.dayStr,note:''})) : null);
+  if (wkEl && _weekSource?.length) {
+    const r_week_ahead_orig = r?.week_ahead; // keep reference
+    // Merge: if using weekAhead fallback, map to expected format
+    const weekItems = _weekSource;
     let wh = '<div class="r-section"><div class="sec-label">The Week Ahead <span style="font-size:11px;color:var(--text3);font-style:italic;font-weight:400;text-transform:none;letter-spacing:.05em">· tap any day for deeper insight</span></div>';
     wh += '<div style="display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-top:12px">';
-    r.week_ahead.forEach(d => {
+    weekItems.forEach(d => {
       const dateStr = d.date || '';
       const ud = dateStr ? clientUD(dateStr) : 0;
       if (!ud || isNaN(ud)) return;
@@ -5607,6 +5632,39 @@ function fillAISections(data, dateStr) {
     });
     wh += '</div></div>';
     fadeIn(wkEl, wh);
+  } else if (wkEl) {
+    // Final fallback — build week from dates with no notes, just numbers/kin/moon
+    const _wa = data?.weekAhead?.length > 1 ? data.weekAhead.slice(1) : [];
+    if (_wa.length) {
+      let wh = '<div class="r-section"><div class="sec-label">The Week Ahead <span style="font-size:11px;color:var(--text3);font-style:italic;font-weight:400;text-transform:none;letter-spacing:.05em">· tap any day for deeper insight</span></div>';
+      wh += '<div style="display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-top:12px">';
+      _wa.forEach(w => {
+        const ud = clientUD(w.date);
+        if (!ud || isNaN(ud)) return;
+        const udD = NUM_DATA[ud] || {n:'',k:''};
+        const kinData = clientKin(w.date);
+        const moonData = clientMoon(w.date);
+        const isMaster = [11,22,33,44].includes(ud);
+        const isGAP = kinData.isGAP;
+        const dt = new Date(w.date + 'T12:00:00Z');
+        const dayShort = dt.toLocaleDateString('en-GB',{weekday:'short'});
+        const dayLabel = dt.toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'short'});
+        const borderCol = isGAP ? 'var(--teal)' : isMaster ? 'var(--master)' : 'var(--div)';
+        const udKw = (udD.k||'').split('·')[0].trim();
+        wh += '<div class="week-day tappable" onclick="tapWeekDay(\''+dayLabel+'\',\''+kinData.seal+'\','+ud+',\''+udKw+'\')"'
+          +' style="border-color:'+borderCol+'">'
+          +'<div style="font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold3);margin-bottom:6px">'+dayShort+'</div>'
+          +'<div style="font-family:\'Cormorant Garamond\',serif;font-size:34px;color:'+(isMaster?'var(--master)':'var(--gold)')+';line-height:1;margin-bottom:3px">'+ud+(isMaster?'<span style="font-size:18px">★</span>':'')+'</div>'
+          +'<div style="font-size:12px;color:var(--text);font-weight:500;margin-bottom:3px">'+udD.n+'</div>'
+          +'<div style="font-size:11px;color:var(--text3);margin-bottom:4px;font-style:italic">'+udKw+'</div>'
+          +(isGAP?'<div style="font-size:9px;color:var(--teal);letter-spacing:.12em;text-transform:uppercase;border:1px solid rgba(129,205,182,.3);border-radius:2px;padding:2px 4px;display:inline-block;margin-bottom:4px">★ Portal</div>':'')
+          +'<div style="font-size:11px;color:var(--text3)">'+moonData.emoji+' <span style="font-size:10px">'+moonData.phase+'</span></div>'
+          +'<div style="font-size:10px;color:var(--teal2);margin-top:4px">'+kinData.seal+'</div>'
+          +'</div>';
+      });
+      wh += '</div></div>';
+      fadeIn(wkEl, wh);
+    }
   }
 
   // Quote
@@ -7668,7 +7726,7 @@ async function signInWithGoogle() {
   try {
     const { error } = await sb.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: window.location.origin }
+      options: { redirectTo: window.location.origin + '/app?mode=' + (cdpEntryMode||'quick') }
     });
     if (error) showAuthMsg(document.getElementById('magicMsg'), error.message, 'error');
   } catch(e) {
@@ -7742,6 +7800,8 @@ async function syncProfileToSupabase() {
 
 async function syncProfileFromSupabase() {
   if (!sb || !currentUser) return;
+  // Mark entry as done for authenticated users — skip entry screen on return
+  localStorage.setItem('cdp_entry_done', '1');
   try {
     const { data, error } = await sb.from('profiles').select('*').eq('id', currentUser.id).single();
     if (error || !data) return;
@@ -9163,7 +9223,29 @@ function showEntryScreen(mode) {
   var savedName = localStorage.getItem('cdp_name') || '';
   var savedDob  = localStorage.getItem('cdp_dob')  || '';
   if (savedName) document.getElementById('entryName').value = savedName;
-  if (savedDob)  { document.getElementById('entryDob').value = savedDob; document.getElementById('entryDobHint').style.display='none'; }
+  if (savedDob) {
+    var dobParts = savedDob.split('/');
+    if (dobParts.length === 3) {
+      var dayEl = document.getElementById('entryDay');
+      var monEl = document.getElementById('entryMonth');
+      var yrEl  = document.getElementById('entryYear');
+      if (dayEl) dayEl.value = parseInt(dobParts[0],10);
+      if (monEl) monEl.value = parseInt(dobParts[1],10);
+      if (yrEl)  yrEl.value  = parseInt(dobParts[2],10);
+    }
+    var hint = document.getElementById('entryDobHint');
+    if (hint) hint.style.display = 'none';
+  }
+  // Restore birth time
+  var savedBH = localStorage.getItem('cdp_bh') || '';
+  var savedBM = localStorage.getItem('cdp_bmin') || '';
+  if (savedBH) { var bh = document.getElementById('entryBirthHour'); if(bh) bh.value = savedBH; }
+  if (savedBM) { var bm = document.getElementById('entryBirthMin');  if(bm) bm.value = savedBM; }
+  // Restore locations
+  var savedBP = localStorage.getItem('cdp_birth_place') || '';
+  var savedLoc = localStorage.getItem('cdp_location') || '';
+  if (savedBP) { var bp = document.getElementById('entryBirthPlace'); if(bp) bp.value = savedBP; }
+  if (savedLoc){ var lc = document.getElementById('entryLocation');   if(lc) lc.value = savedLoc; }
   // Set language toggle
   setLang(cdpLang, true);
   // Show entry screen
@@ -9213,6 +9295,8 @@ function beginFromEntry() {
   var day       = document.getElementById('entryDay').value;
   var month     = document.getElementById('entryMonth').value;
   var year      = document.getElementById('entryYear').value;
+  var birthHour   = document.getElementById('entryBirthHour').value;
+  var birthMin    = document.getElementById('entryBirthMin').value;
   var birthPlace= document.getElementById('entryBirthPlace').value.trim();
   var location  = document.getElementById('entryLocation').value.trim();
   var intention = document.getElementById('entryIntention').value.trim();
@@ -9220,6 +9304,8 @@ function beginFromEntry() {
   if (name)       localStorage.setItem('cdp_name', name);
   if (intention)  localStorage.setItem('cdp_intention', intention);
   else            localStorage.removeItem('cdp_intention');
+  if (birthHour) localStorage.setItem('cdp_bh', birthHour);
+  if (birthMin)  localStorage.setItem('cdp_bmin', birthMin);
   if (birthPlace) localStorage.setItem('cdp_birth_place', birthPlace);
   if (location)   localStorage.setItem('cdp_location', location);
   localStorage.setItem('cdp_lang', cdpLang);
@@ -9229,9 +9315,31 @@ function beginFromEntry() {
     localStorage.setItem('cdp_bm', month);
     localStorage.setItem('cdp_by', year);
     localStorage.setItem('cdp_dob', day+'/'+month+'/'+year);
+    // Merge into cdp_profile so the app's profile system picks it up
+    try {
+      var prof = JSON.parse(localStorage.getItem('cdp_profile') || '{}');
+      prof.birthDay   = parseInt(day,10);
+      prof.birthMonth = parseInt(month,10);
+      prof.birthYear  = parseInt(year,10);
+      if (name) prof.name = name;
+      if (birthHour && birthMin) prof.birthTime = birthHour.padStart(2,'0') + ':' + birthMin.padStart(2,'0');
+      if (birthPlace) prof.birthLocation = birthPlace;
+      if (location)   prof.location = location;
+      localStorage.setItem('cdp_profile', JSON.stringify(prof));
+    } catch(e) {}
   } else {
     localStorage.removeItem('cdp_dob');
+    // Still save name/location to profile
+    try {
+      var prof = JSON.parse(localStorage.getItem('cdp_profile') || '{}');
+      if (name) prof.name = name;
+      if (birthPlace) prof.birthLocation = birthPlace;
+      if (location)   prof.location = location;
+      localStorage.setItem('cdp_profile', JSON.stringify(prof));
+    } catch(e) {}
   }
+  // Mark entry as done for returning users
+  localStorage.setItem('cdp_entry_done', '1');
   // Hide entry screen
   var el = document.getElementById('cdpEntry');
   el.classList.remove('visible');
@@ -9239,6 +9347,8 @@ function beginFromEntry() {
   // Show tier bar
   document.getElementById('cdpTierBar').style.display = 'flex';
   updateTierBar(cdpEntryMode);
+  // Pass language preference to reading system
+  window.cdpReadingLang = cdpLang;
   // Start reading
   selectMode(cdpEntryMode);
   startWithMode(true);
@@ -9273,10 +9383,25 @@ function showModeSelector() { showEntryScreen(cdpEntryMode); }
     s.textContent = '#modeSelector{display:none!important}';
     document.head.appendChild(s);
     function init() {
-      if (m && ['free','quick','standard','mystic','deep'].indexOf(m) > -1) {
-        cdpEntryMode = m;
-      }
-      showEntryScreen(cdpEntryMode);
+      try {
+        if (m && ['free','quick','standard','mystic','deep'].indexOf(m) > -1) {
+          cdpEntryMode = m;
+        }
+        // Only show entry screen if not already admitted (returning user with full profile)
+        var hasName = localStorage.getItem('cdp_name');
+        var hasDob  = localStorage.getItem('cdp_dob');
+        var hasSkipped = localStorage.getItem('cdp_entry_done');
+        if (hasSkipped && hasName) {
+          // Returning user — skip entry screen, go straight to reading
+          document.getElementById('modeSelector').style.display = 'none';
+          document.getElementById('cdpTierBar').style.display = 'flex';
+          updateTierBar(cdpEntryMode);
+          selectMode(cdpEntryMode);
+          startWithMode(true);
+        } else {
+          showEntryScreen(cdpEntryMode);
+        }
+      } catch(e) { console.warn('CDP init error:', e); }
     }
     if (document.readyState === 'complete') {
       setTimeout(init, 200);
