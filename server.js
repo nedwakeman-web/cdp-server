@@ -667,8 +667,10 @@ Generate the FULL ORACLE READING as valid JSON (no markdown, no fences, no pream
   "sources": "Astronomy: Swiss Ephemeris (Koch & Treindl, Astrodienst AG, ae_2026.pdf); USNO Moon Phases. Maya calendrics: Šprajc et al. (2023) Science Advances doi:10.1126/sciadv.abq7675; Aldana (2022) doi:10.34758/qyyd-vx23. Dreamspell: Argüelles (1987) The Mayan Factor. Astrology: Greene (1976) Saturn; Tarnas (2006) Cosmos & Psyche; Hand (2002) Planets in Transit; Brady (1999) Predictive Astrology; Brennan (2017) Hellenistic Astrology. Numerology: Drayer (2002); Kahn (2001) Pythagoras."
 }`;
 
-  const maxTok = {free:800, seeker:4500, initiate:6000, mystic:8000, oracle:10000}[tier] || 8192;
-  const raw = await callAPI('claude-sonnet-4-6', maxTok, sys, user);
+  const maxTok = {free:800, seeker:3000, initiate:5000, mystic:8000, oracle:8192}[tier] || 8192;
+  // Use Haiku for lighter tiers — much faster, still quality
+  const genModel = (tier === 'seeker' || tier === 'initiate') ? 'claude-haiku-4-5-20251001' : 'claude-sonnet-4-6';
+  const raw = await callAPI(genModel, maxTok, sys, user);
 
   let reading;
   try {
@@ -851,7 +853,7 @@ app.post('/api/reading/start', async (req, res) => {
         let qdRaw;
         for (let attempt = 0; attempt < 3; attempt++) {
           try {
-            qdRaw = await callAPI('claude-haiku-4-5-20251001', 1400, qdSys, qdUser);
+            qdRaw = await callAPI('claude-haiku-4-5-20251001', 1800, qdSys, qdUser);
             break;
           } catch(e) {
             if (e.message.includes('overloaded') && attempt < 2) {
@@ -1779,7 +1781,7 @@ app.get('/api/health', (req, res) => {
   const hasKey = !!(process.env.ANTHROPIC_API_KEY);
   res.json({
     status: 'ok',
-    version: 'CDP v7 Beta2',
+    version: 'CDP v9',
     time: new Date().toISOString(),
     apiKey: hasKey ? 'present' : 'MISSING — readings will fail',
     jobs: jobs.size,
@@ -1817,6 +1819,6 @@ setInterval(() => {
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(`CDP v7 Beta2 — port ${PORT}`);
+  console.log(`CDP v9 — port ${PORT}`);
   console.log(`API key: ${process.env.ANTHROPIC_API_KEY ? 'present ✓' : 'MISSING ✗ — readings will fail'}`);
 });
