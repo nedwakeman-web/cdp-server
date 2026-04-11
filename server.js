@@ -16,15 +16,7 @@ app.use((req, res, next) => {
 });
 
 app.use(express.json());
-
-// ── PAGE ROUTES — must come before static middleware ──────────────────────
-// / → landing page (public marketing)
-// /app → Oracle application
-app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'public', 'landing.html')));
-app.get('/app', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
-
-// Static assets — index disabled so / is not auto-served from index.html
-app.use(express.static(path.join(__dirname, 'public'), { index: false }));
+app.use(express.static(path.join(__dirname, 'public')));
 
 // ══════════════════════════════════════════════════════════════════
 // SWISS EPHEMERIS 2026 — verified from Astrodienst ae_2026.pdf
@@ -506,6 +498,9 @@ function buildProfileContext(p, recentHistory = []) {
 // ORACLE READING — FULL SCHEMA, FULL QUALITY, BENCHMARK STANDARD
 // ══════════════════════════════════════════════════════════════════
 async function generateReading(dateStr, profile = {}, tier = 'oracle', recentHistory = [], _planets, _moon, _kin, _num, _aspects) {
+  const _langNote = (profile && profile.readingLang === 'modern')
+    ? '\n\nLANGUAGE MODE — MODERN SCIENTIFIC: Translate every cosmic insight into neuroscience terms. Frame numerology as cognitive priming (salience network), lunar cycles as circadian biology, shadow work as interoceptive signal (Barrett 2017), transits as predictive framework shifts. Name the mechanism. The ancient framework is the scaffold; the language is neuroscience.'
+    : '';
   // Accept pre-calculated data from two-phase flow to avoid recalculating
   const planets = _planets || buildPlanets(dateStr);
   const moon = _moon || getMoon(dateStr);
@@ -554,7 +549,7 @@ async function generateReading(dateStr, profile = {}, tier = 'oracle', recentHis
   };
   const scope = tierScope[tier] || tierScope.oracle;
 
-  const sys = `You are the Oracle at Cosmic Daily Planner (cosmicdailyplanner.com) — a rigorous, personalised daily cosmic planner synthesising Swiss Ephemeris astronomy, Pythagorean numerology, Western psychological astrology, and Dreamspell/Law of Time.
+  const sys = `You are the Oracle at Cosmic Daily Planner (cosmicdailyplanner.com) — a rigorous, personalised daily cosmic planner synthesising Swiss Ephemeris astronomy, Pythagorean numerology, Western psychological astrology, and Dreamspell/Law of Time.${_langNote}
 
 YOUR VOICE: The best Jungian analyst meets the Swiss Ephemeris. Precise. Personal. Grounded. Emotionally intelligent.
 
@@ -846,7 +841,11 @@ app.post('/api/reading/start', async (req, res) => {
         const moonNote = moon.isBlack?'BLACK MOON — do not initiate.':moon.isShiva?'SHIVA MOON — plant with intention.':'';
         const weekAhead = getWeekAhead(ds);
         const weekCtx = weekAhead.slice(1).map(w => w.dayStr+': UD'+w.ud+(w.isGAP?' GAP★':'')+' '+w.kin).join(', ');
-        const qdSys = 'You are the Oracle at Cosmic Daily Planner. Respond ONLY with valid JSON, no markdown, no preamble. Schema: {"synthesis":"string","priorities":[{"title":"string","action":"string"},{"title":"string","action":"string"},{"title":"string","action":"string"}],"shadow":"string","focus_on":["string","string","string","string"],"ease_off":["string","string","string","string"],"time_windows":{"morning":"string","afternoon":"string","evening":"string"},"week_notes":["string","string","string","string","string","string"],"next_tier_teaser":"string"}. week_notes: exactly 6 notes (2 sentences each): what the day energy means + one specific implication for the person. next_tier_teaser: 1-2 compelling sentences about what a Monthly Arc reading would additionally reveal for this person this month — end with a curiosity hook. Max 1200 tokens. Be specific.';
+        const langMode = (profile && profile.readingLang === 'modern') ? 'modern' : 'ancient';
+        const langInstr = langMode === 'modern'
+          ? ' READING LANGUAGE: Modern scientific. Frame every insight in neuroscience terms: salience network, circadian rhythms, interoception, neuroplasticity, predictive coding. Name the mechanism. Cite the science briefly (e.g. Barrett 2017, Bremer 2022). Still use the cosmic data as the scaffold but translate it into brain science language.'
+          : ' READING LANGUAGE: Ancient traditional. Use the language of cosmic intelligence, archetypes, energetic fields and symbolic meaning. No neuroscience terminology.';
+        const qdSys = 'You are the Oracle at Cosmic Daily Planner. Respond ONLY with valid JSON, no markdown, no preamble.' + langInstr + ' Schema: {"synthesis":"string","priorities":[{"title":"string","action":"string"},{"title":"string","action":"string"},{"title":"string","action":"string"}],"shadow":"string","focus_on":["string","string","string","string"],"ease_off":["string","string","string","string"],"time_windows":{"morning":"string","afternoon":"string","evening":"string"},"week_notes":["string","string","string","string","string","string"],"next_tier_teaser":"string"}. week_notes: exactly 6 notes (2 sentences each): what the day energy means + one specific implication for the person. next_tier_teaser: 1-2 compelling sentences about what a Monthly Arc reading would additionally reveal for this person this month — end with a curiosity hook. Max 1200 tokens. Be specific.';
         const weekDateList = weekAhead.slice(1).map((w,i)=>(i+1)+'. '+w.dayStr+' (UD'+w.ud+(w.isGAP?' GAP':'')+' '+w.kin+')').join('; ');
         const qdUser = 'Person: '+fn+'. Date: '+ds+'. Moon: '+moon.phase+(moonNote?' ('+moonNote+')':'')+'. UD: '+num.ud+(num.udM&&num.udM.n?' ('+num.udM.n+')':'')+', PD: '+(num.pd||num.ud)+'. LP: '+(num.lp||'?')+', PY: '+(num.py||'?')+'. Kin: '+kin.full+(kin.isGAP?' GALACTIC ACTIVATION PORTAL':'')+'. '+ctx+'. Next 6 days (in order for week_notes): '+weekDateList+'. Saturn-Neptune Aries 2026 (Tarnas 2006). Write personal daily reading for '+fn+'. week_notes must have exactly 6 strings in same order as the dates above.';
         let qdRaw;
@@ -1780,7 +1779,7 @@ app.get('/api/health', (req, res) => {
   const hasKey = !!(process.env.ANTHROPIC_API_KEY);
   res.json({
     status: 'ok',
-    version: 'CDP v8',
+    version: 'CDP v7 Beta2',
     time: new Date().toISOString(),
     apiKey: hasKey ? 'present' : 'MISSING — readings will fail',
     jobs: jobs.size,
