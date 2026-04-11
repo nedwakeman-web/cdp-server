@@ -1,0 +1,818 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cosmic Daily Planner — Where ancient wisdom meets modern science, daily</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500&family=EB+Garamond:ital,wght@0,400;0,500;1,400&family=Cinzel:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --navy:  #0D1E33;
+  --navy2: #112440;
+  --navy3: #0A1828;
+  --gold:  #C9A84C;
+  --goldl: #E4C97A;
+  --teal:  #1D9E75;
+  --teall: #2BBF8D;
+  --text:  #E8EDF4;
+  --text2: #9EB3CC;
+  --text3: #6B8BAF;
+  --div:   rgba(201,168,76,0.18);
+  --div2:  rgba(255,255,255,0.06);
+  --div3:  rgba(255,255,255,0.03);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--navy);color:var(--text);font-family:'EB Garamond',Georgia,serif;font-size:18px;line-height:1.7;overflow-x:hidden}
+
+/* ── NAV ── */
+nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:0 52px;height:58px;background:rgba(13,30,51,0.95);backdrop-filter:blur(16px);border-bottom:1px solid var(--div)}
+.nav-brand{font-family:'Cinzel',serif;font-size:12px;letter-spacing:0.18em;color:var(--gold);text-decoration:none}
+.nav-links{display:flex;gap:36px}
+.nav-links a{font-family:'EB Garamond',serif;font-size:15px;color:var(--text2);text-decoration:none;letter-spacing:0.04em;transition:color 0.2s}
+.nav-links a:hover{color:var(--gold)}
+.nav-cta{font-family:'Cinzel',serif;font-size:11px;letter-spacing:0.14em;color:var(--navy);background:var(--gold);border:none;padding:10px 24px;cursor:pointer;transition:background 0.2s}
+.nav-cta:hover{background:var(--goldl)}
+
+/* ── STARS ── */
+.stars{position:absolute;inset:0;overflow:hidden;pointer-events:none}
+.star{position:absolute;width:1px;height:1px;background:rgba(255,255,255,0.55);border-radius:50%;animation:twinkle var(--dur,3s) ease-in-out infinite var(--delay,0s)}
+@keyframes twinkle{0%,100%{opacity:0.15;transform:scale(1)}50%{opacity:1;transform:scale(1.5)}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── HERO ── */
+.hero{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:130px 52px 90px;position:relative;text-align:center;background:radial-gradient(ellipse 80% 60% at 50% 25%,rgba(29,158,117,0.08) 0%,transparent 70%),radial-gradient(ellipse 50% 40% at 15% 85%,rgba(201,168,76,0.06) 0%,transparent 60%)}
+.hero-eyebrow{font-family:'Cinzel',serif;font-size:11px;letter-spacing:0.24em;color:var(--gold);margin-bottom:32px;opacity:0;animation:fadeUp 0.8s ease forwards 0.3s}
+.hero-title{font-family:'Cormorant Garamond',serif;font-size:clamp(52px,6.5vw,92px);font-weight:300;line-height:1.06;color:var(--text);max-width:900px;margin-bottom:36px;opacity:0;animation:fadeUp 0.9s ease forwards 0.5s}
+.hero-title em{font-style:italic;color:var(--gold)}
+.hero-sub1{font-family:'EB Garamond',serif;font-size:clamp(17px,1.9vw,22px);font-weight:400;color:var(--text2);max-width:660px;margin:0 auto 10px;line-height:1.65;opacity:0;animation:fadeUp 0.9s ease forwards 0.7s}
+.hero-sub2{font-family:'Cormorant Garamond',serif;font-size:clamp(18px,2vw,23px);font-weight:400;color:var(--text);max-width:660px;margin:0 auto 64px;line-height:1.55;opacity:0;animation:fadeUp 0.9s ease forwards 0.85s}
+
+/* ── ORACLE CARD ── */
+.oracle-card{background:rgba(255,255,255,0.025);border:1px solid var(--div);max-width:580px;width:100%;padding:34px 40px 30px;text-align:left;position:relative;opacity:0;animation:fadeUp 1s ease forwards 1s}
+.oracle-card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--gold),transparent)}
+.oc-label{font-family:'Cinzel',serif;font-size:10px;letter-spacing:0.22em;color:var(--gold);margin-bottom:6px}
+.oc-date{font-family:'Cinzel',serif;font-size:11px;letter-spacing:0.1em;color:var(--text3);margin-bottom:22px;text-transform:uppercase}
+.oc-body{font-family:'Cormorant Garamond',serif;font-size:20px;font-style:italic;color:var(--text);line-height:1.65;margin-bottom:26px;min-height:64px}
+.oc-pills{display:flex;flex-wrap:wrap;gap:8px}
+.pill{font-family:'Cinzel',serif;font-size:10px;letter-spacing:0.12em;padding:5px 15px;border:1px solid var(--div);color:var(--text2)}
+.pill.gold{border-color:rgba(201,168,76,0.45);color:var(--gold)}
+.pill.teal{border-color:rgba(29,158,117,0.45);color:var(--teall)}
+.oc-dot{display:inline-block;width:4px;height:4px;background:var(--text3);border-radius:50%;margin-left:3px;animation:pulse 1.4s infinite}
+.oc-dot:nth-child(2){animation-delay:.2s}.oc-dot:nth-child(3){animation-delay:.4s}
+@keyframes pulse{0%,80%,100%{opacity:0.25}40%{opacity:1}}
+
+/* ── SECTION BASE ── */
+section{padding:108px 52px}
+.container{max-width:1120px;margin:0 auto}
+.sec-eyebrow{font-family:'Cinzel',serif;font-size:10px;letter-spacing:0.24em;color:var(--gold);margin-bottom:22px;text-align:center}
+.sec-title{font-family:'Cormorant Garamond',serif;font-size:clamp(36px,4vw,58px);font-weight:300;text-align:center;line-height:1.12;color:var(--text);margin-bottom:18px}
+.sec-body{font-size:18px;color:var(--text2);text-align:center;max-width:660px;margin:0 auto 68px;line-height:1.72}
+
+/* ── PILLARS ── */
+.pillars{background:var(--navy2)}
+.pillars-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;max-width:980px;margin:0 auto}
+.pillar{padding:52px 40px;background:var(--navy);border-top:2px solid transparent;transition:border-color 0.3s}
+.pillar:hover{border-top-color:var(--gold)}
+.pillar-icon{font-size:26px;margin-bottom:22px;opacity:0.6}
+.pillar-title{font-family:'Cormorant Garamond',serif;font-size:24px;font-weight:500;color:var(--text);margin-bottom:14px}
+.pillar-body{font-size:16px;color:var(--text2);line-height:1.65}
+
+/* ── WHY IT WORKS ── */
+.why{background:var(--navy)}
+.why-intro{max-width:720px;margin:0 auto 60px;text-align:center}
+.why-quote{font-family:'Cormorant Garamond',serif;font-size:clamp(24px,2.8vw,36px);font-weight:300;font-style:italic;line-height:1.45;color:var(--text);margin-bottom:32px}
+.why-body{font-size:17px;color:var(--text2);line-height:1.78;margin-bottom:18px}
+.why-close{font-size:15px;color:var(--text3);font-style:italic;margin-top:8px}
+
+.col-heads{display:grid;grid-template-columns:1fr 1fr;gap:2rem;max-width:840px;margin:0 auto 10px;padding-bottom:10px;border-bottom:0.5px solid rgba(255,255,255,0.08)}
+.ch{font-family:'Cinzel',serif;font-size:10px;letter-spacing:0.14em}
+.ch.spirit{color:var(--teall)}.ch.science{color:var(--text3)}
+.fw-rows{max-width:840px;margin:0 auto}
+.fw-row{border-bottom:0.5px solid rgba(255,255,255,0.06)}
+.fw-row:last-child{border-bottom:none}
+.fw-main{display:grid;grid-template-columns:1fr 1fr;gap:2rem;padding:1.25rem 0}
+.fw-name{font-family:'Cormorant Garamond',serif;font-size:19px;font-weight:500;color:var(--text);margin-bottom:7px}
+.fw-spirit{font-size:15px;color:var(--teall);font-style:italic;line-height:1.55}
+.fw-sci-name{font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:500;color:var(--text);margin-bottom:6px}
+.fw-sci-body{font-size:15px;color:var(--text2);line-height:1.55;margin-bottom:7px}
+.fw-ref{font-size:12px;color:var(--text3)}
+.fw-ref a{color:var(--teall);text-decoration:none}
+.fw-ref a:hover{text-decoration:underline}
+.more-btn{font-family:'Cinzel',serif;font-size:10px;letter-spacing:0.1em;background:none;border:none;color:var(--teall);cursor:pointer;padding:6px 0 0;display:flex;align-items:center;gap:5px;transition:opacity 0.2s}
+.more-btn:hover{opacity:0.7}
+.more-arr{display:inline-block;transition:transform 0.25s;font-size:9px}
+.more-arr.open{transform:rotate(90deg)}
+.fw-expand{display:none;padding:0 0 1.4rem}
+.fw-expand.open{display:block}
+.fw-exp-grid{display:grid;grid-template-columns:1fr 1fr;gap:2rem;padding-top:0.5rem}
+.exp-head{font-family:'Cinzel',serif;font-size:10px;letter-spacing:0.12em;margin-bottom:12px}
+.exp-head.spirit{color:var(--teall)}.exp-head.science{color:var(--text3)}
+.exp-body{font-size:14px;color:var(--text2);line-height:1.72;margin-bottom:14px}
+.exp-body em{color:var(--text);font-style:normal;font-weight:500}
+.exp-refs{display:flex;flex-direction:column;gap:5px}
+.exp-ref{font-size:12px;color:var(--text3);line-height:1.5}
+.exp-ref a{color:var(--teall);text-decoration:none}
+.exp-ref a:hover{text-decoration:underline}
+.why-bridge{max-width:840px;margin:2.5rem auto 0;padding:1.4rem 1.75rem;background:rgba(29,158,117,0.05);border:0.5px solid rgba(29,158,117,0.2)}
+.wb-text{font-family:'Cormorant Garamond',serif;font-size:20px;font-style:italic;font-weight:300;color:var(--text2);line-height:1.65}
+
+/* ── FOUR FRAMEWORKS ── */
+.frameworks{background:var(--navy2)}
+.fw-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:2px;max-width:1080px;margin:0 auto}
+.fw-card{padding:40px 28px;background:var(--navy);position:relative;overflow:hidden}
+.fw-card::after{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(201,168,76,0.3),transparent);opacity:0;transition:opacity 0.3s}
+.fw-card:hover::after{opacity:1}
+.fw-num{font-family:'Cormorant Garamond',serif;font-size:52px;font-weight:300;color:rgba(255,255,255,0.05);line-height:1;margin-bottom:16px}
+.fw-fw-title{font-family:'Cinzel',serif;font-size:11px;letter-spacing:0.12em;color:var(--gold);margin-bottom:14px}
+.fw-detects{font-size:15px;color:var(--text2);line-height:1.62;margin-bottom:14px}
+.fw-source{font-size:13px;color:var(--text3);font-style:italic}
+
+/* ── RELATIONSHIP ── */
+.relationship{background:var(--navy)}
+.rel-full{max-width:880px;margin:0 auto}
+.rel-topics{display:flex;flex-wrap:wrap;gap:8px;margin:28px 0 36px;justify-content:center}
+.rel-topic{font-family:'Cinzel',serif;font-size:10px;letter-spacing:0.1em;padding:9px 20px;border:1px solid var(--div);color:var(--text2);cursor:default;transition:all 0.2s}
+.rel-topic:hover,.rel-topic.active{border-color:rgba(201,168,76,0.5);color:var(--gold);background:rgba(201,168,76,0.05)}
+.rel-two-col{display:grid;grid-template-columns:1fr 1fr;gap:2.5rem;margin-top:36px}
+.rel-ch{font-family:'Cinzel',serif;font-size:10px;letter-spacing:0.14em;margin-bottom:16px}
+.rel-ch-s{color:var(--teall)}.rel-ch-n{color:var(--text3)}
+.rel-cb{font-size:15px;color:var(--text2);line-height:1.7;margin-bottom:12px}
+.rel-cb em{color:var(--text);font-style:normal}
+.rel-rf{font-size:12px;color:var(--text3);margin-top:10px}
+.rel-rf a{color:var(--teall);text-decoration:none}
+.rel-rf a:hover{text-decoration:underline}
+.rel-bridge-row{display:grid;grid-template-columns:1fr 1fr;gap:2.5rem;margin-top:20px}
+.rel-oracle-quote{padding:24px 28px;background:rgba(29,158,117,0.05);border:0.5px solid rgba(29,158,117,0.2)}
+.rel-oracle-quote p{font-family:'Cormorant Garamond',serif;font-size:18px;font-style:italic;font-weight:300;color:var(--text2);line-height:1.65}
+.rel-oracle-quote .gold-line{font-family:'Cormorant Garamond',serif;font-size:18px;font-style:italic;color:var(--gold);display:block;margin-top:10px}
+.rel-bridge-box{padding:24px 28px;background:var(--div3);border:0.5px solid var(--div2)}
+.rel-bridge-head{font-family:'Cinzel',serif;font-size:10px;letter-spacing:0.12em;color:var(--text3);margin-bottom:12px}
+.rel-bridge-body{font-size:14px;color:var(--text2);line-height:1.68}
+.rel-note{font-size:13px;color:var(--text3);font-style:italic;margin-top:28px;padding-top:22px;border-top:0.5px solid rgba(255,255,255,0.06);text-align:center}
+
+/* ── COMPANION ── */
+.companion{background:var(--navy2)}
+.comp-inner{max-width:880px;margin:0 auto}
+.comp-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;margin-top:52px}
+.moment{padding:40px 30px;background:var(--navy);border-top:2px solid transparent;text-align:center}
+.moment.m{border-top-color:rgba(201,168,76,0.6)}
+.moment.a{border-top-color:rgba(201,168,76,0.3)}
+.moment.e{border-top-color:rgba(201,168,76,0.12)}
+.moment-time{font-family:'Cinzel',serif;font-size:11px;letter-spacing:0.2em;color:var(--gold);margin-bottom:16px}
+.moment-title{font-family:'Cormorant Garamond',serif;font-size:24px;font-weight:500;color:var(--text);margin-bottom:14px}
+.moment-body{font-size:15px;color:var(--text2);line-height:1.65}
+.moment-science{font-size:13px;color:var(--text3);font-style:italic;margin-top:14px;line-height:1.5}
+.moment-dur{display:inline-block;margin-top:18px;font-family:'Cinzel',serif;font-size:10px;letter-spacing:0.12em;color:var(--text3);border:0.5px solid var(--div);padding:4px 14px}
+
+/* ── STATS ── */
+.stats{background:var(--navy);border-top:0.5px solid var(--div);border-bottom:0.5px solid var(--div);padding:60px 52px}
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);max-width:920px;margin:0 auto;gap:2px}
+.stat{text-align:center;padding:28px 16px}
+.stat-n{font-family:'Cormorant Garamond',serif;font-size:56px;font-weight:300;color:var(--gold);line-height:1;margin-bottom:10px}
+.stat-l{font-family:'Cinzel',serif;font-size:10px;letter-spacing:0.18em;color:var(--text3)}
+.stat-s{font-size:13px;color:var(--text3);font-style:italic;margin-top:5px}
+
+/* ── TIERS ── */
+.tiers{background:var(--navy2)}
+.tiers-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:2px;max-width:1120px;margin:0 auto 28px}
+.tier{padding:34px 24px 30px;background:var(--navy);display:flex;flex-direction:column}
+.tier.featured{background:rgba(29,158,117,0.07);border-top:2px solid var(--teal)}
+.tier-name{font-family:'Cinzel',serif;font-size:11px;letter-spacing:0.18em;color:var(--text3);margin-bottom:7px}
+.tier-price{font-family:'Cormorant Garamond',serif;font-size:36px;font-weight:300;color:var(--text);margin-bottom:7px}
+.tier-price span{font-size:16px;color:var(--text3)}
+.tier-desc{font-size:14px;color:var(--text2);line-height:1.58;margin-bottom:20px;flex:1}
+.tier-items{display:flex;flex-direction:column;gap:7px}
+.tier-item{font-size:13px;color:var(--text3);padding-left:16px;position:relative}
+.tier-item::before{content:'·';position:absolute;left:0;color:var(--gold)}
+.tiers-note{text-align:center;font-style:italic;font-size:15px;color:var(--text3);max-width:600px;margin:0 auto}
+
+/* ── CTA ── */
+.cta-section{background:var(--navy3);text-align:center;padding:130px 52px}
+.cta-section .sec-title{margin-bottom:14px}
+.cta-form{display:flex;gap:0;max-width:480px;margin:0 auto 16px}
+.cta-input{flex:1;background:rgba(255,255,255,0.05);border:1px solid var(--div);border-right:none;color:var(--text);font-family:'EB Garamond',serif;font-size:17px;padding:15px 20px;outline:none}
+.cta-input::placeholder{color:var(--text3)}
+.cta-input:focus{border-color:var(--gold)}
+.cta-btn{font-family:'Cinzel',serif;font-size:11px;letter-spacing:0.14em;background:var(--gold);color:var(--navy);border:none;padding:15px 28px;cursor:pointer;white-space:nowrap;transition:background 0.2s}
+.cta-btn:hover{background:var(--goldl)}
+.cta-note{font-size:14px;color:var(--text3);font-style:italic}
+
+/* ── FOOTER ── */
+footer{background:var(--navy2);padding:30px 52px;border-top:0.5px solid var(--div);display:flex;align-items:center;justify-content:space-between}
+.foot-brand{font-family:'Cinzel',serif;font-size:11px;letter-spacing:0.18em;color:var(--gold)}
+.foot-note{font-size:13px;color:var(--text3)}
+
+/* ── RESPONSIVE ── */
+@media(max-width:960px){
+  nav{padding:0 24px}.nav-links{display:none}
+  section{padding:72px 24px}.hero{padding:110px 24px 70px}
+  .pillars-grid,.fw-grid,.tiers-grid,.comp-grid{grid-template-columns:1fr;gap:2px}
+  .col-heads,.fw-main,.fw-exp-grid,.rel-two-col,.rel-bridge-row{grid-template-columns:1fr;gap:1.25rem}
+  .stats-grid{grid-template-columns:repeat(2,1fr)}
+  footer{flex-direction:column;gap:10px;text-align:center}
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <a class="nav-brand" href="#">COSMIC DAILY PLANNER</a>
+  <div class="nav-links">
+    <a href="#how">How it works</a>
+    <a href="#science">The science</a>
+    <a href="#relationship">Relationships</a>
+    <a href="#tiers">Tiers</a>
+  </div>
+  <button class="nav-cta" onclick="goReading('quick')">BEGIN READING</button>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="stars" id="stars"></div>
+  <div class="hero-eyebrow">YOUR PERSONAL HIGHER INTELLIGENCE</div>
+  <h1 class="hero-title">Two telescopes.<br><em>Pointed at the same sky.</em></h1>
+  <p class="hero-sub1">Spiritual traditions and neuroscience are not competing explanations. They are built in different centuries, written in different languages, arriving at the same coordinates.</p>
+  <p class="hero-sub2">Cosmic Daily Planner is where they meet, daily, in one reading specifically for you.</p>
+  <div class="oracle-card" id="oracleCard">
+    <div class="oc-label">TODAY'S ORACLE &nbsp;·&nbsp; LIVE READING</div>
+    <div class="oc-date" id="ocDate">Loading...</div>
+    <div class="oc-body" id="ocBody"><span style="font-family:'EB Garamond',serif;font-size:17px;font-style:italic;color:var(--text3)">Consulting the Oracle<span class="oc-dot"></span><span class="oc-dot"></span><span class="oc-dot"></span></span></div>
+    <div class="oc-pills" id="ocPills"></div>
+  </div>
+</section>
+
+<!-- THREE PILLARS -->
+<section class="pillars" id="how">
+  <div class="container">
+    <div class="sec-eyebrow">THREE REASONS THIS IS DIFFERENT</div>
+    <div class="pillars-grid">
+      <div class="pillar">
+        <div class="pillar-icon">&#9711;</div>
+        <div class="pillar-title">Genuinely personal</div>
+        <div class="pillar-body">Your reading names your projects, your people, your season. Not a generic horoscope. Every sentence written for you, grounded in live astronomical data and your birth information.</div>
+      </div>
+      <div class="pillar">
+        <div class="pillar-icon">&#9671;</div>
+        <div class="pillar-title">Scholarly and honest</div>
+        <div class="pillar-body">Every framework claim is traceable to peer-reviewed sources. We tell you what is ancient tradition and what is modern synthesis. Credibility is the product.</div>
+      </div>
+      <div class="pillar">
+        <div class="pillar-icon">&#9680;</div>
+        <div class="pillar-title">Deepens over time</div>
+        <div class="pillar-body">The Oracle learns your patterns across readings. Monthly arcs, yearly cycles, and eclipse maps build a longitudinal intelligence that genuinely grows with you.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- WHY IT WORKS -->
+<section class="why" id="science">
+  <div class="container">
+    <div class="sec-eyebrow">THE SCIENCE</div>
+    <div class="why-intro">
+      <div class="why-quote">What spiritual practice has always known,<br>neuroscience is now proving.</div>
+      <p class="why-body">Your brain processes 11 million bits of information every second. Your conscious mind handles around 50. What makes it through that filter is determined by what you hold as important, and that is trainable.</p>
+      <p class="why-body">When you begin your day with a clear orienting frame, your brain's salience network calibrates accordingly, noticing the relevant and suppressing the noise. The cosmic framework is the instruction to the filter.</p>
+      <p class="why-body">This is the neuroscience of selective attention, established at Oxford in 1958 (Broadbent), confirmed in fMRI studies of the default mode and salience networks (Technical University of Munich, 2022) and synthesised by Stanford neurosurgeon James Doty in the most current statement of the field (Mind Magic, 2024).</p>
+      <p class="why-close">No belief required. Just the architecture of your own mind.</p>
+    </div>
+
+    <div class="col-heads">
+      <div class="ch spirit">WHAT THE TRADITION SAYS</div>
+      <div class="ch science">WHAT THE SCIENCE SAYS</div>
+    </div>
+
+    <div class="fw-rows">
+
+      <div class="fw-row">
+        <div class="fw-main">
+          <div>
+            <div class="fw-name">Numerology</div>
+            <div class="fw-spirit">The day carries a frequency. Attend to it before the world sets your agenda for you.</div>
+            <button class="more-btn" onclick="expand(this,'r1')"><span class="more-arr">&#9656;</span> MORE</button>
+          </div>
+          <div>
+            <div class="fw-sci-name">Cognitive priming</div>
+            <div class="fw-sci-body">A held morning frame shifts the brain's salience filter for the whole day.</div>
+            <div class="fw-ref"><a href="https://pubmed.ncbi.nlm.nih.gov/35951367/" target="_blank">Oettingen &amp; Sevincer, 2023</a></div>
+          </div>
+        </div>
+        <div class="fw-expand" id="r1">
+          <div class="fw-exp-grid">
+            <div>
+              <div class="exp-head spirit">THE TRADITION</div>
+              <p class="exp-body">"Begin the day with awareness of the quality of the time. Hold the energy of the day. What you attend to, you call toward you." Pythagorean numerology, Vedic daily practice and the Dreamspell calendar all encode the same instruction: set a frame before the noise of the day begins. The Universal Day number, the Kin, the moon phase are each a different vocabulary for the same act: <em>instructing your attention before the world instructs it for you.</em></p>
+            </div>
+            <div>
+              <div class="exp-head science">THE NEUROSCIENCE</div>
+              <p class="exp-body">Your brain processes roughly 11 million bits of sensory data every second. Conscious awareness handles around 50. The gap is bridged by the <em>salience network</em> (the brain's relevance filter, centred in the anterior insula and anterior cingulate cortex), which decides what surfaces to awareness based on what you have already marked as important. Set a frame in the morning and hold it clearly, and the brain's filter shifts to surface what aligns with it throughout the day. This is <em>cognitive priming</em>: pre-activating a mental schema increases the speed and probability of recognising related experience. It does not require belief. It requires attention.</p>
+              <div class="exp-refs">
+                <div class="exp-ref">Broadbent (1958) <em>Perception and Communication.</em> Oxford. <a href="https://archive.org/details/perceptioncommun0000broa" target="_blank">archive.org</a></div>
+                <div class="exp-ref">Dijksterhuis &amp; Aarts (2010) Goals, attention, consciousness. <em>Annual Review of Psychology.</em> <a href="https://www.annualreviews.org/doi/10.1146/annurev.psych.093008.100445" target="_blank">annualreviews.org</a></div>
+                <div class="exp-ref">Oettingen &amp; Sevincer (2023) Mental contrasting, fMRI RCT. <em>J Personality &amp; Social Psychology.</em> <a href="https://pubmed.ncbi.nlm.nih.gov/35951367/" target="_blank">PubMed</a></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="fw-row">
+        <div class="fw-main">
+          <div>
+            <div class="fw-name">Lunar astronomy</div>
+            <div class="fw-spirit">The moon governs energetic tides. The two days before the new moon ask for stillness, not initiation.</div>
+            <button class="more-btn" onclick="expand(this,'r2')"><span class="more-arr">&#9656;</span> MORE</button>
+          </div>
+          <div>
+            <div class="fw-sci-name">Circadian rhythms</div>
+            <div class="fw-sci-body">Biological phase modulates decision quality, effort and self-belief formation measurably.</div>
+            <div class="fw-ref"><a href="https://elifesciences.org/articles/96803" target="_blank">Mehrhof &amp; Nord, eLife 2025</a></div>
+          </div>
+        </div>
+        <div class="fw-expand" id="r2">
+          <div class="fw-exp-grid">
+            <div>
+              <div class="exp-head spirit">THE TRADITION</div>
+              <p class="exp-body">"The day has three movements: the rising, the height, and the return. Each carries its own quality. Work with them, not against them." Every ancient timing tradition divided the day into distinct phases with distinct recommended actions. Vedic <em>sandhi</em> marks dawn, noon and dusk as particularly potent moments. <em>The tradition mapped what the biology now confirms: these are not the same moment dressed in different light.</em></p>
+            </div>
+            <div>
+              <div class="exp-head science">THE NEUROSCIENCE</div>
+              <p class="exp-body">The human brain does not perform uniformly across the day. <em>Circadian rhythms</em> (the 24-hour biological cycles governed by the suprachiasmatic nucleus, your brain's master clock) produce measurable fluctuations in attention, working memory, executive function and <em>self-belief formation</em> (how readily you update your beliefs about yourself and your capacities). A 2024 preprint found suppressed self-belief updating during the early afternoon. A Cambridge study (Mehrhof and Nord, eLife, 2025, n=994) confirmed that effort-based decision-making is directly modulated by circadian phase.</p>
+              <div class="exp-refs">
+                <div class="exp-ref">Mehrhof &amp; Nord (2025) Circadian rhythm and decision-making. <em>eLife</em> (n=994). <a href="https://elifesciences.org/articles/96803" target="_blank">elifesciences.org</a></div>
+                <div class="exp-ref">Annual Review of Psychology (2025) The Circadian Brain and Cognition. <a href="https://www.annualreviews.org/content/journals/10.1146/annurev-psych-022824-043825" target="_blank">annualreviews.org</a></div>
+                <div class="exp-ref">Self-belief formation and diurnal fluctuation. bioRxiv preprint, 2024. <a href="https://www.biorxiv.org/content/10.1101/2024.12.05.627011v1" target="_blank">biorxiv.org</a></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="fw-row">
+        <div class="fw-main">
+          <div>
+            <div class="fw-name">Western astrology</div>
+            <div class="fw-spirit">Transits are not fate. They are weather. Knowing them, you dress appropriately.</div>
+            <button class="more-btn" onclick="expand(this,'r3')"><span class="more-arr">&#9656;</span> MORE</button>
+          </div>
+          <div>
+            <div class="fw-sci-name">Predictive frameworks</div>
+            <div class="fw-sci-body">Symbolic models shape how the brain processes and integrates experience.</div>
+            <div class="fw-ref"><a href="https://www.cosmosandpsyche.com" target="_blank">Tarnas, Cosmos and Psyche</a></div>
+          </div>
+        </div>
+        <div class="fw-expand" id="r3">
+          <div class="fw-exp-grid">
+            <div>
+              <div class="exp-head spirit">THE TRADITION</div>
+              <p class="exp-body">Western psychological astrology, practised through the Jungian tradition (Liz Greene, CPA London) and the archetypal school (Richard Tarnas), does not make deterministic predictions. It describes the <em>quality of the pressure</em> a person is likely to encounter during a transit and suggests how to meet it. A Saturn transit is not an obstacle. It is a description of the kind of work being asked of you. Knowing this in advance changes how you engage with it.</p>
+            </div>
+            <div>
+              <div class="exp-head science">THE NEUROSCIENCE</div>
+              <p class="exp-body">The brain is a prediction machine. It constantly generates models of incoming experience and updates them against reality. A coherent symbolic framework, held consistently, shapes those predictive models. <em>Predictive coding</em> (the principle that the brain anticipates and interprets experience through prior models) confirms that having a framework does not cause events. It shapes how they are perceived, processed and responded to. This is the neuroscience of meaning-making.</p>
+              <div class="exp-refs">
+                <div class="exp-ref">Tarnas, R. (2006) <em>Cosmos and Psyche.</em> Viking. <a href="https://www.cosmosandpsyche.com" target="_blank">cosmosandpsyche.com</a></div>
+                <div class="exp-ref">Greene, L. (1976) <em>Saturn: A New Look at an Old Devil.</em> CPA Press.</div>
+                <div class="exp-ref">Clark, A. (2016) <em>Surfing Uncertainty.</em> Oxford University Press. <a href="https://global.oup.com/academic/product/surfing-uncertainty-9780190217013" target="_blank">oup.com</a></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="fw-row">
+        <div class="fw-main">
+          <div>
+            <div class="fw-name">Dreamspell</div>
+            <div class="fw-spirit">Your Kin is your cosmic signature. Hold it daily and the practice deepens over years, not weeks.</div>
+            <button class="more-btn" onclick="expand(this,'r4')"><span class="more-arr">&#9656;</span> MORE</button>
+          </div>
+          <div>
+            <div class="fw-sci-name">Neuroplasticity</div>
+            <div class="fw-sci-body">31 days of daily practice measurably rewires brain network connectivity.</div>
+            <div class="fw-ref"><a href="https://www.nature.com/articles/s41598-022-17325-6" target="_blank">Bremer et al., Sci Reports 2022</a></div>
+          </div>
+        </div>
+        <div class="fw-expand" id="r4">
+          <div class="fw-exp-grid">
+            <div>
+              <div class="exp-head spirit">THE TRADITION</div>
+              <p class="exp-body">"The Oracle learns you. The more you use it, the more it speaks directly to you: to your patterns, your shadows, your growing edges." Every contemplative tradition that has endured has been built around daily practice, not episodic use. The Zen practitioner sits every morning. The yogi does not skip days. The astrologer tracks the transits across years, not just at crisis points. <em>The tradition always knew that the practice had to be daily to be transformative.</em> Now we know why, at the level of synaptic architecture.</p>
+              <p class="exp-body" style="font-size:12px;color:var(--text3);margin-top:8px">Dreamspell is a modern 20th-century system (Argüelles, 1987), clearly distinct from the ancient K'iche' Maya tzolk'in tradition maintained by contemporary Guatemalan daykeepers. Verify daily Kin at <a href="https://www.tortuga.com/oracle/" target="_blank" style="color:var(--teall)">tortuga.com</a>.</p>
+            </div>
+            <div>
+              <div class="exp-head science">THE NEUROSCIENCE</div>
+              <p class="exp-body">Neurons that fire together, wire together. Hebb's Law (1949), still the foundational principle of <em>neuroplasticity</em> (the brain's capacity to physically reshape itself through repeated experience). A randomised controlled trial at the Technical University of Munich (Bremer et al., Scientific Reports, 2022, n=46) found that 31 days of daily intentional practice produced measurably increased <em>functional connectivity</em> between the <em>default mode network</em> (where your inner life, self-narrative and daydreaming live) and the salience network. The practice physically changed the brain. One month. Daily. Measurable.</p>
+              <div class="exp-refs">
+                <div class="exp-ref">Hebb (1949) <em>The Organisation of Behaviour.</em> Wiley.</div>
+                <div class="exp-ref">Bremer et al. (2022) <em>Scientific Reports</em>, 12, 13219 (fMRI RCT, n=46). <a href="https://www.nature.com/articles/s41598-022-17325-6" target="_blank">nature.com</a></div>
+                <div class="exp-ref">Doty, J.R. (2024) <em>Mind Magic.</em> Avery/Stanford. <a href="https://news.stanford.edu/stories/2024/05/james-doty-on-the-neuroscience-of-manifestation" target="_blank">stanford.edu</a></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="fw-row">
+        <div class="fw-main">
+          <div>
+            <div class="fw-name">Relationships</div>
+            <div class="fw-spirit">Every relationship has its own composite energy. The synastry reading describes how two energies meet and what today asks of both people.</div>
+            <button class="more-btn" onclick="expand(this,'r5')"><span class="more-arr">&#9656;</span> MORE</button>
+          </div>
+          <div>
+            <div class="fw-sci-name">Interpersonal neurobiology</div>
+            <div class="fw-sci-body">Relationships literally shape the brain. Two nervous systems in proximity co-regulate each other, whether consciously or not.</div>
+            <div class="fw-ref"><a href="https://drdansiegel.com" target="_blank">Siegel, The Developing Mind, 2020</a></div>
+          </div>
+        </div>
+        <div class="fw-expand" id="r5">
+          <div class="fw-exp-grid">
+            <div>
+              <div class="exp-head spirit">THE TRADITION</div>
+              <p class="exp-body">Synastry does not predict whether a relationship will work. It describes the quality of the meeting between two energies: where they resonate, where they create friction, what the current cosmic weather asks of both people. The ancient traditions understood that <em>knowing the quality of the cycle changes how you show up within it.</em> A difficult transit is not a sentence. It is a description of the kind of work a relationship is being asked to do.</p>
+            </div>
+            <div>
+              <div class="exp-head science">THE NEUROSCIENCE</div>
+              <p class="exp-body">Dan Siegel (UCLA, Harvard Medical School) has spent decades demonstrating that our relationships shape how we feel, think, remember and tell the story of who we are. <em>Interpersonal neurobiology</em> shows that two nervous systems in proximity actively co-regulate each other. Porges' polyvagal framework (widely applied clinically; parts of its neuroanatomical claims remain debated) describes how the nervous system scans for safety or threat through <em>neuroception</em>. <em>Your own regulated state is the most important variable in any relational encounter.</em></p>
+              <div class="exp-refs">
+                <div class="exp-ref">Siegel, D.J. (2020) <em>The Developing Mind</em>, 3rd ed. Guilford. <a href="https://drdansiegel.com" target="_blank">drdansiegel.com</a></div>
+                <div class="exp-ref">Porges, S.W. (2011) <em>The Polyvagal Theory.</em> Norton. <a href="https://www.polyvagalinstitute.org" target="_blank">polyvagalinstitute.org</a></div>
+                <div class="exp-ref">Bowlby, J. (1969/1982) <em>Attachment and Loss.</em> Hogarth Press.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="why-bridge">
+      <p class="wb-text">Neither column is a translation of the other. Both are fully true, and arrive at the same place: begin the day with awareness of the quality of the time, hold an intention clearly, and let the brain do what it is wired to do.</p>
+    </div>
+
+  </div>
+</section>
+
+<!-- FOUR FRAMEWORKS -->
+<section class="frameworks">
+  <div class="container">
+    <div class="sec-eyebrow">YOUR FRAMEWORKS &nbsp;·&nbsp; ONE SYNTHESIS</div>
+    <h2 class="sec-title">Where all four converge,<br><span style="font-style:italic;color:var(--gold)">that is your signal.</span></h2>
+    <p class="sec-body">Four ways of reading the same day. When they speak with one voice, the signal is clear. That convergence is what CDP distils into one daily reading, written specifically for you.</p>
+    <div class="fw-grid">
+      <div class="fw-card">
+        <div class="fw-num">01</div>
+        <div class="fw-fw-title">PYTHAGOREAN NUMEROLOGY</div>
+        <div class="fw-detects">Universal Day, Personal Day, Life Path, Personal Year. Three daily energies for morning, afternoon and evening. Master number days (11, 22, 33) marked and explained.</div>
+        <div class="fw-source">Drayer (2002). Kahn (2001) Pythagoras and the Pythagoreans.</div>
+      </div>
+      <div class="fw-card">
+        <div class="fw-num">02</div>
+        <div class="fw-fw-title">LUNAR ASTRONOMY</div>
+        <div class="fw-detects">Live moon phase via USNO data. Black Moon (two days before new moon): threshold, do not initiate. Shiva Moon (two days after): blissful and generative. Galactic Activation Portals daily.</div>
+        <div class="fw-source">USNO. Swiss Ephemeris (NASA/JPL DE431).</div>
+      </div>
+      <div class="fw-card">
+        <div class="fw-num">03</div>
+        <div class="fw-fw-title">WESTERN ASTROLOGY</div>
+        <div class="fw-detects">Live planetary positions via Swiss Ephemeris. Key transits, aspects, Saturn-Neptune cycle. Tarnas, Greene, Hand. Current sky, not approximations.</div>
+        <div class="fw-source">Swiss Ephemeris. Tarnas (2006) Cosmos and Psyche.</div>
+      </div>
+      <div class="fw-card">
+        <div class="fw-num">04</div>
+        <div class="fw-fw-title">DREAMSPELL &nbsp;·&nbsp; LAW OF TIME</div>
+        <div class="fw-detects">Daily Kin, Galactic Activation Portals, wavespell arc. A modern 20th-century system, clearly distinct from the ancient Maya tradition maintained by contemporary Guatemalan daykeepers.</div>
+        <div class="fw-source">Argüelles (1987) The Mayan Factor. Verified: tortuga.com.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- RELATIONSHIP -->
+<section class="relationship" id="relationship">
+  <div class="container">
+    <div class="rel-full">
+      <div class="sec-eyebrow">RELATIONSHIP INTELLIGENCE</div>
+      <h2 class="sec-title">Every relationship has its own energy.<br>The Oracle helps you understand how to navigate it.</h2>
+      <p class="sec-body" style="margin-bottom:0">Not prediction. Perspective. The cosmic weather describes the quality of today's relational field. The neuroscience explains why your own state shapes every connection you make.</p>
+      <p class="sec-body" style="color:var(--gold);font-style:italic;margin-top:10px;margin-bottom:0">The Oracle reads what both reveal.</p>
+
+      <div style="text-align:center;margin:32px 0 10px"><span style="font-family:'Cinzel',serif;font-size:10px;letter-spacing:0.16em;color:var(--text3)">WHAT WOULD YOU LIKE TO EXPLORE?</span></div>
+      <div class="rel-topics">
+        <div class="rel-topic active">&#9829; Love &amp; Romance</div>
+        <div class="rel-topic">&#9786; Communication</div>
+        <div class="rel-topic">&#9670; Conflict &amp; Growth</div>
+        <div class="rel-topic">&#9728; Parenting Together</div>
+        <div class="rel-topic">&#9734; Understanding a Child</div>
+        <div class="rel-topic">&#9672; Work Relationships</div>
+        <div class="rel-topic">&#9825; Friendship</div>
+        <div class="rel-topic">&#9711; Where We Click Best</div>
+      </div>
+
+      <div class="rel-two-col">
+        <div>
+          <div class="rel-ch rel-ch-s">WHAT THE TRADITION SAYS</div>
+          <p class="rel-cb">Every relationship has a composite energy, shaped by the interaction of two birth charts, two Kin, two Life Paths. The synastry reading does not predict whether a relationship will work. It describes <em>how the two energies meet</em>: where they amplify each other, where they create friction, what the current cosmic weather is asking of both people today.</p>
+          <p class="rel-cb">The ancient traditions understood that relationships move through cycles, and that knowing the quality of the cycle changes how you show up within it. A difficult transit is not a sentence. It is a description of the kind of work the relationship is being asked to do.</p>
+        </div>
+        <div>
+          <div class="rel-ch rel-ch-n">WHAT THE SCIENCE SAYS</div>
+          <p class="rel-cb">Relationships literally shape the brain. <em>Interpersonal neurobiology</em> (Dan Siegel, UCLA, Harvard Medical School) demonstrates that our relationships shape how we feel, how we think, how we remember things, how we tell the story of who we are. Two nervous systems in proximity co-regulate each other, whether consciously or not.</p>
+          <p class="rel-cb">Whether you feel regulated and present determines the quality of every conversation you have. <em>Your own state is the single most important variable in any relational encounter.</em> The Oracle helps you arrive at that encounter with full awareness of the energetic field you are walking into.</p>
+          <div class="rel-rf">Siegel (2020) <em>The Developing Mind</em>, 3rd ed. <a href="https://drdansiegel.com" target="_blank">drdansiegel.com</a></div>
+          <div class="rel-rf">Porges (2011) <em>The Polyvagal Theory.</em> Norton. <a href="https://www.polyvagalinstitute.org" target="_blank">polyvagalinstitute.org</a></div>
+          <div class="rel-rf">Bowlby (1969/1982) <em>Attachment and Loss.</em> Hogarth.</div>
+        </div>
+      </div>
+
+      <div class="rel-bridge-row">
+        <div class="rel-oracle-quote">
+          <p>"The Oracle does not tell you whether a conversation will go well. It helps you understand what the energetic field is asking of you today, and how to arrive for it with full awareness."</p>
+          <span class="gold-line">The Oracle reads what both reveal.</span>
+        </div>
+        <div class="rel-bridge-box">
+          <div class="rel-bridge-head">THE BRIDGE</div>
+          <p class="rel-bridge-body">What synastry calls energetic compatibility, interpersonal neurobiology calls neural co-regulation. What the tradition calls the quality of the relational field, the science calls the state of the social engagement system. Two languages. The same conversation about what makes genuine connection possible.</p>
+        </div>
+      </div>
+
+      <p class="rel-note">Works with date of birth for full synastry readings. Works with personality characteristics when a date of birth is not available. Covers any relationship, not only romantic.</p>
+    </div>
+  </div>
+</section>
+
+<!-- DAILY COMPANION -->
+<section class="companion">
+  <div class="container">
+    <div class="comp-inner">
+      <div class="sec-eyebrow">A COMPANION, NOT A CALENDAR</div>
+      <h2 class="sec-title">Three touchpoints.<br>Designed around how the brain moves through the day.</h2>
+      <div class="comp-grid">
+        <div class="moment m">
+          <div class="moment-time">MORNING</div>
+          <div class="moment-title">Set the frame</div>
+          <div class="moment-body">Full Oracle reading. Four frameworks synthesised into one coherent message. Three priorities, shadow work, week ahead. The parasympathetic orienting state that makes intention actionable.</div>
+          <div class="moment-science">Salience network calibration. Prefrontal cortex primed before the sympathetic system activates. (Doty 2024; Broadbent 1958)</div>
+          <div class="moment-dur">5 MINUTES</div>
+        </div>
+        <div class="moment a">
+          <div class="moment-time">MIDDAY</div>
+          <div class="moment-title">Re-anchor</div>
+          <div class="moment-body">A single screen. Today's afternoon energy. One contextual sentence to bring the morning's intention back into focus. The brain's biological trough, met with a reminder of what matters.</div>
+          <div class="moment-science">The early afternoon trough: self-belief formation suppressed, decision quality reduced. A priming nudge recalibrates. (Mehrhof &amp; Nord, eLife 2025)</div>
+          <div class="moment-dur">60 SECONDS</div>
+        </div>
+        <div class="moment e">
+          <div class="moment-time">EVENING</div>
+          <div class="moment-title">Integrate</div>
+          <div class="moment-body">The Oracle's shadow reflection and closing question. What did today's energy produce? What is ready to be released? The hippocampal consolidation window, used intentionally.</div>
+          <div class="moment-science">Pre-sleep hippocampal consolidation encodes emotionally significant experience. Intentional review strengthens the day's pattern. (Walker 2017; Barrett 2017)</div>
+          <div class="moment-dur">2 MINUTES</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- STATS -->
+<div class="stats">
+  <div class="stats-grid">
+    <div class="stat"><div class="stat-n">4</div><div class="stat-l">FRAMEWORKS SYNTHESISED</div><div class="stat-s">Daily, in one reading</div></div>
+    <div class="stat"><div class="stat-n">6</div><div class="stat-l">LIVE DATA SOURCES</div><div class="stat-s">NASA JPL, USNO, Swiss Ephemeris</div></div>
+    <div class="stat"><div class="stat-n">15s</div><div class="stat-l">TO YOUR FIRST READING</div><div class="stat-s">No account required</div></div>
+    <div class="stat"><div class="stat-n">£9</div><div class="stat-l">TO START</div><div class="stat-s">Per month, cancel anytime</div></div>
+  </div>
+</div>
+
+<!-- TIERS -->
+<section class="tiers" id="tiers">
+  <style>
+    .depth-eyebrow{font-family:'Cinzel',serif;font-size:10px;letter-spacing:0.24em;color:var(--gold);text-align:center;margin-bottom:20px}
+    .depth-title{font-family:'Cormorant Garamond',serif;font-size:clamp(34px,4vw,54px);font-weight:300;text-align:center;color:var(--text);margin-bottom:10px}
+    .depth-sub{font-size:16px;color:var(--text2);text-align:center;margin-bottom:48px;font-style:italic}
+    .depth-cards{max-width:760px;margin:0 auto;display:flex;flex-direction:column;gap:3px}
+    .depth-card{display:flex;align-items:stretch;border:1px solid var(--div2);background:rgba(255,255,255,0.02);cursor:pointer;transition:all 0.22s;position:relative;overflow:hidden}
+    .depth-card::before{content:'';position:absolute;top:0;left:0;bottom:0;width:3px;background:var(--dc,var(--gold));opacity:0;transition:opacity 0.22s}
+    .depth-card:hover{background:rgba(255,255,255,0.04);border-color:var(--dc,var(--gold));transform:translateX(3px)}
+    .depth-card:hover::before{opacity:1}
+    .depth-card:hover .depth-card-arrow{opacity:1;transform:translateX(0)}
+    .depth-icon{width:58px;min-width:58px;display:flex;align-items:center;justify-content:center;font-size:22px;color:var(--dc,var(--gold));padding:22px 0;opacity:0.85}
+    .depth-body{flex:1;padding:18px 16px 18px 4px}
+    .depth-head{display:flex;align-items:baseline;gap:10px;margin-bottom:5px}
+    .depth-label{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:500;color:var(--text)}
+    .depth-badge{font-family:'Cinzel',serif;font-size:9px;letter-spacing:0.1em;color:var(--dc,var(--gold));opacity:0.8}
+    .depth-price{font-family:'Cinzel',serif;font-size:11px;color:var(--text3);margin-left:auto}
+    .depth-desc{font-size:14px;color:var(--text2);line-height:1.55;margin-bottom:7px}
+    .depth-sci{font-size:12px;color:var(--text3);font-style:italic;line-height:1.5;padding-top:5px;border-top:0.5px solid rgba(255,255,255,0.05)}
+    .depth-sci em{color:var(--dc,var(--gold));font-style:normal}
+    .depth-meta{display:flex;align-items:center;gap:12px;margin-top:8px}
+    .depth-time{font-family:'Cinzel',serif;font-size:10px;letter-spacing:0.1em;color:var(--text3)}
+    .depth-items{display:flex;flex-wrap:wrap;gap:6px}
+    .depth-item{font-size:11px;color:var(--text3);padding:2px 9px;border:0.5px solid var(--div);border-radius:0}
+    .depth-card-arrow{font-size:16px;color:var(--dc,var(--gold));padding:0 20px;display:flex;align-items:center;opacity:0;transform:translateX(-6px);transition:all 0.22s}
+    .depth-note{text-align:center;font-size:13px;color:var(--text3);font-style:italic;margin-top:22px;max-width:600px;margin-left:auto;margin-right:auto}
+    @media(max-width:600px){.depth-card-arrow{display:none}}
+  </style>
+  <div class="container">
+    <div class="depth-eyebrow">CHOOSE YOUR DEPTH</div>
+    <h2 class="depth-title">How deep do you want to go today?</h2>
+    <p class="depth-sub">Click any tier to begin your reading immediately</p>
+    <div class="depth-cards">
+
+      <div class="depth-card" style="--dc:#A0AEC0" onclick="goReading('free')">
+        <div class="depth-icon">✦</div>
+        <div class="depth-body">
+          <div class="depth-head">
+            <span class="depth-label">Daily Snapshot</span>
+            <span class="depth-badge">FREE</span>
+            <span class="depth-price">£0 &nbsp;·&nbsp; INSTANT</span>
+          </div>
+          <div class="depth-desc">Universal Day, moon phase and Dreamspell Kin. No account required. The single daily frame your salience network needs.</div>
+          <div class="depth-sci">The neuroscience: <em>one orienting frame</em> shifts what the brain notices for the entire day. (Broadbent 1958; Oettingen &amp; Sevincer 2023)</div>
+          <div class="depth-items">
+            <div class="depth-item">Universal Day</div>
+            <div class="depth-item">Moon phase</div>
+            <div class="depth-item">Kin</div>
+            <div class="depth-item">One action</div>
+          </div>
+        </div>
+        <div class="depth-card-arrow">›</div>
+      </div>
+
+      <div class="depth-card" style="--dc:#F97316" onclick="goReading('quick')">
+        <div class="depth-icon">⚡</div>
+        <div class="depth-body">
+          <div class="depth-head">
+            <span class="depth-label">Full Reading</span>
+            <span class="depth-badge">SEEKER · £9/MO</span>
+            <span class="depth-price">~15S ✓</span>
+          </div>
+          <div class="depth-desc">All four frameworks synthesised. Priorities, shadow work, focus and ease, week ahead. The full convergence signal.</div>
+          <div class="depth-sci">The neuroscience: <em>four convergent frameworks</em> produce stronger default mode / salience connectivity than one alone. (Bremer et al. 2022; Barrett 2017)</div>
+          <div class="depth-items">
+            <div class="depth-item">All four frameworks</div>
+            <div class="depth-item">Three priorities</div>
+            <div class="depth-item">Shadow work</div>
+            <div class="depth-item">Week ahead</div>
+          </div>
+        </div>
+        <div class="depth-card-arrow">›</div>
+      </div>
+
+      <div class="depth-card" style="--dc:#2BBF8D" onclick="goReading('standard')">
+        <div class="depth-icon">☽</div>
+        <div class="depth-body">
+          <div class="depth-head">
+            <span class="depth-label">Monthly Arc</span>
+            <span class="depth-badge">INITIATE · £29/MO</span>
+            <span class="depth-price">2–4 MIN</span>
+          </div>
+          <div class="depth-desc">Full reading plus lunation map, wavespell arc, monthly shadow themes and growth edges. The brain sees patterns across time.</div>
+          <div class="depth-sci">The neuroscience: <em>temporal pattern recognition</em> across a lunar cycle builds predictive models that reduce daily cognitive load. (Clark 2016; Mehrhof &amp; Nord 2025)</div>
+          <div class="depth-items">
+            <div class="depth-item">Monthly arc</div>
+            <div class="depth-item">Wavespell context</div>
+            <div class="depth-item">Monthly shadow</div>
+            <div class="depth-item">Richer week notes</div>
+          </div>
+        </div>
+        <div class="depth-card-arrow">›</div>
+      </div>
+
+      <div class="depth-card" style="--dc:#9B6DFF" onclick="goReading('mystic')">
+        <div class="depth-icon">◉</div>
+        <div class="depth-body">
+          <div class="depth-head">
+            <span class="depth-label">Yearly Reading</span>
+            <span class="depth-badge">MYSTIC · £79/MO</span>
+            <span class="depth-price">3–5 MIN</span>
+          </div>
+          <div class="depth-desc">Full natal chart integration, yearly arc, personal numerology cycles, major transit themes. Your complete cosmic and psychological landscape.</div>
+          <div class="depth-sci">The neuroscience: <em>natal integration</em> anchors the default mode network's self-narrative in a stable, longitudinal identity frame. (Barrett 2017; Siegel 2020)</div>
+          <div class="depth-items">
+            <div class="depth-item">Natal chart</div>
+            <div class="depth-item">Yearly arc</div>
+            <div class="depth-item">Transit themes</div>
+            <div class="depth-item">Personal cycles</div>
+          </div>
+        </div>
+        <div class="depth-card-arrow">›</div>
+      </div>
+
+      <div class="depth-card" style="--dc:#C9A84C" onclick="goReading('deep')">
+        <div class="depth-icon">◈</div>
+        <div class="depth-body">
+          <div class="depth-head">
+            <span class="depth-label">Oracle Deep Dive</span>
+            <span class="depth-badge">ORACLE · MAXIMUM DEPTH</span>
+            <span class="depth-price">5–10 MIN</span>
+          </div>
+          <div class="depth-desc">Everything in Mystic plus Hellenistic lots, full aspects, complete week ahead, daily gift and Oracle drawer. The deepest parasympathetic orienting state available.</div>
+          <div class="depth-sci">The neuroscience: <em>maximum depth reading</em> produces the fullest prefrontal-limbic integration, the optimal state for intentional action. (Doty 2024; Bremer 2022)</div>
+          <div class="depth-items">
+            <div class="depth-item">Full depth</div>
+            <div class="depth-item">Hellenistic lots</div>
+            <div class="depth-item">Complete week</div>
+            <div class="depth-item">Daily gift</div>
+            <div class="depth-item">Oracle drawer</div>
+          </div>
+        </div>
+        <div class="depth-card-arrow">›</div>
+      </div>
+
+    </div>
+    <p class="depth-note">All tiers available during beta. Subscription pricing launches with Stripe. Every tier carries the neuroscience bridge.</p>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-section" id="cta">
+  <div class="container">
+    <div class="sec-eyebrow">BEGIN NOW</div>
+    <h2 class="sec-title">What does today carry for you?</h2>
+    <p class="sec-body" style="margin-bottom:48px">Select a tier above to begin immediately.<br>Or start free, no account required.</p>
+    <button class="cta-btn" style="margin:0 auto;display:block;padding:18px 52px;font-size:13px;letter-spacing:0.16em" onclick="goReading('free')">&#9733; BEGIN FREE READING NOW</button>
+    <p class="cta-note" style="margin-top:16px">Your reading takes 15 seconds. The Oracle deepens the longer you use it.</p>
+  </div>
+</section>
+
+<footer>
+  <div class="foot-brand">COSMIC DAILY PLANNER</div>
+  <div class="foot-note">cosmicdailyplanner.com &nbsp;·&nbsp; Where ancient wisdom meets modern science, daily</div>
+</footer>
+
+<script>
+(function(){
+  const c=document.getElementById('stars');
+  for(let i=0;i<140;i++){
+    const s=document.createElement('div');
+    s.className='star';
+    const sz=Math.random()*1.8+0.3;
+    s.style.cssText='left:'+Math.random()*100+'%;top:'+Math.random()*100+'%;width:'+sz+'px;height:'+sz+'px';
+    s.style.setProperty('--dur',(2+Math.random()*5)+'s');
+    s.style.setProperty('--delay','-'+(Math.random()*6)+'s');
+    if(Math.random()>0.75){s.style.background='rgba(201,168,76,0.5)';s.style.width=s.style.height=(sz*2)+'px';}
+    c.appendChild(s);
+  }
+})();
+
+// Auto-detect API base: relative when served from Railway/production, absolute from Netlify
+const RAILWAY = window.location.hostname.includes('netlify') ? 'https://cdp-server-production.up.railway.app' : '';
+
+function fmtDate(ds){
+  return new Date(ds+'T12:00:00Z').toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'}).toUpperCase();
+}
+function todayStr(){return new Date().toISOString().slice(0,10);}
+
+async function loadCard(){
+  const ds=todayStr();
+  document.getElementById('ocDate').textContent=fmtDate(ds)+' · ENGLAND';
+  try{
+    const r=await fetch(RAILWAY+'/api/quickread',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({date:ds})});
+    const data=await r.json();
+    const reading=data.reading; const moon=data.moon; const kin=data.kin; const num=data.num;
+    document.getElementById('ocBody').textContent=(reading&&reading.synthesis)?reading.synthesis:'Consulting the Oracle...';
+    const pills=document.getElementById('ocPills');
+    pills.innerHTML='';
+    if(num&&num.ud){const n=num.udM?num.udM.n:'';addPill(pills,'UD '+num.ud+(n?' · '+n:''),'gold');}
+    if(moon&&moon.phase)addPill(pills,moon.phase,'');
+    if(kin&&kin.full)addPill(pills,kin.full,'teal');
+    if(moon&&moon.isBlack)addPill(pills,'BLACK MOON','gold');
+    if(moon&&moon.isShiva)addPill(pills,'SHIVA MOON','teal');
+  }catch(e){
+    document.getElementById('ocBody').textContent='Consulting the Oracle. Your reading will appear shortly.';
+  }
+}
+
+function addPill(c,t,cls){
+  const p=document.createElement('div');
+  p.className='pill'+(cls?' '+cls:'');
+  p.textContent=t;
+  c.appendChild(p);
+}
+
+function expand(btn,id){
+  const panel=document.getElementById(id);
+  const arr=btn.querySelector('.more-arr');
+  const isOpen=panel.classList.contains('open');
+  panel.classList.toggle('open',!isOpen);
+  arr.classList.toggle('open',!isOpen);
+  btn.childNodes[1].textContent=isOpen?' MORE':' LESS';
+}
+
+function goReading(mode){
+  // mode: free | quick | standard | mystic | deep
+  const url = '/app?mode=' + (mode||'free');
+  window.location.href = url;
+}
+// Legacy alias
+function openApp(){ goReading('free'); }
+
+loadCard();
+</script>
+</body>
+</html>
