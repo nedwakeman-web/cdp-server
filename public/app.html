@@ -2072,12 +2072,12 @@ const NUM_DATA = {
     evening:'Master Evening — review the architecture of your long-term vision.'},
 };
 
-// Neuroscience mode language (Modern) - apostrophe-safe version
+// Neuroscience language variants (Modern mode) - no apostrophes
 const NUM_NEURO = {
   1:{morning:"Salience network primed for initiation. Begin with clear intention.",afternoon:"Sustained dopaminergic drive. Execute on what you started.",evening:"Reward circuitry review. What did your brain code as genuinely worthwhile today?"},
   2:{morning:"Social cognition networks attuned. Listen before asserting.",afternoon:"Insular cortex reads emotional tone with precision. Trust somatic signals.",evening:"Oxytocin cycles favour connection and repair. Tend close relationships."},
   3:{morning:"Default Mode Network creativity window. Novel associations form freely.",afternoon:"Verbal fluency peaks with cortical arousal. Express and synthesise.",evening:"Limbic tagging of creative output. Journal before sleep consolidates it."},
-  4:{morning:"Prefrontal executive function sharpest in morning cortisol window.",afternoon:"Sustained attention favoured. Batch routine work to avoid decision fatigue.",evening:"Hippocampus files structured learning. Review systems, not outcomes."},
+  4:{morning:"Prefrontal executive function sharpest in the morning cortisol window.",afternoon:"Sustained attention favoured. Batch routine work to avoid decision fatigue.",evening:"Hippocampus files structured learning. Review systems, not outcomes."},
   5:{morning:"Novelty-seeking circuitry primed. Disrupting routine activates learning.",afternoon:"Adaptive flexibility is prefrontal. Channel change into calculated pivots.",evening:"Default mode integrates disparate experiences. Notice what surprised you."},
   6:{morning:"Caregiving activates medial prefrontal cortex and releases oxytocin.",afternoon:"Prosocial behaviour peaks at moderate cortisol. Lead with attuned presence.",evening:"Ventral vagal activation supported by warm social connection. Rest here."},
   7:{morning:"Theta brainwave activity accessible before cortical noise rises. Be still.",afternoon:"Lateral prefrontal activation sustained through focused inquiry. Go deep.",evening:"Gamma-band integration occurs in quiet evenings. Protect this window."},
@@ -2085,10 +2085,9 @@ const NUM_NEURO = {
   9:{morning:"Striatal completion circuitry primed. Close unfinished loops first.",afternoon:"Compassionate engagement sustainable when regulated. Give from calm ground.",evening:"Default mode integrates the cycle of the day. Release judgement."},
   11:{morning:"Interoceptive sensitivity heightened. Intuition as predictive processing.",afternoon:"Wider predictive priors active. Unusual connections and foresight available.",evening:"Integration of heightened signal. What arrived that bypassed ordinary filters?"},
   22:{morning:"Executive and default mode networks in rare co-activation. Build vision.",afternoon:"Prefrontal-parietal coordination supports large-scale systems thinking.",evening:"Complex structural learning needs consolidation. Set intention before rest."},
-  33:{morning:"Limbic empathy circuits at scale. Caregiving and teaching are supported.",afternoon:"Oxytocin and serotonin loops sustain generosity. Resource your own calm first.",evening:"Altruism is intrinsically rewarding neurochemically. Notice what that felt like."},
+  33:{morning:"Limbic empathy circuits at scale. Caregiving and teaching are supported.",afternoon:"Oxytocin and serotonin loops sustain generosity. Resource your calm first.",evening:"Altruism is intrinsically rewarding neurochemically. Notice what that felt like."},
   44:{morning:"Executive architecture and basal ganglia efficiency both primed. Build.",afternoon:"Expert pattern recognition at full capacity for complex strategic work.",evening:"Structural review. What did you build or move toward today? Reinforce intent."}
 };
-
 
 // ══════════════════════════════════════════════════════════
 // NAVIGATION
@@ -3368,7 +3367,7 @@ function showLoadPill(tierLabel) {
   const sub  = document.getElementById('cdpLoadPillSub');
   if (!pill) return;
   text.textContent = (tierLabel||'Reading') + ' composing…';
-  sub.innerHTML = 'Explore while you wait: <a onclick="showScreen('scard',document.querySelectorAll('.npill')[1]);renderCard()" style="color:var(--teal);cursor:pointer;text-decoration:underline">Daily Card</a> · <a onclick="showScreen('sc',document.querySelectorAll('.npill')[2])" style="color:var(--teal);cursor:pointer;text-decoration:underline">Calendar</a>';
+  sub.innerHTML = "Explore while you wait: <a onclick=\"showScreen('scard',document.querySelectorAll('.npill')[1]);renderCard()\" style=\"color:var(--teal);cursor:pointer;text-decoration:underline\">Daily Card</a> · <a onclick=\"showScreen('sc',document.querySelectorAll('.npill')[2])\" style=\"color:var(--teal);cursor:pointer;text-decoration:underline\">Calendar</a>";
   pill.style.display = 'block';
   // Animate the bar over ~3 min
   setTimeout(() => { const b = document.getElementById('cdpLoadPillBar'); if(b) b.style.width='40%'; }, 100);
