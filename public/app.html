@@ -1398,7 +1398,7 @@ select.entry-input option{background:#0D1E33;color:#E8EDF4}
     </button>
     <button id="profileLibBtn" class="thm" onclick="openProfileLibrary()" title="Profiles" style="font-family:'Cinzel',serif;font-size:13px">☿</button>
     <button class="thm tbr-tiers" onclick="showTierOverview()" title="View all tiers">Tiers</button>
-    <button class="thm tbr-guide" onclick="openHelp()" title="Guide">Guide</button>TIERS</button><button class="thm" onclick="openHelp()" title="How to use CDP" style="font-family:'Cinzel',serif;font-size:11px;letter-spacing:.12em;border:1px solid rgba(201,160,80,0.35);padding:4px 10px;border-radius:2px;color:var(--gold)">GUIDE</button>
+    <button class="thm tbr-guide" onclick="openHelp()" title="Guide">Guide</button>
   <button class="thm" onclick="toggleTheme()" id="thmBtn">◑</button>
   </div>
 </div>
@@ -4235,15 +4235,18 @@ function renderCard() {
   const locLine   = (profile.location || 'your location').toUpperCase();
 
   const tw = r.time_windows || {};
-  let reflection = mode==='morning' ? tw.morning : mode==='afternoon' ? tw.afternoon : tw.evening;
+  let reflection = mode==='morning' ? (tw.morning||tw.morning_guidance) : mode==='afternoon' ? (tw.afternoon||tw.afternoon_guidance) : (tw.evening||tw.evening_guidance);
   if (!reflection) {
-    const te = r.numerology?.three_energies;
-    if (te) reflection = mode==='morning' ? te.morning?.guidance
-      : mode==='afternoon' ? te.afternoon?.guidance : te.evening?.guidance;
+    const te = r.numerology?.three_energies || r.three_energies;
+    if (te) {
+      reflection = mode==='morning' ? (te.morning?.guidance || te.morning)
+        : mode==='afternoon' ? (te.afternoon?.guidance || te.afternoon)
+        : (te.evening?.guidance || te.evening);
+    }
   }
   if (!reflection) {
     const udD = NUM_DATA[num?.pd||num?.ud] || {};
-    reflection = udD.m || `Today carries the energy of ${num?.udM?.n||'the cosmos'}.`;
+    reflection = udD[mode] || udD.m || `Today carries the energy of ${num?.udM?.n||'the cosmos'}.`;
   }
 
   const timeLabel = mode==='morning' ? 'MORNING REFLECTION'
