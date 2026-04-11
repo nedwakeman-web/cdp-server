@@ -1192,6 +1192,65 @@ select.entry-input option{background:#0D1E33;color:#E8EDF4}
   .wgt{padding:12px 8px!important}
 }
 .energy-card.active-window{border-color:rgba(201,160,80,0.5)!important;background:rgba(201,160,80,0.07)!important}
+
+/* ── TOPBAR RIGHT BUTTONS ── */
+.tbr-btn{background:none;border:1px solid var(--div);color:var(--text3);
+  height:30px;padding:0 10px;border-radius:2px;cursor:pointer;
+  font-size:11px;letter-spacing:.14em;text-transform:uppercase;
+  font-family:'Cinzel',serif;transition:all .25s;white-space:nowrap;flex-shrink:0}
+.tbr-btn:hover{border-color:var(--gold3);color:var(--gold)}
+.tbr-tiers{border-color:rgba(201,160,80,0.35);color:var(--gold)}
+.tbr-tiers:hover{background:var(--gold4)}
+.tbr-guide{border-color:rgba(129,205,182,0.35);color:var(--teal)}
+.tbr-guide:hover{background:rgba(129,205,182,0.07)}
+.topbar-right{display:flex;gap:5px;align-items:center;flex-shrink:0}
+@media(max-width:600px){
+  .tbr-tiers,.tbr-guide{display:none}
+  .topbar-right{gap:4px}
+  .tbr-btn{height:28px;padding:0 8px;font-size:10px}
+  .signin-btn{font-size:10px;padding:5px 8px}
+}
+@media(max-width:400px){
+  .feedback-btn{display:none}
+}
+
+
+/* ═══ MOBILE WIDTH FIXES ═══ */
+@media(max-width:640px){
+  body{overflow-x:hidden}
+  #sr{padding:0 10px 110px!important}
+  .r-section{padding:16px 14px!important;margin-bottom:14px}
+  .widgets{grid-template-columns:repeat(2,1fr)!important;gap:8px!important}
+  .energies{grid-template-columns:1fr!important}
+  .two-col{grid-template-columns:1fr!important}
+  .num-blocks{grid-template-columns:1fr!important}
+  .week-grid{grid-template-columns:repeat(3,1fr)!important}
+  .planet-grid{grid-template-columns:1fr!important}
+  /* Modals full width */
+  .tier-modal-box{width:calc(100vw - 16px)!important;max-width:calc(100vw - 16px)!important;margin:8px!important}
+  #modeSelector{padding:10px 8px!important}
+  .mode-box{width:100%!important;max-width:100%!important}
+  .mode-btn{padding:12px 12px!important}
+  .mode-btn-title{font-size:16px!important}
+  .mode-btn-desc{font-size:12px!important;line-height:1.4}
+  /* Drawers */
+  #insightDrawer{left:0!important;right:0!important;width:100vw!important}
+  /* Help drawer */
+  #helpDrawer > div > div{width:100vw!important;right:0!important;left:0!important;
+    padding:20px 14px!important;max-height:92vh;overflow-y:auto}
+  /* Profile library */
+  #profileLibrary > div > div{width:calc(100vw - 16px)!important;max-width:calc(100vw - 16px)!important;
+    left:8px!important;right:8px!important;transform:translateY(-50%)!important;margin-left:0!important}
+  /* Share card */
+  #shareCardOverlay .share-card-inner,
+  #shareCardOverlay > div > div{width:calc(100vw - 16px)!important;max-width:calc(100vw - 16px)!important}
+  /* Prevent anything escaping */
+  .r-section,.wgt,.col-card,.energy-card,.bio-card,.ne-card,.week-day,
+  .planet-row,.tier-feature{max-width:100%!important;box-sizing:border-box!important}
+  /* Topbar */
+  .brand{font-size:11px!important;letter-spacing:.25em!important}
+}
+
 </style>
 </head>
 <body>
@@ -1357,16 +1416,17 @@ select.entry-input option{background:#0D1E33;color:#E8EDF4}
     <div id="authBtnArea">
       <button class="signin-btn" onclick="openAuth()">Sign In</button>
     </div>
-    <button class="feedback-btn" onclick="openFeedback()" title="Send feedback">✉</button>
-    <button class="feedback-btn" onclick="openShare()" title="Share & Invite">
+    <button class="feedback-btn" onclick="openFeedback()" title="Feedback">✉</button>
+    <button class="feedback-btn" onclick="openShare()" title="Share">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
         <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
       </svg>
     </button>
-    <button id="profileLibBtn" class="thm" onclick="openProfileLibrary()" title="Profiles" style="font-family:'Cinzel',serif;font-size:13px">☿</button>
-    <button class="thm" onclick="showTierModal('seeker')" title="View tiers" style="font-family:'Cinzel',serif;font-size:11px;letter-spacing:.12em;border:1px solid rgba(201,160,80,0.2);padding:4px 8px;border-radius:2px;color:var(--text3)">TIERS</button><button class="thm" onclick="openHelp()" title="How to use CDP" style="font-family:'Cinzel',serif;font-size:11px;letter-spacing:.12em;border:1px solid rgba(201,160,80,0.35);padding:4px 10px;border-radius:2px;color:var(--gold)">GUIDE</button>
-  <button class="thm" onclick="toggleTheme()" id="thmBtn">◑</button>
+    <button id="profileLibBtn" class="tbr-btn" onclick="openProfileLibrary()" title="Profiles">☿</button>
+    <button class="tbr-btn tbr-tiers" onclick="showTierOverview()" title="Tiers">Tiers</button>
+    <button class="tbr-btn tbr-guide" onclick="openHelp()" title="Guide">Guide</button>
+    <button class="tbr-btn" onclick="toggleTheme()" id="thmBtn">◑</button>
   </div>
 </div>
 
@@ -2015,6 +2075,7 @@ let cardTimeMode = 'auto';
 let calYear = new Date().getFullYear();
 let calMonth = new Date().getMonth() + 1;
 const TODAY = new Date().toISOString().slice(0,10);
+let currentDate = TODAY;  // alias kept for legacy references
 
 // Beta 2: recent reading history for Oracle continuity injection
 let recentReadingHistory = [];
@@ -2766,6 +2827,42 @@ function toggleProfileEdit() {
 function toggleTheme() {
   document.body.classList.toggle('light');
   document.getElementById('thmBtn').textContent = document.body.classList.contains('light') ? '◕' : '◑';
+}
+
+
+function showTierOverview() {
+  // Show all 5 tiers as clickable cards in the modal
+  const tierOrder = ['free','seeker','initiate','mystic','oracle'];
+  const box = document.getElementById('tierModalBox');
+  const cardsHtml = tierOrder.map(key => {
+    const t = TIERS[key];
+    const highlight = key === (currentTier||'seeker');
+    return `<div onclick="closeTierModal();generateTierReading('${key}')"
+      style="padding:14px 18px;border:1px solid ${highlight?t.color:'var(--div)'};
+      background:${highlight?'rgba(201,160,80,0.06)':'transparent'};
+      border-radius:3px;cursor:pointer;margin-bottom:8px;transition:all .2s"
+      onmouseover="this.style.borderColor='${t.color}';this.style.background='rgba(201,160,80,0.04)'"
+      onmouseout="this.style.borderColor='${highlight?t.color:'var(--div)'}';this.style.background='${highlight?'rgba(201,160,80,0.06)':'transparent'}'">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px">
+        <span style="font-family:'Cormorant Garamond',serif;font-size:19px;color:${t.color}">${t.name}</span>
+        <span style="font-size:13px;color:var(--text3)">${t.price}</span>
+      </div>
+      <div style="font-size:14px;color:var(--text3);line-height:1.5">${t.desc}</div>
+      ${highlight?'<div style="font-size:11px;color:var(--teal);margin-top:6px;letter-spacing:.1em">✓ CURRENT TIER</div>':''}
+    </div>`;
+  }).join('');
+  box.innerHTML = `
+    <div class="tier-modal-header">
+      <div class="tier-modal-name">Reading Depths</div>
+      <button class="tier-modal-close" onclick="closeTierModal()">×</button>
+    </div>
+    <div class="tier-modal-body">
+      <div style="font-size:14px;color:var(--text3);margin-bottom:16px;font-style:italic">
+        Tap any tier to generate that reading for today
+      </div>
+      ${cardsHtml}
+    </div>`;
+  document.getElementById('tierModal').classList.add('open');
 }
 
 function closeTierModal(){ document.getElementById('tierModal').classList.remove('open'); }
@@ -8306,8 +8403,12 @@ ${bodyHTML}
   <div style="position:absolute;right:0;top:0;bottom:0;width:min(480px,100vw);background:var(--bg2);overflow-y:auto;padding:28px 24px">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;border-bottom:1px solid var(--div);padding-bottom:16px">
       <span style="font-family:'Cinzel',serif;font-size:13px;letter-spacing:.18em;color:var(--gold)">HOW TO USE CDP</span>
-      <button onclick="closeHelp()" style="background:none;border:none;color:var(--text3);font-size:20px;cursor:pointer">×</button>
+      <div style="display:flex;gap:8px;align-items:center">
+        <button onclick="downloadGuidePDF()" style="background:none;border:1px solid rgba(201,160,80,0.4);color:var(--gold);font-family:'Cinzel',serif;font-size:9px;letter-spacing:.12em;padding:5px 10px;cursor:pointer;border-radius:2px">⬇ PDF</button>
+        <button onclick="closeHelp()" style="background:none;border:none;color:var(--text3);font-size:20px;cursor:pointer">×</button>
+      </div>
     </div>
+    <div id="helpContent">
     <div style="font-family:'EB Garamond',serif;font-size:16px;color:var(--text2);line-height:1.7">
 
       <div style="font-family:'Cinzel',serif;font-size:11px;letter-spacing:.14em;color:var(--teal);margin-bottom:8px">YOUR DAILY FLOW</div>
@@ -8352,7 +8453,7 @@ ${bodyHTML}
       <p style="margin-bottom:8px">Tap any section heading or card to ask the Oracle a follow-up question. Pre-built chips appear for common questions, or type your own.</p>
       <p style="margin-bottom:24px">The more personal context you add in your profile (what you are building, who matters to you, what you are navigating), the more specific the Oracle becomes. It speaks to your actual life, not a generic one.</p>
 
-    </div>
+    </div><!-- /helpContent -->
   </div>
 </div>
 
@@ -9469,7 +9570,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
   </div>
 </div>
 
-<script>
+<script
 // ══ INVITE GATE ══ Change INVITE_CODE to update. Redeploy to activate.
 (function(){
   var INVITE_CODE = 'COSMIC2026';
@@ -9897,6 +9998,7 @@ function showModeSelector() { showEntryScreen(cdpEntryMode); }
     }
   } catch(e){ console.warn('CDP v8 init:', e); }
 })();
+
 </script>
 
 <!-- ── HELP DRAWER ─────────────────────────────────────────────── -->
@@ -9904,8 +10006,12 @@ function showModeSelector() { showEntryScreen(cdpEntryMode); }
   <div style="position:absolute;right:0;top:0;bottom:0;width:min(480px,100vw);background:var(--bg2);overflow-y:auto;padding:28px 24px">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;border-bottom:1px solid var(--div);padding-bottom:16px">
       <span style="font-family:'Cinzel',serif;font-size:13px;letter-spacing:.18em;color:var(--gold)">HOW TO USE CDP</span>
-      <button onclick="closeHelp()" style="background:none;border:none;color:var(--text3);font-size:20px;cursor:pointer">×</button>
+      <div style="display:flex;gap:8px;align-items:center">
+        <button onclick="downloadGuidePDF()" style="background:none;border:1px solid rgba(201,160,80,0.4);color:var(--gold);font-family:'Cinzel',serif;font-size:9px;letter-spacing:.12em;padding:5px 10px;cursor:pointer;border-radius:2px">⬇ PDF</button>
+        <button onclick="closeHelp()" style="background:none;border:none;color:var(--text3);font-size:20px;cursor:pointer">×</button>
+      </div>
     </div>
+    <div id="helpContent">
     <div style="font-family:'EB Garamond',serif;font-size:16px;color:var(--text2);line-height:1.7">
 
       <div style="font-family:'Cinzel',serif;font-size:11px;letter-spacing:.14em;color:var(--teal);margin-bottom:8px">YOUR DAILY FLOW</div>
@@ -10000,8 +10106,39 @@ function showModeSelector() { showEntryScreen(cdpEntryMode); }
   </div>
 </div>
 
-<script>
+<script
 // ── HELP ──────────────────────────────────────────────────────────
+function downloadGuidePDF() {
+  var helpContent = document.getElementById('helpContent');
+  var bodyHTML = helpContent ? helpContent.innerHTML : '';
+  var printWin = window.open('','_blank','width=800,height=900');
+  if (!printWin) { alert('Please allow popups to download the PDF.'); return; }
+  printWin.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Cosmic Daily Planner — Guide</title>');
+  printWin.document.write('<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600&family=EB+Garamond:wght@400;500&display=swap" rel="stylesheet">');
+  printWin.document.write(`<style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{background:#fff;color:#1a1208;font-family:"EB Garamond",Georgia,serif;font-size:16px;line-height:1.75;padding:48px 56px;max-width:720px;margin:0 auto}
+    h1{font-family:"Cormorant Garamond",serif;font-size:34px;color:#0D1E33;margin-bottom:6px;font-weight:300;letter-spacing:.04em}
+    .sub{font-size:12px;letter-spacing:.28em;text-transform:uppercase;color:#7A6A50;margin-bottom:32px;padding-bottom:16px;border-bottom:1px solid #e0d8c8}
+    p{margin-bottom:14px;color:#3D3220;font-size:16px;line-height:1.75}
+    .footer{margin-top:40px;padding-top:14px;border-top:1px solid #e0d8c8;font-size:11px;color:#9E9282;text-align:center;letter-spacing:.18em;text-transform:uppercase}
+    @media print{body{padding:32px 40px}@page{margin:18mm 22mm;size:A4}}
+    /* Style inline elements from the guide */
+    span[style*="Cinzel"]{font-family:"Cormorant Garamond",serif!important;font-size:11px!important;
+      letter-spacing:.2em;text-transform:uppercase;color:#81CDB6;margin-top:22px;display:block;font-weight:600}
+    span[style*="gold"],div span[style*="gold"]{color:#C9A050!important;font-weight:600}
+    div[style*="flex-direction:column"]{display:block}
+    div[style*="flex-direction:column"] > div{margin-bottom:7px;padding-left:14px;position:relative}
+    div[style*="flex-direction:column"] > div::before{content:"–";position:absolute;left:0;color:#C9A050}
+    em{font-style:italic}
+  </style></head><body>`);
+  printWin.document.write('<h1>Cosmic Daily Planner</h1><div class="sub">Complete Guide — How to Use Your Oracle</div>');
+  printWin.document.write(bodyHTML || '<p>Guide content not available — please open the Guide from the app first.</p>');
+  printWin.document.write('<div class="footer">cosmicdailyplanner.com</div></body></html>');
+  printWin.document.close();
+  setTimeout(function(){ printWin.focus(); printWin.print(); }, 800);
+}
+
 function openHelp() {
   var drawers = document.querySelectorAll('#helpDrawer');
   var d = drawers[drawers.length-1];
@@ -10142,6 +10279,7 @@ function computeLP(d, m, y) {
 window.addEventListener('load', function() {
   updateProfileIndicator();
 });
+
 </script>
 </body>
 </html>
