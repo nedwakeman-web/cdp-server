@@ -761,7 +761,7 @@ footer{background:var(--navy2);padding:30px 52px;border-top:0.5px solid var(--di
 })();
 
 // Auto-detect API base: relative when served from Railway/production, absolute from Netlify
-const RAILWAY = 'https://cdp-server-production.up.railway.app'; // Always use Railway — API never lives on Netlify
+const RAILWAY = 'https://cdp-server-production.up.railway.app';
 
 function fmtDate(ds){
   return new Date(ds+'T12:00:00Z').toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'}).toUpperCase();
