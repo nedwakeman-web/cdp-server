@@ -162,6 +162,7 @@ body.light{--bg:#F5F0E8;--bg2:#EDE6D6;--bg3:#E4DBC8;--bg4:#F8F4EC;
 .energy-num{font-family:'Cormorant Garamond',serif;font-size:40px;color:var(--gold);margin-bottom:5px;line-height:1}
 .energy-name{font-size:16px;color:var(--text2);margin-bottom:8px;font-style:italic}
 .energy-guidance{font-size:16px;color:var(--text3);line-height:1.75}
+.next-tier-btn{font-family:'Cormorant Garamond',serif!important}
 .two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px}
 @media(max-width:600px){.two-col{grid-template-columns:1fr}}
 /* ── WIDE SCREEN (1200px+) ────────────────────────────────── */
@@ -175,9 +176,9 @@ body.light{--bg:#F5F0E8;--bg2:#EDE6D6;--bg3:#E4DBC8;--bg4:#F8F4EC;
   .week-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;margin-top:12px}
 @media(max-width:700px){.week-grid{grid-template-columns:repeat(3,1fr)}}
 @media(max-width:420px){.week-grid{grid-template-columns:repeat(2,1fr)}}
-.week-day{padding:14px 10px;background:var(--bg3);border:1px solid var(--div);border-radius:3px;text-align:center;cursor:pointer;transition:all .2s;display:flex;flex-direction:column;gap:0}
+.week-day{padding:10px 6px;background:var(--bg3);border:1px solid var(--div);border-radius:3px;text-align:center;cursor:pointer;transition:all .2s;display:flex;flex-direction:column;gap:0;min-width:0;overflow:hidden}
 .week-day:hover{border-color:var(--gold3);background:rgba(201,160,80,0.04)}
-.week-day-name{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);margin-bottom:6px;display:flex;align-items:center;justify-content:center;gap:3px}
+.week-day-name{font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--text3);margin-bottom:4px;display:flex;align-items:center;justify-content:center;gap:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .pri-num{font-size:52px}
   .sec-label{font-size:12px}
   .mode-box{max-width:720px}
@@ -489,7 +490,7 @@ body.light{--bg:#F5F0E8;--bg2:#EDE6D6;--bg3:#E4DBC8;--bg4:#F8F4EC;
   cursor:pointer;padding:0 0 0 12px;line-height:1;transition:color .2s}
 .drawer-close:hover{color:var(--gold)}
 .drawer-body{overflow-y:auto;flex:1;padding:20px}
-.drawer-response{font-size:17px;color:var(--text2);line-height:1.9}
+.drawer-response{font-size:16px;color:var(--text2);line-height:1.9;word-wrap:break-word;overflow-wrap:break-word;max-width:100%}
 .drawer-response p{margin-bottom:1rem}.drawer-response p:last-child{margin-bottom:0}
 .drawer-loading{display:flex;align-items:center;gap:12px;color:var(--text3);font-style:italic;font-size:16px;padding:10px 0}
 .drawer-loading::before{content:'☽';font-size:22px;animation:pulse 1.5s ease-in-out infinite}
@@ -1350,7 +1351,7 @@ select.entry-input option{background:#0D1E33;color:#E8EDF4}
       </svg>
     </button>
     <button id="profileLibBtn" class="thm" onclick="openProfileLibrary()" title="Profiles" style="font-family:'Cinzel',serif;font-size:13px">☿</button>
-    <button class="thm" onclick="openHelp()" title="How to use CDP" style="font-family:'Cinzel',serif;font-size:11px;letter-spacing:.12em;border:1px solid rgba(201,160,80,0.35);padding:4px 10px;border-radius:2px;color:var(--gold)">GUIDE</button>
+    <button class="thm" onclick="showTierModal('seeker')" title="View tiers" style="font-family:'Cinzel',serif;font-size:11px;letter-spacing:.12em;border:1px solid rgba(201,160,80,0.2);padding:4px 8px;border-radius:2px;color:var(--text3)">TIERS</button><button class="thm" onclick="openHelp()" title="How to use CDP" style="font-family:'Cinzel',serif;font-size:11px;letter-spacing:.12em;border:1px solid rgba(201,160,80,0.35);padding:4px 10px;border-radius:2px;color:var(--gold)">GUIDE</button>
   <button class="thm" onclick="toggleTheme()" id="thmBtn">◑</button>
   </div>
 </div>
@@ -4704,7 +4705,7 @@ function renderSkeletonReading(dateStr, tier) {
         text-decoration:underline;text-underline-offset:3px">
         change depth
       </button>
-      ${_nextTier ? '<span style="color:var(--text3);font-size:11px">·</span><button onclick="selectMode(\'' + _nextTier + '\');startWithMode()" style="background:none;border:none;font-size:13px;color:var(--teal);cursor:pointer;padding:0;letter-spacing:.06em;">try ' + (_nextLabel||'') + ' →</button>' : ''}
+      ${_nextTier ? '<span style="color:var(--text3);font-size:11px">·</span><button onclick="selectMode(\'' + _nextTier + '\');startWithMode()" class="next-tier-btn" style="background:none;border:none;font-size:13px;color:var(--teal);cursor:pointer;padding:0;letter-spacing:.06em;">try ' + (_nextLabel||'') + ' →</button>' : ''}
     </div>
     <div class="r-date">${dateLabel}</div>
     <div class="r-loc">${(profile.location||'').toUpperCase()}</div>
@@ -6475,7 +6476,7 @@ function openWgtMoon(phase, q, isBlack, isShiva, fn) {
 }
 function openWgtKin(kinFull, q, isGAP) {
   const chips = [
-    {q:'What is the gift and shadow of today\'s '+kinFull+' archetype?', l:'Gift & shadow'},
+    {q:'What is the gift and shadow of today's '+kinFull+' archetype?', l:'Gift & shadow'},
     {q:'How does the tone shape the quality of today?', l:'Tone in practice'}
   ];
   if (isGAP) chips.push({q:'What synchronicities should I watch for on this GAP portal day?', l:'Portal day'});
@@ -8405,13 +8406,14 @@ function saveProfiles(profiles) {
 
 function openProfileLibrary() {
   renderProfileList();
-  document.getElementById('profileLibrary').style.display = 'flex';
-  document.getElementById('profileLibrary').style.alignItems = 'center';
-  document.getElementById('profileLibrary').style.justifyContent = 'center';
+  var libs = document.querySelectorAll('#profileLibrary');
+  var el = libs[libs.length-1];
+  if (el) { el.style.display='flex'; el.style.alignItems='center'; el.style.justifyContent='center'; }
 }
 function closeProfileLibrary() {
-  document.getElementById('profileLibrary').style.display = 'none';
-  document.getElementById('addProfileForm').style.display = 'none';
+  document.querySelectorAll('#profileLibrary').forEach(function(el){ el.style.display='none'; });
+  var af = document.querySelectorAll('#addProfileForm');
+  if (af.length) af[af.length-1].style.display='none';
 }
 function showAddProfile() {
   const f = document.getElementById('addProfileForm');
@@ -9968,10 +9970,12 @@ function showModeSelector() { showEntryScreen(cdpEntryMode); }
 <script>
 // ── HELP ──────────────────────────────────────────────────────────
 function openHelp() {
-  document.getElementById('helpDrawer').style.display = 'block';
+  var drawers = document.querySelectorAll('#helpDrawer');
+  var d = drawers[drawers.length-1];
+  if (d) d.style.display = 'block';
 }
 function closeHelp() {
-  document.getElementById('helpDrawer').style.display = 'none';
+  document.querySelectorAll('#helpDrawer').forEach(function(d){ d.style.display='none'; });
 }
 
 // ── PROFILE LIBRARY ───────────────────────────────────────────────
