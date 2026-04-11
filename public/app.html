@@ -1280,6 +1280,36 @@ select.entry-input option{background:#0D1E33;color:#E8EDF4}
   <button class="tsw-btn" style="--tc:#C9A84C" data-mode="deep" onclick="switchTier('deep')"><span class="tsw-icon">◈</span><span class="tsw-label">Oracle</span></button>
 </div>
 
+
+<!-- ── Persistent loading pill — shows across ALL screens during reading generation ── -->
+<div id="cdpLoadPill" style="display:none;position:fixed;bottom:24px;right:24px;z-index:9999;
+  background:rgba(8,19,31,0.97);border:1px solid rgba(201,160,80,0.45);border-radius:4px;
+  padding:10px 16px;max-width:280px;box-shadow:0 4px 24px rgba(0,0,0,0.5);
+  animation:pillIn .35s ease">
+  <div style="display:flex;align-items:center;gap:10px">
+    <span style="font-size:18px;animation:moonSpin 3s linear infinite;flex-shrink:0">☽</span>
+    <div style="flex:1;min-width:0">
+      <div id="cdpLoadPillText" style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;
+        color:var(--gold);font-family:'Cinzel',serif">Reading composing…</div>
+      <div id="cdpLoadPillSub" style="font-size:11px;color:rgba(232,228,218,0.5);margin-top:2px">
+        Tap any tab to explore while you wait</div>
+    </div>
+    <button onclick="showScreen('sr',document.querySelectorAll('.npill')[0])"
+      style="background:none;border:1px solid rgba(201,160,80,0.3);color:var(--gold);
+      font-size:10px;padding:4px 8px;border-radius:2px;cursor:pointer;
+      font-family:'Cinzel',serif;letter-spacing:.08em;white-space:nowrap;flex-shrink:0">
+      View →
+    </button>
+  </div>
+  <div style="height:2px;background:rgba(255,255,255,0.06);border-radius:1px;margin-top:8px;overflow:hidden">
+    <div id="cdpLoadPillBar" style="height:100%;width:0%;background:var(--gold);
+      border-radius:1px;transition:width 1.5s ease"></div>
+  </div>
+</div>
+<style>
+@keyframes pillIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+</style>
+
 <div class="topbar">
   <div class="brand">Cosmic Daily Planner</div>
   <div class="nav">
@@ -3357,6 +3387,44 @@ const loadMsgs = [
 ];
 
 let pollingTimer = null;
+
+// ── Persistent cross-screen loading pill ─────────────────────────────────────
+function showLoadPill(tierLabel) {
+  const pill = document.getElementById('cdpLoadPill');
+  const text = document.getElementById('cdpLoadPillText');
+  const sub  = document.getElementById('cdpLoadPillSub');
+  if (!pill) return;
+  text.textContent = (tierLabel||'Reading') + ' composing…';
+  sub.innerHTML = 'Explore while you wait: <a onclick="showScreen('scard',document.querySelectorAll('.npill')[1]);renderCard()" style="color:var(--teal);cursor:pointer;text-decoration:underline">Daily Card</a> · <a onclick="showScreen('sc',document.querySelectorAll('.npill')[2])" style="color:var(--teal);cursor:pointer;text-decoration:underline">Calendar</a>';
+  pill.style.display = 'block';
+  // Animate the bar over ~3 min
+  setTimeout(() => { const b = document.getElementById('cdpLoadPillBar'); if(b) b.style.width='40%'; }, 100);
+  setTimeout(() => { const b = document.getElementById('cdpLoadPillBar'); if(b) b.style.width='70%'; }, 60000);
+  setTimeout(() => { const b = document.getElementById('cdpLoadPillBar'); if(b) b.style.width='88%'; }, 150000);
+}
+function hideLoadPill(done) {
+  const pill = document.getElementById('cdpLoadPill');
+  const text = document.getElementById('cdpLoadPillText');
+  const sub  = document.getElementById('cdpLoadPillSub');
+  const bar  = document.getElementById('cdpLoadPillBar');
+  if (!pill) return;
+  if (done) {
+    text.textContent = '✶ Reading ready';
+    sub.textContent  = 'Tap View to open your Oracle';
+    if(bar) { bar.style.transition='width .4s ease'; bar.style.width='100%'; }
+    // Flash notification
+    pill.style.borderColor = 'rgba(29,158,117,0.7)';
+    setTimeout(() => { pill.style.display='none'; pill.style.borderColor=''; }, 6000);
+  } else {
+    pill.style.opacity = '0';
+    setTimeout(() => { pill.style.display='none'; pill.style.opacity=''; }, 400);
+  }
+}
+function updateLoadPillText(msg) {
+  const el = document.getElementById('cdpLoadPillText');
+  if (el && msg) el.textContent = msg;
+}
+
 let activeJobId = null;
 
 const TIER_STAGES = {
@@ -3860,12 +3928,14 @@ async function loadReading(dateStr, tier) {
           clearInterval(pollingTimer); pollingTimer = null;
           clearInterval(stageTimer);
           sessionStorage.removeItem('cdp_active_job');
+          hideLoadPill(false);
           window._phase1Rendered = false;
           currentReading = poll.result;
           saveToHistory(dateStr, poll.result);
           const _sb = document.getElementById('skeletonStatusBar');
           if (_sb) { _sb.style.transition='opacity .4s'; _sb.style.opacity='0'; setTimeout(()=>_sb.remove(),400); }
           fillAISections(poll.result, dateStr);
+          hideLoadPill(true);
           if (document.hidden) {
             document.title = '✶ Your Oracle Reading is Ready';
             setTimeout(() => { document.title = 'Cosmic Daily Planner'; }, 5000);
@@ -4622,6 +4692,16 @@ function renderSkeletonReading(dateStr, tier) {
       <div id="skProgressBar" style="height:100%;width:0%;background:var(--gold);
         transition:width 1s linear"></div>
     </div>
+  </div>
+  <div id="whileWaitBar" style="background:rgba(8,19,31,0.7);border-bottom:1px solid rgba(201,160,80,0.12);padding:8px 20px;display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+    <span style="font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:rgba(201,160,80,0.5);flex-shrink:0">While you wait</span>
+    <div style="display:flex;gap:12px;flex-wrap:wrap">
+      <button onclick="showScreen('scard',document.querySelectorAll('.npill')[1]);renderCard()" style="background:none;border:1px solid rgba(29,158,117,0.3);color:rgba(29,158,117,0.8);font-size:11px;padding:4px 10px;border-radius:2px;cursor:pointer;font-family:'Cinzel',serif;letter-spacing:.1em">Daily Card ↗</button>
+      <button onclick="showScreen('sc',document.querySelectorAll('.npill')[2])" style="background:none;border:1px solid rgba(29,158,117,0.3);color:rgba(29,158,117,0.8);font-size:11px;padding:4px 10px;border-radius:2px;cursor:pointer;font-family:'Cinzel',serif;letter-spacing:.1em">Calendar ↗</button>
+      <button onclick="showScreen('sctx',document.querySelectorAll('.npill')[3]);renderContext()" style="background:none;border:1px solid rgba(29,158,117,0.3);color:rgba(29,158,117,0.8);font-size:11px;padding:4px 10px;border-radius:2px;cursor:pointer;font-family:'Cinzel',serif;letter-spacing:.1em">My Energy ↗</button>
+      <button onclick="showScreen('scompat',document.querySelectorAll('.npill')[4]);initCompatScreen()" style="background:none;border:1px solid rgba(29,158,117,0.3);color:rgba(29,158,117,0.8);font-size:11px;padding:4px 10px;border-radius:2px;cursor:pointer;font-family:'Cinzel',serif;letter-spacing:.1em">Compatibility ↗</button>
+    </div>
+    <span style="font-size:11px;color:rgba(232,228,218,0.3);font-style:italic">Your reading continues in the background</span>
   </div>`;
 
   html += `<div id="sr-inner" style="max-width:1400px;margin:0 auto;padding:0 32px 100px">`;
@@ -4957,6 +5037,9 @@ function startPolling(jobId, dateStr, tier, startedAt) {
   // Show progress dot in topbar so user knows reading is loading while on other tabs
   const _dot = document.getElementById('readingProgressDot');
   if (_dot) _dot.style.display = 'block';
+  // Show persistent cross-screen pill
+  const tierLabels = {free:'Daily Snapshot',seeker:'Full Reading',initiate:'Monthly Arc',mystic:'Yearly Reading',oracle:'Oracle'};
+  showLoadPill(tierLabels[tier]||'Reading');
   pollingTimer = setInterval(async () => {
     try {
       const elapsed = Math.round((Date.now() - startedAt) / 1000);
