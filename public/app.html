@@ -9046,16 +9046,40 @@ function renderProfileList() {
 function buildProfileCard(p, isActive) {
   const lp = p.birthDay && p.birthYear ? computeLP(p.birthDay, p.birthMonth, p.birthYear) : null;
   const dob = p.birthDay ? p.birthDay+'/'+p.birthMonth+'/'+p.birthYear : 'No DOB set';
-  return '<div style="display:flex;align-items:center;gap:12px;padding:12px 14px;border:1px solid '+(isActive?'var(--gold)':'var(--div)')+';background:'+(isActive?'rgba(201,168,76,0.06)':'var(--bg3)')+';cursor:pointer;transition:all .2s" onclick=\"selectProfile('"+p.id+"')\">'
-    +'<div style="width:36px;height:36px;border-radius:50%;background:'+(isActive?'var(--gold)':'var(--div)')+';display:flex;align-items:center;justify-content:center;font-family:\'Cormorant Garamond\',serif;font-size:18px;font-weight:500;color:'+(isActive?'var(--navy)':'var(--text2)')+'">'+((p.name||'?').slice(0,1))+'</div>'
-    +'<div style="flex:1">'
-    +'<div style="font-family:\'Cormorant Garamond\',serif;font-size:18px;font-weight:500;color:'+(isActive?'var(--gold)':'var(--text)')+'">'+p.name+(p.nickname&&p.nickname!==p.name?' · '+p.nickname:'')+'</div>'
-    +'<div style="font-size:13px;color:var(--text3)">'+(p.relationship?p.relationship+' · ':'')+dob+(lp?' · LP '+lp:'')+'</div>'
-    +'</div>'
-    +(isActive?'<span style="font-family:\'Cinzel\',serif;font-size:10px;letter-spacing:.1em;color:var(--gold)">ACTIVE</span>':'')
-    +(p.id!=='me'?'<button onclick="event.stopPropagation();deleteProfile(''+p.id+'')" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:16px;padding:4px 8px">×</button>':'')
-    +'</div>';
+  const wrap = document.createElement('div');
+  wrap.style.cssText = 'display:flex;align-items:center;gap:12px;padding:12px 14px;border:1px solid '+(isActive?'var(--gold)':'var(--div)')+';background:'+(isActive?'rgba(201,168,76,0.06)':'var(--bg3)')+';cursor:pointer;transition:all .2s';
+  wrap.onclick = function() { selectProfile(p.id); };
+  const avatar = document.createElement('div');
+  avatar.style.cssText = 'width:36px;height:36px;border-radius:50%;background:'+(isActive?'var(--gold)':'var(--div)')+';display:flex;align-items:center;justify-content:center;font-family:"Cormorant Garamond",serif;font-size:18px;font-weight:500;color:'+(isActive?'var(--navy)':'var(--text2)');
+  avatar.textContent = (p.name||'?').slice(0,1);
+  const info = document.createElement('div');
+  info.style.cssText = 'flex:1';
+  const nameEl = document.createElement('div');
+  nameEl.style.cssText = 'font-family:"Cormorant Garamond",serif;font-size:18px;font-weight:500;color:'+(isActive?'var(--gold)':'var(--text)');
+  nameEl.textContent = p.name+(p.nickname&&p.nickname!==p.name?' · '+p.nickname:'');
+  const metaEl = document.createElement('div');
+  metaEl.style.cssText = 'font-size:13px;color:var(--text3)';
+  metaEl.textContent = (p.relationship?p.relationship+' · ':'')+dob+(lp?' · LP '+lp:'');
+  info.appendChild(nameEl);
+  info.appendChild(metaEl);
+  wrap.appendChild(avatar);
+  wrap.appendChild(info);
+  if (isActive) {
+    const badge = document.createElement('span');
+    badge.style.cssText = 'font-family:"Cinzel",serif;font-size:10px;letter-spacing:.1em;color:var(--gold)';
+    badge.textContent = 'ACTIVE';
+    wrap.appendChild(badge);
+  }
+  if (p.id !== 'me') {
+    const del = document.createElement('button');
+    del.style.cssText = 'background:none;border:none;color:var(--text3);cursor:pointer;font-size:16px;padding:4px 8px';
+    del.textContent = '×';
+    del.onclick = function(e) { e.stopPropagation(); deleteProfile(p.id); };
+    wrap.appendChild(del);
+  }
+  return wrap.outerHTML;
 }
+
 
 function selectProfile(id) {
   localStorage.setItem('cdp_active_profile_id', id);
@@ -10625,20 +10649,6 @@ function renderProfileList() {
   }, activeId === 'me' || !activeId);
   
   list.innerHTML = meCard + profiles.map(p => buildProfileCard(p, activeId === p.id)).join('');
-}
-
-function buildProfileCard(p, isActive) {
-  const lp = p.birthDay && p.birthYear ? computeLP(p.birthDay, p.birthMonth, p.birthYear) : null;
-  const dob = p.birthDay ? p.birthDay+'/'+p.birthMonth+'/'+p.birthYear : 'No DOB set';
-  return '<div style="display:flex;align-items:center;gap:12px;padding:12px 14px;border:1px solid '+(isActive?'var(--gold)':'var(--div)')+';background:'+(isActive?'rgba(201,168,76,0.06)':'var(--bg3)')+';cursor:pointer;transition:all .2s" onclick=\"selectProfile('"+p.id+"')\">'
-    +'<div style="width:36px;height:36px;border-radius:50%;background:'+(isActive?'var(--gold)':'var(--div)')+';display:flex;align-items:center;justify-content:center;font-family:\'Cormorant Garamond\',serif;font-size:18px;font-weight:500;color:'+(isActive?'var(--navy)':'var(--text2)')+'">'+((p.name||'?').slice(0,1))+'</div>'
-    +'<div style="flex:1">'
-    +'<div style="font-family:\'Cormorant Garamond\',serif;font-size:18px;font-weight:500;color:'+(isActive?'var(--gold)':'var(--text)')+'">'+p.name+(p.nickname&&p.nickname!==p.name?' · '+p.nickname:'')+'</div>'
-    +'<div style="font-size:13px;color:var(--text3)">'+(p.relationship?p.relationship+' · ':'')+dob+(lp?' · LP '+lp:'')+'</div>'
-    +'</div>'
-    +(isActive?'<span style="font-family:\'Cinzel\',serif;font-size:10px;letter-spacing:.1em;color:var(--gold)">ACTIVE</span>':'')
-    +(p.id!=='me'?'<button onclick="event.stopPropagation();deleteProfile(''+p.id+'')" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:16px;padding:4px 8px">×</button>':'')
-    +'</div>';
 }
 
 function selectProfile(id) {
