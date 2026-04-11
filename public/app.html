@@ -1196,8 +1196,13 @@ select.entry-input option{background:#0D1E33;color:#E8EDF4}
     <h2 class="entry-title">Your reading awaits.</h2>
     <p class="entry-sub">Add your details to make it personal,<br>or skip straight in.</p>
     <div class="entry-field">
-      <label class="entry-label">YOUR NAME <span>optional</span></label>
-      <input class="entry-input" id="entryName" placeholder="Your full name as given at birth" autocomplete="given-name">
+      <label class="entry-label">PREFERRED NAME <span>what the Oracle calls you</span></label>
+      <input class="entry-input" id="entryNickname" placeholder="Ned, or whatever name you go by" autocomplete="nickname">
+    </div>
+    <div class="entry-field">
+      <label class="entry-label">FULL BIRTH NAME <span>optional · for name numerology</span></label>
+      <input class="entry-input" id="entryName" placeholder="As it appears on your birth certificate" autocomplete="name">
+      <div style="font-size:11px;color:var(--text3);font-style:italic;margin-top:4px">Used for Soul Urge, Expression &amp; Personality numbers. Leave blank to skip.</div>
     </div>
     <div class="entry-field">
       <label class="entry-label">DATE OF BIRTH <span>makes your reading personal</span></label>
@@ -1315,7 +1320,7 @@ select.entry-input option{background:#0D1E33;color:#E8EDF4}
       </svg>
     </button>
     <button id="profileLibBtn" class="thm" onclick="openProfileLibrary()" title="Profiles" style="font-family:'Cinzel',serif;font-size:13px">☿</button>
-    <button class="thm" onclick="openHelp()" title="How to use CDP" style="font-family:'Cinzel',serif;font-size:11px;letter-spacing:.1em">?</button>
+    <button class="thm" onclick="openHelp()" title="How to use CDP" style="font-family:'Cinzel',serif;font-size:11px;letter-spacing:.12em;border:1px solid rgba(201,160,80,0.35);padding:4px 10px;border-radius:2px;color:var(--gold)">GUIDE</button>
   <button class="thm" onclick="toggleTheme()" id="thmBtn">◑</button>
   </div>
 </div>
@@ -2037,50 +2042,49 @@ const NUM_DATA = {
     evening:'Master Evening — review the architecture of your long-term vision.'},
 };
 
-// ── Modern/Neuroscience language variants for NUM_DATA ──────────────────────
-// Language mode: Ancient = symbolic/archetypal. Modern = neuroscience-framed.
-// Refs: Barrett (2017) How Emotions are Made; Dehaene (2014) Consciousness and the Brain;
-//       Bremer (2022) Predictive Coding; Huberman (2021) circadian neuroscience.
+// ── Neuroscience language variants (Modern mode) ─────────────────────────────
+// Refs: Barrett (2017) How Emotions are Made; Huberman circadian neuroscience;
+// Dehaene (2014) Consciousness and the Brain; Porges polyvagal theory.
 const NUM_NEURO = {
-  1:{morning:'Dopaminergic drive peaks in early novelty. Your salience network is primed for independent initiation — the prefrontal cortex is receptive to new goal-encoding (Barrett 2017).',
-     afternoon:'Norepinephrine sustains directed effort. Consolidate the initiative you began — executive circuits reward focused, uninterrupted action chains.',
-     evening:'Reward circuitry recalibrates. Review what the dopamine signal told you today: what did your brain code as genuinely worth pursuing?'},
+  1:{morning:'Dopaminergic drive peaks with novelty. Your salience network is primed for independent initiation — prefrontal cortex is receptive to new goal-encoding (Barrett 2017).',
+     afternoon:'Norepinephrine sustains directed effort. Consolidate the initiative you began; executive circuits reward focused, uninterrupted action chains.',
+     evening:'Reward circuitry recalibrates. Review what the dopamine signal told you: what did your brain code as genuinely worth pursuing today?'},
   2:{morning:'Social cognition networks (temporoparietal junction) are most attuned early. Mirror-neuron activity supports collaborative sensing — listen before asserting.',
-     afternoon:'Interoceptive awareness of relationship tension is heightened. The insular cortex reads emotional tone with precision; trust somatic signals in negotiations.',
-     evening:'Oxytocin cycles favour bonding and repair. The evening is neurochemically suited to tending close relationships — reach out.'},
+     afternoon:'Interoceptive awareness of relational tension is heightened. The insular cortex reads emotional tone with precision; trust somatic signals in negotiations.',
+     evening:'Oxytocin cycles favour bonding and repair. The evening is neurochemically suited to tending close relationships.'},
   3:{morning:'Default Mode Network creativity windows open before task-positive routines dominate. Novel associations form most freely in the first hours (Dehaene 2014).',
-     afternoon:'Verbal fluency and working memory load increase as the cortical arousal curve rises. Expression and idea-synthesis are neurologically supported.',
-     evening:'Limbic emotional tagging of the day\'s creative output. Journal, share, or voice-record insights before sleep consolidation encodes them.'},
+     afternoon:'Verbal fluency and working memory load increase as cortical arousal rises. Expression and idea-synthesis are neurologically supported.',
+     evening:'Limbic emotional tagging of the day's creative output. Journal or voice-record insights before sleep consolidation encodes them.'},
   4:{morning:'Prefrontal cortex executive function is sharpest in the morning cortisol window (Huberman 2021). Systematic planning and procedural memory access are optimal.',
-     afternoon:'Cognitive stamina favours sustained attention tasks. Avoid decision fatigue by batching routine work; your anterior cingulate cortex rewards consistent effort.',
-     evening:'Consolidation phase: the hippocampus files the day\'s structured learning. Review systems, not outcomes — the brain encodes process more durably than results.'},
-  5:{morning:'Novelty-seeking circuitry (dopamine D1 receptors) fires strongly with environmental variation. Disrupt routine deliberately — the brain\'s prediction-error signal is a learning catalyst.',
-     afternoon:'Adaptive flexibility is a prefrontal function — but afternoon cortisol dips can loosen it into impulsivity. Channel the change-energy into calculated pivots, not reactive ones.',
-     evening:'Consolidation of a day\'s cognitive flexibility. The brain\'s default mode integrates disparate experiences during wind-down. Notice what surprised you.'},
-  6:{morning:'Caregiving behaviour activates the medial prefrontal cortex and releases oxytocin. Morning relational investment sets the hormonal tone for the day\'s social engagement.',
-     afternoon:'Prosocial behaviour peaks when cortisol is moderate (mid-cycle). Your capacity to regulate others\' affect is highest — lead with attuned presence.',
-     evening:'Ventral vagal activation (Porges, polyvagal theory) is supported by warm social connection. The nervous system downregulates most effectively in safe relational space.'},
-  7:{morning:'Theta brainwave activity (associated with insight and pattern recognition) is accessible in morning quiet before cortical noise rises. Sit still before engaging screens.',
-     afternoon:'Analytical depth — lateral prefrontal activation — is sustained through focused inquiry. Question the data beneath the surface; the brain rewards precise interrogation.',
-     evening:'Gamma-band integration: the cortex synthesises the day\'s inputs into coherent insight during quiet, low-stimulation evenings. Protect this window.'},
+     afternoon:'Cognitive stamina favours sustained attention tasks. Avoid decision fatigue by batching routine work; anterior cingulate cortex rewards consistent effort.',
+     evening:'Consolidation phase: the hippocampus files the day's structured learning. Review systems, not outcomes.'},
+  5:{morning:'Novelty-seeking circuitry fires strongly with environmental variation. The brain's prediction-error signal is a learning catalyst — disrupt routine deliberately.',
+     afternoon:'Adaptive flexibility is a prefrontal function; afternoon cortisol dips can loosen it into impulsivity. Channel change-energy into calculated pivots.',
+     evening:'The default mode integrates disparate experiences during wind-down. Notice what surprised you today.'},
+  6:{morning:'Caregiving activates medial prefrontal cortex and releases oxytocin. Morning relational investment sets the hormonal tone for the day's social engagement.',
+     afternoon:'Prosocial behaviour peaks when cortisol is moderate. Your capacity to regulate others' affect is highest — lead with attuned presence.',
+     evening:'Ventral vagal activation (Porges, polyvagal theory) is supported by warm social connection. The nervous system downregulates best in safe relational space.'},
+  7:{morning:'Theta brainwave activity (associated with insight) is accessible in morning quiet before cortical noise rises. Sit still before engaging screens.',
+     afternoon:'Analytical depth — lateral prefrontal activation — is sustained through focused inquiry. Question the data beneath the surface.',
+     evening:'Gamma-band integration: the cortex synthesises the day's inputs into coherent insight during quiet, low-stimulation evenings. Protect this window.'},
   8:{morning:'High-arousal decision-making is best when cortisol is elevated (morning peak). Executive authority and consequence-weighting are neurologically sharpest now.',
-     afternoon:'The brain\'s reward anticipation circuitry (nucleus accumbens) is active. Leverage afternoon momentum for high-stakes communication and material decisions.',
-     evening:'Parasympathetic review: what did your autonomic nervous system signal was genuinely important today? Align tomorrow\'s intentions with somatic, not just cognitive, priority signals.'},
-  9:{morning:'The brain\'s completion circuitry — the striatum encoding task closure — is primed for morning wrap-ups. What unfinished loops from yesterday need closing before you begin anew?',
-     afternoon:'Compassion fatigue research (Singer & Klimecki 2014) shows that afternoon empathic engagement is sustainable when bounded. Give generously, but from a regulated nervous system.',
-     evening:'The default mode network\'s self-referential processing during evening wind-down integrates the cycle of the day. Release judgement; the hippocampus will consolidate what matters.'},
-  11:{morning:'Master Morning (11): Heightened interoceptive sensitivity — the insular cortex picks up subtle signals others miss. Intuition is a predictive processing output (Clark 2016); trust it early.',
-      afternoon:'Unusual pattern-recognition clarity. The brain\'s predictive models are running with wider priors today — unusual connections and foresight are neurologically available.',
-      evening:'Integration of a day of heightened signal. Protect the evening from noise: what arrived in consciousness today that bypassed ordinary filtering?'},
-  22:{morning:'Master Morning (22): Executive network and default mode network are in rare simultaneous activation — the neural signature of visionary planning meeting practical architecture.',
-      afternoon:'Prefrontal-parietal coordination supports large-scale systems thinking. The brain is capable of holding both the macro vision and micro detail in working memory simultaneously.',
-      evening:'The mind\'s architectural work needs consolidation. Sleep spindles during NREM will process the day\'s complex structural learning — prime the system with clear intention before rest.'},
-  33:{morning:'Master Morning (33): Limbic empathy circuits (anterior cingulate, insula) are operating at scale. Caregiving, teaching, and healing are neurochemically and structurally supported.',
-      afternoon:'Oxytocin and serotonin feedback loops sustain generosity without depletion — but only when the nervous system is regulated. Resource your own calm first (Porges 2011).',
-      evening:'The day\'s service leaves a neurological imprint. The brain\'s reward system treats genuine altruism as intrinsically motivating (Moll et al. 2006). Notice what that felt like.'},
-  44:{morning:'Master Morning (44): Prefrontal executive architecture and basal ganglia habitual efficiency are both primed. Systems that are built to last begin in the morning clarity window.',
-      afternoon:'Deep pattern recognition and material mastery. The brain\'s expertise circuitry (chunk-based pattern storage in basal ganglia) is at full capacity for complex strategic work.',
-      evening:'Structural review: what did you build, or move toward building, today? The hippocampus encodes procedural mastery through sleep — reinforce intention before rest.'}
+     afternoon:'The brain's reward anticipation circuitry is active. Leverage afternoon momentum for high-stakes communication and material decisions.',
+     evening:'Parasympathetic review: what did your autonomic nervous system signal was genuinely important today?'},
+  9:{morning:'The brain's completion circuitry — striatum encoding task closure — is primed for morning wrap-ups. Close unfinished loops before beginning anew.',
+     afternoon:'Compassion fatigue research (Singer & Klimecki 2014) shows afternoon empathic engagement is sustainable when bounded. Give from a regulated nervous system.',
+     evening:'The default mode network's self-referential processing integrates the cycle of the day. Release judgement; the hippocampus consolidates what matters.'},
+  11:{morning:'Heightened interoceptive sensitivity — the insular cortex picks up subtle signals others miss. Intuition is a predictive processing output (Clark 2016); trust it early.',
+      afternoon:'Unusual pattern-recognition clarity. The brain's predictive models run with wider priors — unusual connections and foresight are neurologically available.',
+      evening:'Integration of a day of heightened signal. Protect the evening from noise: what arrived in consciousness that bypassed ordinary filtering?'},
+  22:{morning:'Executive network and default mode network in rare simultaneous activation — the neural signature of visionary planning meeting practical architecture.',
+      afternoon:'Prefrontal-parietal coordination supports large-scale systems thinking. The brain holds macro vision and micro detail in working memory simultaneously.',
+      evening:'The mind's architectural work needs consolidation. Sleep spindles during NREM will process the day's complex structural learning.'},
+  33:{morning:'Limbic empathy circuits (anterior cingulate, insula) are operating at scale. Caregiving, teaching, and healing are neurochemically and structurally supported.',
+      afternoon:'Oxytocin and serotonin feedback loops sustain generosity without depletion — only when the nervous system is regulated. Resource your own calm first.',
+      evening:'The brain's reward system treats genuine altruism as intrinsically motivating (Moll et al. 2006). Notice what that felt like today.'},
+  44:{morning:'Prefrontal executive architecture and basal ganglia habitual efficiency are both primed. Systems built to last begin in the morning clarity window.',
+      afternoon:'Deep pattern recognition and material mastery. The brain's expertise circuitry is at full capacity for complex strategic work.',
+      evening:'Structural review: what did you build, or move toward building, today? Reinforce intention before rest.'}
 };
 
 // ══════════════════════════════════════════════════════════
@@ -3086,6 +3090,7 @@ function showShareToast(msg) {
 // PROFILE
 // ══════════════════════════════════════════════════════════
 function loadProfileUI() {
+  if(document.getElementById('entryNickname')) document.getElementById('entryNickname').value = profile.nickname || '';
   document.getElementById('pNick').value = profile.nickname || '';
   document.getElementById('pName').value = profile.name || '';
   document.getElementById('pLoc').value = profile.location || '';
@@ -4546,7 +4551,7 @@ function renderSkeletonReading(dateStr, tier) {
   };
   const curH = new Date().getHours();
   const activeW = curH < 12 ? 'morning' : curH < 18 ? 'afternoon' : 'evening';
-  const isModernMode = (typeof cdpLang !== 'undefined' && cdpLang === 'modern') || localStorage.getItem('cdp_lang') === 'modern';
+  const isModernMode = localStorage.getItem('cdp_lang') === 'modern';
   const energyHtml = ['morning','afternoon','evening'].map(k => {
     const fb = teNums[k];
     const fD = NUM_DATA[fb.n] || {n:'—',m:''};
@@ -4555,16 +4560,14 @@ function renderSkeletonReading(dateStr, tier) {
     const isM = [11,22,33,44].includes(fb.n);
     const icons = {morning:'☀︎',afternoon:'◑',evening:'☽'};
     const lbls  = {morning:'Morning',afternoon:'Afternoon',evening:'Evening'};
-    const modeBadge = isModernMode ? '<span style="font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--teal);border:1px solid rgba(29,158,117,0.3);padding:1px 5px;border-radius:2px;margin-left:6px">Neuro</span>' : '';
     return `<div class="energy-card${activeW===k?' active-window':''} tappable"
       onclick="tapEnergy('${k}',${fb.n},'${(fD.n||'').replace(/'/g,"\'")}','${guidanceText.replace(/'/g,"\'").slice(0,80)}…')"
       title="Tap for deeper ${lbls[k]} guidance">
-      <div class="energy-time">${icons[k]} ${lbls[k]}${activeW===k?' <span style="color:var(--teal);font-size:11px">· Now</span>':''}${modeBadge}</div>
+      <div class="energy-time">${icons[k]} ${lbls[k]}${activeW===k?' <span style="color:var(--teal);font-size:11px">· Now</span>':''}</div>
       <div style="font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--text3);margin-bottom:3px">${fb.lbl}</div>
       <div class="energy-num" style="${isM?'color:var(--master)':''}">${fb.n}${isM?'<span style="font-size:14px">★</span>':''}</div>
       <div class="energy-name">${fD.n}</div>
       <div class="energy-guidance">${guidanceText}</div>
-      ${isModernMode ? '<div style="font-size:9px;color:rgba(29,158,117,0.5);margin-top:4px;font-style:italic">Neuroscience mode · Barrett · Huberman · Dehaene</div>' : ''}
       <div style="font-size:11px;color:var(--gold3);margin-top:8px;text-align:right">↗ Tap for insight</div>
     </div>`;
   }).join('');
@@ -4611,8 +4614,7 @@ function renderSkeletonReading(dateStr, tier) {
       </div>
       <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
         <span style="font-size:13px;color:var(--text2);font-family:'Cormorant Garamond',serif" id="skElapsedTxt"></span>
-        <span style="font-size:14px;color:var(--gold);cursor:pointer;letter-spacing:.1em;
-          text-decoration:underline;text-underline-offset:3px;font-family:'Cinzel',serif"
+        <span style="font-size:12px;color:var(--gold);cursor:pointer;letter-spacing:.1em;font-family:'Cinzel',serif;background:rgba(201,160,80,0.1);border:1px solid rgba(201,160,80,0.35);padding:3px 10px;border-radius:2px"
           onclick="if(pollingTimer){clearInterval(pollingTimer);pollingTimer=null;}changeModeAndReload()">⟳ Change Depth</span>
       </div>
     </div>
@@ -4650,7 +4652,7 @@ function renderSkeletonReading(dateStr, tier) {
         text-decoration:underline;text-underline-offset:3px">
         change depth
       </button>
-      ${_nextTier ? '<span style="color:var(--text3);font-size:11px">·</span><button onclick="selectMode(\'' + _nextTier + '\');startWithMode()" style="background:none;border:none;font-size:12px;color:var(--teal);cursor:pointer;padding:0;letter-spacing:.08em">try ' + (_nextLabel||'') + ' →</button>' : ''}
+      ${_nextTier ? '<span style="color:var(--text3);font-size:11px">·</span><button onclick="selectMode(\'' + _nextTier + '\');startWithMode()" style="background:none;border:none;font-size:13px;color:var(--teal);cursor:pointer;padding:0;letter-spacing:.06em;font-family:'Cormorant Garamond',serif">try ' + (_nextLabel||'') + ' →</button>' : ''}
     </div>
     <div class="r-date">${dateLabel}</div>
     <div class="r-loc">${(profile.location||'').toUpperCase()}</div>
@@ -4675,14 +4677,14 @@ function renderSkeletonReading(dateStr, tier) {
       <div style="font-size:9px;color:var(--gold3);margin-top:5px">↗</div>
     </div>
     <div class="wgt tappable" style="cursor:pointer" title="Tap for lunar insight"
-      onclick="openDrawer('Moon · ${moonPhase}', '${wgtMoonQ.replace(/'/g,"\'")}', [{q:'How does the ${moonPhase} affect ${wgtFN}\'s energy and mood today?',l:'Energy & mood'},{q:'What should ${wgtFN} do or avoid today based on this moon phase?',l:'Do or avoid'}${isBlack?",{q:'What specifically should "+wgtFN+" NOT initiate on this Black Moon threshold?',l:'⚠ Black Moon'}":isShiva?",{q:'What new intention should "+wgtFN+" plant in the next 48 hours?',l:'✨ Shiva Moon'}":''  }])">
+      onclick="openWgtMoon('${moonPhase}','${wgtMoonQ.replace(/'/g,String.fromCharCode(92,39))}',${isBlack?1:0},${isShiva?1:0})">
       <div class="wgt-label">Moon</div>
       <div class="wgt-icon">${moonEmoji}</div>
       <div class="wgt-val" style="font-size:13px;line-height:1.3">${moonPhase}</div>
       <div style="font-size:9px;color:var(--gold3);margin-top:5px">↗</div>
     </div>
     <div class="wgt tappable" style="cursor:pointer" title="Tap for Dreamspell insight"
-      onclick="openDrawer('Kin · ${kinFull}', '${wgtKinQ.replace(/'/g,"\'")}', [{q:'What is the gift and shadow of the ${KS[si]} archetype today?',l:'Gift & shadow'},{q:'How does Tone ${ti+1} (${KT[ti]}) shape the quality of today?',l:'Tone in practice'}${isGAP?",{q:'What synchronicities should "+wgtFN+" watch for on this GAP portal day?',l:'★ GAP portals'}":""}])">
+      onclick="openWgtKin('${kinFull}','${wgtKinQ.replace(/'/g,String.fromCharCode(92,39))}',${isGAP?1:0})">
       <div class="wgt-label">Kin</div>
       <div class="wgt-icon">${isGAP?'★':'◈'}</div>
       <div class="wgt-val" style="font-size:11px;line-height:1.4">${kinFull}</div>
@@ -6404,6 +6406,25 @@ function openDrawer(topic, question, chips) {
   document.body.style.overflow = 'hidden';
   drawerContext = question;
   fetchInsight(question, chips);
+}
+
+// ── Widget card drawer helper — avoids quote-hell in onclick attrs ────────────
+function openWgtMoon(phase, q, isBlack, isShiva, fn) {
+  const chips = [
+    {q:'How does the '+phase+' affect my energy and mood today?', l:'Energy & mood'},
+    {q:'What should I do or avoid today based on this moon phase?', l:'Do or avoid'}
+  ];
+  if (isBlack) chips.push({q:'What specifically should I NOT initiate on this Black Moon threshold?', l:'Black Moon warning'});
+  if (isShiva) chips.push({q:'What new intention should I plant in the next 48 hours?', l:'Shiva Moon intention'});
+  openDrawer('Moon · ' + phase, q, chips);
+}
+function openWgtKin(kinFull, q, isGAP) {
+  const chips = [
+    {q:'What is the gift and shadow of today's '+kinFull+' archetype?', l:'Gift & shadow'},
+    {q:'How does the tone shape the quality of today?', l:'Tone in practice'}
+  ];
+  if (isGAP) chips.push({q:'What synchronicities should I watch for on this GAP portal day?', l:'Portal day'});
+  openDrawer('Kin · ' + kinFull, q, chips);
 }
 
 function closeDrawer() {
@@ -8460,7 +8481,7 @@ function computeLP(d, m, y) {
 window.addEventListener('load', function() {
   updateProfileIndicator();
 });
-</script>
+<\/script>
 </body>
 </html>`);
   w.document.close();
@@ -9664,6 +9685,7 @@ function setLang(lang, silent) {
 }
 
 function beginFromEntry() {
+  var nickname  = (document.getElementById('entryNickname')||{value:''}).value.trim();
   var name      = document.getElementById('entryName').value.trim();
   var day       = document.getElementById('entryDay').value;
   var month     = document.getElementById('entryMonth').value;
@@ -9674,6 +9696,7 @@ function beginFromEntry() {
   var location  = document.getElementById('entryLocation').value.trim();
   var intention = document.getElementById('entryIntention').value.trim();
   // Save to localStorage
+  if (nickname)   localStorage.setItem('cdp_nickname', nickname);
   if (name)       localStorage.setItem('cdp_name', name);
   if (intention)  localStorage.setItem('cdp_intention', intention);
   else            localStorage.removeItem('cdp_intention');
@@ -9694,6 +9717,7 @@ function beginFromEntry() {
       prof.birthDay   = parseInt(day,10);
       prof.birthMonth = parseInt(month,10);
       prof.birthYear  = parseInt(year,10);
+      if (nickname) prof.nickname = nickname;
       if (name) prof.name = name;
       if (birthHour && birthMin) prof.birthTime = birthHour.padStart(2,'0') + ':' + birthMin.padStart(2,'0');
       if (birthPlace) prof.birthLocation = birthPlace;
