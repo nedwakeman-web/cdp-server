@@ -89,6 +89,21 @@ body.light{--bg:#F5F0E8;--bg2:#EDE6D6;--bg3:#E4DBC8;--bg4:#F8F4EC;
     font-size:9px!important;letter-spacing:.12em!important;
     max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap
   }
+  /* Full width on mobile */
+  #sr{padding:0 12px 120px}
+  .r-section{padding:18px 14px}
+  .wgt{padding:12px 8px}
+  .wgt-val{font-size:18px}
+  /* Biorhythms full width */
+  .bio-grid{grid-template-columns:1fr!important}
+  .bio-card{min-width:0!important}
+  /* Numerology cards */
+  .num-blocks{grid-template-columns:1fr!important}
+  /* Week ahead */
+  .week-grid{grid-template-columns:repeat(3,1fr)!important}
+  /* Entry screen */
+  .entry-box{padding:16px 8px 60px}
+  #cdpEntry{padding:16px}
 }
 
 /* ── SCREENS ── */
@@ -1264,10 +1279,10 @@ select.entry-input option{background:#0D1E33;color:#E8EDF4}
   <div class="brand">Cosmic Daily Planner</div>
   <div class="nav">
     <button class="npill on" onclick="showScreen('sr',this);if(!currentReading)showModeSelector()">Reading</button>
-    <button class="npill" onclick="showScreen('scard',this);renderCard()">Card</button>
+    <button class="npill" onclick="showScreen('scard',this);renderCard()">Daily Card</button>
     <button class="npill" onclick="showScreen('sc',this)">Calendar</button>
     <button class="npill" onclick="showScreen('sctx',this);renderContext()">My Energy</button>
-    <button class="npill" onclick="showScreen('scompat',this);initCompatScreen()">Compat</button>
+    <button class="npill" onclick="showScreen('scompat',this);initCompatScreen()">Compatibility</button>
     <button class="npill" onclick="showScreen('sp',this)">Profile</button>
     <button class="npill" onclick="showScreen('shist',this);renderHistory()">History</button>
   </div>
@@ -1278,10 +1293,10 @@ select.entry-input option{background:#0D1E33;color:#E8EDF4}
   </button>
   <div class="nav-dropdown" id="navDropdown">
     <button class="npill on" onclick="showScreen('sr',this);if(!currentReading)showModeSelector();closeMobileNav()">Reading</button>
-    <button class="npill" onclick="showScreen('scard',this);renderCard();closeMobileNav()">Card</button>
+    <button class="npill" onclick="showScreen('scard',this);renderCard();closeMobileNav()">Daily Card</button>
     <button class="npill" onclick="showScreen('sc',this);closeMobileNav()">Calendar</button>
     <button class="npill" onclick="showScreen('sctx',this);renderContext();closeMobileNav()">My Energy</button>
-    <button class="npill" onclick="showScreen('scompat',this);initCompatScreen();closeMobileNav()">Compat</button>
+    <button class="npill" onclick="showScreen('scompat',this);initCompatScreen();closeMobileNav()">Compatibility</button>
     <button class="npill" onclick="showScreen('sp',this);closeMobileNav()">Profile</button>
     <button class="npill" onclick="showScreen('shist',this);renderHistory();closeMobileNav()">History</button>
   </div>
@@ -1299,7 +1314,9 @@ select.entry-input option{background:#0D1E33;color:#E8EDF4}
         <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
       </svg>
     </button>
-    <button class="thm" onclick="toggleTheme()" id="thmBtn">◑</button>
+    <button id="profileLibBtn" class="thm" onclick="openProfileLibrary()" title="Profiles" style="font-family:'Cinzel',serif;font-size:13px">☿</button>
+    <button class="thm" onclick="openHelp()" title="How to use CDP" style="font-family:'Cinzel',serif;font-size:11px;letter-spacing:.1em">?</button>
+  <button class="thm" onclick="toggleTheme()" id="thmBtn">◑</button>
   </div>
 </div>
 
@@ -2018,6 +2035,52 @@ const NUM_DATA = {
     morning:'Master Morning — structural clarity and material achievement are supported.',
     afternoon:'Master Afternoon — deep systems thinking opens. Attend to business and money.',
     evening:'Master Evening — review the architecture of your long-term vision.'},
+};
+
+// ── Modern/Neuroscience language variants for NUM_DATA ──────────────────────
+// Language mode: Ancient = symbolic/archetypal. Modern = neuroscience-framed.
+// Refs: Barrett (2017) How Emotions are Made; Dehaene (2014) Consciousness and the Brain;
+//       Bremer (2022) Predictive Coding; Huberman (2021) circadian neuroscience.
+const NUM_NEURO = {
+  1:{morning:'Dopaminergic drive peaks in early novelty. Your salience network is primed for independent initiation — the prefrontal cortex is receptive to new goal-encoding (Barrett 2017).',
+     afternoon:'Norepinephrine sustains directed effort. Consolidate the initiative you began — executive circuits reward focused, uninterrupted action chains.',
+     evening:'Reward circuitry recalibrates. Review what the dopamine signal told you today: what did your brain code as genuinely worth pursuing?'},
+  2:{morning:'Social cognition networks (temporoparietal junction) are most attuned early. Mirror-neuron activity supports collaborative sensing — listen before asserting.',
+     afternoon:'Interoceptive awareness of relationship tension is heightened. The insular cortex reads emotional tone with precision; trust somatic signals in negotiations.',
+     evening:'Oxytocin cycles favour bonding and repair. The evening is neurochemically suited to tending close relationships — reach out.'},
+  3:{morning:'Default Mode Network creativity windows open before task-positive routines dominate. Novel associations form most freely in the first hours (Dehaene 2014).',
+     afternoon:'Verbal fluency and working memory load increase as the cortical arousal curve rises. Expression and idea-synthesis are neurologically supported.',
+     evening:'Limbic emotional tagging of the day\'s creative output. Journal, share, or voice-record insights before sleep consolidation encodes them.'},
+  4:{morning:'Prefrontal cortex executive function is sharpest in the morning cortisol window (Huberman 2021). Systematic planning and procedural memory access are optimal.',
+     afternoon:'Cognitive stamina favours sustained attention tasks. Avoid decision fatigue by batching routine work; your anterior cingulate cortex rewards consistent effort.',
+     evening:'Consolidation phase: the hippocampus files the day\'s structured learning. Review systems, not outcomes — the brain encodes process more durably than results.'},
+  5:{morning:'Novelty-seeking circuitry (dopamine D1 receptors) fires strongly with environmental variation. Disrupt routine deliberately — the brain\'s prediction-error signal is a learning catalyst.',
+     afternoon:'Adaptive flexibility is a prefrontal function — but afternoon cortisol dips can loosen it into impulsivity. Channel the change-energy into calculated pivots, not reactive ones.',
+     evening:'Consolidation of a day\'s cognitive flexibility. The brain\'s default mode integrates disparate experiences during wind-down. Notice what surprised you.'},
+  6:{morning:'Caregiving behaviour activates the medial prefrontal cortex and releases oxytocin. Morning relational investment sets the hormonal tone for the day\'s social engagement.',
+     afternoon:'Prosocial behaviour peaks when cortisol is moderate (mid-cycle). Your capacity to regulate others\' affect is highest — lead with attuned presence.',
+     evening:'Ventral vagal activation (Porges, polyvagal theory) is supported by warm social connection. The nervous system downregulates most effectively in safe relational space.'},
+  7:{morning:'Theta brainwave activity (associated with insight and pattern recognition) is accessible in morning quiet before cortical noise rises. Sit still before engaging screens.',
+     afternoon:'Analytical depth — lateral prefrontal activation — is sustained through focused inquiry. Question the data beneath the surface; the brain rewards precise interrogation.',
+     evening:'Gamma-band integration: the cortex synthesises the day\'s inputs into coherent insight during quiet, low-stimulation evenings. Protect this window.'},
+  8:{morning:'High-arousal decision-making is best when cortisol is elevated (morning peak). Executive authority and consequence-weighting are neurologically sharpest now.',
+     afternoon:'The brain\'s reward anticipation circuitry (nucleus accumbens) is active. Leverage afternoon momentum for high-stakes communication and material decisions.',
+     evening:'Parasympathetic review: what did your autonomic nervous system signal was genuinely important today? Align tomorrow\'s intentions with somatic, not just cognitive, priority signals.'},
+  9:{morning:'The brain\'s completion circuitry — the striatum encoding task closure — is primed for morning wrap-ups. What unfinished loops from yesterday need closing before you begin anew?',
+     afternoon:'Compassion fatigue research (Singer & Klimecki 2014) shows that afternoon empathic engagement is sustainable when bounded. Give generously, but from a regulated nervous system.',
+     evening:'The default mode network\'s self-referential processing during evening wind-down integrates the cycle of the day. Release judgement; the hippocampus will consolidate what matters.'},
+  11:{morning:'Master Morning (11): Heightened interoceptive sensitivity — the insular cortex picks up subtle signals others miss. Intuition is a predictive processing output (Clark 2016); trust it early.',
+      afternoon:'Unusual pattern-recognition clarity. The brain\'s predictive models are running with wider priors today — unusual connections and foresight are neurologically available.',
+      evening:'Integration of a day of heightened signal. Protect the evening from noise: what arrived in consciousness today that bypassed ordinary filtering?'},
+  22:{morning:'Master Morning (22): Executive network and default mode network are in rare simultaneous activation — the neural signature of visionary planning meeting practical architecture.',
+      afternoon:'Prefrontal-parietal coordination supports large-scale systems thinking. The brain is capable of holding both the macro vision and micro detail in working memory simultaneously.',
+      evening:'The mind\'s architectural work needs consolidation. Sleep spindles during NREM will process the day\'s complex structural learning — prime the system with clear intention before rest.'},
+  33:{morning:'Master Morning (33): Limbic empathy circuits (anterior cingulate, insula) are operating at scale. Caregiving, teaching, and healing are neurochemically and structurally supported.',
+      afternoon:'Oxytocin and serotonin feedback loops sustain generosity without depletion — but only when the nervous system is regulated. Resource your own calm first (Porges 2011).',
+      evening:'The day\'s service leaves a neurological imprint. The brain\'s reward system treats genuine altruism as intrinsically motivating (Moll et al. 2006). Notice what that felt like.'},
+  44:{morning:'Master Morning (44): Prefrontal executive architecture and basal ganglia habitual efficiency are both primed. Systems that are built to last begin in the morning clarity window.',
+      afternoon:'Deep pattern recognition and material mastery. The brain\'s expertise circuitry (chunk-based pattern storage in basal ganglia) is at full capacity for complex strategic work.',
+      evening:'Structural review: what did you build, or move toward building, today? The hippocampus encodes procedural mastery through sleep — reinforce intention before rest.'}
 };
 
 // ══════════════════════════════════════════════════════════
@@ -3448,9 +3511,8 @@ async function loadReading(dateStr, tier) {
         ${{'free':'Daily Snapshot','seeker':'Full Reading','oracle':'Deep Reading','initiate':'Initiate','mystic':'Mystic'}[activeTier]||activeTier}
         &nbsp;·&nbsp; ${{'free':'Instant','seeker':'~2 min','oracle':'~5 min','initiate':'~3 min','mystic':'~4 min'}[activeTier]||''}
       </span>
-      <span style="font-size:12px;color:var(--gold3);cursor:pointer;text-decoration:underline;text-underline-offset:3px"
-        onclick="if(pollingTimer){clearInterval(pollingTimer);pollingTimer=null;}changeModeAndReload()"
-        style="color:var(--gold);font-size:13px;letter-spacing:.08em;text-decoration:underline;text-underline-offset:3px">
+      <span style="font-size:14px;color:var(--gold);cursor:pointer;letter-spacing:.1em;text-decoration:underline;text-underline-offset:3px;font-family:'Cinzel',serif"
+        onclick="if(pollingTimer){clearInterval(pollingTimer);pollingTimer=null;}changeModeAndReload()">
         Change Depth
       </span>
     </div>
@@ -4484,20 +4546,25 @@ function renderSkeletonReading(dateStr, tier) {
   };
   const curH = new Date().getHours();
   const activeW = curH < 12 ? 'morning' : curH < 18 ? 'afternoon' : 'evening';
+  const isModernMode = (typeof cdpLang !== 'undefined' && cdpLang === 'modern') || localStorage.getItem('cdp_lang') === 'modern';
   const energyHtml = ['morning','afternoon','evening'].map(k => {
     const fb = teNums[k];
     const fD = NUM_DATA[fb.n] || {n:'—',m:''};
+    const fN = (typeof NUM_NEURO !== 'undefined' && NUM_NEURO[fb.n]) || {};
+    const guidanceText = isModernMode ? (fN[k]||fD[k]||fD.m||'') : (fD[k]||fD.m||'');
     const isM = [11,22,33,44].includes(fb.n);
     const icons = {morning:'☀︎',afternoon:'◑',evening:'☽'};
     const lbls  = {morning:'Morning',afternoon:'Afternoon',evening:'Evening'};
+    const modeBadge = isModernMode ? '<span style="font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--teal);border:1px solid rgba(29,158,117,0.3);padding:1px 5px;border-radius:2px;margin-left:6px">Neuro</span>' : '';
     return `<div class="energy-card${activeW===k?' active-window':''} tappable"
-      onclick="tapEnergy('${k}',${fb.n},'${(fD.n||'').replace(/'/g,"\'")}','${(fD.m||'').replace(/'/g,"\'").slice(0,80)}…')"
+      onclick="tapEnergy('${k}',${fb.n},'${(fD.n||'').replace(/'/g,"\'")}','${guidanceText.replace(/'/g,"\'").slice(0,80)}…')"
       title="Tap for deeper ${lbls[k]} guidance">
-      <div class="energy-time">${icons[k]} ${lbls[k]}${activeW===k?' <span style="color:var(--teal);font-size:11px">· Now</span>':''}</div>
+      <div class="energy-time">${icons[k]} ${lbls[k]}${activeW===k?' <span style="color:var(--teal);font-size:11px">· Now</span>':''}${modeBadge}</div>
       <div style="font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--text3);margin-bottom:3px">${fb.lbl}</div>
       <div class="energy-num" style="${isM?'color:var(--master)':''}">${fb.n}${isM?'<span style="font-size:14px">★</span>':''}</div>
       <div class="energy-name">${fD.n}</div>
-      <div class="energy-guidance">${fD.m||''}</div>
+      <div class="energy-guidance">${guidanceText}</div>
+      ${isModernMode ? '<div style="font-size:9px;color:rgba(29,158,117,0.5);margin-top:4px;font-style:italic">Neuroscience mode · Barrett · Huberman · Dehaene</div>' : ''}
       <div style="font-size:11px;color:var(--gold3);margin-top:8px;text-align:right">↗ Tap for insight</div>
     </div>`;
   }).join('');
@@ -4544,9 +4611,9 @@ function renderSkeletonReading(dateStr, tier) {
       </div>
       <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
         <span style="font-size:13px;color:var(--text2);font-family:'Cormorant Garamond',serif" id="skElapsedTxt"></span>
-        <span style="font-size:12px;color:var(--gold);cursor:pointer;letter-spacing:.08em;
-          text-decoration:underline;text-underline-offset:2px"
-          onclick="if(pollingTimer){clearInterval(pollingTimer);pollingTimer=null;}changeModeAndReload()">change depth</span>
+        <span style="font-size:14px;color:var(--gold);cursor:pointer;letter-spacing:.1em;
+          text-decoration:underline;text-underline-offset:3px;font-family:'Cinzel',serif"
+          onclick="if(pollingTimer){clearInterval(pollingTimer);pollingTimer=null;}changeModeAndReload()">⟳ Change Depth</span>
       </div>
     </div>
     <div style="height:2px;background:var(--div);overflow:hidden">
@@ -4926,8 +4993,9 @@ function startPolling(jobId, dateStr, tier, startedAt) {
 
 // ── SHAREABLE SYNTHESIS CARD ──────────────────────────────────────
 function openShareCard(btnEl) {
-  const r = currentReading?.reading?.reading || currentReading?.reading;
-  const synth = r?.synthesis || currentReading?.reading?.synthesis;
+  // Handle both nested and flat reading structures
+  const r = currentReading?.reading?.reading || currentReading?.reading || currentReading;
+  const synth = r?.synthesis || currentReading?.synthesis;
   if (!synth) {
     // Try to find the button that was clicked
     const btn = btnEl || document.querySelector('button[onclick*="openShareCard"]');
@@ -5346,7 +5414,59 @@ function fillPhase1Sections(p1) {
     }
   }
 
-  // Week ahead — lite version for Seeker (AI notes + client-side UD/Kin/moon per day)
+  // Week ahead — render immediately from client-side calculation
+  // If AI week notes are present, use them; otherwise render with just the numbers/kin/moon
+  if (!document.getElementById('ai-week')?.classList.contains('week-rendered')) {
+    const _wkDates = [];
+    const _today = new Date(); _today.setHours(12,0,0,0);
+    for (let i = 1; i <= 6; i++) {
+      const d = new Date(_today); d.setDate(d.getDate() + i);
+      _wkDates.push(d.toISOString().slice(0,10));
+    }
+    const _wkEl = document.getElementById('ai-week');
+    if (_wkEl) {
+      let wh = '<div class="r-section"><div class="sec-label">The Week Ahead <span style="font-size:11px;color:var(--text3);font-style:italic;font-weight:400;text-transform:none;letter-spacing:.05em">· tap any day for deeper insight</span></div>';
+      wh += '<div style="display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-top:12px">';
+      _wkDates.forEach(wdate => {
+        const ud = clientUD(wdate);
+        if (!ud || isNaN(ud)) return;
+        const udD = NUM_DATA[ud] || {n:'',k:''};
+        const kinData = clientKin(wdate);
+        const moonData = clientMoon(wdate);
+        const isMaster = [11,22,33,44].includes(ud);
+        const isGAP = kinData.isGAP;
+        const dt = new Date(wdate + 'T12:00:00Z');
+        const dayShort = dt.toLocaleDateString('en-GB',{weekday:'short'});
+        const dayLabel = dt.toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'short'});
+        const borderCol = isGAP ? 'var(--teal)' : isMaster ? 'var(--master)' : 'var(--div)';
+        const udKw = (udD.k||'').split('·')[0].trim();
+        // Look for AI note in p1.week_ahead if available
+        const aiDay = p1.week_ahead ? p1.week_ahead.find(w => w.date === wdate) : null;
+        const noteClean = aiDay?.note ? cleanText(aiDay.note) : '';
+        const safeNote = noteClean.replace(/'/g,"\'").slice(0,150);
+        const safeKin = (kinData.seal||'').replace(/'/g,"\'");
+        wh += '<div class="week-day tappable" onclick="tapWeekDay(\''+dayLabel+'\',\''+safeKin+'\','+ud+',\''+safeNote+'\')"'
+          +' style="border-color:'+borderCol+'">'
+          +'<div style="font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold3);margin-bottom:6px">'+dayShort+'</div>'
+          +'<div style="font-family:\'Cormorant Garamond\',serif;font-size:34px;color:'+(isMaster?'var(--master)':'var(--gold)')+';line-height:1;margin-bottom:3px">'+ud+(isMaster?'<span style="font-size:18px">★</span>':'')+'</div>'
+          +'<div style="font-size:12px;color:var(--text);font-weight:500;margin-bottom:3px;line-height:1.3">'+udD.n+'</div>'
+          +'<div style="font-size:11px;color:var(--text3);margin-bottom:6px;font-style:italic">'+udKw+'</div>'
+          +(isGAP?'<div style="font-size:9px;color:var(--teal);letter-spacing:.15em;text-transform:uppercase;margin-bottom:5px;border:1px solid rgba(129,205,182,.3);border-radius:2px;padding:2px 4px;display:inline-block">★ Portal</div>':'')
+          +'<div style="font-size:11px;color:var(--text3);margin-bottom:4px">'+moonData.emoji+' <span style="font-size:10px">'+moonData.phase+'</span></div>'
+          +'<div style="font-size:10px;color:var(--teal2);margin-bottom:6px;line-height:1.3">'+kinData.seal+'</div>'
+          +(noteClean?'<div style="font-size:12px;color:var(--text2);line-height:1.55;font-style:italic;border-top:1px solid var(--div2);padding-top:7px;margin-top:4px;text-align:left">'+noteClean.slice(0,120)+(noteClean.length>120?'…':'')+'</div>':'')
+          +'<div style="font-size:10px;color:var(--gold3);margin-top:6px;text-align:right;letter-spacing:.08em">↗ ask oracle</div>'
+          +'</div>';
+      });
+      wh += '</div></div>';
+      _wkEl.classList.remove('sk-section');
+      _wkEl.classList.add('week-rendered');
+      _wkEl.style.opacity = '0'; _wkEl.style.transition = 'opacity .5s';
+      _wkEl.innerHTML = wh;
+      requestAnimationFrame(() => requestAnimationFrame(() => { _wkEl.style.opacity = '1'; }));
+    }
+  }
+
   if (p1.week_ahead?.length) {
     const wkEl = document.getElementById('ai-week');
     if (wkEl) {
@@ -5478,7 +5598,13 @@ function injectReadingNav(tier) {
 }
 
 function fillAISections(data, dateStr) {
-  const { reading: r, planets, moon, kin, num, aspects } = data;
+  // Handle both { reading: {...} } and flat structures
+  const r = data?.reading?.reading || data?.reading || data;
+  const planets = data?.planets;
+  const moon = data?.moon;
+  const kin = data?.kin;
+  const num = data?.num;
+  const aspects = data?.aspects;
   const moonSign = planets ? (planets[1]?.sign||'') : '';
 
   function fadeIn(el, html) {
@@ -8088,6 +8214,253 @@ ${bodyHTML}
   <span>Cosmic Daily Planner · cosmicdailyplanner.com</span>
   <span>Generated ${new Date().toLocaleString('en-GB')}</span>
 </div>
+
+<!-- ── HELP DRAWER ─────────────────────────────────────────────── -->
+<div id="helpDrawer" style="display:none;position:fixed;inset:0;z-index:9998;background:rgba(0,0,0,0.7)" onclick="if(event.target===this)closeHelp()">
+  <div style="position:absolute;right:0;top:0;bottom:0;width:min(480px,100vw);background:var(--bg2);overflow-y:auto;padding:28px 24px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;border-bottom:1px solid var(--div);padding-bottom:16px">
+      <span style="font-family:'Cinzel',serif;font-size:13px;letter-spacing:.18em;color:var(--gold)">HOW TO USE CDP</span>
+      <button onclick="closeHelp()" style="background:none;border:none;color:var(--text3);font-size:20px;cursor:pointer">×</button>
+    </div>
+    <div style="font-family:'EB Garamond',serif;font-size:16px;color:var(--text2);line-height:1.7">
+
+      <div style="font-family:'Cinzel',serif;font-size:11px;letter-spacing:.14em;color:var(--teal);margin-bottom:8px">YOUR DAILY FLOW</div>
+      <p style="margin-bottom:16px">Morning: open the Reading tab and begin your day with a Full Reading. Tap any card (Day, Moon, Kin, Life Path) for deeper Oracle insight. Scroll through priorities, shadow work, and the week ahead.</p>
+      <p style="margin-bottom:24px">Midday: the check-in bar slides up from the bottom. Tap "Reading" to re-anchor. Evening: scroll to the reflection section to close the day intentionally.</p>
+
+      <div style="font-family:'Cinzel',serif;font-size:11px;letter-spacing:.14em;color:var(--teal);margin-bottom:8px">THE TABS</div>
+      <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:24px">
+        <div><span style="color:var(--gold)">Reading</span> — your full daily Oracle across all four frameworks</div>
+        <div><span style="color:var(--gold)">Daily Card</span> — a single shareable card with today's synthesis</div>
+        <div><span style="color:var(--gold)">Calendar</span> — monthly view showing Kin, moon phases, GAP portals and master number days. Tap any day to preview its energy and open a reading for it.</div>
+        <div><span style="color:var(--gold)">My Energy</span> — your personal numerology, Life Path, Personal Year, and Chinese astrology profile</div>
+        <div><span style="color:var(--gold)">Compatibility</span> — enter a second person's birth data for a relationship reading across all frameworks</div>
+        <div><span style="color:var(--gold)">Profile</span> — save your birth details, time, location, and personal context</div>
+        <div><span style="color:var(--gold)">History</span> — your past readings, tap any to reopen</div>
+      </div>
+
+      <div style="font-family:'Cinzel',serif;font-size:11px;letter-spacing:.14em;color:var(--teal);margin-bottom:8px">READING DEPTHS</div>
+      <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:24px">
+        <div><span style="color:var(--gold)">✦ Free</span> — Universal Day, moon phase, Kin. Instant.</div>
+        <div><span style="color:var(--gold)">⚡ Full Reading</span> — all four frameworks, priorities, shadow work, week ahead. ~15 seconds.</div>
+        <div><span style="color:var(--gold)">☽ Monthly Arc</span> — full reading plus lunation map and wavespell arc. 2-4 minutes.</div>
+        <div><span style="color:var(--gold)">◉ Yearly Reading</span> — natal chart integration, yearly arc, transit themes. 3-5 minutes.</div>
+        <div><span style="color:var(--gold)">◈ Oracle Deep Dive</span> — maximum depth, all frameworks, Hellenistic lots. 5-10 minutes.</div>
+      </div>
+
+      <div style="font-family:'Cinzel',serif;font-size:11px;letter-spacing:.14em;color:var(--teal);margin-bottom:8px">SPECIAL DAYS</div>
+      <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:24px">
+        <div><span style="color:var(--gold)">★ GAP Portal</span> — Galactic Activation Portal. The veil is thinner. Watch for synchronicities.</div>
+        <div><span style="color:var(--gold)">⚠ Black Moon</span> — two days before the new moon. Do not initiate. Complete and release.</div>
+        <div><span style="color:var(--gold)">✨ Shiva Moon</span> — two days after the new moon. Plant intentions. Generative energy.</div>
+        <div><span style="color:var(--gold)">11, 22, 33, 44</span> — master number days. Heightened frequency. Tap the day number for its meaning.</div>
+      </div>
+
+      <div style="font-family:'Cinzel',serif;font-size:11px;letter-spacing:.14em;color:var(--teal);margin-bottom:8px">READING LANGUAGE</div>
+      <p style="margin-bottom:24px">On the entry screen, choose <em>Ancient</em> for the traditional cosmic language of archetypes and energetic fields, or <em>Modern</em> for the same insights translated into neuroscience: salience networks, circadian rhythms, interoception and neuroplasticity.</p>
+
+      <div style="font-family:'Cinzel',serif;font-size:11px;letter-spacing:.14em;color:var(--teal);margin-bottom:8px">PROFILES</div>
+      <p style="margin-bottom:24px">Use the Profiles button (☿ in the top bar) to save multiple people — family, friends, colleagues. Select a profile before a reading to receive it for that person. Use Compatibility to read two profiles together.</p>
+
+      <div style="font-family:'Cinzel',serif;font-size:11px;letter-spacing:.14em;color:var(--teal);margin-bottom:8px">GETTING MORE FROM THE ORACLE</div>
+      <p style="margin-bottom:8px">Tap any section heading or card to ask the Oracle a follow-up question. Pre-built chips appear for common questions, or type your own.</p>
+      <p style="margin-bottom:24px">The more personal context you add in your profile (what you are building, who matters to you, what you are navigating), the more specific the Oracle becomes. It speaks to your actual life, not a generic one.</p>
+
+    </div>
+  </div>
+</div>
+
+<!-- ── PROFILE LIBRARY ──────────────────────────────────────────── -->
+<div id="profileLibrary" style="display:none;position:fixed;inset:0;z-index:9997;background:rgba(0,0,0,0.7)" onclick="if(event.target===this)closeProfileLibrary()">
+  <div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(560px,95vw);max-height:85vh;background:var(--bg2);overflow-y:auto;padding:28px 24px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+      <span style="font-family:'Cinzel',serif;font-size:12px;letter-spacing:.18em;color:var(--gold)">PROFILES</span>
+      <button onclick="closeProfileLibrary()" style="background:none;border:none;color:var(--text3);font-size:20px;cursor:pointer">×</button>
+    </div>
+    <div id="profileLibraryList" style="display:flex;flex-direction:column;gap:8px;margin-bottom:20px"></div>
+    <button onclick="showAddProfile()" style="width:100%;background:none;border:1px solid var(--div);color:var(--text2);font-family:'Cinzel',serif;font-size:11px;letter-spacing:.14em;padding:12px;cursor:pointer;transition:all .2s"
+      onmouseover="this.style.borderColor='var(--gold)';this.style.color='var(--gold)'"
+      onmouseout="this.style.borderColor='var(--div)';this.style.color='var(--text2)'">
+      + ADD PERSON
+    </button>
+    <div id="addProfileForm" style="display:none;margin-top:16px;padding:16px;background:var(--bg3);border:1px solid var(--div)">
+      <div style="font-family:'Cinzel',serif;font-size:11px;letter-spacing:.14em;color:var(--teal);margin-bottom:14px">NEW PROFILE</div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <input id="npName" class="entry-input" placeholder="Full name as given at birth" style="padding:10px 14px;font-size:16px">
+        <input id="npNick" class="entry-input" placeholder="Nickname (optional — how the Oracle addresses them)" style="padding:10px 14px;font-size:16px">
+        <div style="display:flex;gap:8px">
+          <select id="npDay" class="entry-input" style="flex:1;padding:10px 8px">
+            <option value="">Day</option>
+            <option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option><option value="15">15</option><option value="16">16</option><option value="17">17</option><option value="18">18</option><option value="19">19</option><option value="20">20</option><option value="21">21</option><option value="22">22</option><option value="23">23</option><option value="24">24</option><option value="25">25</option><option value="26">26</option><option value="27">27</option><option value="28">28</option><option value="29">29</option><option value="30">30</option><option value="31">31</option>
+          </select>
+          <select id="npMonth" class="entry-input" style="flex:2;padding:10px 8px">
+            <option value="">Month</option>
+            <option value="1">January</option><option value="2">February</option>
+            <option value="3">March</option><option value="4">April</option>
+            <option value="5">May</option><option value="6">June</option>
+            <option value="7">July</option><option value="8">August</option>
+            <option value="9">September</option><option value="10">October</option>
+            <option value="11">November</option><option value="12">December</option>
+          </select>
+          <select id="npYear" class="entry-input" style="flex:2;padding:10px 8px">
+            <option value="">Year</option>
+            <option value="2015">2015</option><option value="2014">2014</option><option value="2013">2013</option><option value="2012">2012</option><option value="2011">2011</option><option value="2010">2010</option><option value="2009">2009</option><option value="2008">2008</option><option value="2007">2007</option><option value="2006">2006</option><option value="2005">2005</option><option value="2004">2004</option><option value="2003">2003</option><option value="2002">2002</option><option value="2001">2001</option><option value="2000">2000</option><option value="1999">1999</option><option value="1998">1998</option><option value="1997">1997</option><option value="1996">1996</option><option value="1995">1995</option><option value="1994">1994</option><option value="1993">1993</option><option value="1992">1992</option><option value="1991">1991</option><option value="1990">1990</option><option value="1989">1989</option><option value="1988">1988</option><option value="1987">1987</option><option value="1986">1986</option><option value="1985">1985</option><option value="1984">1984</option><option value="1983">1983</option><option value="1982">1982</option><option value="1981">1981</option><option value="1980">1980</option><option value="1979">1979</option><option value="1978">1978</option><option value="1977">1977</option><option value="1976">1976</option><option value="1975">1975</option><option value="1974">1974</option><option value="1973">1973</option><option value="1972">1972</option><option value="1971">1971</option><option value="1970">1970</option><option value="1969">1969</option><option value="1968">1968</option><option value="1967">1967</option><option value="1966">1966</option><option value="1965">1965</option><option value="1964">1964</option><option value="1963">1963</option><option value="1962">1962</option><option value="1961">1961</option><option value="1960">1960</option><option value="1959">1959</option><option value="1958">1958</option><option value="1957">1957</option><option value="1956">1956</option><option value="1955">1955</option><option value="1954">1954</option><option value="1953">1953</option><option value="1952">1952</option><option value="1951">1951</option><option value="1950">1950</option><option value="1949">1949</option><option value="1948">1948</option><option value="1947">1947</option><option value="1946">1946</option><option value="1945">1945</option><option value="1944">1944</option><option value="1943">1943</option><option value="1942">1942</option><option value="1941">1941</option><option value="1940">1940</option><option value="1939">1939</option><option value="1938">1938</option><option value="1937">1937</option><option value="1936">1936</option><option value="1935">1935</option><option value="1934">1934</option><option value="1933">1933</option><option value="1932">1932</option><option value="1931">1931</option><option value="1930">1930</option><option value="1929">1929</option><option value="1928">1928</option><option value="1927">1927</option><option value="1926">1926</option><option value="1925">1925</option><option value="1924">1924</option><option value="1923">1923</option><option value="1922">1922</option><option value="1921">1921</option><option value="1920">1920</option>
+          </select>
+        </div>
+        <input id="npRelationship" class="entry-input" placeholder="Relationship to you (e.g. daughter, wife, colleague)" style="padding:10px 14px;font-size:16px">
+        <button onclick="saveNewProfile()" style="background:var(--gold);color:var(--navy);border:none;font-family:'Cinzel',serif;font-size:11px;letter-spacing:.14em;padding:12px;cursor:pointer">
+          SAVE PROFILE
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── PROFILE LIBRARY ───────────────────────────────────────────────
+var PROFILES_KEY = 'cdp_profiles_v1';
+
+function getProfiles() {
+  try { return JSON.parse(localStorage.getItem(PROFILES_KEY) || '[]'); } catch(e) { return []; }
+}
+function saveProfiles(profiles) {
+  localStorage.setItem(PROFILES_KEY, JSON.stringify(profiles));
+}
+
+function openProfileLibrary() {
+  renderProfileList();
+  document.getElementById('profileLibrary').style.display = 'flex';
+  document.getElementById('profileLibrary').style.alignItems = 'center';
+  document.getElementById('profileLibrary').style.justifyContent = 'center';
+}
+function closeProfileLibrary() {
+  document.getElementById('profileLibrary').style.display = 'none';
+  document.getElementById('addProfileForm').style.display = 'none';
+}
+function showAddProfile() {
+  const f = document.getElementById('addProfileForm');
+  f.style.display = f.style.display === 'none' ? 'block' : 'none';
+}
+
+function renderProfileList() {
+  const profiles = getProfiles();
+  const list = document.getElementById('profileLibraryList');
+  const activeId = localStorage.getItem('cdp_active_profile_id');
+  
+  // Always show current user profile first
+  const currentProf = JSON.parse(localStorage.getItem('cdp_profile') || '{}');
+  const meCard = buildProfileCard({
+    id: 'me',
+    name: currentProf.name || 'You',
+    nickname: currentProf.nickname || '',
+    birthDay: currentProf.birthDay, birthMonth: currentProf.birthMonth, birthYear: currentProf.birthYear,
+    relationship: 'My profile'
+  }, activeId === 'me' || !activeId);
+  
+  list.innerHTML = meCard + profiles.map(p => buildProfileCard(p, activeId === p.id)).join('');
+}
+
+function buildProfileCard(p, isActive) {
+  const lp = p.birthDay && p.birthYear ? computeLP(p.birthDay, p.birthMonth, p.birthYear) : null;
+  const dob = p.birthDay ? p.birthDay+'/'+p.birthMonth+'/'+p.birthYear : 'No DOB set';
+  return '<div style="display:flex;align-items:center;gap:12px;padding:12px 14px;border:1px solid '+(isActive?'var(--gold)':'var(--div)')+';background:'+(isActive?'rgba(201,168,76,0.06)':'var(--bg3)')+';cursor:pointer;transition:all .2s" onclick="selectProfile(''+p.id+'')">'
+    +'<div style="width:36px;height:36px;border-radius:50%;background:'+(isActive?'var(--gold)':'var(--div)')+';display:flex;align-items:center;justify-content:center;font-family:\'Cormorant Garamond\',serif;font-size:18px;font-weight:500;color:'+(isActive?'var(--navy)':'var(--text2)')+'">'+((p.name||'?').slice(0,1))+'</div>'
+    +'<div style="flex:1">'
+    +'<div style="font-family:\'Cormorant Garamond\',serif;font-size:18px;font-weight:500;color:'+(isActive?'var(--gold)':'var(--text)')+'">'+p.name+(p.nickname&&p.nickname!==p.name?' · '+p.nickname:'')+'</div>'
+    +'<div style="font-size:13px;color:var(--text3)">'+(p.relationship?p.relationship+' · ':'')+dob+(lp?' · LP '+lp:'')+'</div>'
+    +'</div>'
+    +(isActive?'<span style="font-family:\'Cinzel\',serif;font-size:10px;letter-spacing:.1em;color:var(--gold)">ACTIVE</span>':'')
+    +(p.id!=='me'?'<button onclick="event.stopPropagation();deleteProfile(''+p.id+'')" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:16px;padding:4px 8px">×</button>':'')
+    +'</div>';
+}
+
+function selectProfile(id) {
+  localStorage.setItem('cdp_active_profile_id', id);
+  if (id === 'me') {
+    // Restore own profile
+    profile = JSON.parse(localStorage.getItem('cdp_profile') || '{}');
+  } else {
+    const profiles = getProfiles();
+    const p = profiles.find(x => x.id === id);
+    if (p) {
+      // Set as active profile for reading
+      profile = {
+        name: p.name,
+        nickname: p.nickname || p.name.split(' ')[0],
+        birthDay: p.birthDay, birthMonth: p.birthMonth, birthYear: p.birthYear,
+        birthLocation: p.birthLocation || '',
+        relationship: p.relationship || ''
+      };
+    }
+  }
+  renderProfileList();
+  // Update display
+  updateProfileIndicator();
+  closeProfileLibrary();
+  // Reload reading for new profile
+  if (typeof loadReading === 'function') loadReading(TODAY, currentTier || 'quick');
+}
+
+function updateProfileIndicator() {
+  const id = localStorage.getItem('cdp_active_profile_id');
+  const btn = document.getElementById('profileLibBtn');
+  if (!btn) return;
+  if (id && id !== 'me') {
+    const profiles = getProfiles();
+    const p = profiles.find(x => x.id === id);
+    if (p) btn.textContent = (p.name||'?').slice(0,1);
+  } else {
+    btn.textContent = '☿';
+  }
+}
+
+function saveNewProfile() {
+  const name = document.getElementById('npName').value.trim();
+  if (!name) { alert('Please enter a name.'); return; }
+  const profiles = getProfiles();
+  const newP = {
+    id: 'p_' + Date.now(),
+    name: name,
+    nickname: document.getElementById('npNick').value.trim() || name.split(' ')[0],
+    birthDay: parseInt(document.getElementById('npDay').value) || null,
+    birthMonth: parseInt(document.getElementById('npMonth').value) || null,
+    birthYear: parseInt(document.getElementById('npYear').value) || null,
+    relationship: document.getElementById('npRelationship').value.trim()
+  };
+  profiles.push(newP);
+  saveProfiles(profiles);
+  // Clear form
+  ['npName','npNick','npRelationship'].forEach(id => document.getElementById(id).value = '');
+  ['npDay','npMonth','npYear'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('addProfileForm').style.display = 'none';
+  renderProfileList();
+}
+
+function deleteProfile(id) {
+  if (!confirm('Remove this profile?')) return;
+  const profiles = getProfiles().filter(p => p.id !== id);
+  saveProfiles(profiles);
+  // If was active, switch back to me
+  if (localStorage.getItem('cdp_active_profile_id') === id) {
+    localStorage.setItem('cdp_active_profile_id', 'me');
+    profile = JSON.parse(localStorage.getItem('cdp_profile') || '{}');
+  }
+  renderProfileList();
+}
+
+function computeLP(d, m, y) {
+  try {
+    let s = parseInt(d)+parseInt(m)+String(y).split('').reduce((a,b)=>a+parseInt(b),0);
+    while(s>9&&![11,22,33,44].includes(s)){s=String(s).split('').reduce((a,b)=>a+parseInt(b),0);}
+    return s;
+  } catch(e){ return null; }
+}
+
+// Init profile indicator on load
+window.addEventListener('load', function() {
+  updateProfileIndicator();
+});
+</script>
 </body>
 </html>`);
   w.document.close();
@@ -9410,6 +9783,261 @@ function showModeSelector() { showEntryScreen(cdpEntryMode); }
     }
   } catch(e){ console.warn('CDP v8 init:', e); }
 })();
+</script>
+
+<!-- ── HELP DRAWER ─────────────────────────────────────────────── -->
+<div id="helpDrawer" style="display:none;position:fixed;inset:0;z-index:9998;background:rgba(0,0,0,0.7)" onclick="if(event.target===this)closeHelp()">
+  <div style="position:absolute;right:0;top:0;bottom:0;width:min(480px,100vw);background:var(--bg2);overflow-y:auto;padding:28px 24px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;border-bottom:1px solid var(--div);padding-bottom:16px">
+      <span style="font-family:'Cinzel',serif;font-size:13px;letter-spacing:.18em;color:var(--gold)">HOW TO USE CDP</span>
+      <button onclick="closeHelp()" style="background:none;border:none;color:var(--text3);font-size:20px;cursor:pointer">×</button>
+    </div>
+    <div style="font-family:'EB Garamond',serif;font-size:16px;color:var(--text2);line-height:1.7">
+
+      <div style="font-family:'Cinzel',serif;font-size:11px;letter-spacing:.14em;color:var(--teal);margin-bottom:8px">YOUR DAILY FLOW</div>
+      <p style="margin-bottom:16px">Morning: open the Reading tab and begin your day with a Full Reading. Tap any card (Day, Moon, Kin, Life Path) for deeper Oracle insight. Scroll through priorities, shadow work, and the week ahead.</p>
+      <p style="margin-bottom:24px">Midday: the check-in bar slides up from the bottom. Tap "Reading" to re-anchor. Evening: scroll to the reflection section to close the day intentionally.</p>
+
+      <div style="font-family:'Cinzel',serif;font-size:11px;letter-spacing:.14em;color:var(--teal);margin-bottom:8px">THE TABS</div>
+      <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:24px">
+        <div><span style="color:var(--gold)">Reading</span> — your full daily Oracle across all four frameworks</div>
+        <div><span style="color:var(--gold)">Daily Card</span> — a single shareable card with today's synthesis</div>
+        <div><span style="color:var(--gold)">Calendar</span> — monthly view showing Kin, moon phases, GAP portals and master number days. Tap any day to preview its energy and open a reading for it.</div>
+        <div><span style="color:var(--gold)">My Energy</span> — your personal numerology, Life Path, Personal Year, and Chinese astrology profile</div>
+        <div><span style="color:var(--gold)">Compatibility</span> — enter a second person's birth data for a relationship reading across all frameworks</div>
+        <div><span style="color:var(--gold)">Profile</span> — save your birth details, time, location, and personal context</div>
+        <div><span style="color:var(--gold)">History</span> — your past readings, tap any to reopen</div>
+      </div>
+
+      <div style="font-family:'Cinzel',serif;font-size:11px;letter-spacing:.14em;color:var(--teal);margin-bottom:8px">READING DEPTHS</div>
+      <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:24px">
+        <div><span style="color:var(--gold)">✦ Free</span> — Universal Day, moon phase, Kin. Instant.</div>
+        <div><span style="color:var(--gold)">⚡ Full Reading</span> — all four frameworks, priorities, shadow work, week ahead. ~15 seconds.</div>
+        <div><span style="color:var(--gold)">☽ Monthly Arc</span> — full reading plus lunation map and wavespell arc. 2-4 minutes.</div>
+        <div><span style="color:var(--gold)">◉ Yearly Reading</span> — natal chart integration, yearly arc, transit themes. 3-5 minutes.</div>
+        <div><span style="color:var(--gold)">◈ Oracle Deep Dive</span> — maximum depth, all frameworks, Hellenistic lots. 5-10 minutes.</div>
+      </div>
+
+      <div style="font-family:'Cinzel',serif;font-size:11px;letter-spacing:.14em;color:var(--teal);margin-bottom:8px">SPECIAL DAYS</div>
+      <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:24px">
+        <div><span style="color:var(--gold)">★ GAP Portal</span> — Galactic Activation Portal. The veil is thinner. Watch for synchronicities.</div>
+        <div><span style="color:var(--gold)">⚠ Black Moon</span> — two days before the new moon. Do not initiate. Complete and release.</div>
+        <div><span style="color:var(--gold)">✨ Shiva Moon</span> — two days after the new moon. Plant intentions. Generative energy.</div>
+        <div><span style="color:var(--gold)">11, 22, 33, 44</span> — master number days. Heightened frequency. Tap the day number for its meaning.</div>
+      </div>
+
+      <div style="font-family:'Cinzel',serif;font-size:11px;letter-spacing:.14em;color:var(--teal);margin-bottom:8px">READING LANGUAGE</div>
+      <p style="margin-bottom:24px">On the entry screen, choose <em>Ancient</em> for the traditional cosmic language of archetypes and energetic fields, or <em>Modern</em> for the same insights translated into neuroscience: salience networks, circadian rhythms, interoception and neuroplasticity.</p>
+
+      <div style="font-family:'Cinzel',serif;font-size:11px;letter-spacing:.14em;color:var(--teal);margin-bottom:8px">PROFILES</div>
+      <p style="margin-bottom:24px">Use the Profiles button (☿ in the top bar) to save multiple people — family, friends, colleagues. Select a profile before a reading to receive it for that person. Use Compatibility to read two profiles together.</p>
+
+      <div style="font-family:'Cinzel',serif;font-size:11px;letter-spacing:.14em;color:var(--teal);margin-bottom:8px">GETTING MORE FROM THE ORACLE</div>
+      <p style="margin-bottom:8px">Tap any section heading or card to ask the Oracle a follow-up question. Pre-built chips appear for common questions, or type your own.</p>
+      <p style="margin-bottom:24px">The more personal context you add in your profile (what you are building, who matters to you, what you are navigating), the more specific the Oracle becomes. It speaks to your actual life, not a generic one.</p>
+
+    </div>
+  </div>
+</div>
+
+<!-- ── PROFILE LIBRARY ──────────────────────────────────────────── -->
+<div id="profileLibrary" style="display:none;position:fixed;inset:0;z-index:9997;background:rgba(0,0,0,0.7)" onclick="if(event.target===this)closeProfileLibrary()">
+  <div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(560px,95vw);max-height:85vh;background:var(--bg2);overflow-y:auto;padding:28px 24px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+      <span style="font-family:'Cinzel',serif;font-size:12px;letter-spacing:.18em;color:var(--gold)">PROFILES</span>
+      <button onclick="closeProfileLibrary()" style="background:none;border:none;color:var(--text3);font-size:20px;cursor:pointer">×</button>
+    </div>
+    <div id="profileLibraryList" style="display:flex;flex-direction:column;gap:8px;margin-bottom:20px"></div>
+    <button onclick="showAddProfile()" style="width:100%;background:none;border:1px solid var(--div);color:var(--text2);font-family:'Cinzel',serif;font-size:11px;letter-spacing:.14em;padding:12px;cursor:pointer;transition:all .2s"
+      onmouseover="this.style.borderColor='var(--gold)';this.style.color='var(--gold)'"
+      onmouseout="this.style.borderColor='var(--div)';this.style.color='var(--text2)'">
+      + ADD PERSON
+    </button>
+    <div id="addProfileForm" style="display:none;margin-top:16px;padding:16px;background:var(--bg3);border:1px solid var(--div)">
+      <div style="font-family:'Cinzel',serif;font-size:11px;letter-spacing:.14em;color:var(--teal);margin-bottom:14px">NEW PROFILE</div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <input id="npName" class="entry-input" placeholder="Full name as given at birth" style="padding:10px 14px;font-size:16px">
+        <input id="npNick" class="entry-input" placeholder="Nickname (optional — how the Oracle addresses them)" style="padding:10px 14px;font-size:16px">
+        <div style="display:flex;gap:8px">
+          <select id="npDay" class="entry-input" style="flex:1;padding:10px 8px">
+            <option value="">Day</option>
+            <option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option><option value="15">15</option><option value="16">16</option><option value="17">17</option><option value="18">18</option><option value="19">19</option><option value="20">20</option><option value="21">21</option><option value="22">22</option><option value="23">23</option><option value="24">24</option><option value="25">25</option><option value="26">26</option><option value="27">27</option><option value="28">28</option><option value="29">29</option><option value="30">30</option><option value="31">31</option>
+          </select>
+          <select id="npMonth" class="entry-input" style="flex:2;padding:10px 8px">
+            <option value="">Month</option>
+            <option value="1">January</option><option value="2">February</option>
+            <option value="3">March</option><option value="4">April</option>
+            <option value="5">May</option><option value="6">June</option>
+            <option value="7">July</option><option value="8">August</option>
+            <option value="9">September</option><option value="10">October</option>
+            <option value="11">November</option><option value="12">December</option>
+          </select>
+          <select id="npYear" class="entry-input" style="flex:2;padding:10px 8px">
+            <option value="">Year</option>
+            <option value="2015">2015</option><option value="2014">2014</option><option value="2013">2013</option><option value="2012">2012</option><option value="2011">2011</option><option value="2010">2010</option><option value="2009">2009</option><option value="2008">2008</option><option value="2007">2007</option><option value="2006">2006</option><option value="2005">2005</option><option value="2004">2004</option><option value="2003">2003</option><option value="2002">2002</option><option value="2001">2001</option><option value="2000">2000</option><option value="1999">1999</option><option value="1998">1998</option><option value="1997">1997</option><option value="1996">1996</option><option value="1995">1995</option><option value="1994">1994</option><option value="1993">1993</option><option value="1992">1992</option><option value="1991">1991</option><option value="1990">1990</option><option value="1989">1989</option><option value="1988">1988</option><option value="1987">1987</option><option value="1986">1986</option><option value="1985">1985</option><option value="1984">1984</option><option value="1983">1983</option><option value="1982">1982</option><option value="1981">1981</option><option value="1980">1980</option><option value="1979">1979</option><option value="1978">1978</option><option value="1977">1977</option><option value="1976">1976</option><option value="1975">1975</option><option value="1974">1974</option><option value="1973">1973</option><option value="1972">1972</option><option value="1971">1971</option><option value="1970">1970</option><option value="1969">1969</option><option value="1968">1968</option><option value="1967">1967</option><option value="1966">1966</option><option value="1965">1965</option><option value="1964">1964</option><option value="1963">1963</option><option value="1962">1962</option><option value="1961">1961</option><option value="1960">1960</option><option value="1959">1959</option><option value="1958">1958</option><option value="1957">1957</option><option value="1956">1956</option><option value="1955">1955</option><option value="1954">1954</option><option value="1953">1953</option><option value="1952">1952</option><option value="1951">1951</option><option value="1950">1950</option><option value="1949">1949</option><option value="1948">1948</option><option value="1947">1947</option><option value="1946">1946</option><option value="1945">1945</option><option value="1944">1944</option><option value="1943">1943</option><option value="1942">1942</option><option value="1941">1941</option><option value="1940">1940</option><option value="1939">1939</option><option value="1938">1938</option><option value="1937">1937</option><option value="1936">1936</option><option value="1935">1935</option><option value="1934">1934</option><option value="1933">1933</option><option value="1932">1932</option><option value="1931">1931</option><option value="1930">1930</option><option value="1929">1929</option><option value="1928">1928</option><option value="1927">1927</option><option value="1926">1926</option><option value="1925">1925</option><option value="1924">1924</option><option value="1923">1923</option><option value="1922">1922</option><option value="1921">1921</option><option value="1920">1920</option>
+          </select>
+        </div>
+        <input id="npRelationship" class="entry-input" placeholder="Relationship to you (e.g. daughter, wife, colleague)" style="padding:10px 14px;font-size:16px">
+        <button onclick="saveNewProfile()" style="background:var(--gold);color:var(--navy);border:none;font-family:'Cinzel',serif;font-size:11px;letter-spacing:.14em;padding:12px;cursor:pointer">
+          SAVE PROFILE
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── HELP ──────────────────────────────────────────────────────────
+function openHelp() {
+  document.getElementById('helpDrawer').style.display = 'block';
+}
+function closeHelp() {
+  document.getElementById('helpDrawer').style.display = 'none';
+}
+
+// ── PROFILE LIBRARY ───────────────────────────────────────────────
+var PROFILES_KEY = 'cdp_profiles_v1';
+
+function getProfiles() {
+  try { return JSON.parse(localStorage.getItem(PROFILES_KEY) || '[]'); } catch(e) { return []; }
+}
+function saveProfiles(profiles) {
+  localStorage.setItem(PROFILES_KEY, JSON.stringify(profiles));
+}
+
+function openProfileLibrary() {
+  renderProfileList();
+  document.getElementById('profileLibrary').style.display = 'flex';
+  document.getElementById('profileLibrary').style.alignItems = 'center';
+  document.getElementById('profileLibrary').style.justifyContent = 'center';
+}
+function closeProfileLibrary() {
+  document.getElementById('profileLibrary').style.display = 'none';
+  document.getElementById('addProfileForm').style.display = 'none';
+}
+function showAddProfile() {
+  const f = document.getElementById('addProfileForm');
+  f.style.display = f.style.display === 'none' ? 'block' : 'none';
+}
+
+function renderProfileList() {
+  const profiles = getProfiles();
+  const list = document.getElementById('profileLibraryList');
+  const activeId = localStorage.getItem('cdp_active_profile_id');
+  
+  // Always show current user profile first
+  const currentProf = JSON.parse(localStorage.getItem('cdp_profile') || '{}');
+  const meCard = buildProfileCard({
+    id: 'me',
+    name: currentProf.name || 'You',
+    nickname: currentProf.nickname || '',
+    birthDay: currentProf.birthDay, birthMonth: currentProf.birthMonth, birthYear: currentProf.birthYear,
+    relationship: 'My profile'
+  }, activeId === 'me' || !activeId);
+  
+  list.innerHTML = meCard + profiles.map(p => buildProfileCard(p, activeId === p.id)).join('');
+}
+
+function buildProfileCard(p, isActive) {
+  const lp = p.birthDay && p.birthYear ? computeLP(p.birthDay, p.birthMonth, p.birthYear) : null;
+  const dob = p.birthDay ? p.birthDay+'/'+p.birthMonth+'/'+p.birthYear : 'No DOB set';
+  return '<div style="display:flex;align-items:center;gap:12px;padding:12px 14px;border:1px solid '+(isActive?'var(--gold)':'var(--div)')+';background:'+(isActive?'rgba(201,168,76,0.06)':'var(--bg3)')+';cursor:pointer;transition:all .2s" onclick="selectProfile(''+p.id+'')">'
+    +'<div style="width:36px;height:36px;border-radius:50%;background:'+(isActive?'var(--gold)':'var(--div)')+';display:flex;align-items:center;justify-content:center;font-family:\'Cormorant Garamond\',serif;font-size:18px;font-weight:500;color:'+(isActive?'var(--navy)':'var(--text2)')+'">'+((p.name||'?').slice(0,1))+'</div>'
+    +'<div style="flex:1">'
+    +'<div style="font-family:\'Cormorant Garamond\',serif;font-size:18px;font-weight:500;color:'+(isActive?'var(--gold)':'var(--text)')+'">'+p.name+(p.nickname&&p.nickname!==p.name?' · '+p.nickname:'')+'</div>'
+    +'<div style="font-size:13px;color:var(--text3)">'+(p.relationship?p.relationship+' · ':'')+dob+(lp?' · LP '+lp:'')+'</div>'
+    +'</div>'
+    +(isActive?'<span style="font-family:\'Cinzel\',serif;font-size:10px;letter-spacing:.1em;color:var(--gold)">ACTIVE</span>':'')
+    +(p.id!=='me'?'<button onclick="event.stopPropagation();deleteProfile(''+p.id+'')" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:16px;padding:4px 8px">×</button>':'')
+    +'</div>';
+}
+
+function selectProfile(id) {
+  localStorage.setItem('cdp_active_profile_id', id);
+  if (id === 'me') {
+    // Restore own profile
+    profile = JSON.parse(localStorage.getItem('cdp_profile') || '{}');
+  } else {
+    const profiles = getProfiles();
+    const p = profiles.find(x => x.id === id);
+    if (p) {
+      // Set as active profile for reading
+      profile = {
+        name: p.name,
+        nickname: p.nickname || p.name.split(' ')[0],
+        birthDay: p.birthDay, birthMonth: p.birthMonth, birthYear: p.birthYear,
+        birthLocation: p.birthLocation || '',
+        relationship: p.relationship || ''
+      };
+    }
+  }
+  renderProfileList();
+  // Update display
+  updateProfileIndicator();
+  closeProfileLibrary();
+  // Reload reading for new profile
+  if (typeof loadReading === 'function') loadReading(TODAY, currentTier || 'quick');
+}
+
+function updateProfileIndicator() {
+  const id = localStorage.getItem('cdp_active_profile_id');
+  const btn = document.getElementById('profileLibBtn');
+  if (!btn) return;
+  if (id && id !== 'me') {
+    const profiles = getProfiles();
+    const p = profiles.find(x => x.id === id);
+    if (p) btn.textContent = (p.name||'?').slice(0,1);
+  } else {
+    btn.textContent = '☿';
+  }
+}
+
+function saveNewProfile() {
+  const name = document.getElementById('npName').value.trim();
+  if (!name) { alert('Please enter a name.'); return; }
+  const profiles = getProfiles();
+  const newP = {
+    id: 'p_' + Date.now(),
+    name: name,
+    nickname: document.getElementById('npNick').value.trim() || name.split(' ')[0],
+    birthDay: parseInt(document.getElementById('npDay').value) || null,
+    birthMonth: parseInt(document.getElementById('npMonth').value) || null,
+    birthYear: parseInt(document.getElementById('npYear').value) || null,
+    relationship: document.getElementById('npRelationship').value.trim()
+  };
+  profiles.push(newP);
+  saveProfiles(profiles);
+  // Clear form
+  ['npName','npNick','npRelationship'].forEach(id => document.getElementById(id).value = '');
+  ['npDay','npMonth','npYear'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('addProfileForm').style.display = 'none';
+  renderProfileList();
+}
+
+function deleteProfile(id) {
+  if (!confirm('Remove this profile?')) return;
+  const profiles = getProfiles().filter(p => p.id !== id);
+  saveProfiles(profiles);
+  // If was active, switch back to me
+  if (localStorage.getItem('cdp_active_profile_id') === id) {
+    localStorage.setItem('cdp_active_profile_id', 'me');
+    profile = JSON.parse(localStorage.getItem('cdp_profile') || '{}');
+  }
+  renderProfileList();
+}
+
+function computeLP(d, m, y) {
+  try {
+    let s = parseInt(d)+parseInt(m)+String(y).split('').reduce((a,b)=>a+parseInt(b),0);
+    while(s>9&&![11,22,33,44].includes(s)){s=String(s).split('').reduce((a,b)=>a+parseInt(b),0);}
+    return s;
+  } catch(e){ return null; }
+}
+
+// Init profile indicator on load
+window.addEventListener('load', function() {
+  updateProfileIndicator();
+});
 </script>
 </body>
 </html>

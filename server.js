@@ -1817,6 +1817,17 @@ setInterval(() => {
   if (cleaned > 0) console.log(`Cleaned ${cleaned} stale jobs`);
 }, 30 * 60 * 1000); // every 30 minutes
 
+// ── SPA ROUTING ─────────────────────────────────────────────────────────────
+// /app → Oracle app (app.html)
+app.get('/app', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'app.html'));
+});
+// Catch-all → landing page (index.html)
+// Must come AFTER all API routes
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`CDP v9 — port ${PORT}`);
