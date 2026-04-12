@@ -9658,54 +9658,66 @@ document.addEventListener('DOMContentLoaded', ()=>{
   }
 
   window.gateSkip = function() {
-    setAdmitted();
-    admit(true);
+    try { setAdmitted(); } catch(e) {}
+    try { admit(true); } catch(e) {
+      var g = document.getElementById('cdp-gate');
+      if (g) g.style.display = 'none';
+    }
   };
 
   window.gateEnter = async function() {
-    var btn  = document.getElementById('g-btn');
-    var msg  = document.getElementById('g-msg');
-    var name  = (document.getElementById('g-name').value || '').trim();
-    var email = (document.getElementById('g-email').value || '').trim();
-    var code  = (document.getElementById('g-code').value || '').trim().toUpperCase();
-    var wantsUpdates = document.getElementById('g-updates').checked;
+    // Wrap everything — gate MUST always open regardless of any error
+    try {
+      var btn  = document.getElementById('g-btn');
+      var msg  = document.getElementById('g-msg');
+      var name  = (document.getElementById('g-name') ? document.getElementById('g-name').value : '').trim();
+      var email = (document.getElementById('g-email') ? document.getElementById('g-email').value : '').trim();
+      var code  = (document.getElementById('g-code') ? document.getElementById('g-code').value : '').trim().toUpperCase();
+      var wantsUpdates = document.getElementById('g-updates') ? document.getElementById('g-updates').checked : true;
 
-    if (btn) { btn.disabled = true; btn.textContent = 'Opening…'; }
-    if (msg) { msg.textContent = ''; }
+      if (btn) { btn.disabled = true; btn.textContent = 'Opening…'; }
+      if (msg) { msg.textContent = ''; }
 
-    // Save to Supabase if email provided
-    if (email && typeof sb !== 'undefined' && sb) {
-      try {
-        await sb.from('waitlist').upsert({
-          email: email,
-          name: name || null,
-          invite_code: code || 'none',
-          wants_updates: wantsUpdates,
-          beta_consent: document.getElementById('g-beta-consent').checked,
-          source: 'gate-v2',
-          created_at: new Date().toISOString()
-        }, { onConflict: 'email' });
-      } catch(e) {
-        console.warn('Gate save:', e.message);
+      // Save to Supabase — with hard 3s timeout so it never blocks
+      if (email) {
+        try {
+          var saveData = { email: email, source: 'gate-v2', created_at: new Date().toISOString() };
+          if (name) saveData.name = name;
+          if (code) saveData.invite_code = code;
+          saveData.wants_updates = wantsUpdates;
+          saveData.beta_consent = document.getElementById('g-beta-consent') ? document.getElementById('g-beta-consent').checked : true;
+          if (typeof sb !== 'undefined' && sb && sb.from) {
+            await Promise.race([
+              sb.from('waitlist').upsert(saveData, { onConflict: 'email' }),
+              new Promise(function(_, rej){ setTimeout(function(){ rej(new Error('timeout')); }, 3000); })
+            ]);
+          }
+        } catch(e) { console.warn('Gate save (non-blocking):', e.message); }
       }
-    }
 
-    // Store name for reading personalisation
-    if (name) {
-      try {
-        var p = JSON.parse(localStorage.getItem('cdp_profile') || '{}');
-        if (!p.name) { p.name = name; localStorage.setItem('cdp_profile', JSON.stringify(p)); }
-      } catch(e) {}
-    }
+      // Store name for reading personalisation
+      if (name) {
+        try {
+          var p = JSON.parse(localStorage.getItem('cdp_profile') || '{}');
+          if (!p.name) { p.name = name; localStorage.setItem('cdp_profile', JSON.stringify(p)); }
+        } catch(e) {}
+      }
 
-    // Show success then open
-    var form = document.getElementById('g-form');
-    var success = document.getElementById('g-success');
-    if (form) form.style.display = 'none';
-    if (success) success.style.display = 'block';
+      // Show success then open
+      var form = document.getElementById('g-form');
+      var succ = document.getElementById('g-success');
+      if (form) form.style.display = 'none';
+      if (succ) succ.style.display = 'block';
 
-    setAdmitted();
+      setAdmitted();
     setTimeout(function(){ admit(true); }, 1400);
+  } catch(e) {
+    // Failsafe — always open even if something breaks
+    console.warn('Gate error (opening anyway):', e.message);
+    setAdmitted();
+    var g = document.getElementById('cdp-gate');
+    if (g) { g.style.transition='opacity 0.5s'; g.style.opacity='0'; setTimeout(function(){ g.style.display='none'; },520); }
+  }
   };
 
   // Show gate to new visitors; skip if already admitted
