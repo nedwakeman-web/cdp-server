@@ -1,6 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <script>
+  (function() {
+    var h = window.location.hash;
+    var s = window.location.search;
+    if (h.includes('access_token') || h.includes('error_description') || s.includes('code=')) {
+      window.location.replace('/app?mode=quick' + h);
+    }
+  })();
+</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Cosmic Daily Planner — Where ancient wisdom meets modern science, daily</title>
