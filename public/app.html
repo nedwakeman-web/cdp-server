@@ -127,16 +127,42 @@ body.light{--bg:#F5F0E8;--bg2:#EDE6D6;--bg3:#E4DBC8;--bg4:#F8F4EC;
   .topbar-right > button.thm[onclick*="window.location.href='/'"]{display:none}
   /* Hide share button on mobile topbar - sharing lives inside reading screens */
   .topbar-right > button.feedback-btn[onclick*="openShare"]{display:none}
-  /* Voice toggle compact: single-letter labels, smaller padding, never wraps */
-  .topbar-right .cdp-voice-bar{padding:3px;flex-shrink:0}
-  .topbar-right .cdp-voice-bar button{padding:0.32rem 0.42rem;font-size:0.66rem;letter-spacing:.5px;min-width:22px}
-  /* Replace voice button text with single-letter glyphs on phones via CSS */
-  .topbar-right #tbLangAncient{font-size:0;padding:0.4rem 0.55rem}
-  .topbar-right #tbLangAncient::before{content:"T";font-size:0.78rem;font-weight:700}
-  .topbar-right #tbLangModern{font-size:0;padding:0.4rem 0.55rem}
-  .topbar-right #tbLangModern::before{content:"S";font-size:0.78rem;font-weight:700}
-  .topbar-right #tbLangEveryday{font-size:0;padding:0.4rem 0.55rem}
-  .topbar-right #tbLangEveryday::before{content:"E";font-size:0.78rem;font-weight:700}
+  /* Voice toggle compact: distinct GLYPHS on mobile, isolated stacking context.
+     Each voice gets its own shape AND colour so they're visible at a glance even
+     when inactive. Tradition: crescent moon (gold), Science: hexagon (teal),
+     Everyday: sparkle (cream). Active state inherits the existing per-voice
+     active CSS (gold / teal / cream backgrounds at L1570-1587). */
+  .topbar-right .cdp-voice-bar{
+    padding:3px;flex-shrink:0;
+    position:relative;z-index:101;          /* above any stray fixed-position elements */
+    pointer-events:auto;                     /* defensive: ensure no inherited none */
+    isolation:isolate;                       /* new stacking context, no bleed-through */
+  }
+  .topbar-right .cdp-voice-bar button{
+    padding:0.36rem 0.46rem;font-size:0;letter-spacing:0;min-width:24px;
+    position:relative;
+  }
+  .topbar-right #tbLangAncient::before{
+    content:"\263D";                        /* crescent moon */
+    font-size:1rem;font-weight:400;line-height:1;
+    color:rgba(212,175,55,0.55);            /* dim gold when inactive */
+    display:block;
+  }
+  .topbar-right #tbLangAncient.cdp-active::before{color:#D4AF37}
+  .topbar-right #tbLangModern::before{
+    content:"\2B22";                        /* hexagon */
+    font-size:0.92rem;font-weight:400;line-height:1;
+    color:rgba(129,205,198,0.55);           /* dim teal when inactive */
+    display:block;
+  }
+  .topbar-right #tbLangModern.cdp-active::before{color:#81CDC6}
+  .topbar-right #tbLangEveryday::before{
+    content:"\2726";                        /* four-pointed star / sparkle */
+    font-size:0.95rem;font-weight:400;line-height:1;
+    color:rgba(240,237,230,0.55);           /* dim cream when inactive */
+    display:block;
+  }
+  .topbar-right #tbLangEveryday.cdp-active::before{color:#F0EDE6}
   /* Sign-in: compact */
   .signin-btn{padding:5px 8px;font-size:11px;letter-spacing:.05em;flex-shrink:0}
   /* Round buttons in topbar-right: shrink slightly */
@@ -12473,9 +12499,13 @@ window.addEventListener('load', function() {
   // ===== Wire up every voice bar (delegation, so dynamically-inserted bars work too) =====
 
   document.addEventListener('click', function(e) {
-    // Voice toggle clicks
+    // Voice toggle clicks - capture and stop here so no downstream listener
+    // (including any showScreen(...) wired link that happens to share the tap
+    // region on a small mobile viewport) can run on the same event.
     const btn = e.target.closest('.cdp-voice-bar button[data-voice]');
     if (btn) {
+      e.stopPropagation();
+      if (e.preventDefault) e.preventDefault();
       const v = btn.getAttribute('data-voice');
       setVoice(v);
       return;
