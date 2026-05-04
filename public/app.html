@@ -2040,11 +2040,28 @@ select.entry-input option{background:#0D1E33;color:#E8EDF4}
 </style>
 </head>
 <body>
-<!-- DEV BUILD BANNER -->
-<div id="cdp-dev-banner" style="background:#B8942A;color:#fff;text-align:center;padding:6px 12px;font-family:Helvetica,Arial,sans-serif;font-size:12px;letter-spacing:.05em;position:relative;z-index:9998">
-  DEV BUILD -- calculations under verification, do not screenshot or share externally
-  <button onclick="this.parentElement.style.display='none'" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;color:#fff;cursor:pointer;font-size:16px">×</button>
+<!-- DEV BUILD BANNER (auto-scoped to dev and beta hosts) -->
+<div id="cdp-dev-banner" style="display:none;background:#B8942A;color:#fff;text-align:center;padding:6px 12px;font-family:Helvetica,Arial,sans-serif;font-size:12px;letter-spacing:.05em;position:relative;z-index:9998">
+  DEV BUILD - calculations under verification, do not screenshot or share externally
+  <button onclick="this.parentElement.style.display='none'" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;color:#fff;cursor:pointer;font-size:16px">x</button>
 </div>
+<script>
+(function(){
+  // Show DEV banner only on dev/beta hosts; never on production (cosmicdailyplanner.com).
+  try {
+    var h = (location.hostname || '').toLowerCase();
+    var isProd = (h === 'cosmicdailyplanner.com' || h === 'www.cosmicdailyplanner.com');
+    var isDevOrBeta = h.indexOf('cosmicdailyplannerdev') !== -1
+                   || h.indexOf('cosmicdailyplanner-beta') !== -1
+                   || h.indexOf('localhost') !== -1
+                   || h.indexOf('127.0.0.1') !== -1;
+    if (isDevOrBeta && !isProd) {
+      var el = document.getElementById('cdp-dev-banner');
+      if (el) el.style.display = '';
+    }
+  } catch(e) {}
+})();
+</script>
 
 
 <!-- STAR CANVAS -->
@@ -2184,7 +2201,7 @@ select.entry-input option{background:#0D1E33;color:#E8EDF4}
     <button class="npill" onclick="showScreen('scard',this);renderCard()">Daily Card</button>
     <button class="npill" onclick="showScreen('sc',this)">Calendar</button>
     <button class="npill" onclick="showScreen('sctx',this);renderContext()">My Energy</button>
-    <button class="npill cdp-compat-tab" onclick="showScreen('scompat',this);initCompatScreen()" style="display:none">Compatibility</button>
+    <button class="npill cdp-compat-tab" onclick="showScreen('scompat',this);initCompatScreen()">Compatibility</button>
     <button class="npill" onclick="showScreen('sp',this)">Profile</button>
     <button class="npill" onclick="showScreen('shist',this);renderHistory()">History</button>
   </div>
@@ -2198,7 +2215,7 @@ select.entry-input option{background:#0D1E33;color:#E8EDF4}
     <button class="npill" onclick="showScreen('scard',this);renderCard();closeMobileNav()">Daily Card</button>
     <button class="npill" onclick="showScreen('sc',this);closeMobileNav()">Calendar</button>
     <button class="npill" onclick="showScreen('sctx',this);renderContext();closeMobileNav()">My Energy</button>
-    <button class="npill cdp-compat-tab" onclick="showScreen('scompat',this);initCompatScreen();closeMobileNav()" style="display:none">Compatibility</button>
+    <button class="npill cdp-compat-tab" onclick="showScreen('scompat',this);initCompatScreen();closeMobileNav()">Compatibility</button>
     <button class="npill" onclick="showScreen('sp',this);closeMobileNav()">Profile</button>
     <button class="npill" onclick="showScreen('shist',this);renderHistory();closeMobileNav()">History</button>
     <div style="height:1px;background:var(--div);margin:4px 0"></div>
@@ -6001,7 +6018,7 @@ function renderSkeletonReading(dateStr, tier) {
       <button onclick="showScreen('scard',document.querySelectorAll('.npill')[1]);renderCard()" style="background:none;border:1px solid rgba(29,158,117,0.3);color:rgba(29,158,117,0.8);font-size:11px;padding:4px 10px;border-radius:2px;cursor:pointer;font-family:'Cinzel',serif;letter-spacing:.1em">Daily Card ↗</button>
       <button onclick="showScreen('sc',document.querySelectorAll('.npill')[2])" style="background:none;border:1px solid rgba(29,158,117,0.3);color:rgba(29,158,117,0.8);font-size:11px;padding:4px 10px;border-radius:2px;cursor:pointer;font-family:'Cinzel',serif;letter-spacing:.1em">Calendar ↗</button>
       <button onclick="showScreen('sctx',document.querySelectorAll('.npill')[3]);renderContext()" style="background:none;border:1px solid rgba(29,158,117,0.3);color:rgba(29,158,117,0.8);font-size:11px;padding:4px 10px;border-radius:2px;cursor:pointer;font-family:'Cinzel',serif;letter-spacing:.1em">My Energy ↗</button>
-      <button class="cdp-compat-link" onclick="showScreen('scompat',document.querySelectorAll('.npill')[4]);initCompatScreen()" style="display:none;background:none;border:1px solid rgba(29,158,117,0.3);color:rgba(29,158,117,0.8);font-size:11px;padding:4px 10px;border-radius:2px;cursor:pointer;font-family:'Cinzel',serif;letter-spacing:.1em">Compatibility ↗</button>
+      <button class="cdp-compat-link" onclick="showScreen('scompat',document.querySelectorAll('.npill')[4]);initCompatScreen()" style="background:none;border:1px solid rgba(29,158,117,0.3);color:rgba(29,158,117,0.8);font-size:11px;padding:4px 10px;border-radius:2px;cursor:pointer;font-family:'Cinzel',serif;letter-spacing:.1em">Compatibility ↗</button>
     </div>
     <span style="font-size:13px;color:rgba(232,228,218,0.55);font-style:italic">Your reading continues in the background</span>
   </div>`;
