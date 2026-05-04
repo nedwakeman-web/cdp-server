@@ -33,6 +33,7 @@
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 :root{
   --bg:#0D1E33;--bg2:#122440;--bg3:#192E4A;--bg4:#08131F;
+  --navy:#0D1E33; /* alias for --bg, used as text color on light/teal/gold backgrounds */
   --gold:#C9A050;--gold2:#E8C878;--gold3:rgba(201,160,80,0.18);--gold4:rgba(201,160,80,0.07);
   --teal:#81CDB6;--teal2:rgba(129,205,182,0.18);--teal3:rgba(129,205,182,0.07);
   --text:#F0E6CC;--text2:#D4C8AE;--text3:#9E9282;
@@ -1741,6 +1742,300 @@ select.entry-input option{background:#0D1E33;color:#E8EDF4}
     .cdp-voice-bar button { padding: 0.4rem 0.7rem; font-size: 0.78rem; }
   }
 
+  /* ════════════════════════════════════════════════════════════════════
+     V11 READABILITY + MOBILE LAYOUT FIXES
+     Addresses Ned's reported issues 4 May 2026:
+     1. Italic body prose hard to read (synthesis paragraph)
+     2. Top-right toggle area overlaps on mobile, no Everyday button visible
+     3. Biorhythm and weekly cards overflow viewport on mobile
+     4. Natal Chart Insight button text too light to read
+     ════════════════════════════════════════════════════════════════════ */
+
+  /* ── 1. Synthesis: switch from italic body to upright with italic emphasis ── */
+  /* Prior: full paragraph italic (ornate, tiring at length).
+     Now: upright Cormorant Garamond, full cream contrast, italic reserved
+     for emphasised phrases the model returns inside <em>. */
+  .synthesis,
+  .synthesis p {
+    font-style: normal !important;
+    color: var(--text) !important;
+    line-height: 1.85;
+  }
+  .synthesis em,
+  .synthesis i {
+    font-style: italic;
+    color: var(--gold-soft, #d4af37);
+  }
+  /* Numerology of the day master-number block: same treatment */
+  .sec-hook {
+    font-style: normal !important;
+    color: var(--text2) !important;
+  }
+  .sec-hook em { font-style: italic; }
+
+  /* ── 2. Natal Chart Insight button: raise contrast ── */
+  /* Was: light teal on dark navy at insufficient ratio.
+     Now: full teal text, slightly heavier weight, visible border. */
+  button.natal-insight-btn,
+  .natal-insight-btn,
+  button[onclick*="tapNatalChart"],
+  .nat-insight {
+    color: var(--teal) !important;
+    background: rgba(129, 205, 198, 0.10) !important;
+    border: 1px solid rgba(129, 205, 198, 0.55) !important;
+    font-weight: 500;
+  }
+  button.natal-insight-btn:hover,
+  .natal-insight-btn:hover {
+    color: #a3e0d8 !important;
+    background: rgba(129, 205, 198, 0.16) !important;
+    border-color: rgba(129, 205, 198, 0.75) !important;
+  }
+
+  /* ── 3. Mobile layout (≤ 600px): stack voice bar below date, prevent overflow ── */
+  @media (max-width: 600px) {
+    /* Universal anti-overflow guard for content blocks.
+       Many old card components were sized at fixed pixel widths or used
+       absolute positioning that breaks on narrow viewports. */
+    body, html { overflow-x: hidden; }
+
+    /* Date header: stack the voice bar BELOW the date row so it has full width
+       for all three buttons. Prior layout tried to fit voice bar to the right
+       of the date on mobile and ran out of room — collapsing the third button. */
+    .r-head > div[style*="flex"] {
+      flex-direction: column !important;
+      gap: 14px !important;
+    }
+    .r-head .cdp-voice-bar {
+      align-self: center !important;
+      margin-top: 6px !important;
+    }
+    .r-head .cdp-voice-bar button {
+      padding: 5px 12px !important;
+      font-size: 11px !important;
+      letter-spacing: 0.14em !important;
+    }
+
+    /* Floating bottom-right voice pill: nudge so it doesn't overlap content
+       and shrink on small screens */
+    #cdp-global-voice-bar {
+      bottom: 14px !important;
+      right: 14px !important;
+    }
+    #cdp-global-voice-bar .cdp-voice-bar button {
+      padding: 5px 10px !important;
+      font-size: 10px !important;
+      letter-spacing: 0.12em !important;
+    }
+
+    /* Decision row: stack vertically on mobile, smaller padding */
+    .cdp-decision-row {
+      grid-template-columns: 1fr !important;
+      gap: 8px !important;
+    }
+    .cdp-decision-cta {
+      padding: 11px 14px !important;
+    }
+
+    /* Four-square widget row: keep 2x2 grid, prevent overflow */
+    .widgets {
+      grid-template-columns: 1fr 1fr !important;
+      gap: 8px !important;
+    }
+    .wgt {
+      min-width: 0 !important;
+      padding: 14px 10px !important;
+    }
+    .wgt-label {
+      font-size: 10px !important;
+      letter-spacing: 0.14em !important;
+    }
+    .wgt-val {
+      font-size: 13px !important;
+    }
+    .wgt-sub {
+      font-size: 11px !important;
+    }
+
+    /* Biorhythms card row: keep 3 across but compress padding so they fit */
+    .biorhythms-row,
+    .biorhythm-cards {
+      gap: 6px !important;
+    }
+    .biorhythm-card,
+    .br-card {
+      min-width: 0 !important;
+      padding: 10px 8px !important;
+      font-size: 11px !important;
+    }
+
+    /* Weekly view (Wed/Thu/Fri cards from screenshot 2): clamp to viewport */
+    .week-day-card,
+    .weekly-cards .day-col,
+    [class*="week"][class*="card"] {
+      min-width: 0 !important;
+      max-width: 100% !important;
+    }
+
+    /* Reading container default padding cut */
+    #readingContent,
+    .reading-wrap {
+      padding-left: 14px !important;
+      padding-right: 14px !important;
+    }
+
+    /* Numerology component-energies cards: stack to 1 column on smallest screens
+       only when they would otherwise overflow */
+    .num-component-grid,
+    [class*="component"][class*="grid"] {
+      grid-template-columns: repeat(auto-fit, minmax(0, 1fr)) !important;
+      gap: 8px !important;
+    }
+  }
+  /* End V11 mobile fixes */
+
+  /* ════════════════════════════════════════════════════════════════════
+     V13 — VOICE BASELINE PIN + PER-SECTION COMPARE PANEL
+     User can pin their preferred voice (★) and "Compare voices" expander
+     on each voiced section to peek at the other interpretations on demand.
+     ════════════════════════════════════════════════════════════════════ */
+
+  /* ── Pin button (☆/★) sits next to topbar voice toggle ── */
+  .cdp-voice-pin {
+    background: transparent;
+    border: 1px solid rgba(201, 160, 80, 0.35);
+    color: rgba(201, 160, 80, 0.65);
+    cursor: pointer;
+    font-size: 13px;
+    padding: 4px 8px;
+    border-radius: 2px;
+    line-height: 1;
+    transition: all 0.18s ease;
+    margin-right: 4px;
+  }
+  .cdp-voice-pin:hover {
+    color: var(--gold, #C9A050);
+    border-color: var(--gold, #C9A050);
+    background: rgba(201, 160, 80, 0.06);
+  }
+  .cdp-voice-pin.cdp-voice-pin-active {
+    color: var(--gold, #C9A050);
+    border-color: var(--gold, #C9A050);
+    background: rgba(201, 160, 80, 0.10);
+  }
+  .cdp-voice-pin:focus-visible {
+    outline: 2px solid var(--gold, #C9A050);
+    outline-offset: 2px;
+  }
+
+  /* ── Per-section Compare voices button + expander panel ── */
+  .cdp-compare-trigger {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: transparent;
+    border: none;
+    color: var(--text3, #9E9282);
+    font-family: 'Cinzel', serif;
+    font-size: 10px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    cursor: pointer;
+    padding: 6px 0 6px 10px;
+    margin-top: 4px;
+    transition: color 0.18s;
+    opacity: 0.78;
+  }
+  .cdp-compare-trigger:hover {
+    color: var(--gold, #C9A050);
+    opacity: 1;
+  }
+  .cdp-compare-trigger .cdp-compare-arrow {
+    display: inline-block;
+    transition: transform 0.2s;
+    font-size: 0.85em;
+  }
+  .cdp-compare-trigger.cdp-compare-open .cdp-compare-arrow {
+    transform: rotate(90deg);
+  }
+
+  .cdp-compare-panel {
+    overflow: hidden;
+    max-height: 0;
+    transition: max-height 0.4s ease, margin 0.3s ease, padding 0.3s ease;
+    margin: 0;
+    padding: 0;
+    border-radius: 4px;
+  }
+  .cdp-compare-panel.cdp-compare-open {
+    max-height: 2400px;
+    margin: 12px 0 8px;
+    padding: 14px 16px;
+    background: rgba(13, 30, 51, 0.55);
+    border: 1px solid rgba(240, 230, 204, 0.10);
+  }
+  .cdp-compare-voice {
+    padding: 10px 12px;
+    border-left: 2px solid;
+    margin-bottom: 10px;
+    border-radius: 0 3px 3px 0;
+    background: rgba(255, 255, 255, 0.02);
+  }
+  .cdp-compare-voice:last-child { margin-bottom: 0; }
+  .cdp-compare-voice-label {
+    font-family: 'Cinzel', serif;
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+    opacity: 0.85;
+  }
+  .cdp-compare-voice-tradition {
+    border-left-color: var(--gold, #C9A050);
+  }
+  .cdp-compare-voice-tradition .cdp-compare-voice-label {
+    color: var(--gold, #C9A050);
+  }
+  .cdp-compare-voice-science {
+    border-left-color: var(--teal, #81CDB6);
+  }
+  .cdp-compare-voice-science .cdp-compare-voice-label {
+    color: var(--teal, #81CDB6);
+  }
+  .cdp-compare-voice-everyday {
+    border-left-color: var(--text2, #D4C8AE);
+  }
+  .cdp-compare-voice-everyday .cdp-compare-voice-label {
+    color: var(--text2, #D4C8AE);
+  }
+  .cdp-compare-voice-text {
+    font-family: 'EB Garamond', Georgia, serif;
+    font-size: 14px;
+    line-height: 1.65;
+    color: var(--text, #F0E6CC);
+  }
+  .cdp-compare-voice.cdp-compare-current {
+    background: rgba(201, 160, 80, 0.04);
+  }
+  .cdp-compare-voice.cdp-compare-current .cdp-compare-voice-label::after {
+    content: ' · current';
+    opacity: 0.55;
+    font-size: 0.85em;
+  }
+  .cdp-compare-empty {
+    color: var(--text3, #9E9282);
+    font-style: italic;
+    font-size: 13px;
+    padding: 4px 0;
+  }
+
+  @media (max-width: 600px) {
+    .cdp-compare-panel.cdp-compare-open { padding: 12px 10px; }
+    .cdp-compare-voice { padding: 9px 10px; }
+    .cdp-compare-voice-text { font-size: 13.5px; }
+  }
+  /* End V13 voice baseline + compare */
+
 </style>
 </head>
 <body>
@@ -1888,7 +2183,7 @@ select.entry-input option{background:#0D1E33;color:#E8EDF4}
     <button class="npill" onclick="showScreen('scard',this);renderCard()">Daily Card</button>
     <button class="npill" onclick="showScreen('sc',this)">Calendar</button>
     <button class="npill" onclick="showScreen('sctx',this);renderContext()">My Energy</button>
-    <button class="npill" onclick="showScreen('scompat',this);initCompatScreen()">Compatibility</button>
+    <button class="npill cdp-compat-tab" onclick="showScreen('scompat',this);initCompatScreen()" style="display:none">Compatibility</button>
     <button class="npill" onclick="showScreen('sp',this)">Profile</button>
     <button class="npill" onclick="showScreen('shist',this);renderHistory()">History</button>
   </div>
@@ -1902,7 +2197,7 @@ select.entry-input option{background:#0D1E33;color:#E8EDF4}
     <button class="npill" onclick="showScreen('scard',this);renderCard();closeMobileNav()">Daily Card</button>
     <button class="npill" onclick="showScreen('sc',this);closeMobileNav()">Calendar</button>
     <button class="npill" onclick="showScreen('sctx',this);renderContext();closeMobileNav()">My Energy</button>
-    <button class="npill" onclick="showScreen('scompat',this);initCompatScreen();closeMobileNav()">Compatibility</button>
+    <button class="npill cdp-compat-tab" onclick="showScreen('scompat',this);initCompatScreen();closeMobileNav()" style="display:none">Compatibility</button>
     <button class="npill" onclick="showScreen('sp',this);closeMobileNav()">Profile</button>
     <button class="npill" onclick="showScreen('shist',this);renderHistory();closeMobileNav()">History</button>
     <div style="height:1px;background:var(--div);margin:4px 0"></div>
@@ -1924,11 +2219,21 @@ select.entry-input option{background:#0D1E33;color:#E8EDF4}
       </svg>
     </button>
     <button id="profileLibBtn" class="thm" onclick="openProfileLibrary()" title="Profiles" style="font-family:'Cinzel',serif;font-size:13px">☿</button>
-    <!-- Persistent language toggle — always visible in reading -->
-    <div id="langToggleBar" style="display:inline-flex;gap:3px;margin-right:4px" title="Switch: Tradition (ancient wisdom) or Science (neuroscience framing)">
-      <button id="tbLangAncient" onclick="setLang('ancient');updateLangToggleBar()" style="font-family:'Cinzel',serif;font-size:9px;letter-spacing:.1em;padding:5px 10px;border:1px solid rgba(201,160,80,0.6);border-radius:2px;background:var(--gold);color:#0D1E33;font-weight:600;cursor:pointer;transition:all .2s">☽ Tradition</button>
-      <button id="tbLangModern" onclick="setLang('modern');updateLangToggleBar()" style="font-family:'Cinzel',serif;font-size:9px;letter-spacing:.1em;padding:5px 10px;border:1px solid rgba(29,158,117,0.4);border-radius:2px;background:transparent;color:rgba(29,158,117,0.6);cursor:pointer;transition:all .2s">⬡ Science</button>
+    <!-- Persistent voice toggle — always visible in topbar.
+         Tradition / Science / Everyday. Calls cdpSetVoice() for single
+         source of truth across all toggle render sites (date-header inline,
+         floating pill, this topbar). Replaces the legacy 2-button setLang
+         toggle which had no Everyday option. -->
+    <div id="langToggleBar" class="cdp-voice-bar" role="tablist" aria-label="Reading voice" style="margin-right:4px" title="Switch voice: Tradition · Science · Everyday">
+      <button type="button" id="tbLangAncient" class="cdp-voice-tradition-btn cdp-active" data-voice="tradition" role="tab" aria-selected="true">Tradition</button>
+      <button type="button" id="tbLangModern" class="cdp-voice-science-btn" data-voice="science" role="tab" aria-selected="false">Science</button>
+      <button type="button" id="tbLangEveryday" class="cdp-voice-everyday-btn" data-voice="everyday" role="tab" aria-selected="false">Everyday</button>
     </div>
+    <!-- Pin current voice as baseline (v13). Saves to localStorage so every
+         reading opens in this voice from now on. Filled star = current voice
+         is the saved baseline. Unfilled = current voice is just a temporary
+         preview. Tap to pin. -->
+    <button type="button" id="tbPinVoice" class="cdp-voice-pin thm" onclick="(function(b){var v=window.cdpGetVoice&&window.cdpGetVoice();if(!v)return;window.cdpSetPreferredVoice&&window.cdpSetPreferredVoice(v);})(this)" title="Pin current voice as your default for every reading" aria-pressed="false" style="font-size:13px;padding:5px 8px">☆</button>
     <button class="thm" onclick="window.location.href='/'" title="Two Telescopes — How CDP works" style="font-size:12px;color:rgba(29,158,117,0.85);border-color:rgba(29,158,117,0.4)">ℹ</button>
     <button class="thm tbr-tiers" onclick="showTierOverview()" title="Switch tier · see all reading depths">Tiers</button>
     <button class="thm tbr-guide" onclick="openHelp()" title="Guide">Guide</button>
@@ -2178,6 +2483,35 @@ select.entry-input option{background:#0D1E33;color:#E8EDF4}
     <div class="form-group">
       <label class="form-label">Personal Context <span style="font-style:italic;text-transform:none;letter-spacing:0">(deepens Oracle readings)</span></label>
       <textarea class="form-input" id="pCtx" rows="3" placeholder="Current life chapter, projects, relationships, anything that matters to you..." oninput="saveProfileField('context',this.value)" style="resize:vertical"></textarea>
+    </div>
+  </div>
+  <div class="form-section">
+    <div class="form-section-title">Reading Voice <span style="font-style:italic;text-transform:none;letter-spacing:0;opacity:.6">· the language your readings open in</span></div>
+    <div class="form-group">
+      <div style="display:flex;flex-direction:column;gap:14px;margin-top:6px">
+        <label style="display:flex;gap:12px;align-items:flex-start;cursor:pointer;padding:14px 16px;border:1px solid var(--div);border-radius:3px;transition:border-color .2s,background .2s" data-cdp-voice-row="tradition">
+          <input type="radio" name="cdp-pref-voice-radio" value="tradition" onchange="window.cdpSetPreferredVoice && window.cdpSetPreferredVoice('tradition'); window.cdpSetVoice && window.cdpSetVoice('tradition');" style="margin-top:4px;accent-color:var(--gold)">
+          <div style="flex:1">
+            <div style="font-family:'Cormorant Garamond',serif;font-size:18px;color:var(--gold);margin-bottom:4px;letter-spacing:.04em">Tradition</div>
+            <div style="font-size:13px;color:var(--text2);line-height:1.55">The symbolic, archetypal voice. Numerology, astrology, Mayan calendrics, lunar wisdom. Cites Tarnas, Aldana, Greene. For when you want depth, image, and resonance.</div>
+          </div>
+        </label>
+        <label style="display:flex;gap:12px;align-items:flex-start;cursor:pointer;padding:14px 16px;border:1px solid var(--div);border-radius:3px;transition:border-color .2s,background .2s" data-cdp-voice-row="science">
+          <input type="radio" name="cdp-pref-voice-radio" value="science" onchange="window.cdpSetPreferredVoice && window.cdpSetPreferredVoice('science'); window.cdpSetVoice && window.cdpSetVoice('science');" style="margin-top:4px;accent-color:var(--teal)">
+          <div style="flex:1">
+            <div style="font-family:'Cormorant Garamond',serif;font-size:18px;color:var(--teal);margin-bottom:4px;letter-spacing:.04em">Science</div>
+            <div style="font-size:13px;color:var(--text2);line-height:1.55">The neuroscience and chronobiology voice. Predictive processing, default mode network, interoception, circadian cognition. Cites Barrett, Clark, Cajochen, Tang. For when you want what is happening in the brain and body.</div>
+          </div>
+        </label>
+        <label style="display:flex;gap:12px;align-items:flex-start;cursor:pointer;padding:14px 16px;border:1px solid var(--div);border-radius:3px;transition:border-color .2s,background .2s" data-cdp-voice-row="everyday">
+          <input type="radio" name="cdp-pref-voice-radio" value="everyday" onchange="window.cdpSetPreferredVoice && window.cdpSetPreferredVoice('everyday'); window.cdpSetVoice && window.cdpSetVoice('everyday');" style="margin-top:4px;accent-color:var(--text2)">
+          <div style="flex:1">
+            <div style="font-family:'Cormorant Garamond',serif;font-size:18px;color:var(--text);margin-bottom:4px;letter-spacing:.04em">Everyday</div>
+            <div style="font-size:13px;color:var(--text2);line-height:1.55">The plain-spoken voice. No mystical or clinical jargon. Just what today is good for, what to be careful about, what to do next. For when you want the help without either tradition or science.</div>
+          </div>
+        </label>
+      </div>
+      <div class="form-hint" style="margin-top:12px">Every reading opens in this voice. You can preview the others using the toggle in the top bar, then tap the ★ to pin a different voice as your default.</div>
     </div>
   </div>
   <div class="form-section">
@@ -3531,6 +3865,23 @@ function setLang(lang) {
   updateLangToggleBar();
 }
 
+// ── Bridge new three-voice system to legacy setLang ──────────────────────
+// The new voice toggle (#langToggleBar in topbar, .cdp-voice-bar elsewhere)
+// fires `cdp:voice-changed` with detail.voice = tradition|science|everyday.
+// Map these to the legacy lang names (ancient|modern|everyday) so any code
+// that still depends on the old setLang stays in sync.
+document.addEventListener('cdp:voice-changed', function(ev) {
+  if (!ev || !ev.detail || !ev.detail.voice) return;
+  const VOICE_TO_LANG = { tradition: 'ancient', science: 'modern', everyday: 'everyday' };
+  const lang = VOICE_TO_LANG[ev.detail.voice];
+  if (lang && typeof setLang === 'function') {
+    // Only call if the lang would actually change, to avoid feedback loops
+    let current = null;
+    try { current = localStorage.getItem('cdp_lang'); } catch(e) {}
+    if (current !== lang) setLang(lang);
+  }
+});
+
 
 // ── SAVE COMPATIBILITY PERSON TO PROFILE LIBRARY (no auth needed) ────────────
 function saveCompatPersonToProfiles(side) {
@@ -4132,7 +4483,7 @@ function calcSig() {
     <div class="ne-card" style="margin-top:0">
       <div class="ne-label">Birth Kin · Galactic Signature</div>
       <div style="font-family:'Cormorant Garamond',serif;font-size:16px;color:var(--teal);margin-bottom:4px">Kin ${kin} — ${col} ${KIN_TONES[ti]} ${KIN_SEALS[si]}</div>
-      <div class="ne-meaning">Your Dreamspell birth signature (Argüelles 1987 — modern system). The ${col} ${KIN_SEALS[si].split(' ').pop()} carries the energy of ${KIN_SEALS[si].split(' ').pop()} as your foundational gift. Tone ${ti+1} (${KIN_TONES[ti]}) is your power frequency. Verify at tortuga.com/oracle.</div>
+      <div class="ne-meaning">Your Dreamspell birth signature (Argüelles 1987 — modern system). The ${col} ${KIN_SEALS[si].split(' ').pop()} carries the energy of ${KIN_SEALS[si].split(' ').pop()} as your foundational gift. Tone ${ti+1} (${KIN_TONES[ti]}) is your power frequency.</div>
     </div>
     <div class="ne-card" style="margin-top:10px">
       <div class="ne-label">Sun Sign</div>
@@ -5572,7 +5923,7 @@ function renderSkeletonReading(dateStr, tier) {
       <button onclick="showScreen('scard',document.querySelectorAll('.npill')[1]);renderCard()" style="background:none;border:1px solid rgba(29,158,117,0.3);color:rgba(29,158,117,0.8);font-size:11px;padding:4px 10px;border-radius:2px;cursor:pointer;font-family:'Cinzel',serif;letter-spacing:.1em">Daily Card ↗</button>
       <button onclick="showScreen('sc',document.querySelectorAll('.npill')[2])" style="background:none;border:1px solid rgba(29,158,117,0.3);color:rgba(29,158,117,0.8);font-size:11px;padding:4px 10px;border-radius:2px;cursor:pointer;font-family:'Cinzel',serif;letter-spacing:.1em">Calendar ↗</button>
       <button onclick="showScreen('sctx',document.querySelectorAll('.npill')[3]);renderContext()" style="background:none;border:1px solid rgba(29,158,117,0.3);color:rgba(29,158,117,0.8);font-size:11px;padding:4px 10px;border-radius:2px;cursor:pointer;font-family:'Cinzel',serif;letter-spacing:.1em">My Energy ↗</button>
-      <button onclick="showScreen('scompat',document.querySelectorAll('.npill')[4]);initCompatScreen()" style="background:none;border:1px solid rgba(29,158,117,0.3);color:rgba(29,158,117,0.8);font-size:11px;padding:4px 10px;border-radius:2px;cursor:pointer;font-family:'Cinzel',serif;letter-spacing:.1em">Compatibility ↗</button>
+      <button class="cdp-compat-link" onclick="showScreen('scompat',document.querySelectorAll('.npill')[4]);initCompatScreen()" style="display:none;background:none;border:1px solid rgba(29,158,117,0.3);color:rgba(29,158,117,0.8);font-size:11px;padding:4px 10px;border-radius:2px;cursor:pointer;font-family:'Cinzel',serif;letter-spacing:.1em">Compatibility ↗</button>
     </div>
     <span style="font-size:13px;color:rgba(232,228,218,0.55);font-style:italic">Your reading continues in the background</span>
   </div>`;
@@ -5740,7 +6091,7 @@ function renderSkeletonReading(dateStr, tier) {
     '<div style="font-size:13px;color:var(--text2)">' + _natalDob + '</div>' +
     '</div>' +
     '<div style="display:flex;gap:8px;flex-wrap:wrap">' +
-    '<button onclick="tapNatalChart()" style="font-family:\'Cinzel\',serif;font-size:10px;letter-spacing:.12em;color:var(--navy);background:var(--teal);padding:7px 14px;border-radius:2px;border:none;cursor:pointer;white-space:nowrap">Natal Chart Insight</button>' +
+    '<button class="natal-insight-btn" onclick="tapNatalChart()" style="font-family:\'Cinzel\',serif;font-size:10px;letter-spacing:.12em;color:#0D1E33;background:var(--teal);padding:7px 14px;border-radius:2px;border:none;cursor:pointer;white-space:nowrap;font-weight:600">Natal Chart Insight</button>' +
     '<button onclick="tapTransits()" style="font-family:\'Cinzel\',serif;font-size:10px;letter-spacing:.12em;color:var(--teal);border:1px solid var(--teal);padding:7px 14px;border-radius:2px;cursor:pointer;white-space:nowrap;background:transparent">Daily Transits</button>' +
     '</div></div>'
   ) : '';
@@ -5930,7 +6281,7 @@ function renderSkeletonReading(dateStr, tier) {
       What does my Kin mean for me today? <span class="cta-arrow">→</span>
     </button>
     <div style="margin-top:14px;padding:9px;background:var(--bg4);border:1px solid var(--div2);border-radius:2px">
-      <div style="font-size:12px;color:var(--text3);font-style:italic">Dreamspell: Argüelles (1987) The Mayan Factor. Modern system. Verify: tortuga.com/oracle</div>
+      <div style="font-size:12px;color:var(--text3);font-style:italic">Dreamspell: Argüelles (1987) The Mayan Factor. Modern system.</div>
     </div>
     <div style="margin-top:8px;display:flex;align-items:center;gap:6px;flex-wrap:wrap">
       <span class="citation-badge" onclick="openCitation('arguelles')">Argüelles 1987</span>
@@ -7411,7 +7762,7 @@ function renderReading(data, dateStr) {
       What does my Kin mean for me today? <span class="cta-arrow">→</span>
     </button>
     <div style="margin-top:14px;padding:9px;background:var(--bg4);border:1px solid var(--div2);border-radius:2px">
-      <div style="font-size:12px;color:var(--text3);font-style:italic">${r.dreamspell?.disclaimer||"Dreamspell: Argüelles (1987) The Mayan Factor. A modern 20th-century system, distinct from the living K'iche Maya tzolkʼin. Verify: tortuga.com/oracle"}</div>
+      <div style="font-size:12px;color:var(--text3);font-style:italic">${r.dreamspell?.disclaimer||"Dreamspell: Argüelles (1987) The Mayan Factor. A modern 20th-century system, distinct from the living K'iche Maya tzolkʼin."}</div>
     </div>
   </div>`;
 
@@ -7904,24 +8255,33 @@ function tapYearEnergy(yearEn, year) {
 function updateLangToggleBar() {
   var lang = 'ancient';
   try { lang = localStorage.getItem('cdp_lang') || 'ancient'; } catch(e) {}
-  // Topbar toggle
-  var anc = document.getElementById('tbLangAncient');
-  var mod = document.getElementById('tbLangModern');
-  if (anc && mod) {
-    if (lang === 'ancient') {
-      anc.style.cssText = "font-family:'Cinzel',serif;font-size:9px;letter-spacing:.1em;padding:5px 10px;border:1px solid var(--gold);border-radius:2px;background:var(--gold);color:#0D1E33;font-weight:700;cursor:pointer;transition:all .2s";
-      mod.style.cssText = "font-family:'Cinzel',serif;font-size:9px;letter-spacing:.1em;padding:5px 10px;border:1px solid rgba(29,158,117,0.4);border-radius:2px;background:transparent;color:rgba(29,158,117,0.65);cursor:pointer;transition:all .2s";
-    } else {
-      mod.style.cssText = "font-family:'Cinzel',serif;font-size:9px;letter-spacing:.1em;padding:5px 10px;border:1px solid var(--teal);border-radius:2px;background:var(--teal);color:#0D1E33;font-weight:700;cursor:pointer;transition:all .2s";
-      anc.style.cssText = "font-family:'Cinzel',serif;font-size:9px;letter-spacing:.1em;padding:5px 10px;border:1px solid rgba(201,160,80,0.4);border-radius:2px;background:transparent;color:rgba(201,160,80,0.65);cursor:pointer;transition:all .2s";
+  // Topbar toggle: the new three-voice bar is styled by .cdp-voice-bar CSS
+  // and managed by the global voice handler (window.cdpSetVoice). Skip
+  // legacy inline-style management when the new structure is detected.
+  var topbar = document.getElementById('langToggleBar');
+  if (topbar && !topbar.classList.contains('cdp-voice-bar')) {
+    // Legacy two-button toggle path (kept for backwards compatibility with
+    // any environment where the v12 topbar markup hasn't been applied)
+    var anc = document.getElementById('tbLangAncient');
+    var mod = document.getElementById('tbLangModern');
+    if (anc && mod && !anc.hasAttribute('data-voice')) {
+      if (lang === 'ancient') {
+        anc.style.cssText = "font-family:'Cinzel',serif;font-size:9px;letter-spacing:.1em;padding:5px 10px;border:1px solid var(--gold);border-radius:2px;background:var(--gold);color:#0D1E33;font-weight:700;cursor:pointer;transition:all .2s";
+        mod.style.cssText = "font-family:'Cinzel',serif;font-size:9px;letter-spacing:.1em;padding:5px 10px;border:1px solid rgba(29,158,117,0.4);border-radius:2px;background:transparent;color:rgba(29,158,117,0.65);cursor:pointer;transition:all .2s";
+      } else {
+        mod.style.cssText = "font-family:'Cinzel',serif;font-size:9px;letter-spacing:.1em;padding:5px 10px;border:1px solid var(--teal);border-radius:2px;background:var(--teal);color:#0D1E33;font-weight:700;cursor:pointer;transition:all .2s";
+        anc.style.cssText = "font-family:'Cinzel',serif;font-size:9px;letter-spacing:.1em;padding:5px 10px;border:1px solid rgba(201,160,80,0.4);border-radius:2px;background:transparent;color:rgba(201,160,80,0.65);cursor:pointer;transition:all .2s";
+      }
     }
   }
-  // Entry screen toggle
+  // Entry screen toggle (3-button group with Everyday)
   var ea = document.getElementById('langAncient');
   var em = document.getElementById('langModern');
+  var ee = document.getElementById('langEveryday');
   if (ea && em) {
     ea.className = lang === 'ancient' ? 'active' : '';
     em.className = lang === 'modern' ? 'active' : '';
+    if (ee) ee.className = lang === 'everyday' ? 'active' : '';
   }
 }
 
@@ -7964,7 +8324,6 @@ const SCIENCE_BRIDGES = {
     links: [
       {label: 'Šprajc et al. (2023) — Origins of 260-Day Calendar, Science Advances', url: 'https://doi.org/10.1126/sciadv.abq7675'},
       {label: 'Argüelles (1987) — The Mayan Factor', url: 'https://www.goodreads.com/book/show/1208048.The_Mayan_Factor'},
-      {label: 'Tortuga — Kin Verification', url: 'https://www.tortuga.com/oracle/'},
       {label: 'NMAI Smithsonian — Maya Calendar Resource', url: 'https://americanindian.si.edu/nk360/'}
     ]
   },
@@ -11917,7 +12276,10 @@ window.addEventListener('load', function() {
     // 5. Fire an event so other parts of the app can react (e.g. analytics, the day-detail panel)
     document.dispatchEvent(new CustomEvent('cdp:voice-changed', { detail: { voice } }));
 
-    // 6. Analytics (if available)
+    // 6. Sync pin glyph (v13): ★ when current voice is the pinned baseline, ☆ otherwise
+    if (typeof syncPinButtons === 'function') syncPinButtons();
+
+    // 7. Analytics (if available)
     if (window.trackEvent) {
       try { window.trackEvent('voice_toggled', { voice }); } catch (e) { /* ignore */ }
     }
@@ -12013,10 +12375,69 @@ window.addEventListener('load', function() {
 
   // ===== Initialise =====
 
+  // ── PREFERRED VOICE PERSISTENCE (v13) ─────────────────────────────────
+  // The user's "natural" voice — Ned defaults to Science, Sonia to Tradition,
+  // Connie probably Everyday. Saved across sessions so each reading opens in
+  // the user's preferred register without re-toggling.
+  const PREF_VOICE_KEY = 'cdp_preferred_voice';
+  function getPreferredVoice() {
+    try {
+      const v = localStorage.getItem(PREF_VOICE_KEY);
+      return VALID_VOICES.includes(v) ? v : 'tradition';
+    } catch(e) { return 'tradition'; }
+  }
+  function setPreferredVoice(voice) {
+    if (!VALID_VOICES.includes(voice)) return;
+    try { localStorage.setItem(PREF_VOICE_KEY, voice); } catch(e) {}
+    // Update pin glyph and a11y state on all pin buttons
+    syncPinButtons();
+    // Update Profile screen radios if present
+    document.querySelectorAll('input[name="cdp-pref-voice-radio"]').forEach(r => {
+      r.checked = r.value === voice;
+    });
+    // Brief toast confirming pin
+    showPinToast(voice);
+  }
+
+  // Update pin button glyph (★ filled when current voice equals pinned baseline)
+  function syncPinButtons() {
+    const current = getVoice();
+    const preferred = getPreferredVoice();
+    const isPinnedNow = current === preferred;
+    document.querySelectorAll('.cdp-voice-pin').forEach(el => {
+      el.textContent = isPinnedNow ? '★' : '☆';
+      el.classList.toggle('cdp-voice-pin-active', isPinnedNow);
+      el.setAttribute('aria-pressed', isPinnedNow ? 'true' : 'false');
+      el.title = isPinnedNow
+        ? 'Current voice is your pinned default. Tap a different voice to preview, then tap ☆ to pin that.'
+        : 'Tap to pin "' + current.charAt(0).toUpperCase() + current.slice(1) + '" as your default voice for every reading.';
+    });
+  }
+
+  function showPinToast(voice) {
+    let toast = document.getElementById('cdp-pin-toast');
+    if (!toast) {
+      toast = document.createElement('div');
+      toast.id = 'cdp-pin-toast';
+      toast.style.cssText = 'position:fixed;top:60px;left:50%;transform:translateX(-50%);background:rgba(13,30,51,0.96);border:1px solid var(--gold,#C9A050);color:var(--gold,#C9A050);padding:10px 18px;border-radius:2px;font-family:Cinzel,serif;font-size:11px;letter-spacing:.18em;text-transform:uppercase;z-index:9999;opacity:0;transition:opacity .25s;pointer-events:none;box-shadow:0 6px 24px rgba(0,0,0,0.5)';
+      document.body.appendChild(toast);
+    }
+    const label = voice.charAt(0).toUpperCase() + voice.slice(1);
+    toast.innerHTML = '★ Pinned: ' + label + ' is now your default';
+    toast.style.opacity = '1';
+    clearTimeout(toast._fadeT);
+    toast._fadeT = setTimeout(() => { toast.style.opacity = '0'; }, 2400);
+  }
+  // Expose
+  window.cdpGetPreferredVoice = getPreferredVoice;
+  window.cdpSetPreferredVoice = setPreferredVoice;
+
   function init() {
-    // Default voice if not already set
+    // Load preferred voice from localStorage (v13). If user has never set one,
+    // defaults to 'tradition' for backwards compatibility with all prior content.
+    const preferred = getPreferredVoice();
     if (!document.body.hasAttribute('data-cdp-voice')) {
-      document.body.setAttribute('data-cdp-voice', 'tradition');
+      document.body.setAttribute('data-cdp-voice', preferred);
     }
     window.cdpVoice = getVoice();
 
@@ -12027,6 +12448,10 @@ window.addEventListener('load', function() {
       btn.classList.toggle('cdp-active', isActive);
       btn.setAttribute('aria-selected', isActive ? 'true' : 'false');
     });
+    // Sync pin indicators to current preferred
+    document.querySelectorAll('.cdp-voice-pin').forEach(el => {
+      el.classList.toggle('cdp-voice-pin-active', el.getAttribute('data-pin-voice') === preferred);
+    });
   }
 
   if (document.readyState === 'loading') {
@@ -12034,6 +12459,130 @@ window.addEventListener('load', function() {
   } else {
     init();
   }
+
+  // ════════════════════════════════════════════════════════════════════
+  // V13 COMPARE VOICES — per-section expander
+  // For every .cdp-voiced element with at least 2 voices populated,
+  // inject a "Compare voices ▾" button. Tapping expands a panel showing
+  // all populated voices stacked, labelled and colour-coded.
+  // ════════════════════════════════════════════════════════════════════
+
+  function escapeHtml(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  function getVoicesFromElement(el) {
+    return {
+      tradition: el.getAttribute('data-tradition') || '',
+      science:   el.getAttribute('data-science')   || '',
+      everyday:  el.getAttribute('data-everyday')  || ''
+    };
+  }
+
+  function countPopulatedVoices(voices) {
+    let n = 0;
+    for (const k of VALID_VOICES) if (voices[k] && voices[k].trim()) n++;
+    return n;
+  }
+
+  function buildComparePanel(voices, currentVoice) {
+    const VOICE_LABELS = { tradition: 'Tradition', science: 'Science', everyday: 'Everyday' };
+    let html = '';
+    for (const v of VALID_VOICES) {
+      const text = voices[v];
+      if (!text || !text.trim()) continue;
+      const isCurrent = v === currentVoice;
+      html += '<div class="cdp-compare-voice cdp-compare-voice-' + v +
+        (isCurrent ? ' cdp-compare-current' : '') + '">' +
+        '<div class="cdp-compare-voice-label">' + VOICE_LABELS[v] + '</div>' +
+        '<div class="cdp-compare-voice-text">' + escapeHtml(text) + '</div>' +
+        '</div>';
+    }
+    return html || '<div class="cdp-compare-empty">No alternate voices returned for this section.</div>';
+  }
+
+  function injectCompareButtons(root) {
+    const scope = root || document;
+    const elems = scope.querySelectorAll('.cdp-voiced');
+    elems.forEach(el => {
+      // Skip if already has Compare attached (idempotent)
+      if (el.hasAttribute('data-cdp-compare-attached')) return;
+      const voices = getVoicesFromElement(el);
+      const populated = countPopulatedVoices(voices);
+      // Only attach Compare when there's actually something to compare (2+ voices)
+      if (populated < 2) {
+        el.setAttribute('data-cdp-compare-attached', 'single');
+        return;
+      }
+      el.setAttribute('data-cdp-compare-attached', 'true');
+
+      // Build the trigger + panel as siblings right after the voiced element
+      const wrap = document.createElement('div');
+      wrap.className = 'cdp-compare-wrap';
+      wrap.style.cssText = 'display:block;margin:2px 0 0;text-align:right';
+
+      const trigger = document.createElement('button');
+      trigger.type = 'button';
+      trigger.className = 'cdp-compare-trigger';
+      trigger.setAttribute('aria-expanded', 'false');
+      trigger.innerHTML = '<span class="cdp-compare-arrow">&#9656;</span> Compare voices';
+
+      const panel = document.createElement('div');
+      panel.className = 'cdp-compare-panel';
+      panel.setAttribute('aria-hidden', 'true');
+
+      // Render initial panel content with current voice highlighted
+      panel.innerHTML = buildComparePanel(voices, getVoice());
+
+      trigger.addEventListener('click', function() {
+        const isOpen = trigger.classList.toggle('cdp-compare-open');
+        panel.classList.toggle('cdp-compare-open', isOpen);
+        trigger.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+        panel.setAttribute('aria-hidden', isOpen ? 'false' : 'true');
+        const arrowSpan = trigger.querySelector('.cdp-compare-arrow');
+        const labelText = trigger.childNodes[trigger.childNodes.length - 1];
+        // Update text after the arrow
+        trigger.innerHTML = '<span class="cdp-compare-arrow' + (isOpen ? '' : '') + '">&#9656;</span> ' +
+          (isOpen ? 'Hide comparison' : 'Compare voices');
+        if (isOpen) trigger.classList.add('cdp-compare-open');
+        // Re-render panel with current voice marker
+        panel.innerHTML = buildComparePanel(voices, getVoice());
+        if (window.trackEvent) {
+          try { window.trackEvent('compare_voices_toggled', { state: isOpen ? 'open' : 'closed' }); } catch(e){}
+        }
+      });
+
+      wrap.appendChild(trigger);
+      wrap.appendChild(panel);
+
+      // Insert wrap after the voiced element
+      if (el.parentNode) el.parentNode.insertBefore(wrap, el.nextSibling);
+    });
+  }
+
+  // Re-inject when reading content changes (new render)
+  document.addEventListener('cdp:reading-ready', function() {
+    setTimeout(injectCompareButtons, 200);
+  });
+  // Initial pass after first paint
+  setTimeout(injectCompareButtons, 600);
+  // Also re-render open compare panels when voice changes (keeps "current" mark accurate)
+  document.addEventListener('cdp:voice-changed', function() {
+    document.querySelectorAll('.cdp-compare-panel.cdp-compare-open').forEach(panel => {
+      const wrap = panel.parentNode;
+      const voicedEl = wrap && wrap.previousElementSibling;
+      if (!voicedEl || !voicedEl.classList || !voicedEl.classList.contains('cdp-voiced')) return;
+      const voices = getVoicesFromElement(voicedEl);
+      panel.innerHTML = buildComparePanel(voices, getVoice());
+    });
+  });
+  // Expose for manual re-injection if a section is added dynamically later
+  window.cdpInjectCompareButtons = injectCompareButtons;
+
 })();
 
 // Show global voice bar when reading is visible
