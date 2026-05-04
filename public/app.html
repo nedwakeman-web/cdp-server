@@ -107,6 +107,50 @@ body.light{--bg:#F5F0E8;--bg2:#EDE6D6;--bg3:#E4DBC8;--bg4:#F8F4EC;
   /* Entry screen */
   .entry-box{padding:16px 8px 60px}
   #cdpEntry{padding:16px}
+
+  /* === v17.1 mobile topbar fixes === */
+  /* Tighten outer padding for max horizontal room */
+  .topbar{padding:10px 12px;gap:6px}
+  /* Brand: keep but make it compact and never-wrap so it cannot push siblings off-screen */
+  .brand{font-size:11px;letter-spacing:.22em;white-space:nowrap;flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;max-width:120px}
+  /* Hamburger: drop the MENU label, glyph alone is enough */
+  #hamburgerLabel{display:none}
+  .nav-hamburger{padding:6px 9px;flex-shrink:0}
+  /* topbar-right: allow internal wrap if absolutely needed, tighten gaps */
+  .topbar-right{gap:4px;flex-wrap:nowrap;min-width:0}
+  /* Hide elements already accessible elsewhere (hamburger menu) or low priority on phone */
+  .topbar-right .tbr-tiers,
+  .topbar-right .tbr-guide,
+  .topbar-right .cdp-voice-pin,
+  .topbar-right #thmBtn{display:none}
+  /* Hide info pill - redirects to homepage, redundant on mobile reading view */
+  .topbar-right > button.thm[onclick*="window.location.href='/'"]{display:none}
+  /* Hide share button on mobile topbar - sharing lives inside reading screens */
+  .topbar-right > button.feedback-btn[onclick*="openShare"]{display:none}
+  /* Voice toggle compact: single-letter labels, smaller padding, never wraps */
+  .topbar-right .cdp-voice-bar{padding:3px;flex-shrink:0}
+  .topbar-right .cdp-voice-bar button{padding:0.32rem 0.42rem;font-size:0.66rem;letter-spacing:.5px;min-width:22px}
+  /* Replace voice button text with single-letter glyphs on phones via CSS */
+  .topbar-right #tbLangAncient{font-size:0;padding:0.4rem 0.55rem}
+  .topbar-right #tbLangAncient::before{content:"T";font-size:0.78rem;font-weight:700}
+  .topbar-right #tbLangModern{font-size:0;padding:0.4rem 0.55rem}
+  .topbar-right #tbLangModern::before{content:"S";font-size:0.78rem;font-weight:700}
+  .topbar-right #tbLangEveryday{font-size:0;padding:0.4rem 0.55rem}
+  .topbar-right #tbLangEveryday::before{content:"E";font-size:0.78rem;font-weight:700}
+  /* Sign-in: compact */
+  .signin-btn{padding:5px 8px;font-size:11px;letter-spacing:.05em;flex-shrink:0}
+  /* Round buttons in topbar-right: shrink slightly */
+  .topbar-right .thm,
+  .topbar-right .feedback-btn{width:28px;height:28px;font-size:13px;flex-shrink:0}
+}
+
+/* Tighter still for very narrow phones */
+@media(max-width:380px){
+  .topbar{padding:9px 8px;gap:4px}
+  .brand{max-width:90px;font-size:10px;letter-spacing:.18em}
+  .topbar-right{gap:3px}
+  .topbar-right .cdp-voice-bar button{padding:0.3rem 0.38rem}
+  .signin-btn{padding:4px 7px;font-size:10px}
 }
 
 /* ── SCREENS ── */
