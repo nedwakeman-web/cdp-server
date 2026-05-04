@@ -2946,14 +2946,37 @@ select.entry-input option{background:#0D1E33;color:#E8EDF4}
 // ══════════════════════════════════════════════════════════
 // API ROUTING
 // ══════════════════════════════════════════════════════════
-const RAILWAY_URL = 'https://cdp-server-production.up.railway.app';
+// API ROUTING (v16 — hostname-aware)
+//
+// Each environment talks to its own backend Railway:
+//   Live   (cosmicdailyplanner.com)               -> Live Railway
+//   Beta   (cosmicdailyplanner-beta.netlify.app)  -> Beta Railway
+//   Dev    (cosmicdailyplannerdev.netlify.app)    -> Beta Railway (dev shares beta backend)
+//   Local  (localhost)                            -> local node server on :3000
+//   Railway-hosted (any *.railway.app)            -> itself (relative paths)
+//
+// Promotion discipline: a server change pushed to CPD---BETA repo affects
+// dev and beta only. To promote to live, copy the same change to the
+// cdp-server repo (which Live Railway watches).
+// ══════════════════════════════════════════════════════════
+const RAILWAY_URL_LIVE = 'https://cdp-server-production-5549.up.railway.app';
+const RAILWAY_URL_BETA = 'https://cdp-server-production.up.railway.app';
 
 const API_BASE = (function(){
-  const h = window.location.hostname;
+  const h = (window.location.hostname || '').toLowerCase();
+  // Localhost in dev tools
   if (h === 'localhost' || h === '127.0.0.1') return 'http://localhost:3000';
-  if (h.includes('railway.app')) return '';
-  return RAILWAY_URL;
+  // Hosted directly on Railway (rare, used during testing)
+  if (h.endsWith('.railway.app')) return '';
+  // Live production domain (with or without www)
+  if (h === 'cosmicdailyplanner.com' || h === 'www.cosmicdailyplanner.com') return RAILWAY_URL_LIVE;
+  // Everything else (beta and dev Netlify, plus any preview URL) -> Beta Railway
+  return RAILWAY_URL_BETA;
 })();
+
+// Legacy global kept for any old code paths still referencing it.
+// Always points at the active backend for THIS environment.
+const RAILWAY_URL = API_BASE || RAILWAY_URL_BETA;
 
 // ══════════════════════════════════════════════════════════
 // STATE
