@@ -14830,12 +14830,12 @@ document.addEventListener('cdp:reading-ready', function() {
 .cdp-streak-headline {
   font-family: 'Georgia', serif;
   font-size: 28px;
-  color: var(--v19-navy);
+  color: var(--gold, #c9a050);
   margin: 0 0 8px 0;
 }
 .cdp-streak-sub {
   font-family: 'Georgia', serif;
-  color: var(--text2, #555);
+  color: rgba(245,228,196,0.75);
   margin: 0 0 24px 0;
   font-style: italic;
 }
@@ -14844,20 +14844,20 @@ document.addEventListener('cdp:reading-ready', function() {
   gap: 24px;
   margin: 0 0 32px 0;
   padding: 20px 0;
-  border-top: 1px solid var(--v19-rule);
-  border-bottom: 1px solid var(--v19-rule);
+  border-top: 1px solid rgba(201,160,80,0.25);
+  border-bottom: 1px solid rgba(201,160,80,0.25);
 }
 .cdp-streak-stat .stat-label {
   font-size: 11px;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--v19-teal);
+  color: rgba(78,180,167,0.85);
   margin-bottom: 4px;
 }
 .cdp-streak-stat .stat-value {
   font-family: 'Georgia', serif;
   font-size: 28px;
-  color: var(--v19-navy);
+  color: rgba(245,228,196,0.95);
 }
 .cdp-streak-grid {
   display: grid;
@@ -14867,14 +14867,14 @@ document.addEventListener('cdp:reading-ready', function() {
 }
 .cdp-streak-cell {
   aspect-ratio: 1;
-  background: rgba(0, 0, 0, 0.05);
+  background: rgba(255, 255, 255, 0.05);
   border-radius: 4px;
 }
 .cdp-streak-cell.active {
-  background: var(--v19-gold);
+  background: var(--gold, #c9a050);
 }
 .cdp-streak-cell.today {
-  border: 2px solid var(--v19-navy);
+  border: 2px solid rgba(245,228,196,0.7);
 }
 .cdp-streak-status-msg {
   padding: 16px;
