@@ -116,76 +116,150 @@ function numerologyLayers(dateIso, personalYear) {
 // =====================================================================
 // 3. Framework scoring
 // Each returns { score: 0..100, reasons: [...], cautions: [...] }
+// Reasons are written in plain English, with reference to the user where
+// possible. They are designed to be readable, not jargon. Where a
+// numerology number appears in a reason, it is paired with its name and a
+// one-line meaning so the reader does not need to know the system.
 // =====================================================================
 
-function scoreNumerology(layers, profile) {
+// One-line meanings for each numerology number, used in human-readable reasons.
+const NUM_NAMES = {
+  1: 'New Beginnings', 2: 'Partnership', 3: 'Creative Expression', 4: 'Foundation',
+  5: 'Freedom and Change', 6: 'Harmony and Service', 7: 'Wisdom and Introspection',
+  8: 'Power and Abundance', 9: 'Completion',
+  11: 'Master Visionary', 22: 'Master Builder', 33: 'Master Teacher', 44: 'Master Healer'
+};
+const NUM_TEXTURES = {
+  1: 'initiation, leadership, and asserting your direction',
+  2: 'partnership, diplomacy, and shared decisions',
+  3: 'creative expression, communication, and visibility',
+  4: 'structure, careful detail, and steady follow-through',
+  5: 'change, adaptability, and embracing the unexpected',
+  6: 'service, harmony, and care for others',
+  7: 'reflection, depth, and quiet analytical work',
+  8: 'authority, business decisions, and material outcomes',
+  9: 'completion, release, and wrapping things up cleanly',
+  11: 'amplified vision and intuitive breakthrough',
+  22: 'building lasting structures at scale',
+  33: 'teaching, healing, and serving the collective',
+  44: 'practical mastery and disciplined execution'
+};
+
+function scoreNumerology(layers, profile, userProfile, intentRaw) {
   let score = 50;  // neutral baseline
   const reasons = [];
   const cautions = [];
-  const candidates = [layers.day, layers.dayMonth, layers.full];
+  const intentLabel = humanIntent(intentRaw);
 
-  for (const n of candidates) {
+  // Layer name mapping for richer reasons
+  const layerLabels = { day: 'Day', dayMonth: 'Day plus Month', full: 'Day plus Month plus Year' };
+  const candidates = [
+    { n: layers.day, label: 'Day' },
+    { n: layers.dayMonth, label: 'Day plus Month' },
+    { n: layers.full, label: 'Day plus Month plus Year' }
+  ];
+
+  for (const { n, label } of candidates) {
+    const name = NUM_NAMES[n] || ('Number ' + n);
+    const texture = NUM_TEXTURES[n] || '';
     if (profile.favours.numerology.includes(n)) {
       score += 15;
-      reasons.push(`Numerology layer ${n} favours this intent.`);
+      const txt = texture ? texture : 'this intent';
+      reasons.push(`The ${label} numerology layer is ${n} (${name}), bringing ${txt}, which suits ${intentLabel}.`);
     }
     if (profile.avoids.numerology.includes(n)) {
       score -= 12;
-      cautions.push(`Numerology layer ${n} runs against this intent.`);
+      cautions.push(`The ${label} numerology layer is ${n} (${name}), which leans toward ${texture || 'a different texture'} and pulls against ${intentLabel}.`);
     }
     // Master number bonus, regardless of intent
     if ([11, 22, 33, 44].includes(n)) {
       score += 5;
-      reasons.push(`Master number ${n} present, portals open.`);
+      reasons.push(`Master number ${n} (${name}) sits in the ${label} layer. Master days carry amplified intensity and are favoured for high-stakes openings.`);
+    }
+  }
+
+  // Personal Year alignment: if the user's Personal Year sits in the favoured set,
+  // call that out by name. This is the single most-asked thing in numerology.
+  if (userProfile && userProfile.personalYear) {
+    const py = Number(userProfile.personalYear);
+    if (profile.favours.numerology.includes(py)) {
+      score += 8;
+      reasons.push(`Your Personal Year ${py} (${NUM_NAMES[py] || ''}) is itself a favoured number for ${intentLabel}, so this whole month carries supportive backing for this kind of work.`);
     }
   }
 
   return { score: clamp(score, 0, 100), reasons, cautions };
 }
 
-function scoreMoon(moonData, profile) {
+function scoreMoon(moonData, profile, userProfile, intentRaw) {
   let score = 50;
   const reasons = [];
   const cautions = [];
+  const intentLabel = humanIntent(intentRaw);
 
   if (moonData.isBlackMoon) {
     score -= 25;
-    cautions.push("Black Moon window: two days before new moon. Tradition recommends waiting for action.");
+    cautions.push(`The Moon is in the Black Moon window, the two days before the new moon. Tradition reads this as a fallow period, when action tends to misfire. For ${intentLabel}, holding fire here is the conventional advice.`);
   }
   if (moonData.isShivaMoon) {
     score += 15;
-    reasons.push("Shiva Moon window: two days after new moon. Tradition favours initiation here.");
+    reasons.push(`The Moon is in the Shiva Moon window, the two days after the new moon. Tradition reads this as the most fertile point for new initiation, which is why it scores well for ${intentLabel}.`);
   }
 
-  if (profile.favours.moon.includes(moonData.phase)) {
-    score += 12;
-    reasons.push(`Moon phase ${moonData.phase} aligns with this intent.`);
+  const phaseLabel = humanPhase(moonData.phase);
+  if (profile.favours.moon.includes(moonData.phase) || (moonData.isShivaMoon && profile.favours.moon.includes('shiva'))) {
+    if (!moonData.isShivaMoon) {
+      score += 12;
+      reasons.push(`The ${phaseLabel} aligns with the building energy that ${intentLabel} typically benefits from.`);
+    }
   }
   if (profile.avoids.moon.includes(moonData.phase)) {
     score -= 10;
-    cautions.push(`Moon phase ${moonData.phase} is not optimal for this intent.`);
+    cautions.push(`The ${phaseLabel} carries a different texture than ${intentLabel} usually wants. Not a hard no, but worth noting.`);
   }
 
   return { score: clamp(score, 0, 100), reasons, cautions };
 }
 
-function scoreKin(kinData, profile) {
+function humanPhase(phase) {
+  const map = {
+    new_moon: 'New Moon', waxing_crescent: 'Waxing Crescent', first_quarter: 'First Quarter',
+    waxing_gibbous: 'Waxing Gibbous', full_moon: 'Full Moon', waning_gibbous: 'Waning Gibbous',
+    last_quarter: 'Last Quarter', waning_crescent: 'Waning Crescent'
+  };
+  return map[phase] || phase;
+}
+
+function scoreKin(kinData, profile, userProfile, intentRaw) {
   let score = 50;
   const reasons = [];
   const cautions = [];
+  const intentLabel = humanIntent(intentRaw);
 
   if (kinData.isGAP) {
     score += 10;
-    reasons.push(`Galactic Activation Portal day, Kin ${kinData.kin}. Heightened access in the Dreamspell tradition.`);
+    reasons.push(`This is a Galactic Activation Portal day in the Dreamspell calendar. Such days are read as moments when synchronicity and meaningful coincidence tend to cluster. Worth showing up fully for ${intentLabel}.`);
   }
 
   if (profile.favours.kin.tones.includes(kinData.tone)) {
     score += 10;
-    reasons.push(`Tone ${kinData.tone} aligns with this intent.`);
+    reasons.push(`The day carries Tone ${kinData.tone}, which Dreamspell associates with the kind of energy that supports ${intentLabel}.`);
   }
   if (profile.favours.kin.seals.includes(kinData.seal)) {
     score += 10;
-    reasons.push(`Seal ${kinData.seal} aligns with this intent.`);
+    reasons.push(`The day's seal is ${capitalise(kinData.seal)}, which lines up with the texture that ${intentLabel} calls for.`);
+  }
+
+  // Birth-Kin echo: if today's kin equals or rhymes with the user's Birth Kin, call it out.
+  if (userProfile && userProfile.birthKin) {
+    const bk = Number(userProfile.birthKin);
+    if (bk === kinData.kin) {
+      score += 12;
+      reasons.push(`Today's Kin ${kinData.kin} is your Birth Kin. The Dreamspell year wheel turns once every 260 days, and this is your day in that wheel. Personally significant.`);
+    } else if (bk && (bk % 13) === (kinData.kin % 13) && bk !== kinData.kin) {
+      score += 4;
+      reasons.push(`Today shares your Birth Kin's tone, which means the day's energetic rhythm echoes yours, even if the seal is different.`);
+    }
   }
 
   return { score: clamp(score, 0, 100), reasons, cautions };
@@ -255,10 +329,11 @@ async function scoreDay({ dateIso, userProfile, profile, astroService, weights }
   // Compute numerology layers
   const layers = numerologyLayers(dateIso, userProfile.personalYear);
 
-  // Score each framework
-  const numerology = scoreNumerology(layers, profile);
-  const moon = scoreMoon(moonData, profile);
-  const kin = scoreKin(kinData, profile);
+  // Score each framework, passing user context so reasons can reference the person
+  const intentRaw = (profile && profile._rawIntent) || '';
+  const numerology = scoreNumerology(layers, profile, userProfile, intentRaw);
+  const moon = scoreMoon(moonData, profile, userProfile, intentRaw);
+  const kin = scoreKin(kinData, profile, userProfile, intentRaw);
   const transitsScore = scoreTransits(transits, profile);
 
   const frameworkScores = { numerology, moon, kin, transits: transitsScore };
@@ -304,7 +379,8 @@ async function scoreDay({ dateIso, userProfile, profile, astroService, weights }
 
 async function findBestDays({ userProfile, intent, monthStart, monthEnd, astroService, weights, topN = 3 }) {
   const intentKey = classifyIntent(intent);
-  const profile = INTENT_PROFILES[intentKey];
+  // Clone profile so we can safely attach the raw intent text without mutating the shared dict
+  const profile = { ...INTENT_PROFILES[intentKey], _rawIntent: intent || '' };
 
   const dates = enumerateDates(monthStart, monthEnd);
   const results = [];
@@ -319,6 +395,20 @@ async function findBestDays({ userProfile, intent, monthStart, monthEnd, astroSe
   }
 
   results.sort((a, b) => b.totalScore - a.totalScore);
+
+  // Attach a per-result personalContext block useful for the "Why this day for me?" tap
+  for (const r of results) {
+    if (r && !r.error) {
+      r.personalContext = {
+        firstName: (userProfile && (userProfile.firstName || userProfile.name)) || null,
+        personalYear: (userProfile && userProfile.personalYear) || null,
+        lifePath: (userProfile && userProfile.lifePath) || null,
+        birthKin: (userProfile && userProfile.birthKin) || null,
+        intentRaw: intent || '',
+        intentClassified: intentKey
+      };
+    }
+  }
 
   return {
     intent: { raw: intent, classified: intentKey, rationale: profile.rationale },
@@ -336,6 +426,32 @@ async function findBestDays({ userProfile, intent, monthStart, monthEnd, astroSe
 function clamp(n, lo, hi) { return Math.max(lo, Math.min(hi, n)); }
 function round1(n) { return Math.round(n * 10) / 10; }
 function capitalise(s) { return s ? s.charAt(0).toUpperCase() + s.slice(1) : s; }
+
+// Returns a clean, lowercase phrase for the user's intent suitable for embedding
+// inside reason sentences. Example: "funding pitch" stays "a funding pitch";
+// "first date" -> "a first date"; empty -> "this kind of day".
+function humanIntent(raw) {
+  if (!raw || typeof raw !== 'string') return 'this kind of day';
+  const t = raw.trim().toLowerCase();
+  if (!t) return 'this kind of day';
+  // Handle a small set of common phrases gracefully; otherwise wrap with "your".
+  const articleMap = {
+    'funding pitch': 'a funding pitch',
+    'first date': 'a first date',
+    'difficult conversation': 'a difficult conversation',
+    'creative launch': 'a creative launch',
+    'rest day': 'a day of rest',
+    'rest': 'a day of rest',
+    'big decision': 'a big decision',
+    'interview': 'an interview',
+    'contract': 'a contract decision',
+    'legal': 'a legal decision'
+  };
+  if (articleMap[t]) return articleMap[t];
+  // Default: if it sounds noun-like, prefix with "your"; users typed it themselves,
+  // so this reads naturally either way.
+  return 'your ' + t;
+}
 
 function enumerateDates(startIso, endIso) {
   const out = [];
