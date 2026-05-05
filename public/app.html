@@ -10589,6 +10589,31 @@ function initSupabase() {
       currentUser = session?.user || null;
       updateAuthUI();
     }).catch(() => { /* session fetch failed (e.g. tracking prevention) */ });
+
+    // Defensive: in some browsers (incognito, third-party cookie blocking, OAuth
+    // callbacks where the URL hash is consumed but onAuthStateChange does not
+    // fire), the UI can show "Sign In" while a valid session is actually present.
+    // Re-check at 800ms and again at 2500ms after init. Cheap, harmless, and
+    // catches the symptom regardless of which chain in the SDK broke.
+    function _cdpAuthRecheck(label) {
+      try {
+        if (!sb || !sb.auth) return;
+        sb.auth.getSession().then(({ data: { session } }) => {
+          const sessionUser = session && session.user ? session.user : null;
+          if (sessionUser && !currentUser) {
+            currentUser = sessionUser;
+            updateAuthUI();
+            if (typeof syncProfileFromSupabase === 'function') syncProfileFromSupabase().catch(()=>{});
+            if (typeof loadReadingHistoryFromSupabase === 'function') loadReadingHistoryFromSupabase().catch(()=>{});
+          } else if (sessionUser && currentUser) {
+            // Session is valid but UI may not reflect it. Force redraw.
+            updateAuthUI();
+          }
+        }).catch(()=>{});
+      } catch(e) {}
+    }
+    setTimeout(function(){ _cdpAuthRecheck('800ms'); }, 800);
+    setTimeout(function(){ _cdpAuthRecheck('2500ms'); }, 2500);
   } catch(e) {
     console.warn('Supabase init failed:', e.message);
   }
