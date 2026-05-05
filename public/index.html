@@ -8496,6 +8496,87 @@ function openWgtKin(kinFull, q, isGAP) {
   openDrawer('Kin · ' + kinFull, q, chips);
 }
 
+// ── Best Day "Why this day for me?" drawer ──────────────────────────────────
+// Built so the Oracle answer is genuinely personalised. The prompt assembles
+// the reasons, cautions, and the user's stored profile (Personal Year, Life
+// Path, Birth Kin, raw intent text) into a single contextual ask.
+function openWhyThisDayDrawer(encodedPayload) {
+  let payload;
+  try { payload = JSON.parse(decodeURIComponent(encodedPayload)); }
+  catch(e) { console.warn('Best Day drawer payload parse failed', e); return; }
+
+  const { dateIso, score, reasons, cautions, personalContext } = payload || {};
+  const pc = personalContext || {};
+  const dateLabel = (function(){
+    try {
+      const dt = new Date(dateIso + 'T12:00:00Z');
+      return dt.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+    } catch(e) { return dateIso; }
+  })();
+
+  const userBits = [];
+  if (pc.firstName) userBits.push('the person is ' + pc.firstName);
+  if (pc.lifePath) userBits.push('their Life Path is ' + pc.lifePath);
+  if (pc.personalYear) userBits.push('their Personal Year is ' + pc.personalYear);
+  if (pc.birthKin) userBits.push('their Birth Kin is ' + pc.birthKin);
+  const userLine = userBits.length ? ('Context: ' + userBits.join(', ') + '.') : '';
+
+  const intentLine = pc.intentRaw ? ('They asked for the best day for: "' + pc.intentRaw + '".') : '';
+  const reasonsBlock = (reasons || []).map(r => '- ' + r).join('\n');
+  const cautionsBlock = (cautions && cautions.length) ? ('Cautions:\n' + cautions.map(c => '- ' + c).join('\n')) : '';
+
+  const question =
+    'The Best Day algorithm has identified ' + dateLabel + ' (score ' + score + '/100) as a top pick.\n\n' +
+    userLine + '\n' +
+    intentLine + '\n\n' +
+    'The reasons the algorithm flagged were:\n' + reasonsBlock + '\n\n' +
+    cautionsBlock + '\n\n' +
+    'Now translate this into a personal explanation for ' + (pc.firstName || 'the person') + '. Speak in plain English without numerology jargon. Connect what the day offers to who they are (Personal Year ' + (pc.personalYear || '') + ', Life Path ' + (pc.lifePath || '') + ') and what they specifically asked for. Be concrete. Three to five sentences. Avoid the words "energy", "vibration", and "alignment" unless absolutely necessary.';
+
+  const chips = [
+    {q: 'What is the single most important thing for ' + (pc.firstName || 'me') + ' to remember about ' + dateLabel + '?', l: 'One thing to remember'},
+    {q: 'What could go wrong on ' + dateLabel + ' if I am not paying attention, and how do I avoid it?', l: 'What could go wrong'},
+    {q: 'How does ' + dateLabel + ' connect to my longer arc this year, given my Personal Year ' + (pc.personalYear || '') + '?', l: 'The longer arc'}
+  ];
+
+  openDrawer('Why ' + dateLabel + '?', question, chips);
+}
+
+// ── Best Day "What should I actually do?" drawer ────────────────────────────
+function openWhatToDoDrawer(encodedPayload) {
+  let payload;
+  try { payload = JSON.parse(decodeURIComponent(encodedPayload)); }
+  catch(e) { console.warn('Best Day drawer payload parse failed', e); return; }
+
+  const { dateIso, score, reasons, cautions, personalContext } = payload || {};
+  const pc = personalContext || {};
+  const dateLabel = (function(){
+    try {
+      const dt = new Date(dateIso + 'T12:00:00Z');
+      return dt.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' });
+    } catch(e) { return dateIso; }
+  })();
+
+  const userBits = [];
+  if (pc.firstName) userBits.push('the person is ' + pc.firstName);
+  if (pc.personalYear) userBits.push('their Personal Year is ' + pc.personalYear);
+  const userLine = userBits.length ? ('Context: ' + userBits.join(', ') + '.') : '';
+  const intentLine = pc.intentRaw ? ('They asked for the best day for: "' + pc.intentRaw + '".') : '';
+
+  const question =
+    'For ' + dateLabel + ', give ' + (pc.firstName || 'the person') + ' a concrete tactical plan for ' + (pc.intentRaw || 'this kind of day') + '.\n\n' +
+    userLine + ' ' + intentLine + '\n\n' +
+    'Format the answer as: (1) a one-line summary of the texture of the day, (2) three specific actions to take, in order, with rough times of day if useful, (3) one thing to avoid. Be practical, not mystical. Speak in plain English. The reader is a sophisticated professional; respect their intelligence. No more than 250 words.';
+
+  const chips = [
+    {q: 'Of those three actions, which is most likely to be the one ' + (pc.firstName || 'I') + ' avoids or postpones, and why?', l: 'The one I will skip'},
+    {q: 'What conversations should ' + (pc.firstName || 'I') + ' have on ' + dateLabel + ', and with whom?', l: 'Who to talk to'},
+    {q: 'How should ' + (pc.firstName || 'I') + ' prepare the day before to make ' + dateLabel + ' work?', l: 'The day before'}
+  ];
+
+  openDrawer('What to do · ' + dateLabel, question, chips);
+}
+
 function closeDrawer() {
   document.getElementById('insightDrawer').classList.remove('open');
   document.getElementById('drawerOverlay').classList.remove('open');
@@ -9781,6 +9862,35 @@ function openPersonalNumDrawer(scope, num) {
   );
 }
 
+function openNumLayerDrawer(layerLabel, num, layerDesc) {
+  const d = _dayModalData;
+  const nd = NUM_DATA[num] || {n:'-', m:''};
+  const isM = [11,22,33,44].includes(num);
+  const masterNote = isM ? ' This is a master number, carrying amplified intensity.' : '';
+  openDrawer(
+    layerLabel+' Layer '+String.fromCharCode(183)+' '+num+' '+nd.n,
+    'The "'+layerLabel+'" numerology layer for '+d.firstName+' on '+d.dLabel+' is '+num+' ('+nd.n+'). Layer meaning: '+layerDesc+'.'+masterNote+' The deeper number quality: '+(nd.m||nd.k||nd.n||'')+'. In plain language and without jargon, what does this specific layer suggest '+d.firstName+' should pay attention to today?',
+    [
+      {q:'What is one practical thing '+d.firstName+' should do today that honours this '+layerLabel.toLowerCase()+' layer of '+num+'?', l:'One thing to do'},
+      {q:'How does this '+layerLabel.toLowerCase()+' layer interact with '+d.firstName+'\u2019s Life Path and Personal Year, in plain terms?', l:'How it fits the bigger picture'},
+    ]
+  );
+}
+
+function openPacingDrawer(periodLabel, num, scienceDesc, numContext) {
+  const d = _dayModalData;
+  const nd = NUM_DATA[num] || {n:'-', m:''};
+  const cleanLabel = String(periodLabel).replace(/[^A-Za-z]/g, '').trim();
+  openDrawer(
+    periodLabel+' Pacing '+String.fromCharCode(183)+' '+num+' '+nd.n,
+    'Pacing for '+cleanLabel+' on '+d.dLabel+' for '+d.firstName+'. The numerology number is '+num+' ('+nd.n+'), meaning: '+(numContext||nd.m||nd.k||'')+'. The neuroscience pacing note for this period of day: '+scienceDesc+' Bring these together in plain language: what specifically should '+d.firstName+' lean into during '+cleanLabel.toLowerCase()+', and what should they avoid scheduling then?',
+    [
+      {q:'What is the single best use of '+d.firstName+'\u2019s '+cleanLabel.toLowerCase()+' on '+d.dLabel+', given both the numerology and the circadian pattern?', l:'Best use of this window'},
+      {q:'What kinds of work or conversations should '+d.firstName+' move out of the '+cleanLabel.toLowerCase()+' on '+d.dLabel+'?', l:'What to move'},
+    ]
+  );
+}
+
 // ── Day card save-as-image ──────────────────────────────────────
 async function saveDayCardImage(ds) {
   const card = document.getElementById('dayCardCapture');
@@ -10095,11 +10205,14 @@ function openDayModal(ds){
           const isM=[11,22,33,44].includes(n);
           const mc=masterColOf(n);
           const nd=NUM_DATA[n]||{n:'-',m:''};
-          return `<div style="background:var(--bg2);border:1px solid ${isM?mc:'var(--div)'};border-radius:4px;padding:12px 8px;text-align:center">
+          const lq = 'Numerology layer "' + lbl + '" gives ' + firstName + ' the number ' + n + ' (' + (nd.n||'-') + ') today, ' + dLabel + '. ' + desc + '. What does this layer specifically suggest for ' + firstName + ' today, in plain language?';
+        return `<div class="tappable" style="background:var(--bg2);border:1px solid ${isM?mc:'var(--div)'};border-radius:4px;padding:12px 8px;text-align:center;cursor:pointer"
+            onclick="closeModal();openNumLayerDrawer('${lbl.replace(/'/g, '&#39;')}', ${n}, '${(desc||'').replace(/'/g, '&#39;')}')">
             <div style="font-size:9px;color:var(--text3);letter-spacing:.1em;text-transform:uppercase;margin-bottom:6px">${lbl}</div>
             <div style="font-size:32px;font-family:'Cormorant Garamond',serif;color:${isM?mc:'var(--text)'};line-height:1;margin-bottom:4px">${n}${isM?'★':''}</div>
             <div style="font-size:11px;color:var(--text2);margin-bottom:6px">${nd.n||'-'}</div>
             <div style="font-size:10px;color:var(--text3);line-height:1.4">${desc}</div>
+            <div style="font-size:9px;color:var(--gold);margin-top:6px;opacity:.6">↗ Tap</div>
           </div>`;
         }).join('');
       })()}
@@ -10115,11 +10228,13 @@ function openDayModal(ds){
       ].map(([lbl,n,scienceDesc])=>{
         const nd=NUM_DATA[n]||{n:'-',m:'',k:''};
         const numContext = nd.m||nd.k||'';
-        return `<div style="background:var(--bg2);border:1px solid var(--div);border-radius:4px;padding:10px 8px">
+        return `<div class="tappable" style="background:var(--bg2);border:1px solid var(--div);border-radius:4px;padding:10px 8px;cursor:pointer"
+          onclick="closeModal();openPacingDrawer('${lbl.replace(/'/g, '&#39;')}', ${n||0}, '${(scienceDesc||'').replace(/'/g, '&#39;')}', '${(numContext||'').replace(/'/g, '&#39;')}')">
           <div style="font-size:11px;color:var(--text3);margin-bottom:4px">${lbl}</div>
           <div style="font-size:18px;font-family:'Cormorant Garamond',serif;color:var(--text);margin-bottom:4px">${n||'-'} <span style="font-size:11px;color:var(--text2);font-family:inherit">${nd.n||''}</span></div>
           <div style="font-size:10px;color:var(--text2);line-height:1.45;margin-bottom:6px">${numContext}</div>
           <div style="font-size:9px;color:var(--text3);line-height:1.4;font-style:italic">${scienceDesc}</div>
+          <div style="font-size:9px;color:var(--gold);margin-top:6px;opacity:.55;text-align:center">↗ Tap</div>
         </div>`;
       }).join('')}
     </div>
@@ -10317,13 +10432,26 @@ function renderBestDayResults(opts) {
     const reasons = (day.reasons || []).slice(0, 3);
     const cautions = (day.cautions || []).slice(0, 1);
     const rankBadge = rank === 1 ? '✦ Best match' : '#' + rank;
-    return `<div class="best-day-card" onclick="showScreen('sr');loadReading('${day.dateIso}','oracle')" style="cursor:pointer;position:relative">
+    // Encode personalContext for the "Why this day for me?" prompt; safe-escape for HTML attr
+    const pc = day.personalContext || {};
+    const pcAttr = encodeURIComponent(JSON.stringify({
+      dateIso: day.dateIso,
+      score,
+      reasons: day.reasons || [],
+      cautions: day.cautions || [],
+      personalContext: pc
+    }));
+    return `<div class="best-day-card" style="position:relative">
       <div class="best-day-rank">${rankBadge}</div>
       <div class="best-day-date">${dayLabel(day.dateIso)}</div>
       <div class="best-day-score">${score >= 70 ? '⭐ Strong' : score >= 55 ? '✓ Good' : 'Moderate'} · Score ${score}/100</div>
       <div class="best-day-reasons">${reasons.map(r => '✓ ' + escapeHtml(r)).join('<br>')}</div>
       ${cautions.length ? `<div class="best-day-caution">⚠ ${escapeHtml(cautions[0])}</div>` : ''}
-      <div style="font-size:13px;color:var(--gold);opacity:.6;margin-top:8px">↗ Tap to open this day's full reading</div>
+      <div style="display:flex;gap:14px;margin-top:10px;flex-wrap:wrap">
+        <button onclick="event.stopPropagation();openWhyThisDayDrawer('${pcAttr}')" style="background:none;border:1px solid rgba(201,160,80,0.45);color:var(--gold);font-family:'EB Garamond',serif;font-size:12px;letter-spacing:.12em;text-transform:uppercase;padding:6px 12px;border-radius:2px;cursor:pointer">↗ Why this day for me?</button>
+        <button onclick="event.stopPropagation();openWhatToDoDrawer('${pcAttr}')" style="background:none;border:1px solid rgba(78,180,167,0.45);color:var(--teal);font-family:'EB Garamond',serif;font-size:12px;letter-spacing:.12em;text-transform:uppercase;padding:6px 12px;border-radius:2px;cursor:pointer">↗ What should I actually do?</button>
+        <button onclick="showScreen('sr');loadReading('${day.dateIso}','oracle')" style="background:none;border:none;color:var(--text2);font-family:'EB Garamond',serif;font-size:12px;letter-spacing:.12em;text-transform:uppercase;padding:6px 4px;cursor:pointer;margin-left:auto">↗ Open full day</button>
+      </div>
     </div>`;
   }
 
@@ -11411,6 +11539,15 @@ window.addEventListener('load', function() {
 <\/script>
 
 <!-- COMPAT PROFILE PICKER MODAL -->
+<div id="compatPickerModal" style="display:none;position:fixed;inset:0;z-index:8000;background:rgba(0,0,0,0.7);align-items:center;justify-content:center;padding:20px">
+  <div style="background:var(--bg2);border:1px solid var(--div);border-radius:4px;width:min(420px,100%);max-height:80vh;display:flex;flex-direction:column">
+    <div style="padding:16px 20px;border-bottom:1px solid var(--div);display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
+      <span style="font-family:'Cinzel',serif;font-size:11px;letter-spacing:.18em;color:var(--gold)" id="compatPickerTitle">SELECT PROFILE</span>
+      <button onclick="document.getElementById('compatPickerModal').style.display='none'" style="background:none;border:none;color:var(--text3);font-size:22px;cursor:pointer;width:32px;height:32px;display:flex;align-items:center;justify-content:center">×</button>
+    </div>
+    <div id="compatPickerList" style="overflow-y:auto;flex:1;padding:12px 16px"></div>
+  </div>
+</div>
 </body>
 </html>`);
   w.document.close();
@@ -12438,6 +12575,50 @@ document.addEventListener('DOMContentLoaded', ()=>{
 </div>
 
 <!-- ── PROFILE LIBRARY ──────────────────────────────────────────── -->
+<div id="profileLibrary" style="display:none;position:fixed;inset:0;z-index:9997;background:rgba(0,0,0,0.7)" onclick="if(event.target===this)closeProfileLibrary()">
+  <div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(560px,95vw);max-height:85vh;background:var(--bg2);overflow-y:auto;padding:28px 24px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+      <span style="font-family:'Cinzel',serif;font-size:12px;letter-spacing:.18em;color:var(--gold)">PROFILES</span>
+      <button onclick="closeProfileLibrary()" style="background:none;border:none;color:var(--text3);font-size:20px;cursor:pointer">×</button>
+    </div>
+    <div id="profileLibraryList" style="display:flex;flex-direction:column;gap:8px;margin-bottom:20px"></div>
+    <button onclick="showAddProfile()" style="width:100%;background:none;border:1px solid var(--div);color:var(--text2);font-family:'Cinzel',serif;font-size:11px;letter-spacing:.14em;padding:12px;cursor:pointer;transition:all .2s"
+      onmouseover="this.style.borderColor='var(--gold)';this.style.color='var(--gold)'"
+      onmouseout="this.style.borderColor='var(--div)';this.style.color='var(--text2)'">
+      + ADD PERSON
+    </button>
+    <div id="addProfileForm" style="display:none;margin-top:16px;padding:16px;background:var(--bg3);border:1px solid var(--div)">
+      <div style="font-family:'Cinzel',serif;font-size:11px;letter-spacing:.14em;color:var(--teal);margin-bottom:14px">NEW PROFILE</div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <input id="npName" class="entry-input" placeholder="Full name as given at birth" style="padding:10px 14px;font-size:16px">
+        <input id="npNick" class="entry-input" placeholder="Nickname (optional, how the Oracle addresses them)" style="padding:10px 14px;font-size:16px">
+        <div style="display:flex;gap:8px">
+          <select id="npDay" class="entry-input" style="flex:1;padding:10px 8px">
+            <option value="">Day</option>
+            <option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option><option value="15">15</option><option value="16">16</option><option value="17">17</option><option value="18">18</option><option value="19">19</option><option value="20">20</option><option value="21">21</option><option value="22">22</option><option value="23">23</option><option value="24">24</option><option value="25">25</option><option value="26">26</option><option value="27">27</option><option value="28">28</option><option value="29">29</option><option value="30">30</option><option value="31">31</option>
+          </select>
+          <select id="npMonth" class="entry-input" style="flex:2;padding:10px 8px">
+            <option value="">Month</option>
+            <option value="1">January</option><option value="2">February</option>
+            <option value="3">March</option><option value="4">April</option>
+            <option value="5">May</option><option value="6">June</option>
+            <option value="7">July</option><option value="8">August</option>
+            <option value="9">September</option><option value="10">October</option>
+            <option value="11">November</option><option value="12">December</option>
+          </select>
+          <select id="npYear" class="entry-input" style="flex:2;padding:10px 8px">
+            <option value="">Year</option>
+            <option value="2015">2015</option><option value="2014">2014</option><option value="2013">2013</option><option value="2012">2012</option><option value="2011">2011</option><option value="2010">2010</option><option value="2009">2009</option><option value="2008">2008</option><option value="2007">2007</option><option value="2006">2006</option><option value="2005">2005</option><option value="2004">2004</option><option value="2003">2003</option><option value="2002">2002</option><option value="2001">2001</option><option value="2000">2000</option><option value="1999">1999</option><option value="1998">1998</option><option value="1997">1997</option><option value="1996">1996</option><option value="1995">1995</option><option value="1994">1994</option><option value="1993">1993</option><option value="1992">1992</option><option value="1991">1991</option><option value="1990">1990</option><option value="1989">1989</option><option value="1988">1988</option><option value="1987">1987</option><option value="1986">1986</option><option value="1985">1985</option><option value="1984">1984</option><option value="1983">1983</option><option value="1982">1982</option><option value="1981">1981</option><option value="1980">1980</option><option value="1979">1979</option><option value="1978">1978</option><option value="1977">1977</option><option value="1976">1976</option><option value="1975">1975</option><option value="1974">1974</option><option value="1973">1973</option><option value="1972">1972</option><option value="1971">1971</option><option value="1970">1970</option><option value="1969">1969</option><option value="1968">1968</option><option value="1967">1967</option><option value="1966">1966</option><option value="1965">1965</option><option value="1964">1964</option><option value="1963">1963</option><option value="1962">1962</option><option value="1961">1961</option><option value="1960">1960</option><option value="1959">1959</option><option value="1958">1958</option><option value="1957">1957</option><option value="1956">1956</option><option value="1955">1955</option><option value="1954">1954</option><option value="1953">1953</option><option value="1952">1952</option><option value="1951">1951</option><option value="1950">1950</option><option value="1949">1949</option><option value="1948">1948</option><option value="1947">1947</option><option value="1946">1946</option><option value="1945">1945</option><option value="1944">1944</option><option value="1943">1943</option><option value="1942">1942</option><option value="1941">1941</option><option value="1940">1940</option><option value="1939">1939</option><option value="1938">1938</option><option value="1937">1937</option><option value="1936">1936</option><option value="1935">1935</option><option value="1934">1934</option><option value="1933">1933</option><option value="1932">1932</option><option value="1931">1931</option><option value="1930">1930</option><option value="1929">1929</option><option value="1928">1928</option><option value="1927">1927</option><option value="1926">1926</option><option value="1925">1925</option><option value="1924">1924</option><option value="1923">1923</option><option value="1922">1922</option><option value="1921">1921</option><option value="1920">1920</option>
+          </select>
+        </div>
+        <input id="npRelationship" class="entry-input" placeholder="Relationship to you (e.g. daughter, wife, colleague)" style="padding:10px 14px;font-size:16px">
+        <button onclick="saveNewProfile()" style="background:var(--gold);color:var(--navy);border:none;font-family:'Cinzel',serif;font-size:11px;letter-spacing:.14em;padding:12px;cursor:pointer">
+          SAVE PROFILE
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <script>
 // ── HELP ──────────────────────────────────────────────────────────
@@ -12641,8 +12822,26 @@ window.addEventListener('load', function() {
 </script>
 
 <!-- COMPAT PROFILE PICKER MODAL -->
+<div id="compatPickerModal" style="display:none;position:fixed;inset:0;z-index:8000;background:rgba(0,0,0,0.7);align-items:center;justify-content:center;padding:20px">
+  <div style="background:var(--bg2);border:1px solid var(--div);border-radius:4px;width:min(420px,100%);max-height:80vh;display:flex;flex-direction:column">
+    <div style="padding:16px 20px;border-bottom:1px solid var(--div);display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
+      <span style="font-family:'Cinzel',serif;font-size:11px;letter-spacing:.18em;color:var(--gold)" id="compatPickerTitle">SELECT PROFILE</span>
+      <button onclick="document.getElementById('compatPickerModal').style.display='none'" style="background:none;border:none;color:var(--text3);font-size:22px;cursor:pointer;width:32px;height:32px;display:flex;align-items:center;justify-content:center">×</button>
+    </div>
+    <div id="compatPickerList" style="overflow-y:auto;flex:1;padding:12px 16px"></div>
+  </div>
+</div>
 
 <!-- COMPAT PROFILE PICKER MODAL -->
+<div id="compatPickerModal" style="display:none;position:fixed;inset:0;z-index:8000;background:rgba(0,0,0,0.7);align-items:center;justify-content:center;padding:20px">
+  <div style="background:var(--bg2);border:1px solid var(--div);border-radius:4px;width:min(420px,100%);max-height:80vh;display:flex;flex-direction:column">
+    <div style="padding:16px 20px;border-bottom:1px solid var(--div);display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
+      <span style="font-family:'Cinzel',serif;font-size:11px;letter-spacing:.18em;color:var(--gold)" id="compatPickerTitle">SELECT PROFILE</span>
+      <button onclick="document.getElementById('compatPickerModal').style.display='none'" style="background:none;border:none;color:var(--text3);font-size:22px;cursor:pointer;width:32px;height:32px;display:flex;align-items:center;justify-content:center">×</button>
+    </div>
+    <div id="compatPickerList" style="overflow-y:auto;flex:1;padding:12px 16px"></div>
+  </div>
+</div>
 
 <!-- ══ THREE-VOICE TOGGLE MODULE ══ -->
 <template id="cdp-voice-bar-template">
@@ -14679,10 +14878,11 @@ document.addEventListener('cdp:reading-ready', function() {
 }
 .cdp-streak-status-msg {
   padding: 16px;
-  background: var(--v19-gold-soft);
+  background: rgba(201,160,80,0.12);
+  border: 1px solid rgba(201,160,80,0.35);
   border-radius: 8px;
   font-family: 'Georgia', serif;
-  color: var(--v19-navy);
+  color: rgba(245,228,196,0.95);
   font-style: italic;
   text-align: center;
 }
@@ -15948,6 +16148,5 @@ document.addEventListener('cdp:reading-ready', function() {
 <!-- /v19 RETENTION LAYER                                            -->
 <!-- ============================================================== -->
 
-<script src="/cdp-calendar-enhancements-v1.js"></script>
 </body>
 </html>
