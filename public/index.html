@@ -1549,9 +1549,6 @@ select.entry-input option{background:#0D1E33;color:#E8EDF4}
     backdrop-filter: blur(6px);
     -webkit-backdrop-filter: blur(6px);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2), inset 0 0 0 1px rgba(0, 0, 0, 0.15);
-    max-width: 100%;
-    flex-shrink: 1;
-    min-width: 0;
   }
   .cdp-voice-bar button {
     background: transparent;
@@ -6458,7 +6455,7 @@ function renderSkeletonReading(dateStr, tier) {
       <div class="wgt-val" style="${isMD?'color:var(--master)':''}">${dispNum}</div>
       <div class="wgt-name">${dispD.n}</div>
       <div style="font-size:13px;color:var(--text2);margin-top:4px;line-height:1.4;font-style:italic">${dispD.k||''}</div>
-      <div style="font-size:11px;color:var(--gold);opacity:.75;margin-top:6px">↗ tap for insight</div>
+      <div style="font-size:13px;color:var(--gold);opacity:0.95;margin-top:10px;letter-spacing:.04em;font-weight:500">↗ Tap for insight</div>
     </div>
     <div class="wgt tappable" style="cursor:pointer" title="Tap for lunar insight"
       onclick="openWgtMoon('${moonPhase}','${wgtMoonQ.replace(/'/g,String.fromCharCode(92,39))}',${isBlack?1:0},${isShiva?1:0})">
@@ -6466,7 +6463,7 @@ function renderSkeletonReading(dateStr, tier) {
       <div class="wgt-icon">${moonEmoji}</div>
       <div class="wgt-val" style="font-size:14px;line-height:1.3">${moonPhase}</div>
       <div style="font-size:13px;color:var(--text2);margin-top:4px;font-style:italic">${isBlack?'Liminal threshold, pause and reflect':isShiva?'Fertile renewal window':'Day ' + Math.round(moonAge) + ' of 29'}</div>
-      <div style="font-size:11px;color:var(--gold);opacity:.75;margin-top:6px">↗ tap for insight</div>
+      <div style="font-size:13px;color:var(--gold);opacity:0.95;margin-top:10px;letter-spacing:.04em;font-weight:500">↗ Tap for insight</div>
     </div>
     <div class="wgt tappable" style="cursor:pointer" title="Tap for Dreamspell insight"
       onclick="openWgtKin('${kinFull}','${wgtKinQ.replace(/'/g,String.fromCharCode(92,39))}',${isGAP?1:0})">
@@ -6474,14 +6471,14 @@ function renderSkeletonReading(dateStr, tier) {
       <div class="wgt-icon">${isGAP?'★':'◈'}</div>
       <div class="wgt-val" style="font-size:13px;line-height:1.4">${kinFull}</div>
       <div style="font-size:13px;color:var(--text2);margin-top:4px;font-style:italic">${isGAP?'Portal day, synchronicities amplified':'Your Dreamspell archetype today'}</div>
-      <div style="font-size:11px;color:var(--gold);opacity:.75;margin-top:6px">↗ tap for insight</div>
+      <div style="font-size:13px;color:var(--gold);opacity:0.95;margin-top:10px;letter-spacing:.04em;font-weight:500">↗ Tap for insight</div>
     </div>
     ${lp ? `<div class="wgt tappable" style="cursor:pointer" title="Tap for Life Path insight"
       onclick="openDrawer('Life Path ${lp} · ${lpD.n}', '${wgtLPQ.replace(/'/g,"\'")}', [{q:'What is the vocational direction and natural strengths of Life Path ${lp}?',l:'Vocation & strengths'},{q:'What is the shadow pattern of Life Path ${lp} to know and work with?',l:'Shadow pattern'},{q:'How does Life Path ${lp} interact with Personal Year ${py||'?'}?',l:'LP × Personal Year'}])">
       <div class="wgt-label">Life Path</div>
       <div class="wgt-val" style="${[11,22,33,44].includes(lp)?'color:var(--master)':''}">${lp}</div>
       <div class="wgt-name">${lpD.n}</div>
-      <div style="font-size:11px;color:var(--gold);opacity:.75;margin-top:6px">↗ tap for insight</div>
+      <div style="font-size:13px;color:var(--gold);opacity:0.95;margin-top:10px;letter-spacing:.04em;font-weight:500">↗ Tap for insight</div>
     </div>` : '<div class="wgt"><div class="wgt-label">Profile</div><div class="wgt-name" style="font-size:14px;margin-top:8px">Add birth date<br>for personal readings</div></div>'}
   </div>`;
 
@@ -7837,28 +7834,26 @@ function renderReading(data, dateStr) {
   let html = `<div style="max-width:840px;margin:0 auto;padding:0 24px 100px">`;
 
   // v18: Two Telescopes brand ribbon at top of every reading
-  html += `<div class="cdp-two-telescopes-ribbon" onclick="openTwoTelescopesIntro()" style="
+  html += `<div class="cdp-two-telescopes-ribbon" style="
     margin: 8px 0 24px;
     padding: 14px 18px;
-    background: linear-gradient(90deg, rgba(201,160,80,0.14), rgba(129,205,182,0.10), rgba(201,160,80,0.14));
-    border: 1px solid rgba(201,160,80,0.32);
-    border-radius: 4px;
+    background: linear-gradient(90deg, rgba(201,160,80,0.08), rgba(129,205,182,0.06), rgba(201,160,80,0.08));
+    border: 1px solid rgba(201,160,80,0.18);
+    border-radius: 3px;
     display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
     font-family: 'Cormorant Garamond', Georgia, serif;
-    cursor: pointer;
-    transition: background 0.18s ease, border-color 0.18s ease;
-  " onmouseover="this.style.borderColor='rgba(201,160,80,0.55)'" onmouseout="this.style.borderColor='rgba(201,160,80,0.32)'">
+  ">
     <div style="display:flex;gap:6px;align-items:center;color:#c9a050;font-size:18px;letter-spacing:.05em">
-      <span style="opacity:.95">\u263d</span>
-      <span style="opacity:.6;font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:rgba(232,228,218,0.7)">+</span>
-      <span style="opacity:.95">\u2b22</span>
+      <span style="opacity:.85">☽</span>
+      <span style="opacity:.5;font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:rgba(232,228,218,0.5)">+</span>
+      <span style="opacity:.85">⬡</span>
     </div>
     <div style="flex:1;min-width:200px">
-      <div style="font-size:14px;line-height:1.5;color:rgba(245,228,196,0.98);font-style:italic;font-weight:500">
+      <div style="font-size:14px;line-height:1.5;color:rgba(232,228,218,0.85);font-style:italic">
         Two telescopes. Pointed at the same sky.
       </div>
-      <div style="font-size:12px;line-height:1.55;color:rgba(232,228,218,0.78);margin-top:3px">
-        Frameworks for two and a half thousand years. Neuroscience for fifty. Pick the language. <span style="color:rgba(201,160,80,0.85);font-style:normal">\u2197 Tap to learn more</span>
+      <div style="font-size:12px;line-height:1.55;color:rgba(232,228,218,0.55);margin-top:3px">
+        Frameworks for two and a half thousand years. Neuroscience for fifty. Pick the language.
       </div>
     </div>
   </div>`;
@@ -8470,58 +8465,6 @@ function buildChips(r) {
 // INSIGHT DRAWER
 // ══════════════════════════════════════════════════════════
 let drawerContext = '';
-
-// Two Telescopes intro modal, accessible from the ribbon at top of any reading
-// and from the brand text in the navbar. Built as a self-contained modal so it
-// works regardless of which screen the user is on.
-function openTwoTelescopesIntro() {
-  // Remove any existing instance
-  var existing = document.getElementById('cdp-tt-intro-modal');
-  if (existing) existing.remove();
-
-  var modal = document.createElement('div');
-  modal.id = 'cdp-tt-intro-modal';
-  modal.setAttribute('role', 'dialog');
-  modal.setAttribute('aria-label', 'Two Telescopes introduction');
-  modal.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(8,18,34,0.92);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);overflow-y:auto;padding:40px 20px;animation:cdpFadeIn 0.25s ease';
-
-  modal.innerHTML = ''
-    + '<div style="max-width:720px;margin:0 auto;background:rgba(16,28,48,0.95);border:1px solid rgba(201,160,80,0.35);border-radius:8px;padding:36px 32px;font-family:Georgia,serif;color:rgba(245,228,196,0.95);position:relative">'
-    +   '<button onclick="document.getElementById(\'cdp-tt-intro-modal\').remove()" style="position:absolute;top:14px;right:14px;background:none;border:none;color:rgba(245,228,196,0.6);font-size:22px;cursor:pointer;padding:6px 10px;line-height:1" aria-label="Close">\u00d7</button>'
-    +   '<div style="text-align:center;margin-bottom:8px">'
-    +     '<span style="font-size:24px;color:#c9a050;letter-spacing:.05em">\u263d</span>'
-    +     '<span style="font-size:11px;letter-spacing:.3em;text-transform:uppercase;color:rgba(245,228,196,0.55);margin:0 10px">meets</span>'
-    +     '<span style="font-size:24px;color:#81cdc6">\u2b22</span>'
-    +   '</div>'
-    +   '<h2 style="font-family:\'Cormorant Garamond\',Georgia,serif;font-size:32px;font-weight:400;text-align:center;margin:0 0 8px;color:#c9a050;letter-spacing:.01em">Two telescopes. Pointed at the same sky.</h2>'
-    +   '<p style="text-align:center;font-style:italic;color:rgba(245,228,196,0.78);margin:0 0 28px;font-size:16px;line-height:1.55">Ancient traditions and modern neuroscience arrive at the same coordinates. They are not competing explanations. They are different languages for the same observed reality.</p>'
-    +   '<div style="display:grid;grid-template-columns:1fr;gap:14px;margin:22px 0">'
-    +     '<div style="background:rgba(201,160,80,0.07);border-left:3px solid #c9a050;padding:16px 18px;border-radius:4px">'
-    +       '<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px"><span style="color:#c9a050;font-size:18px">\u263d</span><h3 style="margin:0;font-family:Georgia,serif;font-size:15px;letter-spacing:.16em;text-transform:uppercase;color:#c9a050;font-weight:500">Tradition</h3></div>'
-    +       '<p style="margin:0;line-height:1.65;font-size:14px;color:rgba(245,228,196,0.92)">The symbolic voice. Numerology, lunar wisdom, Mayan calendrics, Western archetypes. The language of meaning, drawn from millennia of human reflection. For when you want depth, image, and resonance.</p>'
-    +     '</div>'
-    +     '<div style="background:rgba(129,205,198,0.06);border-left:3px solid #81cdc6;padding:16px 18px;border-radius:4px">'
-    +       '<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px"><span style="color:#81cdc6;font-size:18px">\u2b22</span><h3 style="margin:0;font-family:Georgia,serif;font-size:15px;letter-spacing:.16em;text-transform:uppercase;color:#81cdc6;font-weight:500">Science</h3></div>'
-    +       '<p style="margin:0;line-height:1.65;font-size:14px;color:rgba(245,228,196,0.92)">The neuroscience voice. Circadian cognition, attachment, predictive processing, the default mode network. The language of mechanism, drawn from current peer-reviewed research. For when you want what is happening in the brain and body.</p>'
-    +     '</div>'
-    +     '<div style="background:rgba(108,138,114,0.10);border-left:3px solid #6c8a72;padding:16px 18px;border-radius:4px">'
-    +       '<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px"><span style="color:#9bb89e;font-size:18px">\u2726</span><h3 style="margin:0;font-family:Georgia,serif;font-size:15px;letter-spacing:.16em;text-transform:uppercase;color:#9bb89e;font-weight:500">Everyday</h3></div>'
-    +       '<p style="margin:0;line-height:1.65;font-size:14px;color:rgba(245,228,196,0.92)">The plain-spoken voice. Same reading, no jargon either way. Just what today is good for, what to be careful about, and what to do next. For when you want the help without the language of either tradition or science.</p>'
-    +     '</div>'
-    +   '</div>'
-    +   '<div style="margin-top:24px;padding-top:20px;border-top:1px solid rgba(201,160,80,0.18);text-align:center">'
-    +     '<p style="margin:0 0 14px;font-size:13px;color:rgba(245,228,196,0.7);font-style:italic">Switch voices any time using the Tradition / Science / Everyday toggle in the navigation.</p>'
-    +     '<button onclick="document.getElementById(\'cdp-tt-intro-modal\').remove()" style="background:rgba(201,160,80,0.15);border:1px solid rgba(201,160,80,0.5);color:#c9a050;font-family:Georgia,serif;font-size:13px;letter-spacing:.18em;text-transform:uppercase;padding:10px 28px;border-radius:2px;cursor:pointer">Continue</button>'
-    +   '</div>'
-    + '</div>';
-
-  // Click outside the panel to close
-  modal.addEventListener('click', function(e) {
-    if (e.target === modal) modal.remove();
-  });
-
-  document.body.appendChild(modal);
-}
 
 function openDrawer(topic, question, chips) {
   document.getElementById('drawerTopic').textContent = topic;
@@ -15711,79 +15654,23 @@ document.addEventListener('cdp:reading-ready', function() {
     try { voice = (window.cdpGetVoice && window.cdpGetVoice()) || 'tradition'; } catch (e) {}
     v19RenderVoiceQuote(voice, hour, userId);
 
-    // Pull kin/moon/numerology. Prefer fresh client-side calculations so the
-    // tiles populate immediately on first compass view, before any reading is
-    // generated. Falls back to window.currentReading if available.
+    // Pull kin/moon/numerology from the existing reading state if loaded.
+    // If not loaded yet, leave the defaults; the existing reading flow will
+    // populate them when it runs. v19 deliberately does not duplicate the
+    // existing calculation pipeline.
     try {
-      const todayIso = (new Date()).toISOString().slice(0,10);
-
-      // Kin (Dreamspell)
-      try {
-        if (typeof clientKin === 'function') {
-          const k = clientKin(todayIso);
-          if (k && k.kin) {
-            const kinName = k.col + ' ' + (k.tone || '') + ' ' + (k.seal || '');
-            const kinEl = document.getElementById('v19KinName');
-            if (kinEl) kinEl.textContent = kinName.trim() + (k.isGAP ? ' \u2605' : '');
-          }
-        }
-      } catch(e) {}
-
-      // Moon
-      try {
-        if (typeof clientMoon === 'function') {
-          const m = clientMoon(todayIso);
-          if (m && m.phase) {
-            const moonEl = document.getElementById('v19MoonPhase');
-            if (moonEl) {
-              const tag = m.isBlack ? ' \u2022 Black Moon' : (m.isShiva ? ' \u2022 Shiva Moon' : '');
-              moonEl.textContent = m.phase + tag;
-            }
-          }
-        }
-      } catch(e) {}
-
-      // Personal Day (requires birth day & month from profile)
-      try {
-        const profileBD = parseInt((document.getElementById('pBD') || {}).value, 10);
-        const profileBM = parseInt((document.getElementById('pBM') || {}).value, 10);
-        if (profileBD && profileBM && typeof numReduce === 'function') {
-          const now = new Date();
-          const m = now.getUTCMonth() + 1;
-          const d = now.getUTCDate();
-          const y = now.getUTCFullYear();
-          const yReduced = numReduce(String(y).split('').reduce((a,b)=>a+parseInt(b),0));
-          // Personal Day = day + month + reduced(birth day + birth month + current year)
-          const pyBase = profileBD + profileBM + yReduced;
-          const personalYear = numReduce(pyBase);
-          const personalDay = numReduce(m + d + personalYear);
-          const pdEl = document.getElementById('v19PersonalDay');
-          if (pdEl) pdEl.textContent = String(personalDay);
-          const themes = ['Beginning', 'Connection', 'Expression', 'Foundation', 'Change', 'Care', 'Inquiry', 'Power', 'Completion'];
-          const t = themes[(personalDay - 1) % 9] || 'Reflection';
-          const themeEl = document.getElementById('v19DayTheme');
-          if (themeEl) themeEl.textContent = t;
-        } else {
-          // No birth date set: show graceful fallback rather than "Loading" forever
-          const pdEl = document.getElementById('v19PersonalDay');
-          if (pdEl && pdEl.textContent === 'Loading') pdEl.textContent = '\u2013';
-          const themeEl = document.getElementById('v19DayTheme');
-          if (themeEl && themeEl.textContent === 'Loading') themeEl.textContent = 'Add birth date in Profile';
-        }
-      } catch(e) {}
-
-      // Belt-and-braces fallback to existing reading state if anything above failed
       if (window.currentReading) {
         const r = window.currentReading;
         const kinName = (r.dreamspell && r.dreamspell.kin_name) || (r.kin && r.kin.name);
-        if (kinName) {
-          const kEl = document.getElementById('v19KinName');
-          if (kEl && kEl.textContent === 'Loading') kEl.textContent = kinName;
-        }
+        if (kinName) document.getElementById('v19KinName').textContent = kinName;
         const moonPhase = (r.lunar && r.lunar.phase) || (r.moon && r.moon.phase);
-        if (moonPhase) {
-          const mEl = document.getElementById('v19MoonPhase');
-          if (mEl && mEl.textContent === 'Loading') mEl.textContent = moonPhase;
+        if (moonPhase) document.getElementById('v19MoonPhase').textContent = moonPhase;
+        const personalDay = (r.numerology && r.numerology.personal_day);
+        if (personalDay !== undefined) {
+          document.getElementById('v19PersonalDay').textContent = personalDay;
+          const themes = ['Beginning', 'Connection', 'Expression', 'Foundation', 'Change', 'Care', 'Inquiry', 'Power', 'Completion'];
+          const t = themes[(parseInt(personalDay, 10) - 1) % 9] || 'Reflection';
+          document.getElementById('v19DayTheme').textContent = t;
         }
       }
     } catch (e) {}
