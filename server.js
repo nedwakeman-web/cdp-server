@@ -979,7 +979,12 @@ function buildProfileContext(p, recentHistory = [], yesterdayIntention = null) {
 // ══════════════════════════════════════════════════════════════════
 // ORACLE READING, FULL SCHEMA, FULL QUALITY, BENCHMARK STANDARD
 // ══════════════════════════════════════════════════════════════════
-async function generateReading(dateStr, profile = {}, tier = 'oracle', recentHistory = [], _planets, _moon, _kin, _num, _aspects, _yesterdayIntention = null) {
+async function generateReading(dateStr, profile = {}, tier = 'oracle', recentHistory = [], _planets, _moon, _kin, _num, _aspects, _yesterdayIntention = null, jobId = null) {
+  // Early abort: if job has been marked as errored (deadline), stop immediately
+  if (jobId && !isJobStillValid(jobId)) {
+    throw new Error('job_cancelled_by_deadline');
+  }
+  
   const _langNote = (profile && profile.readingLang === 'modern')
     ? '\n\nLANGUAGE MODE. MODERN SCIENTIFIC: Translate every cosmic insight into neuroscience terms. Frame numerology as cognitive priming (salience network), lunar cycles as circadian biology, shadow work as interoceptive signal (Barrett 2017), transits as predictive framework shifts. Name the mechanism. The ancient framework is the scaffold; the language is neuroscience.'
     : '';
@@ -1311,7 +1316,12 @@ function repairJSON(str) {
 //          dreamspell, transits, week ahead, daily gift
 // ══════════════════════════════════════════════════════════════════
 
-async function generatePhase1(dateStr, profile, tier, planets, moon, kin, num, aspects) {
+async function generatePhase1(dateStr, profile, tier, planets, moon, kin, num, aspects, jobId) {
+  // Early abort: if job has been marked as errored (deadline), stop immediately
+  if (jobId && !isJobStillValid(jobId)) {
+    throw new Error('job_cancelled_by_deadline');
+  }
+  
   const firstName = profile.nickname || (profile.name ? profile.name.split(' ')[0] : 'you');
   const profileBlock = buildProfileContext(profile, []);
 
@@ -1394,6 +1404,15 @@ function cleanOldJobs() {
 }
 setInterval(cleanOldJobs, 600000);
 
+// ── JOB VALIDITY CHECK ──
+// Allows generation functions to exit early if the job has been
+// marked as errored (e.g., by deadline timeout) rather than continuing to call the API
+function isJobStillValid(jobId) {
+  const job = jobs.get(jobId);
+  if (!job) return false;
+  return job.status !== 'error' && job.status !== 'complete';
+}
+
 // ── START BACKGROUND READING ──
 app.post('/api/reading/start', async (req, res) => {
   const {date, profile, tier, user_id, recentHistory} = req.body;
@@ -1433,7 +1452,7 @@ app.post('/api/reading/start', async (req, res) => {
   // failure and can prompt the user to retry. Bounds the worst case end-to-end
   // wall time and prevents 'still composing' phantom states.
   const _jobDeadlineMs = {free: 90000, seeker: 90000, initiate: 180000,
-                          mystic: 240000, oracle: 360000}[activeTier] || 180000;
+                          mystic: 240000, oracle: 240000}[activeTier] || 180000;
   setTimeout(() => {
     const _j = jobs.get(jobId);
     if (_j && _j.status !== 'complete' && _j.status !== 'error') {
@@ -1517,7 +1536,7 @@ app.post('/api/reading/start', async (req, res) => {
 
       if (activeTier !== 'free') {
         // Phase 1, fast actionable core for initiate/mystic/oracle
-        const p1 = await generatePhase1(ds, profile || {}, activeTier, planets, moon, kin, num, aspects);
+        const p1 = await generatePhase1(ds, profile || {}, activeTier, planets, moon, kin, num, aspects, jobId);
         const job = jobs.get(jobId);
         if (job) {
           job.phase1 = p1;
@@ -1527,7 +1546,7 @@ app.post('/api/reading/start', async (req, res) => {
       }
 
       // Phase 2, full depth (runs for initiate/mystic/oracle; free goes direct)
-      const r = await generateReading(ds, profile || {}, activeTier, recentHistory || [], planets, moon, kin, num, aspects, yesterdayIntention);
+      const r = await generateReading(ds, profile || {}, activeTier, recentHistory || [], planets, moon, kin, num, aspects, yesterdayIntention, jobId);
       const job = jobs.get(jobId);
       if (job) {
         // Merge phase1 into full reading (phase1 had fresher/shorter prompts, keep phase2 for depth)
