@@ -5814,8 +5814,8 @@ async function loadReading(dateStr, tier) {
     sessionStorage.setItem('cdp_active_job', JSON.stringify({ jobId, dateStr, tier: activeTier, startedAt: Date.now() }));
 
     const startedAt = Date.now();
-    // Kill switch  -  if no response after 8 minutes, show clear error
-    const maxWait = 8 * 60 * 1000;
+    // Kill switch  -  if no response after 5 minutes (280s buffer for 240s server deadline), show clear error
+    const maxWait = 5 * 60 * 1000;
     pollingTimer = setInterval(async () => {
       try {
         // Timeout check
@@ -5890,7 +5890,7 @@ async function loadReading(dateStr, tier) {
         const poll = await pollRes.json();
 
         const elapsed = Math.round((Date.now() - startedAt) / 1000);
-        const maxSec = {free:60, seeker:120, initiate:180, mystic:240, oracle:360}[activeTier] || 300;
+        const maxSec = {free:90, seeker:90, initiate:180, mystic:240, oracle:240}[activeTier] || 300;
         const pct = Math.min(96, Math.round((elapsed / maxSec) * 100));
         const mins = Math.floor(elapsed/60), secs = elapsed % 60;
         const timeStr = (mins > 0 ? mins+'m ' : '') + secs + 's';
@@ -7260,7 +7260,7 @@ function renderSkeletonReading(dateStr, tier) {
   const pb  = document.getElementById('skProgressBar');
   const elt = document.getElementById('skElapsedTxt');
   let elapsed = 0, stageIdx = 0;
-  const maxSec = {oracle:360,mystic:240,initiate:180,seeker:120,free:60}[tier]||300;
+  const maxSec = {oracle:240,mystic:240,initiate:180,seeker:90,free:90}[tier]||300;
   const stageInterval = Math.max(10, Math.floor(maxSec / _skStages.length));
 
   const pbTimer = setInterval(() => {
@@ -7314,7 +7314,7 @@ function startPolling(jobId, dateStr, tier, startedAt) {
       const elapsed = Math.round((Date.now() - startedAt) / 1000);
       const pollRes = await fetch(API_BASE + '/api/reading/status/' + jobId);
       const poll = await pollRes.json();
-      const maxSec = {free:60,seeker:120,initiate:180,mystic:240,oracle:360}[tier]||300;
+      const maxSec = {free:90,seeker:90,initiate:180,mystic:240,oracle:240}[tier]||300;
       const pct = Math.min(96, Math.round((elapsed/maxSec)*100));
       const skBar = document.getElementById('skProgressBar');
       if (skBar) skBar.style.width = pct + '%';
