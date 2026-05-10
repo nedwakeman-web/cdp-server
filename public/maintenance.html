@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Cosmic Daily Planner · Briefly Down</title>
+  <meta name="description" content="Cosmic Daily Planner is briefly down for a scheduled update. We will be back shortly.">
+  <meta property="og:title" content="Cosmic Daily Planner · Briefly Down">
+  <meta property="og:description" content="A scheduled update is in progress. The Oracle will return shortly.">
+  <meta name="theme-color" content="#1A1A1A">
+
+  <style>
+    /* CDP maintenance page · NanOptima palette
+       INK         #1A1A1A
+       ACCENT_DEEP #2C3E5A
+       ACCENT_MID  #3E6B8A
+       GOLD        #B8942A
+       RULE        #BFA363 */
+
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; height: 100%; }
+    body {
+      font-family: Georgia, 'Times New Roman', serif;
+      background: #1A1A1A;
+      color: #f5f1e8;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      line-height: 1.55;
+    }
+
+    .frame {
+      max-width: 560px;
+      width: 100%;
+      text-align: center;
+      padding: 48px 32px;
+      border: 1px solid rgba(191, 163, 99, 0.35);
+      background: linear-gradient(180deg,
+        rgba(44, 62, 90, 0.18) 0%,
+        rgba(26, 26, 26, 0.4) 100%);
+      border-radius: 2px;
+    }
+
+    .telescopes {
+      display: flex;
+      justify-content: center;
+      gap: 32px;
+      margin-bottom: 28px;
+    }
+
+    .telescope {
+      width: 28px;
+      height: 28px;
+      opacity: 0.85;
+    }
+
+    .telescope path {
+      fill: none;
+      stroke: #B8942A;
+      stroke-width: 1.4;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .eyebrow {
+      font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: #B8942A;
+      margin: 0 0 18px;
+    }
+
+    h1 {
+      font-family: Georgia, 'Times New Roman', serif;
+      font-size: 28px;
+      font-weight: 400;
+      letter-spacing: 0.01em;
+      color: #f5f1e8;
+      margin: 0 0 18px;
+      line-height: 1.25;
+    }
+
+    .lede {
+      font-size: 17px;
+      color: rgba(245, 241, 232, 0.86);
+      margin: 0 auto 24px;
+      max-width: 460px;
+    }
+
+    .rule {
+      width: 56px;
+      height: 1px;
+      background: #BFA363;
+      margin: 28px auto;
+      opacity: 0.6;
+    }
+
+    .body-copy {
+      font-size: 15px;
+      color: rgba(245, 241, 232, 0.78);
+      margin: 0 auto;
+      max-width: 460px;
+    }
+
+    .body-copy p { margin: 0 0 12px; }
+    .body-copy p:last-child { margin-bottom: 0; }
+
+    a {
+      color: #B8942A;
+      text-decoration: none;
+      border-bottom: 1px solid rgba(184, 148, 42, 0.3);
+      padding-bottom: 1px;
+      transition: border-color 160ms ease, color 160ms ease;
+    }
+
+    a:hover { color: #d4ad3e; border-bottom-color: #d4ad3e; }
+
+    .footer {
+      margin-top: 40px;
+      font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+      font-size: 11px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: rgba(245, 241, 232, 0.42);
+    }
+
+    @media (max-width: 480px) {
+      .frame { padding: 36px 22px; }
+      h1 { font-size: 22px; }
+      .lede { font-size: 15px; }
+      .body-copy { font-size: 14px; }
+    }
+
+    /* Reduced motion: nothing here animates; nothing to disable. */
+    /* Print: keep readable on paper if anyone bookmarks the holding page. */
+    @media print {
+      body { background: #ffffff; color: #1A1A1A; }
+      .frame { border-color: #BFA363; background: transparent; }
+      h1, .lede, .body-copy { color: #1A1A1A; }
+      .eyebrow, a { color: #2C3E5A; }
+    }
+  </style>
+</head>
+
+<body>
+  <main class="frame" role="main">
+    <div class="telescopes" aria-hidden="true">
+      <svg class="telescope" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="16" cy="16" r="11" fill="none" stroke="#B8942A" stroke-width="1.2"/>
+        <circle cx="16" cy="16" r="5" fill="none" stroke="#B8942A" stroke-width="1.2" opacity="0.65"/>
+        <circle cx="16" cy="16" r="1.6" fill="#B8942A"/>
+      </svg>
+      <svg class="telescope" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="16" cy="16" r="11" fill="none" stroke="#B8942A" stroke-width="1.2"/>
+        <circle cx="16" cy="16" r="5" fill="none" stroke="#B8942A" stroke-width="1.2" opacity="0.65"/>
+        <circle cx="16" cy="16" r="1.6" fill="#B8942A"/>
+      </svg>
+    </div>
+
+    <p class="eyebrow">Cosmic Daily Planner</p>
+
+    <h1>Briefly down for an update</h1>
+
+    <p class="lede">
+      The Oracle is undergoing a scheduled improvement. We will be back shortly.
+    </p>
+
+    <div class="rule" aria-hidden="true"></div>
+
+    <div class="body-copy">
+      <p>Two telescopes, three voices. Tradition and science point at the same coordinates, and we are tuning the lens.</p>
+      <p>If you need to reach us in the meantime, please write to <a href="mailto:oracle@cosmicdailyplanner.com">oracle@cosmicdailyplanner.com</a>.</p>
+    </div>
+
+    <p class="footer">cosmicdailyplanner.com</p>
+  </main>
+</body>
+</html>
