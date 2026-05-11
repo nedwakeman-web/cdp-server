@@ -76,6 +76,28 @@ body.light{--bg:#F5F0E8;--bg2:#EDE6D6;--bg3:#E4DBC8;--bg4:#F8F4EC;
 .nav-hamburger{display:none;background:none;border:1px solid var(--div);color:var(--text3);
   padding:6px 10px;border-radius:2px;cursor:pointer;font-size:18px;line-height:1}
 .nav-hamburger:hover{border-color:var(--gold);color:var(--gold)}
+
+/* iter9: front-door simplification.
+   The full 6-pill nav, the reading-count badge, and the explicit Sign In
+   button are hidden at all widths. The quiet-menu icon on the right is the
+   primary navigation surface, exposing all screens, settings, and Sign In.
+   The voice toggle keeps a small affordance to the left of the menu icon. */
+.topbar .nav { display: none !important; }
+.topbar .nav-hamburger { display: none !important; }
+#cdpReadCountBadge,
+.cdp-read-count-badge,
+.tbr-read-count { display: none !important; }
+.topbar-right .signin-btn,
+.topbar-right #authBtnArea { display: none !important; }
+/* Brand cycling text (a swappable phrase under "Cosmic Daily Planner") - remove */
+#presenceText { display: none !important; }
+/* Quiet menu trigger must always be visible (was @media-gated before) */
+.quiet-menu-btn.quiet-menu-btn-right {
+  display: inline-flex !important;
+  align-items: center;
+  gap: 6px;
+}
+
 .nav-dropdown{display:none;position:fixed;top:52px;left:0;right:0;
   background:rgba(8,19,31,0.97);border-bottom:1px solid var(--div);padding:10px 16px;
   z-index:199;backdrop-filter:blur(16px)}
@@ -2226,10 +2248,10 @@ select.entry-input option{background:#0D1E33;color:#E8EDF4}
       if (document.getElementById('cdp-demo-ribbon')) return;
       var r = document.createElement('div');
       r.id = 'cdp-demo-ribbon';
-      r.style.cssText = 'position:sticky;top:0;left:0;right:0;z-index:9997;'
+      r.style.cssText = 'position:relative;left:0;right:0;z-index:9997;'
         + 'background:linear-gradient(90deg,rgba(201,160,80,0.20),rgba(129,205,198,0.18),rgba(201,160,80,0.20));'
         + 'border-bottom:1px solid rgba(201,160,80,0.45);'
-        + 'padding:9px 18px;text-align:center;font-family:Georgia,serif;'
+        + 'padding:5px 14px;text-align:center;font-family:Georgia,serif;'
         + 'color:rgba(245,228,196,0.92);font-size:13px;line-height:1.45;'
         + 'box-shadow:0 1px 8px rgba(0,0,0,0.25)';
       r.innerHTML = ''
@@ -2937,18 +2959,40 @@ select.entry-input option{background:#0D1E33;color:#E8EDF4}
 <div class="quiet-menu-overlay" id="quietMenuOverlay" onclick="closeQuietMenu()"></div>
 <aside class="quiet-menu-panel" id="quietMenuPanel" role="dialog" aria-label="Secondary menu" aria-modal="true">
   <button class="quiet-menu-close" onclick="closeQuietMenu()" aria-label="Close menu">&times;</button>
-  <div class="quiet-menu-header">More</div>
-  <button class="quiet-menu-item cdp-compat-tab" onclick="closeQuietMenu();showScreen(&apos;scompat&apos;,null);initCompatScreen()">Compatibility</button>
-  <button class="quiet-menu-item" onclick="closeQuietMenu();showScreen(&apos;sp&apos;,null)">Profiles</button>
-  <button class="quiet-menu-item" onclick="closeQuietMenu();showScreen(&apos;sctx&apos;,null);renderContext()">My Year</button>
+  <div class="quiet-menu-header">Menu</div>
+
+  <!-- iter9: primary navigation in Ned's exact order. -->
+  <button class="quiet-menu-item" onclick="closeQuietMenu();showScreen(&apos;scompass&apos;,null)">Compass</button>
+  <button class="quiet-menu-item" onclick="closeQuietMenu();showScreen(&apos;sr&apos;,null);if(typeof currentReading!==&apos;undefined&apos;&amp;&amp;!currentReading)showModeSelector()">Reading</button>
   <button class="quiet-menu-item" onclick="closeQuietMenu();showScreen(&apos;scard&apos;,null);renderCard()">Daily Card</button>
-  <button class="quiet-menu-item" onclick="closeQuietMenu();openHelp()">Guide</button>
-  <button class="quiet-menu-item" onclick="closeQuietMenu();showScreen(&apos;shist&apos;,null);renderHistory()">History</button>
-  <button class="quiet-menu-item" onclick="closeQuietMenu();openFeedback()">Feedback</button>
-  <div style="height:1px;background:rgba(201,160,80,0.15);margin:8px 0"></div>
+  <button class="quiet-menu-item" onclick="closeQuietMenu();showScreen(&apos;sc&apos;,null)">Calendar</button>
+  <button class="quiet-menu-item" onclick="closeQuietMenu();showScreen(&apos;sp&apos;,null)">Profiles</button>
+  <button class="quiet-menu-item cdp-compat-tab" onclick="closeQuietMenu();showScreen(&apos;scompat&apos;,null);initCompatScreen()">Compatibility</button>
+  <button class="quiet-menu-item" onclick="closeQuietMenu();showScreen(&apos;sctx&apos;,null);renderContext()">My Year</button>
   <button class="quiet-menu-item" onclick="closeQuietMenu();showTierOverview()" style="color:#c9a050">Tiers</button>
+  <button class="quiet-menu-item" onclick="closeQuietMenu();showScreen(&apos;shist&apos;,null);renderHistory()">History</button>
+  <button class="quiet-menu-item" onclick="closeQuietMenu();openHelp()">Guide</button>
+  <button class="quiet-menu-item" onclick="closeQuietMenu();openFeedback()">Feedback</button>
+
+  <!-- iter9: "Open the app on..." control moved from Profile. The
+       select element with id v65OpenScreenSelect is preserved (required ID). -->
+  <div class="quiet-menu-item-row" style="padding:9px 18px;display:flex;flex-direction:column;gap:6px">
+    <span style="font-family:&apos;Cinzel&apos;,Georgia,serif;font-size:10px;letter-spacing:0.20em;text-transform:uppercase;color:rgba(201,160,80,0.85)">Open the app on</span>
+    <select id="v65OpenScreenSelect" onchange="v65SetOpenScreen(this.value);closeQuietMenu()"
+      style="background:rgba(8,26,45,0.5);border:1px solid rgba(165,132,89,0.35);border-radius:3px;padding:7px 10px;color:rgba(245,228,196,0.96);font-family:Georgia,serif;font-size:13px;cursor:pointer;outline:none;width:100%">
+      <option value="">Default (Reading)</option>
+      <option value="scompass">Compass</option>
+      <option value="sr">Reading</option>
+      <option value="sc">Calendar</option>
+    </select>
+  </div>
+
   <button class="quiet-menu-item" onclick="closeQuietMenu();toggleTheme()">Toggle Theme</button>
   <button class="quiet-menu-item" onclick="closeQuietMenu();(function(){var v=window.cdpGetVoice&amp;&amp;window.cdpGetVoice();if(!v)return;window.cdpSetPreferredVoice&amp;&amp;window.cdpSetPreferredVoice(v);})()">Pin Current Voice as Default</button>
+  <button class="quiet-menu-item" onclick="closeQuietMenu();showScreen(&apos;sstreak&apos;,null)">Streak</button>
+  <button class="quiet-menu-item" onclick="closeQuietMenu();if(typeof openShare===&apos;function&apos;)openShare()">Share &amp; Invite</button>
+  <div style="height:1px;background:rgba(201,160,80,0.15);margin:8px 0"></div>
+  <button class="quiet-menu-item" onclick="closeQuietMenu();if(typeof openAuth===&apos;function&apos;)openAuth()" style="color:var(--gold)">Sign In</button>
 </aside>
 <script>
 (function(){
@@ -3095,38 +3139,63 @@ select.entry-input option{background:#0D1E33;color:#E8EDF4}
   <div class="cal-grid" id="calGrid"></div>
   </div><!-- end calMonthView -->
 
-<!-- BEST DAY FINDER -->
-<div id="calBestDayView" style="display:none;padding:16px 12px 24px;margin-top:8px">
-  <div style="font-size:11px;letter-spacing:.3em;text-transform:uppercase;color:var(--gold);opacity:.8;margin-bottom:12px">
-    ✦ Find Your Best Day
+<!-- iter9: BEST DAY surface rebuilt to match mockup_v6.
+     Two sub-modes: "Best day to..." with intro headline, free-text input,
+     date range, 8 specific chips, scored result cards; "What is this month
+     asking?" with 3 priority cards for the visible month. -->
+<div id="calBestDayView" style="display:none">
+
+  <!-- sub-mode toggle -->
+  <div class="bestday-mode-toggle">
+    <button class="bestday-mode-btn active" data-mode="best-day-for"
+      onclick="setBestDayMode(&apos;best-day-for&apos;)">Best day to...</button>
+    <button class="bestday-mode-btn" data-mode="what-asking"
+      onclick="setBestDayMode(&apos;what-asking&apos;)">What is this month asking?</button>
   </div>
-  <div style="font-size:15px;color:var(--text2);margin-bottom:14px;line-height:1.6">
-    Ask when this month is best for anything, a pitch, an interview, a difficult conversation, a launch, a date, or a rest day.
+
+  <!-- "Best day to..." pane -->
+  <div class="bestday-mode-pane active" data-mode-pane="best-day-for">
+    <div class="bestday-intro">
+      <div class="bestday-intro-h">Find the right day for what matters</div>
+      <div class="bestday-intro-sub">Tell me what you want to do. The Oracle scores days across all four frameworks plus your natal chart.</div>
+    </div>
+    <div class="bestday-form">
+      <div class="bestday-input-wrap">
+        <input class="bestday-input" type="text" placeholder="Best day to..."
+          id="bestDayInput" onkeydown="if(event.key===&apos;Enter&apos;)findBestDay()" />
+      </div>
+      <div class="bestday-row">
+        <input class="bestday-date-input" id="bestDayFrom" type="date" />
+        <input class="bestday-date-input2" id="bestDayTo" type="date" />
+        <button class="bestday-run-btn" onclick="findBestDay()">Find best days</button>
+      </div>
+      <div class="bestday-chips">
+        <span class="bestday-chip" onclick="setBestDayIntent(&apos;move my body well&apos;)">Find a good moment to move my body</span>
+        <span class="bestday-chip" onclick="setBestDayIntent(&apos;cook plant build or make something&apos;)">Cook, plant, build, or make something</span>
+        <span class="bestday-chip" onclick="setBestDayIntent(&apos;show up for someone I care about&apos;)">Show up for someone I care about</span>
+        <span class="bestday-chip" onclick="setBestDayIntent(&apos;take care of something I have been avoiding&apos;)">Take care of something I have been avoiding</span>
+        <span class="bestday-chip" onclick="setBestDayIntent(&apos;mark something good&apos;)">Mark something good</span>
+        <span class="bestday-chip" onclick="setBestDayIntent(&apos;sit with how I am doing&apos;)">Sit with how I am doing</span>
+        <span class="bestday-chip" onclick="setBestDayIntent(&apos;make a decision I have been holding&apos;)">Make a decision I have been holding</span>
+        <span class="bestday-chip" onclick="setBestDayIntent(&apos;have a difficult conversation&apos;)">Have a difficult conversation</span>
+      </div>
+    </div>
+    <div class="bestday-results" id="bestDayResult"></div>
   </div>
-  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
-    <button class="best-day-chip" onclick="setBestDayIntent('funding pitch')">💼 Funding pitch</button>
-    <button class="best-day-chip" onclick="setBestDayIntent('first date')">✨ First date</button>
-    <button class="best-day-chip" onclick="setBestDayIntent('difficult conversation')">💬 Difficult conversation</button>
-    <button class="best-day-chip" onclick="setBestDayIntent('creative launch')">🚀 Creative launch</button>
-    <button class="best-day-chip" onclick="setBestDayIntent('rest and retreat')">🌙 Rest day</button>
-    <button class="best-day-chip" onclick="setBestDayIntent('interview')">🎯 Interview</button>
-    <button class="best-day-chip" onclick="setBestDayIntent('important decision')">⚖️ Big decision</button>
-    <button class="best-day-chip" onclick="setBestDayIntent('signing contract')">✍️ Contract / Legal</button>
+
+  <!-- "What is this month asking?" pane -->
+  <div class="bestday-mode-pane" data-mode-pane="what-asking" style="display:none">
+    <div class="whatasking-intro">
+      <div class="whatasking-month" id="whatAskingMonth">This month is asking you</div>
+      <div class="whatasking-sub">The three days the system flags as most significant in your visible month, with what each is for.</div>
+    </div>
+    <div class="whatasking-cards" id="whatAskingCards">
+      <div class="whatasking-card" style="opacity:0.6;text-align:center;padding:40px">
+        Loading the three days...
+      </div>
+    </div>
   </div>
-  <div style="display:flex;gap:8px">
-    <input id="bestDayInput" type="text" placeholder="or type your own… e.g. 'medical appointment'"
-      style="flex:1;background:var(--bg3);border:1px solid var(--div);color:var(--text);
-      font-family:'EB Garamond',serif;font-size:16px;padding:11px 16px;border-radius:3px;outline:none"
-      onkeydown="if(event.key==='Enter')findBestDay()"
-      onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--div)'">
-    <button onclick="findBestDay()"
-      style="padding:11px 20px;background:linear-gradient(135deg,rgba(201,160,80,0.2),rgba(129,205,182,0.15));
-      border:1px solid var(--gold);border-radius:3px;color:var(--gold);
-      font-family:'EB Garamond',serif;font-size:15px;cursor:pointer;white-space:nowrap">
-      Find Best Day ↑
-    </button>
-  </div>
-  <div id="bestDayResult" style="margin-top:16px"></div>
+
 </div>
 
 
@@ -3269,46 +3338,7 @@ select.entry-input option{background:#0D1E33;color:#E8EDF4}
   </div>
 </div>
 <div id="sp" class="screen">
-  <!-- Pin Opening Page (v6.5): which screen to open on app load -->
-  <div style="max-width:680px;margin:18px auto 0;padding:18px 22px;background:rgba(16,28,48,0.7);border:1px solid rgba(201,160,80,0.22);border-radius:6px">
-    <div style="font-family:&apos;Cinzel&apos;,Georgia,serif;font-size:10px;letter-spacing:0.24em;text-transform:uppercase;color:rgba(201,160,80,0.85);margin-bottom:10px">Open the app on</div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
-      <select id="v65OpenScreenSelect" onchange="v65SetOpenScreen(this.value)" style="background:rgba(8,26,45,0.5);border:1px solid rgba(165,132,89,0.35);border-radius:4px;padding:9px 14px;color:rgba(245,228,196,0.96);font-family:Georgia,serif;font-size:14px;cursor:pointer;outline:none">
-        <option value="">Default (Reading)</option>
-        <option value="scompass">Compass</option>
-        <option value="sr">Reading</option>
-        <option value="sc">Calendar</option>
-        
-      </select>
-      <span style="font-family:&apos;EB Garamond&apos;,Georgia,serif;font-size:13px;font-style:italic;color:rgba(245,228,196,0.65)">Sets the screen the app opens on each time you visit.</span>
-    </div>
-  </div>
-  <script>
-  (function(){
-    window.v65SetOpenScreen = function(val) {
-      try {
-        if (val) {
-          localStorage.setItem('cdp_open_screen', val);
-        } else {
-          localStorage.removeItem('cdp_open_screen');
-        }
-      } catch(e) {}
-    };
-    function loadCurrentSetting() {
-      try {
-        var sel = document.getElementById('v65OpenScreenSelect');
-        if (!sel) return;
-        var stored = localStorage.getItem('cdp_open_screen');
-        if (stored) sel.value = stored;
-      } catch(e) {}
-    }
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', loadCurrentSetting);
-    } else {
-      loadCurrentSetting();
-    }
-  })();
-  </script>
+  <!-- iter9: "Open the app on" moved from Profile to the quiet menu. -->
 
   <div class="profile-head">
     <div class="profile-title">Your Cosmic Profile</div>
@@ -3984,7 +4014,20 @@ const NUM_NEURO = {
 // ══════════════════════════════════════════════════════════
 // NAVIGATION
 // ══════════════════════════════════════════════════════════
+window.hideModeSelector = function() {
+  try {
+    var ms = document.getElementById('modeSelector');
+    if (ms) ms.style.display = 'none';
+  } catch(e) {}
+};
 function showScreen(id, btn) {
+  // iter9: any screen navigation must dismiss the modeSelector overlay.
+  // It is fixed-positioned at z-index 500, orphaned in <body>, and persists
+  // across screens because no hide function exists. We add one inline.
+  try {
+    var __ms = document.getElementById('modeSelector');
+    if (__ms) __ms.style.display = 'none';
+  } catch(e) {}
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('on'));
   document.getElementById(id)?.classList.add('on');
   if (btn) {
@@ -8645,13 +8688,9 @@ function renderReading(data, dateStr) {
     </div>`;
   }
 
-  html += `<div class="tier-row">
-    <span class="tier-pill" onclick="showTierModal('free')" style="cursor:pointer">Free</span>
-    <span class="tier-pill" onclick="showTierModal('seeker')" style="cursor:pointer">Seeker</span>
-    <span class="tier-pill" onclick="showTierModal('initiate')" style="cursor:pointer">Initiate</span>
-    <span class="tier-pill" onclick="showTierModal('mystic')" style="cursor:pointer">Mystic</span>
-    <span class="tier-pill active" onclick="showTierModal('oracle')" style="cursor:pointer">Oracle</span>
-  </div>`;
+  // iter9: duplicate tier-row removed. v65TierBand at the top of the reading
+  // already serves this purpose. The JS-injected row that previously sat
+  // further down the page is replaced with an empty injection.
 
   const hasAI = !isRawReading(r);
 
@@ -16975,6 +17014,245 @@ document.addEventListener('cdp:reading-ready', function() {
 @media (prefers-reduced-motion: reduce) {
   .v6-orbit-svg animateMotion { display: none; }
 }
+
+/* iter9: Compass surface simplification.
+   The cipher line + intention input + Reply button is the single entry point.
+   The "Begin today" CTA and "First time?" link are removed from the default
+   view (the cipher input IS the engagement). The "TAP TO LEARN HOW THIS WORKS"
+   caption is removed; the compass image itself remains tappable. The required
+   IDs (v19CompassCta, v6CompassHelper) are preserved in the DOM via hidden
+   wrappers so any downstream code referencing them does not error.
+   These elements stay in the DOM but are not visible. */
+#scompass .v6-compass-cta,
+#scompass #v19CompassCta,
+#scompass .v6-compass-image-caption,
+#scompass a[onclick*="openTwoTelescopesIntro"] { display: none !important; }
+
+
+/* iter9: BEST DAY pane styling matched to mockup_v6.
+   Toggle pills, intro headline + subtitle, form with input + date range +
+   chips, scored result cards, what-asking priority cards. */
+.bestday-mode-toggle {
+  display: flex;
+  gap: 0;
+  margin: 14px auto 28px;
+  max-width: 520px;
+  background: var(--bg3);
+  border: 1px solid var(--div);
+  border-radius: 4px;
+  padding: 4px;
+}
+.bestday-mode-btn {
+  flex: 1;
+  padding: 10px 18px;
+  background: transparent;
+  border: none;
+  border-radius: 3px;
+  font-family: 'Cinzel', Georgia, serif;
+  font-size: 11px;
+  letter-spacing: .22em;
+  text-transform: uppercase;
+  color: var(--text3);
+  cursor: pointer;
+  transition: background .2s ease, color .2s ease;
+}
+.bestday-mode-btn:hover { color: var(--text); }
+.bestday-mode-btn.active { background: var(--gold); color: var(--bg); }
+
+.bestday-mode-pane { display: none; }
+.bestday-mode-pane.active { display: block; }
+
+.bestday-intro { text-align: center; margin-bottom: 28px; }
+.bestday-intro-h {
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-size: clamp(22px, 3vw, 30px);
+  color: var(--gold);
+  font-weight: 300;
+  letter-spacing: .02em;
+  margin-bottom: 8px;
+}
+.bestday-intro-sub {
+  font-size: 14px;
+  color: var(--text3);
+  font-style: italic;
+  max-width: 560px;
+  margin: 0 auto;
+  line-height: 1.55;
+}
+
+.bestday-form { max-width: 720px; margin: 0 auto 28px; }
+.bestday-input-wrap { position: relative; margin-bottom: 14px; }
+.bestday-input {
+  width: 100%;
+  background: var(--bg3);
+  border: 1px solid var(--div);
+  color: var(--text);
+  font-family: 'EB Garamond', Georgia, serif;
+  font-size: 16px;
+  padding: 12px 18px;
+  border-radius: 3px;
+  outline: none;
+  box-sizing: border-box;
+}
+.bestday-input::placeholder { color: var(--text3); font-style: italic; }
+.bestday-input:focus { border-color: var(--gold); }
+
+.bestday-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.bestday-date-input, .bestday-date-input2 {
+  background: var(--bg3);
+  border: 1px solid var(--div);
+  color: var(--text);
+  font-family: 'EB Garamond', Georgia, serif;
+  font-size: 14px;
+  padding: 10px 14px;
+  border-radius: 3px;
+  outline: none;
+}
+.bestday-date-input:focus, .bestday-date-input2:focus { border-color: var(--gold); }
+
+.bestday-run-btn {
+  padding: 10px 22px;
+  background: var(--gold);
+  border: 1px solid var(--gold);
+  border-radius: 3px;
+  color: var(--bg);
+  font-family: 'Cinzel', Georgia, serif;
+  font-size: 11px;
+  letter-spacing: .22em;
+  text-transform: uppercase;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.bestday-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.bestday-chip {
+  padding: 7px 14px;
+  background: var(--bg3);
+  border: 1px solid var(--div);
+  border-radius: 14px;
+  font-family: 'EB Garamond', Georgia, serif;
+  font-size: 13px;
+  font-style: italic;
+  color: var(--text2);
+  cursor: pointer;
+  transition: all .2s ease;
+}
+.bestday-chip:hover {
+  background: rgba(201,160,80,0.18);
+  color: var(--gold);
+  border-color: var(--gold);
+}
+
+.bestday-results { margin-top: 14px; max-width: 720px; margin-left: auto; margin-right: auto; }
+.bestday-result {
+  display: grid;
+  grid-template-columns: 100px 60px 1fr;
+  gap: 18px;
+  align-items: center;
+  background: var(--bg3);
+  border: 1px solid var(--div);
+  border-radius: 4px;
+  padding: 16px 18px;
+  margin-bottom: 10px;
+}
+.bestday-result-date {
+  font-family: 'Cinzel', Georgia, serif;
+  text-align: center;
+}
+.bestday-result-date-day {
+  font-size: 28px;
+  font-weight: 400;
+  color: var(--text);
+  display: block;
+}
+.bestday-result-date-mon {
+  font-size: 10px;
+  letter-spacing: .22em;
+  text-transform: uppercase;
+  color: var(--text3);
+  display: block;
+}
+.bestday-result-score {
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-size: 28px;
+  color: var(--gold);
+  text-align: center;
+  border: 1px solid var(--gold);
+  border-radius: 50%;
+  width: 56px;
+  height: 56px;
+  line-height: 54px;
+}
+.bestday-result-rationale {
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--text2);
+}
+.bestday-result-rationale strong { color: var(--gold); font-weight: 500; }
+
+.whatasking-intro { text-align: center; margin-bottom: 28px; }
+.whatasking-month {
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-size: clamp(22px, 3vw, 30px);
+  color: var(--gold);
+  font-weight: 300;
+  margin-bottom: 8px;
+}
+.whatasking-sub {
+  font-size: 14px;
+  color: var(--text3);
+  font-style: italic;
+  max-width: 560px;
+  margin: 0 auto;
+  line-height: 1.55;
+}
+.whatasking-cards {
+  max-width: 760px;
+  margin: 0 auto;
+  display: grid;
+  gap: 14px;
+}
+.whatasking-card {
+  background: var(--bg3);
+  border: 1px solid var(--div);
+  border-left: 3px solid var(--gold);
+  border-radius: 4px;
+  padding: 16px 20px;
+}
+.whatasking-card-date {
+  font-family: 'Cinzel', Georgia, serif;
+  font-size: 11px;
+  letter-spacing: .22em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 8px;
+}
+.whatasking-card-headline {
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-size: 19px;
+  color: var(--text);
+  line-height: 1.4;
+  margin-bottom: 8px;
+}
+.whatasking-card-body {
+  font-size: 14px;
+  color: var(--text2);
+  line-height: 1.6;
+}
+
+@media (max-width: 600px) {
+  .bestday-row { grid-template-columns: 1fr; }
+  .bestday-result { grid-template-columns: 1fr; gap: 10px; text-align: center; }
+  .bestday-result-rationale { text-align: left; }
+  .bestday-mode-toggle { max-width: 100%; }
+}
+
 /* iter8: site-wide --bg is now #031831 (matches compass asset). The
    previous #scompass localised override is no longer needed. */
 .v6-compass-image-caption {
@@ -19525,6 +19803,62 @@ Removed from v1:
 
 
 <script>
+// iter9: Best Day sub-mode toggle (Best day to / What is this month asking)
+window.v65SetOpenScreen = function(val) {
+  try {
+    if (val) localStorage.setItem('cdp_open_screen', val);
+    else localStorage.removeItem('cdp_open_screen');
+  } catch(e) {}
+};
+
+window.setBestDayMode = function(mode) {
+  var btns = document.querySelectorAll('.bestday-mode-btn');
+  var panes = document.querySelectorAll('.bestday-mode-pane');
+  btns.forEach(function(b) {
+    if (b.dataset.mode === mode) b.classList.add('active');
+    else b.classList.remove('active');
+  });
+  panes.forEach(function(p) {
+    if (p.dataset.modePane === mode) {
+      p.classList.add('active');
+      p.style.display = 'block';
+    } else {
+      p.classList.remove('active');
+      p.style.display = 'none';
+    }
+  });
+  if (mode === 'what-asking') {
+    // Lazy-render the what-asking cards on first show
+    if (typeof window.renderWhatAsking === 'function') {
+      window.renderWhatAsking();
+    }
+  }
+};
+
+// iter9: placeholder renderer for "What is this month asking" - shows three
+// most significant days from current calendar month based on existing data.
+// The full Oracle-narrative version comes in a follow-up (it requires a
+// dedicated /api/whats-asking endpoint). For now we provide a graceful
+// fallback that references the current month context.
+window.renderWhatAsking = function() {
+  var cards = document.getElementById('whatAskingCards');
+  if (!cards) return;
+  var monthEl = document.getElementById('whatAskingMonth');
+  if (monthEl) {
+    var now = new Date();
+    var monthName = now.toLocaleString('default', { month: 'long', year: 'numeric' });
+    monthEl.textContent = monthName + ' is asking you';
+  }
+  // Placeholder until the Oracle endpoint is added
+  cards.innerHTML = '<div class="whatasking-card" style="opacity:0.85;text-align:center;padding:32px">'
+    + '<div class="whatasking-card-headline">Soon</div>'
+    + '<div class="whatasking-card-body">'
+    + 'This pane will surface the three most significant days of the visible month, '
+    + 'narrated across the four traditions. The /api/whats-asking endpoint is in the '
+    + 'queue; the data underneath already exists in the Best Day scorer.'
+    + '</div></div>';
+};
+
 // iter8: Calendar Month/Best Day toggle
 window.setCalView = function(view) {
   var mv = document.getElementById('calMonthView');
