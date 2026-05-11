@@ -181,6 +181,12 @@ button img[aria-hidden="true"] {
    containment), force-hide them. They should only render inside #sc,
    which has its own display: none/block based on .on class. */
 
+/* iter11b: hide the old compass-reply v2 "Go deeper" gold pill. The
+   iter11 threshold (Full Reading + Go deeper here) replaces this with the
+   confirmed two-button model. The "Reply" button still works for inline
+   conversation; only the duplicate go-deeper pill is hidden. */
+.cdp-cr-actions .cdp-cr-go-deeper { display: none !important; }
+
 /* iter11: Compass surface rebuild
    Voice toggle, voice-aware cycling, four chips, threshold buttons, chip drawer.
 */
@@ -206,21 +212,41 @@ button img[aria-hidden="true"] {
   margin: 18px auto 14px; max-width: 560px; padding: 0 12px;
 }
 .v11-compass-chip {
-  display: inline-flex; align-items: center; gap: 7px;
-  padding: 7px 14px; background: rgba(8,26,45,0.5);
-  border: 1px solid rgba(165,132,89,0.32); border-radius: 18px;
+  /* iter11b: tighter chips that fit on one line at desktop; un-italicized
+     for legibility per Ned feedback. */
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 5px 11px; background: rgba(8,26,45,0.5);
+  border: 1px solid rgba(165,132,89,0.32); border-radius: 16px;
   color: rgba(245,228,196,0.88); font-family: 'EB Garamond', Georgia, serif;
-  font-size: 13px; font-style: italic; cursor: pointer;
+  font-size: 12px; font-style: normal; cursor: pointer;
+  white-space: nowrap;
   transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
 }
 .v11-compass-chip:hover {
   background: rgba(201,160,80,0.10); border-color: rgba(201,160,80,0.55); color: var(--gold);
 }
-.v11-chip-icon { font-size: 14px; opacity: 0.85; }
+.v11-chip-icon { font-size: 13px; opacity: 0.85; }
 
 .v11-compass-threshold {
   display: flex; flex-direction: column; align-items: center; gap: 10px;
   margin: 22px auto 14px;
+}
+/* iter11b: when the threshold is in row mode, sit it under the chips. */
+.v11-compass-threshold.v11-threshold-row {
+  flex-direction: row; flex-wrap: wrap; justify-content: center;
+  gap: 12px; margin: 14px auto 18px;
+}
+/* iter11b: confirmation-pending state - primary button label changes */
+.v11-cta-primary[data-confirm-state="1"] {
+  background: rgba(201,160,80,0.32);
+  letter-spacing: 0.18em;
+}
+.v11-cta-primary[data-confirm-state="1"]::before {
+  content: "Tap again to leave Compass: ";
+  font-size: 10px;
+  margin-right: 6px;
+  opacity: 0.80;
+  letter-spacing: 0.15em;
 }
 .v11-cta-primary {
   display: inline-flex; align-items: center; gap: 10px;
@@ -17770,6 +17796,13 @@ document.addEventListener('cdp:reading-ready', function() {
       </button>
     </div>
 
+    <!-- iter11b: threshold buttons SIDE BY SIDE right under the chips per Ned spec.
+         "Full Reading" requires confirmation before navigating away. -->
+    <div class="v11-compass-threshold v11-threshold-row">
+      <button type="button" class="v11-cta-primary" id="v19CompassCta" onclick="v11ConfirmCrossToReading(this)" data-confirm-state="0">Full Reading <span class="v11-arrow">&rarr;</span></button>
+      <button type="button" class="v11-cta-secondary" onclick="v11GoDeeperHere()">Go deeper here</button>
+    </div>
+
     <!-- The single inviting line. Returning users get a continuation prompt. -->
     <p class="v6-compass-prompt" id="v6CompassPrompt">What is alive in you today?</p>
     <div class="v6-compass-input-wrap cdp-compass-intention">
@@ -17779,12 +17812,7 @@ document.addEventListener('cdp:reading-ready', function() {
       <div class="v6-compass-yesterday" id="v19YesterdayHint" style="display:none"></div>
     </div>
 
-    <!-- Begin CTA. Same handler as before for full backwards compat. -->
-    <!-- iter11: two-button threshold -->
-    <div class="v11-compass-threshold">
-      <button type="button" class="v11-cta-primary" id="v19CompassCta" onclick="v11CrossToReading()">Full Reading <span class="v11-arrow">&rarr;</span></button>
-      <button type="button" class="v11-cta-secondary" onclick="v11GoDeeperHere()">Go deeper here</button>
-    </div>
+<!-- iter11b: threshold moved up under chips -->
 
     <!-- Helper line under CTA. Hidden once the user has visited the Two
          Telescopes drawer (localStorage flag cdp_seen_two_telescopes). -->
@@ -20339,6 +20367,31 @@ document.addEventListener('DOMContentLoaded', function() {
         }
       } catch(e) { console.warn('[iter11] cross failed', e); }
     }
+  };
+
+  /* iter11b: Full Reading requires two-tap confirmation before navigation.
+     First tap puts the button into "Tap again to leave Compass" state.
+     Second tap (within 4 seconds) actually navigates. */
+  window.v11ConfirmCrossToReading = function(btn) {
+    if (!btn) return;
+    var state = btn.getAttribute('data-confirm-state') || '0';
+    if (state === '0') {
+      btn.setAttribute('data-confirm-state', '1');
+      btn.dataset.originalLabel = btn.innerHTML;
+      btn.innerHTML = 'Yes, open Full Reading <span class="v11-arrow">&rarr;</span>';
+      // Auto-reset after 4 seconds
+      setTimeout(function() {
+        if (btn.getAttribute('data-confirm-state') === '1') {
+          btn.setAttribute('data-confirm-state', '0');
+          if (btn.dataset.originalLabel) btn.innerHTML = btn.dataset.originalLabel;
+        }
+      }, 4000);
+      return;
+    }
+    // Confirmed - reset state and cross
+    btn.setAttribute('data-confirm-state', '0');
+    if (btn.dataset.originalLabel) btn.innerHTML = btn.dataset.originalLabel;
+    window.v11CrossToReading();
   };
 
   window.v11GoDeeperHere = function() {
