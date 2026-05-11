@@ -180,14 +180,23 @@ button img[aria-hidden="true"] {
    (i.e. some JS reparented them at runtime, breaking the .screen
    containment), force-hide them. They should only render inside #sc,
    which has its own display: none/block based on .on class. */
-body > #calMonthView,
-body > #calBestDayView,
-body > #calGrid {
+/* iter10f: orphan guard refined. The previous version blocked Calendar
+   entirely because the elements were reparented to body and the guard
+   hid them even when #sc was the active screen. The :has() selector
+   makes the guard active only when #sc is NOT on. */
+body:not(:has(#sc.on)) > #calMonthView,
+body:not(:has(#sc.on)) > #calBestDayView,
+body:not(:has(#sc.on)) > #calGrid {
   display: none !important;
 }
-/* When #sc has .on, descendant calMonthView / calBestDayView render normally.
-   When #sc lacks .on (i.e. on Compass, Reading, etc.) the parent's
-   display: none cascades and hides them inside #sc. Orphans get caught above. */
+/* Fallback for browsers without :has() support (older Safari). Use a JS
+   flag instead: set data-active-screen on body, scope the orphan guard
+   by attribute selector. */
+body:not([data-active-screen="sc"]) > #calMonthView,
+body:not([data-active-screen="sc"]) > #calBestDayView,
+body:not([data-active-screen="sc"]) > #calGrid {
+  display: none !important;
+}
 
 /* iter10b: hide the entire presence bar wrapper, not just the inner text.
    The wrapper contains other children (action text, buttons) that were
@@ -4107,6 +4116,9 @@ window.hideModeSelector = function() {
 function showScreen(id, btn) {
   // iter10: log every navigation for diagnosis
   console.log('[iter10 showScreen]', id, 'btn?', !!btn);
+  // iter10f: mark body with active screen so the orphan guard CSS knows when
+  // #sc is current; this allows reparented calendar elements to render.
+  try { document.body.setAttribute('data-active-screen', id); } catch(e) {}
   // iter9: any screen navigation must dismiss the modeSelector overlay.
   // It is fixed-positioned at z-index 500, orphaned in <body>, and persists
   // across screens because no hide function exists. We add one inline.
