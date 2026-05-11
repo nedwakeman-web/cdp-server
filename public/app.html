@@ -77,6 +77,42 @@ body.light{--bg:#F5F0E8;--bg2:#EDE6D6;--bg3:#E4DBC8;--bg4:#F8F4EC;
   padding:6px 10px;border-radius:2px;cursor:pointer;font-size:18px;line-height:1}
 .nav-hamburger:hover{border-color:var(--gold);color:var(--gold)}
 
+
+/* iter10: quiet menu legibility. Standard items had low contrast text. */
+.quiet-menu-item {
+  color: rgba(245, 228, 196, 0.96) !important;
+}
+.quiet-menu-item:hover {
+  background: rgba(201, 160, 80, 0.10) !important;
+  color: var(--gold) !important;
+}
+
+
+/* iter10: Two Telescopes thumbnail blending. The embedded hero art has its
+   own painted bg which doesn't perfectly match the surface bg. These rules
+   feather the edges and screen-blend the image so it merges seamlessly. */
+.r-section img[src*="data:image"][alt=""],
+img[src*="${CDP_HERO_ART_B64}"],
+button img[aria-hidden="true"] {
+  /* Soften the hard edge by feathering */
+  -webkit-mask-image: linear-gradient(180deg, rgba(0,0,0,1) 70%, rgba(0,0,0,0) 100%),
+                       linear-gradient(0deg, rgba(0,0,0,1) 70%, rgba(0,0,0,0) 100%),
+                       linear-gradient(90deg, rgba(0,0,0,1) 92%, rgba(0,0,0,0) 100%),
+                       linear-gradient(270deg, rgba(0,0,0,1) 92%, rgba(0,0,0,0) 100%);
+  -webkit-mask-composite: source-in;
+  mask-image: linear-gradient(180deg, rgba(0,0,0,1) 70%, rgba(0,0,0,0) 100%);
+  /* Mix-blend with surface so painted bg disappears into navy */
+  mix-blend-mode: lighten;
+  filter: contrast(1.08) brightness(0.96);
+}
+
+
+/* iter10: Two Telescopes popout legibility. Bump body text size + contrast. */
+#cdp-tt-intro-modal { font-size: 15px !important; }
+#cdp-tt-intro-modal p { font-size: 15px !important; line-height: 1.65 !important; color: rgba(245,228,196,0.92) !important; }
+#cdp-tt-intro-modal h2 { font-size: 30px !important; }
+#cdp-tt-intro-modal h3, #cdp-tt-intro-modal h4 { font-size: 14px !important; letter-spacing: .14em !important; }
+
 /* iter9: front-door simplification.
    The full 6-pill nav, the reading-count badge, and the explicit Sign In
    button are hidden at all widths. The quiet-menu icon on the right is the
@@ -2980,10 +3016,10 @@ select.entry-input option{background:#0D1E33;color:#E8EDF4}
     <span style="font-family:&apos;Cinzel&apos;,Georgia,serif;font-size:10px;letter-spacing:0.20em;text-transform:uppercase;color:rgba(201,160,80,0.85)">Open the app on</span>
     <select id="v65OpenScreenSelect" onchange="v65SetOpenScreen(this.value);closeQuietMenu()"
       style="background:rgba(8,26,45,0.5);border:1px solid rgba(165,132,89,0.35);border-radius:3px;padding:7px 10px;color:rgba(245,228,196,0.96);font-family:Georgia,serif;font-size:13px;cursor:pointer;outline:none;width:100%">
-      <option value="">Default (Reading)</option>
-      <option value="scompass">Compass</option>
+      <option value="scompass">Compass (default)</option>
       <option value="sr">Reading</option>
       <option value="sc">Calendar</option>
+      <option value="">App default (Reading)</option>
     </select>
   </div>
 
@@ -2992,7 +3028,7 @@ select.entry-input option{background:#0D1E33;color:#E8EDF4}
   <button class="quiet-menu-item" onclick="closeQuietMenu();showScreen(&apos;sstreak&apos;,null)">Streak</button>
   <button class="quiet-menu-item" onclick="closeQuietMenu();if(typeof openShare===&apos;function&apos;)openShare()">Share &amp; Invite</button>
   <div style="height:1px;background:rgba(201,160,80,0.15);margin:8px 0"></div>
-  <button class="quiet-menu-item" onclick="closeQuietMenu();if(typeof openAuth===&apos;function&apos;)openAuth()" style="color:var(--gold)">Sign In</button>
+  <button class="quiet-menu-item" onclick="closeQuietMenu();setTimeout(function(){if(typeof openAuth===&apos;function&apos;)openAuth();else console.warn(&apos;[iter10] openAuth not found&apos;);},40)" style="color:var(--gold)">Sign In</button>
 </aside>
 <script>
 (function(){
@@ -3381,35 +3417,9 @@ select.entry-input option{background:#0D1E33;color:#E8EDF4}
       <textarea class="form-input" id="pCtx" rows="3" placeholder="Current life chapter, projects, relationships, anything that matters to you..." oninput="saveProfileField('context',this.value)" style="resize:vertical"></textarea>
     </div>
   </div>
-  <div class="form-section">
-    <div class="form-section-title">Reading Voice <span style="font-style:italic;text-transform:none;letter-spacing:0;opacity:.6">· the language your readings open in</span></div>
-    <div class="form-group">
-      <div style="display:flex;flex-direction:column;gap:14px;margin-top:6px">
-        <label style="display:flex;gap:12px;align-items:flex-start;cursor:pointer;padding:14px 16px;border:1px solid var(--div);border-radius:3px;transition:border-color .2s,background .2s" data-cdp-voice-row="tradition">
-          <input type="radio" name="cdp-pref-voice-radio" value="tradition" onchange="window.cdpSetPreferredVoice && window.cdpSetPreferredVoice('tradition'); window.cdpSetVoice && window.cdpSetVoice('tradition');" style="margin-top:4px;accent-color:var(--gold)">
-          <div style="flex:1">
-            <div style="font-family:'Cormorant Garamond',serif;font-size:18px;color:var(--gold);margin-bottom:4px;letter-spacing:.04em">Tradition</div>
-            <div style="font-size:13px;color:var(--text2);line-height:1.55">The symbolic, archetypal voice. Numerology, astrology, Mayan calendrics, lunar wisdom. Cites Tarnas, Aldana, Greene. For when you want depth, image, and resonance.</div>
-          </div>
-        </label>
-        <label style="display:flex;gap:12px;align-items:flex-start;cursor:pointer;padding:14px 16px;border:1px solid var(--div);border-radius:3px;transition:border-color .2s,background .2s" data-cdp-voice-row="science">
-          <input type="radio" name="cdp-pref-voice-radio" value="science" onchange="window.cdpSetPreferredVoice && window.cdpSetPreferredVoice('science'); window.cdpSetVoice && window.cdpSetVoice('science');" style="margin-top:4px;accent-color:var(--teal)">
-          <div style="flex:1">
-            <div style="font-family:'Cormorant Garamond',serif;font-size:18px;color:var(--teal);margin-bottom:4px;letter-spacing:.04em">Science</div>
-            <div style="font-size:13px;color:var(--text2);line-height:1.55">The neuroscience and chronobiology voice. Predictive processing, default mode network, interoception, circadian cognition. Cites Barrett, Clark, Cajochen, Tang. For when you want what is happening in the brain and body.</div>
-          </div>
-        </label>
-        <label style="display:flex;gap:12px;align-items:flex-start;cursor:pointer;padding:14px 16px;border:1px solid var(--div);border-radius:3px;transition:border-color .2s,background .2s" data-cdp-voice-row="everyday">
-          <input type="radio" name="cdp-pref-voice-radio" value="everyday" onchange="window.cdpSetPreferredVoice && window.cdpSetPreferredVoice('everyday'); window.cdpSetVoice && window.cdpSetVoice('everyday');" style="margin-top:4px;accent-color:var(--text2)">
-          <div style="flex:1">
-            <div style="font-family:'Cormorant Garamond',serif;font-size:18px;color:var(--text);margin-bottom:4px;letter-spacing:.04em">Everyday</div>
-            <div style="font-size:13px;color:var(--text2);line-height:1.55">The plain-spoken voice. No mystical or clinical jargon. Just what today is good for, what to be careful about, what to do next. For when you want the help without either tradition or science.</div>
-          </div>
-        </label>
-      </div>
-      <div class="form-hint" style="margin-top:12px">Every reading opens in this voice. You can preview the others using the toggle in the top bar, then tap the ★ to pin a different voice as your default.</div>
-    </div>
-  </div>
+  <!-- iter10: Reading Voice section removed from Profile. The voice toggle
+       lives in the topbar (small affordance) and the quiet menu has a "Pin
+       Current Voice as Default" item. Profile no longer duplicates this. -->
   <div class="form-section">
     <div class="form-section-title">Birth Details</div>
     <div class="form-group">
@@ -4021,6 +4031,8 @@ window.hideModeSelector = function() {
   } catch(e) {}
 };
 function showScreen(id, btn) {
+  // iter10: log every navigation for diagnosis
+  console.log('[iter10 showScreen]', id, 'btn?', !!btn);
   // iter9: any screen navigation must dismiss the modeSelector overlay.
   // It is fixed-positioned at z-index 500, orphaned in <body>, and persists
   // across screens because no hide function exists. We add one inline.
@@ -4029,7 +4041,12 @@ function showScreen(id, btn) {
     if (__ms) __ms.style.display = 'none';
   } catch(e) {}
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('on'));
-  document.getElementById(id)?.classList.add('on');
+  var __target = document.getElementById(id);
+  if (!__target) {
+    console.warn('[iter10 showScreen] target not found:', id);
+    return;
+  }
+  __target.classList.add('on');
   if (btn) {
     document.querySelectorAll('.npill').forEach(b => b.classList.remove('on'));
     btn.classList.add('on');
@@ -8597,21 +8614,8 @@ function renderReading(data, dateStr) {
       </div>
   </div>`;
 
-  // Decision / Best Day CTAs  -  prominent above the four-square widget row.
-  // Same pair as on the loading skeleton; persists into the rendered reading
-  // so users always have a visible top-of-fold path to both engines.
-  html += `<div class="cdp-decision-row">
-    <button class="cdp-decision-cta" onclick="openDecisionEngine()" title="Route a specific decision through all four frameworks for a timing verdict">
-      <span class="cdp-cta-icon">⏱</span>
-      <span class="cdp-cta-label">Time a decision</span>
-      <span class="cdp-cta-sub">Should I act today, or wait?</span>
-    </button>
-    <button class="cdp-decision-cta cdp-cta-secondary" onclick="jumpToBestDay()" title="Find the best days this month for a particular intent">
-      <span class="cdp-cta-icon">✦</span>
-      <span class="cdp-cta-label">Find best day</span>
-      <span class="cdp-cta-sub">When is best this month?</span>
-    </button>
-  </div>`;
+  // iter10: bottom Decision/Best-Day row removed. The top row (rendered
+  // earlier in this function) is the only instance now.
 
   html += `<div class="widgets">
     <div class="wgt">
@@ -10153,6 +10157,21 @@ function buildChips(r) {
     chips.push({l: '◈ ' + kin.seal + (kin.isGAP?' ★':''), q: kinQ});
   }
 
+  // 4b. Hormonal phase  -  iter10: surface the cycle phase as a chip alongside
+  //     Moon/Kin/Numerology so women users see the framework is contributing.
+  //     Gated on isCycleEnabled() so it only appears when toggle is on.
+  try {
+    if (typeof isCycleEnabled === 'function' && isCycleEnabled()) {
+      var cycCtx = (typeof getCycleContext === 'function') ? getCycleContext() : '';
+      if (cycCtx) {
+        // Extract phase name (cycCtx is typically "Phase name (descriptor)" or similar)
+        var phaseLabel = String(cycCtx).split(/[.,;]/)[0].trim().slice(0, 30);
+        var cycQ = 'Hormonal phase: ' + cycCtx + '. ' + userCtx + ' How is this phase shaping ' + firstName + '\'s energy, decisions, and relational sensitivity today specifically? What does this phase ask them to honour vs push through? (Reference Walker 2017 hippocampal consolidation, Mehrhof and Nord 2025 circadian cognition where relevant.)';
+        chips.push({l: '☾ ' + phaseLabel, q: cycQ});
+      }
+    }
+  } catch(e) {}
+
   // 5. Priority 1  -  go deeper on the specific priority
   if (rd.priorities?.[0]?.title) {
     const p1 = rd.priorities[0];
@@ -11534,8 +11553,14 @@ function updateAuthUI() {
 }
 
 function openAuth() {
-  document.getElementById('authModal').classList.add('open');
+  // iter10: explicit window assignment in case the surrounding script scope
+  // closed it off the global namespace. Logged so diagnostic can confirm fire.
+  console.log('[iter10] openAuth() fired');
+  var m = document.getElementById('authModal');
+  if (!m) { console.warn('[iter10] #authModal not found'); return; }
+  m.classList.add('open');
 }
+window.openAuth = openAuth;
 function closeAuth() {
   document.getElementById('authModal').classList.remove('open');
 }
@@ -19774,8 +19799,10 @@ Removed from v1:
     if (STARTED) return;
     try {
       var pref = localStorage.getItem('cdp_open_screen');
-      if (!pref) return;
-      // Only route if the preferred screen exists and is not already shown.
+      // iter10: default landing is Compass (front door product). Users can
+      // override via the "Open the app on" select in the quiet menu.
+      if (!pref) pref = 'scompass';
+      // Only route if the preferred screen exists.
       var target = document.getElementById(pref);
       if (!target) return;
       // Don't override an explicit user navigation; route only on initial load.
