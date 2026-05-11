@@ -236,6 +236,152 @@ button img[aria-hidden="true"] {
   display: flex; flex-wrap: wrap; justify-content: center; gap: 8px;
   margin: 18px auto 14px; max-width: 560px; padding: 0 12px;
 }
+
+/* ════════════════════════════════════════════════════════════════════
+   iter11e: boxed-card chip aesthetic matching the Reading-screen
+   KIN/MOON/PERSONAL DAY card design. Stacked vertically, equal width,
+   non-italic, non-bold body text. Visual continuity with Reading
+   reinforces "same coordinates, two depths" architecture.
+   ════════════════════════════════════════════════════════════════════ */
+
+/* Mobile-first: cards stack in a horizontal scroll OR wrap to a grid */
+#scompass .v11-compass-card {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  text-align: center !important;
+  padding: 16px 14px 14px !important;
+  background: rgba(16, 32, 52, 0.55) !important;
+  border: 1px solid rgba(165, 132, 89, 0.28) !important;
+  border-radius: 6px !important;
+  color: rgba(245, 228, 196, 0.94) !important;
+  font-family: 'Cormorant Garamond', Georgia, serif !important;
+  font-size: 14px !important;
+  font-style: normal !important;
+  font-weight: 400 !important;
+  cursor: pointer !important;
+  transition: background 0.22s ease, border-color 0.22s ease, transform 0.18s ease !important;
+  min-height: 92px !important;
+  white-space: normal !important;
+}
+#scompass .v11-compass-card:hover {
+  background: rgba(28, 48, 72, 0.72) !important;
+  border-color: rgba(201, 160, 80, 0.58) !important;
+  transform: translateY(-1px) !important;
+}
+#scompass .v11-compass-card .v11-chip-icon {
+  font-size: 19px !important;
+  opacity: 0.95 !important;
+  color: rgba(201, 160, 80, 0.92) !important;
+  margin: 0 0 6px 0 !important;
+  line-height: 1 !important;
+}
+#scompass .v11-compass-card .v11-chip-eyebrow {
+  display: block !important;
+  font-family: 'Cinzel', Georgia, serif !important;
+  font-size: 9.5px !important;
+  letter-spacing: 0.22em !important;
+  text-transform: uppercase !important;
+  color: rgba(201, 160, 80, 0.75) !important;
+  margin: 0 0 5px 0 !important;
+  font-weight: 400 !important;
+}
+#scompass .v11-compass-card .v11-chip-label {
+  display: block !important;
+  font-family: 'Cormorant Garamond', Georgia, serif !important;
+  font-size: 14.5px !important;
+  font-style: normal !important;
+  font-weight: 400 !important;
+  color: rgba(245, 228, 196, 0.96) !important;
+  line-height: 1.30 !important;
+  margin: 0 !important;
+}
+
+/* In Science voice, eyebrow + icon shift teal */
+[data-compass-voice="science"] #scompass .v11-compass-card .v11-chip-icon { color: rgba(129, 205, 198, 0.92) !important; }
+[data-compass-voice="science"] #scompass .v11-compass-card .v11-chip-eyebrow { color: rgba(129, 205, 198, 0.78) !important; }
+[data-compass-voice="science"] #scompass .v11-compass-card:hover {
+  border-color: rgba(129, 205, 198, 0.58) !important;
+}
+
+/* Mobile (<760px): horizontal scroll or 2x2 grid */
+@media (max-width: 759px) {
+  #scompass .v11-compass-chips {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 8px !important;
+    max-width: 480px !important;
+    margin: 18px auto 14px !important;
+    padding: 0 12px !important;
+  }
+  #scompass .v11-compass-card {
+    min-height: 76px !important;
+    padding: 12px 10px !important;
+  }
+  #scompass .v11-compass-card .v11-chip-label {
+    font-size: 13px !important;
+  }
+}
+
+/* Desktop (>=760px): override iter11d positioning to use card style */
+@media (min-width: 760px) {
+  #scompass .v11-compass-chips {
+    /* Keep absolute positioning from iter11d, but lay out as a column of cards */
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    justify-content: space-between !important;
+    width: 196px !important;
+    max-width: 196px !important;
+  }
+  #scompass .v11-compass-card {
+    width: 196px !important;
+    min-width: 196px !important;
+    max-width: 196px !important;
+    box-sizing: border-box !important;
+  }
+}
+@media (min-width: 1100px) {
+  #scompass .v11-compass-chips {
+    width: 216px !important;
+    max-width: 216px !important;
+  }
+  #scompass .v11-compass-card {
+    width: 216px !important;
+    min-width: 216px !important;
+    max-width: 216px !important;
+  }
+}
+
+/* iter11e: voice-aware question line above the cards.
+   A single inviting question that changes with voice. Sits above the card
+   stack (or above the horizontal grid on mobile). */
+.v11-compass-question {
+  display: block;
+  text-align: center;
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-size: 15px;
+  font-style: italic;
+  font-weight: 400;
+  color: rgba(245, 228, 196, 0.78);
+  margin: 4px auto 0;
+  max-width: 520px;
+  padding: 0 18px;
+  line-height: 1.5;
+}
+@media (min-width: 760px) {
+  #scompass .v11-compass-question {
+    position: absolute;
+    bottom: 4%;
+    left: 50%;
+    transform: translateX(-50%);
+    max-width: 520px;
+    margin: 0;
+    z-index: 3;
+  }
+}
+
 /* iter11d: chord-parallel-to-compass chip layout.
    Pills sit beside the compass image, tightly aligned with the compass's
    vertical extent (top chip near compass top, bottom chip near compass
@@ -17861,22 +18007,29 @@ document.addEventListener('cdp:reading-ready', function() {
       <div class="v6-compass-image-caption">Tap to learn how this works</div>
     </div>
 
-    <!-- iter11: four voice-aware coordinate chips -->
+    <!-- iter11e: voice-aware question line above the cards -->
+    <p class="v11-compass-question" id="v11CompassQuestion">What is the pattern asking of you today?</p>
+
+    <!-- iter11: four voice-aware coordinate chips (now boxed cards in iter11e) -->
     <div class="v11-compass-chips" id="v11CompassChips">
-      <button type="button" class="v11-compass-chip" data-chip="time" onclick="v11OpenChipDrawer(&apos;time&apos;)">
+      <button type="button" class="v11-compass-chip v11-compass-card" data-chip="time" onclick="v11OpenChipDrawer(&apos;time&apos;)">
         <span class="v11-chip-icon">&#9680;</span>
+        <span class="v11-chip-eyebrow">Time</span>
         <span class="v11-chip-label" id="v11ChipTime">Personal Day</span>
       </button>
-      <button type="button" class="v11-compass-chip" data-chip="lunar" onclick="v11OpenChipDrawer(&apos;lunar&apos;)">
+      <button type="button" class="v11-compass-chip v11-compass-card" data-chip="lunar" onclick="v11OpenChipDrawer(&apos;lunar&apos;)">
         <span class="v11-chip-icon">&#9790;</span>
+        <span class="v11-chip-eyebrow">Lunar</span>
         <span class="v11-chip-label" id="v11ChipLunar">Moon</span>
       </button>
-      <button type="button" class="v11-compass-chip" data-chip="symbol" onclick="v11OpenChipDrawer(&apos;symbol&apos;)">
+      <button type="button" class="v11-compass-chip v11-compass-card" data-chip="symbol" onclick="v11OpenChipDrawer(&apos;symbol&apos;)">
         <span class="v11-chip-icon">&#9672;</span>
+        <span class="v11-chip-eyebrow">Symbol</span>
         <span class="v11-chip-label" id="v11ChipSymbol">Kin</span>
       </button>
-      <button type="button" class="v11-compass-chip" data-chip="body" onclick="v11OpenChipDrawer(&apos;body&apos;)">
+      <button type="button" class="v11-compass-chip v11-compass-card" data-chip="body" onclick="v11OpenChipDrawer(&apos;body&apos;)">
         <span class="v11-chip-icon">&#10022;</span>
+        <span class="v11-chip-eyebrow">Body</span>
         <span class="v11-chip-label" id="v11ChipBody">Body</span>
       </button>
     </div>
@@ -20467,6 +20620,16 @@ document.addEventListener('DOMContentLoaded', function() {
       var el = document.getElementById(ids[k]);
       if (el) el.textContent = labels[k];
     });
+    /* iter11e: also update the voice-aware question line. */
+    var questionEl = document.getElementById('v11CompassQuestion');
+    if (questionEl) {
+      var QUESTIONS = {
+        tradition: 'What is the pattern asking of you today?',
+        science: 'What does today\'s signature suggest you optimise for?',
+        everyday: 'What is worth your attention right now?'
+      };
+      questionEl.textContent = QUESTIONS[voice] || QUESTIONS.tradition;
+    }
     try { localStorage.setItem('cdp_compass_voice', voice); } catch(e) {}
     try { if (typeof window.cdpSetVoice === 'function') window.cdpSetVoice(voice); } catch(e) {}
     console.log('[iter11] Compass voice:', voice);
