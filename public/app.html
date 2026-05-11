@@ -372,6 +372,101 @@ button img[aria-hidden="true"] {
 }
 
 
+
+/* ════════════════════════════════════════════════════════════════════
+   iter12: live Oracle drawer + citation popover styles
+   ════════════════════════════════════════════════════════════════════ */
+.v12-drawer-loading {
+  font-style: italic;
+  color: rgba(245, 228, 196, 0.62);
+  text-align: center;
+  padding: 12px 0;
+}
+.v12-drawer-fallback-note {
+  font-size: 12px;
+  color: rgba(201, 160, 80, 0.55);
+  font-style: normal;
+  margin-bottom: 12px;
+  padding: 6px 10px;
+  border-left: 2px solid rgba(201, 160, 80, 0.35);
+  background: rgba(201, 160, 80, 0.04);
+}
+.v11-cite-popover {
+  background: var(--bg2, #102034);
+  border: 1px solid rgba(201, 160, 80, 0.45);
+  border-radius: 4px;
+  padding: 14px 18px 14px 14px;
+  font-family: 'EB Garamond', Georgia, serif;
+  font-size: 13px;
+  line-height: 1.55;
+  color: rgba(245, 228, 196, 0.94);
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.45);
+  animation: v11CitePopIn 0.18s ease-out;
+}
+@keyframes v11CitePopIn {
+  from { transform: translateY(6px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+.v11-cite-pop-authors {
+  font-family: 'Cinzel', Georgia, serif;
+  font-size: 10.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(201, 160, 80, 0.85);
+  margin-bottom: 6px;
+}
+.v11-cite-pop-title {
+  font-size: 14px;
+  font-style: italic;
+  color: rgba(245, 228, 196, 0.96);
+  margin-bottom: 5px;
+  line-height: 1.35;
+}
+.v11-cite-pop-journal {
+  font-size: 12px;
+  color: rgba(245, 228, 196, 0.72);
+  margin-bottom: 4px;
+}
+.v11-cite-pop-doi {
+  font-size: 11px;
+  color: rgba(245, 228, 196, 0.55);
+  font-family: 'Courier New', monospace;
+  margin-bottom: 4px;
+}
+.v11-cite-pop-link {
+  font-size: 12px;
+  margin-top: 6px;
+}
+.v11-cite-pop-link a {
+  color: rgba(129, 205, 198, 0.92);
+  text-decoration: none;
+  border-bottom: 1px dotted rgba(129, 205, 198, 0.45);
+}
+.v11-cite-pop-link a:hover {
+  color: var(--teal, #81CDC6);
+  border-bottom-color: var(--teal, #81CDC6);
+}
+.v11-cite-pop-lineage {
+  font-size: 10px;
+  color: rgba(165, 132, 89, 0.55);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-top: 8px;
+}
+.v11-cite-pop-close {
+  position: absolute;
+  top: 4px;
+  right: 6px;
+  background: none;
+  border: none;
+  color: rgba(245, 228, 196, 0.48);
+  font-size: 18px;
+  cursor: pointer;
+  line-height: 1;
+  padding: 4px 6px;
+}
+.v11-cite-pop-close:hover { color: var(--gold, #B8942A); }
+
 /* iter11g: prevent overlap of v6 compass prompt and iter11e voice-aware
    question line. The iter11e question line replaces v6CompassPrompt's role
    as the primary inviting text. Hide v6CompassPrompt entirely when the
@@ -20608,6 +20703,19 @@ document.addEventListener('DOMContentLoaded', function() {
 
   function v11GetCoords() {
     var r = (typeof currentReading !== 'undefined' && currentReading) ? currentReading : null;
+    /* iter12: pull cycle phase NAME (not the oracle context string) so it
+       flows cleanly to the coordinate-drawer endpoint. */
+    var cyclePhase = '';
+    try {
+      if (typeof isCycleEnabled === 'function' && isCycleEnabled()) {
+        var cycleStart = localStorage.getItem('cdp_cycle_start');
+        var cycleLen = (typeof profile !== 'undefined' && profile && profile.cycleLength) || 28;
+        if (cycleStart && typeof getCyclePhase === 'function') {
+          var phase = getCyclePhase(cycleStart, cycleLen);
+          if (phase && phase.name) cyclePhase = phase.name;
+        }
+      }
+    } catch(e) {}
     return {
       pd: r && r.num && r.num.pd ? r.num.pd : '7',
       ud: r && r.num && r.num.ud ? r.num.ud : '8',
@@ -20615,15 +20723,7 @@ document.addEventListener('DOMContentLoaded', function() {
       moonAge: r && r.moon && r.moon.age ? r.moon.age : 22,
       kinSeal: r && r.kin && r.kin.seal ? r.kin.seal : 'Red Skywalker',
       kinTone: r && r.kin && r.kin.tone ? r.kin.tone : 'Crystal',
-      cyclePhase: (function() {
-        try {
-          if (typeof isCycleEnabled === 'function' && isCycleEnabled()) {
-            var c = (typeof getCycleContext === 'function') ? getCycleContext() : '';
-            if (c) return String(c).split(/[.,;]/)[0].trim().slice(0, 28);
-          }
-        } catch(e) {}
-        return '';
-      })()
+      cyclePhase: cyclePhase
     };
   }
 
@@ -20764,18 +20864,188 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log('[iter11] Compass voice:', voice);
   };
 
-  window.v11OpenChipDrawer = function(chipKey) {
+  /* iter12: drawer now calls /api/compass/coordinate-drawer for live
+     Oracle-generated, citation-anchored content. Falls back to iter11d
+     static drawer content if the endpoint fails or is unreachable.
+     Also wires citation popover when user taps a v11-cite span. */
+  window.v11OpenChipDrawer = async function(chipKey) {
     var voice = document.body.getAttribute('data-compass-voice') || 'tradition';
-    var content = v11ChipDrawerContent(chipKey, voice);
     var header = document.getElementById('v11DrawerHeader');
     var title = document.getElementById('v11DrawerTitle');
     var body = document.getElementById('v11DrawerBody');
-    var headers = { time: 'Time', lunar: 'Lunar', symbol: 'Symbol', body: 'Body' };
-    if (header) header.textContent = headers[chipKey] + ' \u00b7 ' + voice.toUpperCase();
-    if (title) title.textContent = content.title;
-    if (body) body.innerHTML = content.body;  /* iter11c: HTML to render cite markers */
     var overlay = document.getElementById('v11ChipDrawerOverlay');
+    var headers = { time: 'Time', lunar: 'Lunar', symbol: 'Symbol', body: 'Body' };
+    
+    /* Show drawer immediately with loading state */
+    if (header) header.textContent = headers[chipKey] + ' \u00b7 ' + voice.toUpperCase();
+    if (title) title.textContent = 'Composing...';
+    if (body) body.innerHTML = '<p class="v12-drawer-loading">Reading the day across the four frameworks. A moment.</p>';
     if (overlay) overlay.classList.add('open');
+    
+    /* Gather coordinates from currentReading or compass-render data */
+    var c = v11GetCoords();
+    var coordinates = {
+      pd: c.pd,
+      ud: c.ud || '',
+      personalYear: (typeof currentReading !== 'undefined' && currentReading && currentReading.num && currentReading.num.py) || '',
+      moonPhase: c.moonPhase,
+      moonAge: c.moonAge,
+      kinSeal: c.kinSeal,
+      kinTone: c.kinTone,
+      kinNumber: (typeof currentReading !== 'undefined' && currentReading && currentReading.kin && currentReading.kin.number) || null,
+      isGAP: (typeof currentReading !== 'undefined' && currentReading && currentReading.kin && currentReading.kin.isGAP) || false,
+      isMasterDay: (function() {
+        var pd = parseInt(c.pd, 10);
+        return pd === 11 || pd === 22 || pd === 33 || pd === 44;
+      })(),
+      cyclePhase: c.cyclePhase || ''
+    };
+    
+    /* User profile context for personalisation */
+    var userProfile = {};
+    try {
+      if (window.currentUser) {
+        var fullName = window.currentUser.user_metadata && (window.currentUser.user_metadata.full_name || window.currentUser.user_metadata.name) || '';
+        userProfile.firstName = (fullName || window.currentUser.email || '').split(/[\s@]/)[0];
+      }
+      if (typeof currentReading !== 'undefined' && currentReading && currentReading.profile) {
+        if (currentReading.profile.lifePath) userProfile.lifePath = currentReading.profile.lifePath;
+        if (currentReading.profile.birthKin) userProfile.birthKin = currentReading.profile.birthKin;
+      }
+      /* Cycle data flag - tells the server whether user has cycle context */
+      userProfile.hasCycleData = !!coordinates.cyclePhase;
+      /* Tier */
+      try {
+        var tier = localStorage.getItem('cdp_tier') || 'free';
+        userProfile.tier = tier;
+      } catch(e) {}
+    } catch(e) {}
+    
+    /* Call the endpoint */
+    var apiBase = (typeof API_BASE !== 'undefined' ? API_BASE : '');
+    var endpoint = apiBase + '/api/compass/coordinate-drawer';
+    var didRender = false;
+    
+    try {
+      var ctrl = new AbortController();
+      var timeoutId = setTimeout(function() { ctrl.abort(); }, 12000);
+      
+      var resp = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ chip: chipKey, voice: voice, coordinates: coordinates, userProfile: userProfile }),
+        signal: ctrl.signal
+      });
+      clearTimeout(timeoutId);
+      
+      if (resp.ok) {
+        var data = await resp.json();
+        if (data && data.title && data.body_html) {
+          if (title) title.textContent = data.title;
+          if (body) {
+            body.innerHTML = data.body_html;
+            /* Store citations for popover lookup */
+            body.dataset.citations = JSON.stringify(data.citations || []);
+            /* Wire citation tap handlers */
+            v11WireCitations(body);
+          }
+          didRender = true;
+          console.log('[iter12 drawer]', chipKey, voice, 'rendered from', data.source || 'oracle', 'in', data.ms || '?', 'ms', data.cached ? '(cached)' : '');
+        }
+      } else {
+        console.warn('[iter12 drawer] endpoint returned', resp.status);
+      }
+    } catch (err) {
+      console.warn('[iter12 drawer] endpoint call failed:', err.message);
+    }
+    
+    /* Fall back to iter11d static content if endpoint failed */
+    if (!didRender) {
+      var fallback = v11ChipDrawerContent(chipKey, voice);
+      if (title) title.textContent = fallback.title;
+      if (body) {
+        body.innerHTML = '<p class="v12-drawer-fallback-note">The Oracle was not reachable; showing the cached reading.</p>' + fallback.body;
+        v11WireCitations(body);
+      }
+      console.log('[iter12 drawer]', chipKey, voice, 'fell back to static content');
+    }
+  };
+  
+  /* iter12: wire tap-popover for citation markers in the drawer */
+  window.v11WireCitations = function(container) {
+    if (!container) return;
+    var citationData = {};
+    try { citationData = JSON.parse(container.dataset.citations || '[]').reduce(function(acc, c) { acc[c.ref] = c; return acc; }, {}); } catch(e) {}
+    var spans = container.querySelectorAll('.v11-cite');
+    spans.forEach(function(span) {
+      span.style.cursor = 'pointer';
+      span.title = 'Tap for full reference';
+      span.onclick = function(e) {
+        e.stopPropagation();
+        v11ShowCitationPopover(span, citationData[span.dataset.ref] || null);
+      };
+    });
+  };
+  
+  /* iter12: render a small popover with full citation details on tap */
+  window.v11ShowCitationPopover = function(anchor, citation) {
+    var existing = document.getElementById('v11CitationPopover');
+    if (existing) existing.remove();
+    
+    var pop = document.createElement('div');
+    pop.id = 'v11CitationPopover';
+    pop.className = 'v11-cite-popover';
+    
+    var content;
+    if (citation) {
+      var lines = [];
+      lines.push('<div class="v11-cite-pop-authors">' + (citation.authors || '?') + ' (' + (citation.year || '?') + ')</div>');
+      lines.push('<div class="v11-cite-pop-title">' + (citation.title || '') + '</div>');
+      if (citation.journal) lines.push('<div class="v11-cite-pop-journal">' + citation.journal + '</div>');
+      else if (citation.publisher) lines.push('<div class="v11-cite-pop-journal">' + citation.publisher + '</div>');
+      if (citation.doi) lines.push('<div class="v11-cite-pop-doi">DOI: ' + citation.doi + '</div>');
+      if (citation.url) lines.push('<div class="v11-cite-pop-link"><a href="' + citation.url + '" target="_blank" rel="noopener">View source</a></div>');
+      if (citation.lineage) lines.push('<div class="v11-cite-pop-lineage">' + citation.lineage + '</div>');
+      content = lines.join('');
+    } else {
+      /* Fall back to data-ref attribute if no citation data was attached */
+      var ref = anchor.dataset.ref || '';
+      content = '<div class="v11-cite-pop-title">Reference: ' + ref + '</div><div class="v11-cite-pop-journal">Full details unavailable in this view. The full bibliography is at cosmicdailyplanner.com/bibliography.</div>';
+    }
+    
+    pop.innerHTML = content + '<button class="v11-cite-pop-close" onclick="v11ClosePopover()" aria-label="Close">&times;</button>';
+    document.body.appendChild(pop);
+    
+    /* Position near the anchor */
+    var rect = anchor.getBoundingClientRect();
+    var popW = 320, popH = 180;
+    var top = rect.bottom + 8;
+    var left = rect.left + (rect.width / 2) - (popW / 2);
+    if (left < 12) left = 12;
+    if (left + popW > window.innerWidth - 12) left = window.innerWidth - popW - 12;
+    if (top + popH > window.innerHeight - 12) top = rect.top - popH - 8;
+    pop.style.position = 'fixed';
+    pop.style.top = top + 'px';
+    pop.style.left = left + 'px';
+    pop.style.width = popW + 'px';
+    pop.style.zIndex = '600';
+    
+    /* Click outside to close */
+    setTimeout(function() {
+      document.addEventListener('click', v11ClosePopoverOnOutside, { once: true });
+    }, 50);
+  };
+  
+  window.v11ClosePopover = function() {
+    var p = document.getElementById('v11CitationPopover');
+    if (p) p.remove();
+  };
+  window.v11ClosePopoverOnOutside = function(e) {
+    var p = document.getElementById('v11CitationPopover');
+    if (!p) return;
+    if (!p.contains(e.target) && !e.target.classList.contains('v11-cite')) {
+      p.remove();
+    }
   };
   window.v11CloseChipDrawer = function() {
     var overlay = document.getElementById('v11ChipDrawerOverlay');
