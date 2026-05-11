@@ -1078,6 +1078,121 @@ Do NOT truncate any field. Every field in the JSON schema populated to maximum d
   // chips never appeared in quick or free readings, the very tiers where the
   // engagement loop matters most. Now generates three voices for everyone.
   const voiceInstruction = THREE_VOICE_INSTRUCTION;
+  
+  // ═══════════════════════════════════════════════════════════════════════════
+  // iter12d: bibliography integration into the Reading prompt.
+  // 
+  // Until iter12d, the Reading flow had a textual "sources" line at the end
+  // of the JSON schema but no structured reference plumbing. Citations were
+  // present in the chip-tap drawer (iter12) but missing from the main Reading,
+  // which is the substantive output users pay for.
+  // 
+  // iter12d wires bibliography.json into the Reading prompt with a tier-scaled
+  // reference catalogue. Higher tiers get more references; the Oracle tier
+  // gets the full set. The model is instructed to wrap inline citations using
+  // the same <span class="v11-cite" data-ref="..."> markers as the drawer,
+  // so the frontend renders citation popovers in the Reading the same way it
+  // does in the drawer.
+  // ═══════════════════════════════════════════════════════════════════════════
+  let cdpReferencesBlock = '';
+  let cdpCitationInstruction = '';
+  if (CDP_BIBLIOGRAPHY && CDP_BIBLIOGRAPHY.entries && tier !== 'free') {
+    const refLimit = {seeker: 12, initiate: 18, mystic: 24, oracle: 39}[tier] || 18;
+    const tracksCycle = !!(p && p.tracksCycle === true && p.cycleContext);
+    
+    // Core references always included: peer-reviewed neuroscience, scholarly
+    // astrology and Maya literature, numerology lineage, PNI synthesis, and
+    // sceptical counterweights. Order matters for tier-limited slicing.
+    const coreRefIds = [
+      // Foundation
+      'craig-2002',       // Interoception
+      'porges-2011',      // Polyvagal
+      'walker-2017',      // Sleep
+      'barrett-2017',     // Constructed emotion
+      'bremer-2022',      // DMN/salience
+      'clark-2016',       // Predictive processing
+      // Circadian
+      'cajochen-2013',
+      'cajochen-schmidt-2024',
+      // Astrology scholarship
+      'tarnas-2006',
+      'greene-1976',
+      // Maya scholarship (peer-reviewed)
+      'sprajc-2023',
+      'aldana-2022',
+      'aveni-2001',
+      // Dreamspell
+      'arguelles-1987',
+      'tedlock-1992',
+      // Numerology lineage
+      'drayer-2002',
+      'kahn-2001',
+      'riedweg-2005',
+      // PNI
+      'bower-kuhlman-2023',
+      'mengelkoch-2023',
+      // Sceptical balance, intellectual honesty
+      'carlson-1985',
+      'hartmann-2006',
+      'van-dam-2018',
+      // Authoritative data
+      'usno',
+      'law-of-time'
+    ];
+    
+    // Add cycle-specific refs when user has opted in
+    const cycleRefIds = [
+      'hill-2019',
+      'pope-wurlitzer-2017',
+      'klusmann-2023',
+      'baker-lee-2023',
+      'riley-1999',
+      'lange-2024',
+      'jang-2025'  // The bounded null - critical for honest cycle commentary
+    ];
+    
+    let candidateRefs = coreRefIds.slice();
+    if (tracksCycle) {
+      candidateRefs = candidateRefs.concat(cycleRefIds);
+    }
+    
+    // Filter to refs that actually exist in bibliography.json (defensive)
+    const validRefs = candidateRefs.filter(r => CDP_BIBLIOGRAPHY.entries[r]);
+    const finalRefs = validRefs.slice(0, refLimit);
+    
+    const entryLines = finalRefs.map(refId => {
+      const e = CDP_BIBLIOGRAPHY.entries[refId];
+      const authors = Array.isArray(e.authors)
+        ? e.authors.slice(0, 2).join(' and ') + (e.authors.length > 2 ? ' et al' : '')
+        : (e.authors || 'Unknown');
+      const where = e.journal || e.publisher || e.source || '';
+      const title = (e.title || '').slice(0, 90);
+      return '  ' + refId + ': ' + authors + ' (' + e.year + '). ' + title + (where ? '. ' + where : '');
+    });
+    
+    cdpReferencesBlock = '\n\nAVAILABLE REFERENCES for inline citation:\n' + entryLines.join('\n') + '\n';
+    
+    const minCites = {seeker: 4, initiate: 6, mystic: 8, oracle: 10}[tier] || 6;
+    const maxCites = {seeker: 8, initiate: 12, mystic: 16, oracle: 20}[tier] || 12;
+    
+    cdpCitationInstruction = '\n\n═══ INLINE CITATION REQUIREMENT (iter12d) ═══\n' +
+      'In every Science-voice or scholarly claim, wrap the source citation as ' +
+      '<span class="v11-cite" data-ref="REF_ID">Author Year</span> where REF_ID ' +
+      'is from the AVAILABLE REFERENCES list above. Use ' + minCites + ' to ' + maxCites + ' ' +
+      'inline citations across the Reading. Distribute across sections.\n\n' +
+      'DISCIPLINE:\n' +
+      '- Empirical claims about brain, body, sleep, mood: cite peer-reviewed sources (Bremer 2022, Walker 2017, Barrett 2017, Craig 2002).\n' +
+      '- Practitioner claims about cycle phases or symbolic frames: cite practitioner literature (Hill 2019, Pope and Wurlitzer 2017) authentically AS practitioner literature.\n' +
+      '- Astrology mechanism in Science voice MUST include sceptical balance: cite Carlson 1985 (Nature) for the empirical limit.\n' +
+      '- Cycle and cognition: Jang 2025 is the bounded NULL on cognitive performance tasks. Cite alongside positive findings about HPA, sleep, pain.\n' +
+      '- Maya calendrics: distinguish peer-reviewed Maya astronomy (Sprajc 2023, Aldana 2022, Aveni 2001) from Dreamspell (Arguelles 1987 modern system). Tedlock 1992 for the living K\'iche\' count.\n' +
+      '- Numerology: cite Drayer 2002, Kahn 2001, Riedweg 2005 as scholarship on the Pythagorean tradition.\n\n' +
+      'Cite naturally inline: "per Bremer 2022" or "the literature (Walker 2017) suggests" rather than "according to research."\n' +
+      'The Reading must be honest to a sceptic, a scientist, AND an academic. ' +
+      'No claim without a citation. No citation without a real source from the list.\n' +
+      '═══════════════════════════════════════════════\n';
+  }
+
   const scope = tierScope[tier] || tierScope.oracle;
 
   const sys = `You are the Oracle at Cosmic Daily Planner (cosmicdailyplanner.com), a rigorous, personalised daily cosmic planner synthesising Swiss Ephemeris astronomy, Pythagorean numerology, Western psychological astrology, and Dreamspell/Law of Time.${_langNote}
@@ -1142,7 +1257,7 @@ Bortolotti et al. (2025) Frontiers in Neuroscience, supercomplexity: aesthetics 
 Foster & Roenneberg (2008) Current Biology, human responses to geophysical daily, annual, lunar cycles
 
 WHERE RELEVANT: cite specific sources in readings to substantiate claims. Every factual claim traceable to a named authority. Symbolic claims explicitly labelled as symbolic.
-${voiceInstruction}`;
+${voiceInstruction}${cdpReferencesBlock}${cdpCitationInstruction}`;
 
   const user = `PROFILE:
 ${profileBlock}
@@ -1245,7 +1360,18 @@ Generate the FULL ORACLE READING as valid JSON (no markdown, no fences, no pream
   const maxTok = {free:800, seeker:3000, initiate:5000, mystic:8000, oracle:16000}[tier] || 8192;
   // Use Haiku for lighter tiers, much faster, still quality
   const genModel = (tier === 'seeker' || tier === 'initiate') ? 'claude-haiku-4-5-20251001' : 'claude-sonnet-4-6';
+  
+  // iter12d: structured timing logs for diagnosing slow Readings.
+  // Each line lands in Railway logs and lets us see exactly where time went.
+  const _genStart = Date.now();
+  const _sysLen = sys.length;
+  const _userLen = user.length;
+  console.log('[reading-gen] tier=' + tier + ' model=' + genModel + ' maxTok=' + maxTok + ' sysLen=' + _sysLen + ' userLen=' + _userLen + ' jobId=' + (jobId || 'sync'));
+  
   const raw = await callAPI(genModel, maxTok, sys, user);
+  
+  const _apiMs = Date.now() - _genStart;
+  console.log('[reading-gen DONE] tier=' + tier + ' apiMs=' + _apiMs + ' rawLen=' + (raw ? raw.length : 0) + ' jobId=' + (jobId || 'sync'));
 
   let reading;
   try {
