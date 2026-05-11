@@ -236,35 +236,65 @@ button img[aria-hidden="true"] {
   display: flex; flex-wrap: wrap; justify-content: center; gap: 8px;
   margin: 18px auto 14px; max-width: 560px; padding: 0 12px;
 }
-/* iter11c: at desktop widths, lift the chip cluster to the right of the
-   compass image where there is otherwise empty space. Stacked vertically. */
+/* iter11d: chord-parallel-to-compass chip layout.
+   Pills sit beside the compass image, tightly aligned with the compass's
+   vertical extent (top chip near compass top, bottom chip near compass
+   bottom). Equal width across all four. Selector specificity bumped via
+   #scompass prefix to win over any cascade conflicts in production. */
 @media (min-width: 760px) {
-  .v6-compass-frame {
+  #scompass .v6-compass-frame {
     position: relative;
   }
-  .v11-compass-chips {
-    position: absolute;
-    top: 50%;
-    right: 4%;
-    transform: translateY(-50%);
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 10px;
-    margin: 0;
-    padding: 0;
-    max-width: 220px;
-    pointer-events: auto;
-    /* Subtle entrance once the surface settles */
+  #scompass .v11-compass-chips,
+  .v6-compass-frame .v11-compass-chips {
+    position: absolute !important;
+    /* Align to compass-image-wrap vertical extent. The image is ~560px tall
+       at desktop with frame padding. top:14% and bottom:14% places the
+       outermost chips at roughly the compass body's top/bottom edges. */
+    top: 16% !important;
+    bottom: 16% !important;
+    right: 5% !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    justify-content: space-between !important;
+    gap: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 200px !important;
+    max-width: 200px !important;
+    transform: none !important;
     z-index: 4;
+    pointer-events: auto;
   }
-  .v11-compass-chip {
-    width: 100%;
-    justify-content: flex-start;
+  #scompass .v11-compass-chip,
+  .v6-compass-frame .v11-compass-chip {
+    /* Equal-width pills via fixed width + text-align left so the labels
+       line up. Padding tighter so the pills feel intentional, not floaty. */
+    width: 200px !important;
+    min-width: 200px !important;
+    max-width: 200px !important;
+    box-sizing: border-box !important;
+    justify-content: flex-start !important;
+    padding: 6px 12px !important;
+    font-size: 11.5px !important;
+    /* Slight glass effect so they recede visually behind the compass hero */
+    background: rgba(8, 26, 45, 0.62) !important;
+    backdrop-filter: blur(2px) !important;
   }
 }
-/* On very wide viewports give the chip cluster a little more room */
 @media (min-width: 1100px) {
-  .v11-compass-chips { right: 8%; max-width: 240px; }
+  #scompass .v11-compass-chips,
+  .v6-compass-frame .v11-compass-chips {
+    right: 8% !important;
+    width: 220px !important;
+    max-width: 220px !important;
+  }
+  #scompass .v11-compass-chip,
+  .v6-compass-frame .v11-compass-chip {
+    width: 220px !important;
+    min-width: 220px !important;
+    max-width: 220px !important;
+  }
 }
 .v11-compass-chip {
   /* iter11b: tighter chips that fit on one line at desktop; un-italicized
@@ -20341,29 +20371,26 @@ document.addEventListener('DOMContentLoaded', function() {
     };
   }
 
-  /* iter11c: chip drawer content now has lightweight citation markers.
-     References pulled from the CDP consolidated bibliography (217 entries,
-     36 sections, May 2026). The .v11-cite span renders as small inline
-     markers that the user can hover/tap for full citation details.
-     iter12 will replace this static map with a /api/coordinate-drawer
-     endpoint that pulls live from the bibliography JSON and composes
-     Oracle prose with active citations. */
-  function v11Cite(refKey, displayText) {
-    return '<span class="v11-cite" data-ref="' + refKey + '">' + (displayText || refKey) + '</span>';
-  }
+  /* iter11d: chip drawer content with citation markers BAKED IN as inline
+     HTML. No helper function dependency, so partial-deploy scenarios cannot
+     strip the citation wrapping. Each citation is a span with data-ref
+     pointing to the CDP consolidated bibliography (217 entries, May 2026).
+     iter12 will wire tap-to-popover with full author/year/journal/DOI. */
   function v11ChipDrawerContent(chipKey, voice) {
     var c = v11GetCoords();
-    /* All citation displayText must be plain text (no quotes / em-dashes). */
+    var CITE = function(ref, text) {
+      return '<span class="v11-cite" data-ref="' + ref + '">' + text + '</span>';
+    };
     var T = {
       time: {
         tradition: {
           title: 'Personal Day ' + c.pd + ' in the Pythagorean count',
           body: 'In Pythagorean numerology today reduces to ' + c.pd + '. Each number carries a specific quality of attention. Today the day asks for a particular kind of engagement. Read it as a quality, not a script. ' +
-                v11Cite('drayer-2002', 'Drayer 2002') + ' offers the practitioner depth on the Pythagorean tradition; ' + v11Cite('goodwin-1994', 'Goodwin 1994') + ' the full numerology guide. The lineage itself traces to the school in Croton, 6th century BCE: ' + v11Cite('kahn-2001', 'Kahn 2001') + ', ' + v11Cite('riedweg-2005', 'Riedweg 2005') + '.'
+                CITE('drayer-2002', 'Drayer 2002') + ' offers the practitioner depth on the Pythagorean tradition; ' + CITE('goodwin-1994', 'Goodwin 1994') + ' the full numerology guide. The lineage itself traces to the school in Croton, 6th century BCE: ' + CITE('kahn-2001', 'Kahn 2001') + ', ' + CITE('riedweg-2005', 'Riedweg 2005') + '.'
         },
         science: {
           title: 'Cognitive rhythm signature today',
-          body: 'Personal-day signatures correlate loosely with shifts in default-mode network activity versus salience-network engagement ' + v11Cite('bremer-2022', 'Bremer 2022') + '. Today\'s signature aligns with a reflective-versus-executive cognitive bias. Hippocampal consolidation favours reflective windows ' + v11Cite('walker-2017', 'Walker 2017') + '. One input among many; not deterministic. Treat numerology in this context as a contemplative anchor that may prime attention rather than as a causal mechanism.'
+          body: 'Personal-day signatures correlate loosely with shifts in default-mode network activity versus salience-network engagement ' + CITE('bremer-2022', 'Bremer 2022') + '. Today\'s signature aligns with a reflective-versus-executive cognitive bias. Hippocampal consolidation favours reflective windows ' + CITE('walker-2017', 'Walker 2017') + '. One input among many; not deterministic. Treat numerology in this context as a contemplative anchor that may prime attention rather than as a causal mechanism.'
         },
         everyday: {
           title: 'Today\'s quality',
@@ -20373,11 +20400,11 @@ document.addEventListener('DOMContentLoaded', function() {
       lunar: {
         tradition: {
           title: c.moonPhase + ' in the lunar count',
-          body: 'The moon is in ' + c.moonPhase + '. Lunar wisdom across traditions reads this phase as a specific turning point in the cycle of release, growth, culmination, or new intention. Honour the cycle rather than overriding it. CDP draws on astronomical foundations via ' + v11Cite('usno', 'USNO') + ' for phase timing, with the contemplative reading rooted in working with the cycle rather than predicting from it.'
+          body: 'The moon is in ' + c.moonPhase + '. Lunar wisdom across traditions reads this phase as a specific turning point in the cycle of release, growth, culmination, or new intention. Honour the cycle rather than overriding it. CDP draws on astronomical foundations via ' + CITE('usno', 'USNO') + ' for phase timing, with the contemplative reading rooted in working with the cycle rather than predicting from it.'
         },
         science: {
           title: 'Lunar position and sleep architecture',
-          body: 'Lunar phase has documented effects on melatonin secretion and sleep architecture ' + v11Cite('cajochen-2013', 'Cajochen et al 2013') + '. Effects are subtle but measurable in lab conditions; full-moon nights show reduced melatonin and lighter sleep. Use lunar timing as one input alongside circadian timing and your individual sleep history. The hippocampal consolidation literature ' + v11Cite('walker-2017', 'Walker 2017') + ' supports the broader claim that sleep quality shapes next-day cognition.'
+          body: 'Lunar phase has documented effects on melatonin secretion and sleep architecture ' + CITE('cajochen-2013', 'Cajochen et al 2013') + '. Effects are subtle but measurable in lab conditions; full-moon nights show reduced melatonin and lighter sleep. Use lunar timing as one input alongside circadian timing and your individual sleep history. The hippocampal consolidation literature ' + CITE('walker-2017', 'Walker 2017') + ' supports the broader claim that sleep quality shapes next-day cognition.'
         },
         everyday: {
           title: c.moonPhase + ' tonight',
@@ -20387,11 +20414,11 @@ document.addEventListener('DOMContentLoaded', function() {
       symbol: {
         tradition: {
           title: c.kinTone + ' ' + c.kinSeal + ' in the Dreamspell count',
-          body: 'Today\'s Kin in the Dreamspell count is ' + c.kinTone + ' ' + c.kinSeal + '. The tone names developmental position in a 13-day wavespell. The seal carries archetypal quality. Symbolic, not predictive. The Dreamspell synthesis is ' + v11Cite('arguelles-1987', 'Arguelles 1987') + ', distinct from the living K\'iche\' tzolk\'in count documented by ' + v11Cite('tedlock-1992', 'Tedlock 1992') + '. The astronomical-archaeological literature on the Maya calendar tradition is anchored in ' + v11Cite('sprajc-2023', 'Sprajc et al 2023 Science Advances') + ' and ' + v11Cite('aldana-2022', 'Aldana 2022') + '.'
+          body: 'Today\'s Kin in the Dreamspell count is ' + c.kinTone + ' ' + c.kinSeal + '. The tone names developmental position in a 13-day wavespell. The seal carries archetypal quality. Symbolic, not predictive. The Dreamspell synthesis is ' + CITE('arguelles-1987', 'Arguelles 1987') + ', distinct from the living K\'iche\' tzolk\'in count documented by ' + CITE('tedlock-1992', 'Tedlock 1992') + '. The astronomical-archaeological literature on the Maya calendar tradition is anchored in ' + CITE('sprajc-2023', 'Sprajc et al 2023 Science Advances') + ' and ' + CITE('aldana-2022', 'Aldana 2022') + '.'
         },
         science: {
           title: 'Symbolic anchor for today',
-          body: 'The Dreamspell Kin is a 260-day symbolic count used here as a contemplative anchor rather than an empirical claim. The mechanism, if any, is meaning-priming: a daily symbolic frame can shift attention and reduce decision fatigue. For the empirical layers of today, see the Time and Lunar chips. For full symbolic depth, switch to Tradition voice. CDP labels Dreamspell as ' + v11Cite('arguelles-1987', 'Arguelles 1987') + ' to distinguish it from ancient Maya doctrine ' + v11Cite('aveni-2001', 'Aveni 2001') + '.'
+          body: 'The Dreamspell Kin is a 260-day symbolic count used here as a contemplative anchor rather than an empirical claim. The mechanism, if any, is meaning-priming: a daily symbolic frame can shift attention and reduce decision fatigue. For the empirical layers of today, see the Time and Lunar chips. For full symbolic depth, switch to Tradition voice. CDP labels Dreamspell as ' + CITE('arguelles-1987', 'Arguelles 1987') + ' to distinguish it from ancient Maya doctrine ' + CITE('aveni-2001', 'Aveni 2001') + '.'
         },
         everyday: {
           title: c.kinTone + ' ' + c.kinSeal,
@@ -20403,13 +20430,13 @@ document.addEventListener('DOMContentLoaded', function() {
           title: c.cyclePhase || 'Body as compass',
           body: c.cyclePhase ?
             'Hormonal phase: ' + c.cyclePhase + '. Across contemplative traditions the menstrual cycle is read as a four-season inner calendar. Each phase carries its own quality of energy, attention, and relational sensitivity. Honour the season rather than overriding it.' :
-            'The body is the first signal. Today the rhythm of energy, breath, and posture is the first reading. Listen there before consulting the calendar. ' + v11Cite('porges-2011', 'Porges 2011') + ' on neuroception offers the contemplative bridge.'
+            'The body is the first signal. Today the rhythm of energy, breath, and posture is the first reading. Listen there before consulting the calendar. ' + CITE('porges-2011', 'Porges 2011') + ' on neuroception offers the contemplative bridge.'
         },
         science: {
           title: c.cyclePhase ? c.cyclePhase + ' phase signature' : 'Interoception today',
           body: c.cyclePhase ?
-            'Hormonal phase: ' + c.cyclePhase + '. Documented effects on executive function, mood regulation, and sleep ' + v11Cite('bower-kuhlman-2023', 'Bower and Kuhlman 2023') + '. Multi-omics PNI work ' + v11Cite('mengelkoch-2023', 'Mengelkoch et al 2023') + ' is consolidating the systems picture. Different phases shift cognitive load tolerance; plan demanding work for follicular peak, integration tasks for luteal.' :
-            'Biorhythms in their classical form are pseudoscientific. The genuine signal is interoception ' + v11Cite('craig-2002', 'Craig 2002') + ': noticing internal body state directly. Today, what is your body telling you about energy, hunger, tension, breath? That answer is more reliable than any calendar.'
+            'Hormonal phase: ' + c.cyclePhase + '. Documented effects on executive function, mood regulation, and sleep ' + CITE('bower-kuhlman-2023', 'Bower and Kuhlman 2023') + '. Multi-omics PNI work ' + CITE('mengelkoch-2023', 'Mengelkoch et al 2023') + ' is consolidating the systems picture. Different phases shift cognitive load tolerance; plan demanding work for follicular peak, integration tasks for luteal.' :
+            'Biorhythms in their classical form are pseudoscientific. The genuine signal is interoception ' + CITE('craig-2002', 'Craig 2002') + ': noticing internal body state directly. Today, what is your body telling you about energy, hunger, tension, breath? That answer is more reliable than any calendar.'
         },
         everyday: {
           title: c.cyclePhase || 'How is your body today?',
