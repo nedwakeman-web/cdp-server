@@ -374,6 +374,17 @@ button img[aria-hidden="true"] {
 
 
 /* ════════════════════════════════════════════════════════════════════
+   iter12b: remove the redundant voice-aware question line.
+   The four boxed cards now communicate voice register on their own.
+   The previous absolute-position desktop rule was causing visual
+   overlap with the intention input below the compass frame.
+   ════════════════════════════════════════════════════════════════════ */
+#scompass .v11-compass-question,
+.v6-compass-frame .v11-compass-question {
+  display: none !important;
+}
+
+/* ════════════════════════════════════════════════════════════════════
    iter12: live Oracle drawer + citation popover styles
    ════════════════════════════════════════════════════════════════════ */
 .v12-drawer-loading {
