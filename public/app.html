@@ -324,14 +324,16 @@ button img[aria-hidden="true"] {
   }
 }
 
-/* Desktop (>=760px): override iter11d positioning to use card style */
+/* Desktop (>=760px): override iter11d positioning to use card style.
+   iter11f: tightened with flex-start justify and small gap so cards group
+   compactly at compass center rather than spreading top-to-bottom. */
 @media (min-width: 760px) {
   #scompass .v11-compass-chips {
-    /* Keep absolute positioning from iter11d, but lay out as a column of cards */
     display: flex !important;
     flex-direction: column !important;
     align-items: stretch !important;
-    justify-content: space-between !important;
+    justify-content: flex-start !important;
+    gap: 8px !important;
     width: 196px !important;
     max-width: 196px !important;
   }
@@ -340,6 +342,10 @@ button img[aria-hidden="true"] {
     min-width: 196px !important;
     max-width: 196px !important;
     box-sizing: border-box !important;
+    /* iter11f: tighter cards - reduced internal padding so the four-card
+       stack stays compact against the compass center. */
+    padding: 11px 12px 10px !important;
+    min-height: 72px !important;
   }
 }
 @media (min-width: 1100px) {
@@ -351,20 +357,33 @@ button img[aria-hidden="true"] {
     width: 216px !important;
     min-width: 216px !important;
     max-width: 216px !important;
+    padding: 12px 14px 11px !important;
+    min-height: 76px !important;
   }
+}
+
+
+/* iter11f: nuke any italic on the compass surface helper text. */
+#scompass .v11-compass-question,
+#scompass .v6-compass-yesterday,
+#scompass #v19YesterdayHint,
+#scompass .v6-compass-helper {
+  font-style: normal !important;
 }
 
 /* iter11e: voice-aware question line above the cards.
    A single inviting question that changes with voice. Sits above the card
    stack (or above the horizontal grid on mobile). */
 .v11-compass-question {
+  /* iter11f: italic removed for legibility. Regular weight, slightly larger
+     font, slightly higher opacity so the line reads cleanly. */
   display: block;
   text-align: center;
   font-family: 'Cormorant Garamond', Georgia, serif;
-  font-size: 15px;
-  font-style: italic;
+  font-size: 16px;
+  font-style: normal;
   font-weight: 400;
-  color: rgba(245, 228, 196, 0.78);
+  color: rgba(245, 228, 196, 0.88);
   margin: 4px auto 0;
   max-width: 520px;
   padding: 0 18px;
@@ -393,22 +412,21 @@ button img[aria-hidden="true"] {
   }
   #scompass .v11-compass-chips,
   .v6-compass-frame .v11-compass-chips {
+    /* iter11f: tighten - center the card stack vertically with a small
+       fixed gap rather than stretching across the full compass height. */
     position: absolute !important;
-    /* Align to compass-image-wrap vertical extent. The image is ~560px tall
-       at desktop with frame padding. top:14% and bottom:14% places the
-       outermost chips at roughly the compass body's top/bottom edges. */
-    top: 16% !important;
-    bottom: 16% !important;
+    top: 50% !important;
+    bottom: auto !important;
     right: 5% !important;
     flex-direction: column !important;
     align-items: stretch !important;
-    justify-content: space-between !important;
-    gap: 0 !important;
+    justify-content: flex-start !important;
+    gap: 8px !important;
     margin: 0 !important;
     padding: 0 !important;
     width: 200px !important;
     max-width: 200px !important;
-    transform: none !important;
+    transform: translateY(-50%) !important;
     z-index: 4;
     pointer-events: auto;
   }
@@ -434,6 +452,8 @@ button img[aria-hidden="true"] {
     right: 8% !important;
     width: 220px !important;
     max-width: 220px !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
   }
   #scompass .v11-compass-chip,
   .v6-compass-frame .v11-compass-chip {
@@ -17823,7 +17843,7 @@ document.addEventListener('cdp:reading-ready', function() {
   margin-top: 8px;
   font-family: 'EB Garamond', Georgia, serif;
   font-size: 12px;
-  font-style: italic;
+  font-style: normal;
   color: rgba(201, 160, 80, 0.65);
   text-align: center;
 }
