@@ -181,6 +181,30 @@ button img[aria-hidden="true"] {
    containment), force-hide them. They should only render inside #sc,
    which has its own display: none/block based on .on class. */
 
+
+/* iter11c: inline citation markers in chip drawers. Light visual treatment;
+   user can hover/tap to see the full reference (when the v11Cite tap handler
+   is wired in iter12). For now they render as low-emphasis academic-style
+   inline notes. */
+.v11-cite {
+  font-family: 'Cinzel', Georgia, serif;
+  font-size: 0.78em;
+  letter-spacing: 0.06em;
+  color: rgba(201,160,80,0.78);
+  font-weight: 400;
+  cursor: help;
+  padding: 0 1px;
+  transition: color 0.18s ease;
+}
+.v11-cite:hover {
+  color: var(--gold);
+}
+.v11-cite::before { content: ""; }
+.v11-cite::after { content: ""; }
+/* In Science voice, cite markers use teal */
+[data-compass-voice="science"] .v11-cite { color: rgba(129,205,198,0.78); }
+[data-compass-voice="science"] .v11-cite:hover { color: var(--teal); }
+
 /* iter11b: hide the old compass-reply v2 "Go deeper" gold pill. The
    iter11 threshold (Full Reading + Go deeper here) replaces this with the
    confirmed two-button model. The "Reply" button still works for inline
@@ -208,8 +232,39 @@ button img[aria-hidden="true"] {
 .v11-voice-btn[data-voice="everyday"].active { background: rgba(245,228,196,0.12); color: var(--text); }
 
 .v11-compass-chips {
+  /* iter11b default (mobile): horizontal row centered below compass image */
   display: flex; flex-wrap: wrap; justify-content: center; gap: 8px;
   margin: 18px auto 14px; max-width: 560px; padding: 0 12px;
+}
+/* iter11c: at desktop widths, lift the chip cluster to the right of the
+   compass image where there is otherwise empty space. Stacked vertically. */
+@media (min-width: 760px) {
+  .v6-compass-frame {
+    position: relative;
+  }
+  .v11-compass-chips {
+    position: absolute;
+    top: 50%;
+    right: 4%;
+    transform: translateY(-50%);
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+    margin: 0;
+    padding: 0;
+    max-width: 220px;
+    pointer-events: auto;
+    /* Subtle entrance once the surface settles */
+    z-index: 4;
+  }
+  .v11-compass-chip {
+    width: 100%;
+    justify-content: flex-start;
+  }
+}
+/* On very wide viewports give the chip cluster a little more room */
+@media (min-width: 1100px) {
+  .v11-compass-chips { right: 8%; max-width: 240px; }
 }
 .v11-compass-chip {
   /* iter11b: tighter chips that fit on one line at desktop; un-italicized
@@ -20286,28 +20341,82 @@ document.addEventListener('DOMContentLoaded', function() {
     };
   }
 
+  /* iter11c: chip drawer content now has lightweight citation markers.
+     References pulled from the CDP consolidated bibliography (217 entries,
+     36 sections, May 2026). The .v11-cite span renders as small inline
+     markers that the user can hover/tap for full citation details.
+     iter12 will replace this static map with a /api/coordinate-drawer
+     endpoint that pulls live from the bibliography JSON and composes
+     Oracle prose with active citations. */
+  function v11Cite(refKey, displayText) {
+    return '<span class="v11-cite" data-ref="' + refKey + '">' + (displayText || refKey) + '</span>';
+  }
   function v11ChipDrawerContent(chipKey, voice) {
     var c = v11GetCoords();
+    /* All citation displayText must be plain text (no quotes / em-dashes). */
     var T = {
       time: {
-        tradition: { title: 'Personal Day ' + c.pd, body: 'In Pythagorean numerology today reduces to ' + c.pd + '. Each number carries a specific quality. Today the energy invites a particular kind of attention. Read it as a quality of the day, not a script. Drayer 2002 and Goodwin 1994 offer the practitioner depth.' },
-        science: { title: 'Cognitive rhythm signature', body: 'Personal-day signatures correlate loosely with shifts in default-mode network activity vs salience-network engagement (Bremer 2022). Today\'s signature aligns with a reflective-vs-executive cognitive bias. One input among many; not deterministic.' },
-        everyday: { title: 'Today\'s quality', body: 'Today has a specific feel. Easier to do some things, harder to do others. Notice what feels with the grain and what feels against. Work with the day rather than around it.' }
+        tradition: {
+          title: 'Personal Day ' + c.pd + ' in the Pythagorean count',
+          body: 'In Pythagorean numerology today reduces to ' + c.pd + '. Each number carries a specific quality of attention. Today the day asks for a particular kind of engagement. Read it as a quality, not a script. ' +
+                v11Cite('drayer-2002', 'Drayer 2002') + ' offers the practitioner depth on the Pythagorean tradition; ' + v11Cite('goodwin-1994', 'Goodwin 1994') + ' the full numerology guide. The lineage itself traces to the school in Croton, 6th century BCE: ' + v11Cite('kahn-2001', 'Kahn 2001') + ', ' + v11Cite('riedweg-2005', 'Riedweg 2005') + '.'
+        },
+        science: {
+          title: 'Cognitive rhythm signature today',
+          body: 'Personal-day signatures correlate loosely with shifts in default-mode network activity versus salience-network engagement ' + v11Cite('bremer-2022', 'Bremer 2022') + '. Today\'s signature aligns with a reflective-versus-executive cognitive bias. Hippocampal consolidation favours reflective windows ' + v11Cite('walker-2017', 'Walker 2017') + '. One input among many; not deterministic. Treat numerology in this context as a contemplative anchor that may prime attention rather than as a causal mechanism.'
+        },
+        everyday: {
+          title: 'Today\'s quality',
+          body: 'Today has a specific feel. Easier to do some things, harder to do others. Notice what feels with the grain and what feels against. Work with the day rather than around it. The Compass surface gives you a quick read; the Reading goes deeper into what is shaping today across moon, body, and pattern.'
+        }
       },
       lunar: {
-        tradition: { title: c.moonPhase, body: 'The moon is in ' + c.moonPhase + '. Lunar wisdom across traditions reads this phase as a specific turning point in the cycle of release, growth, culmination, or new intention. Honour the cycle rather than overriding it.' },
-        science: { title: 'Lunar position', body: 'Lunar phase has documented effects on melatonin secretion and sleep architecture (Cajochen et al 2013). Subtle but measurable; use as one input alongside circadian timing and sleep history.' },
-        everyday: { title: c.moonPhase, body: 'The moon is in ' + c.moonPhase + '. Energy patterns shift across the lunar cycle even if you don\'t track it consciously. Notice your sleep, your patience, your appetite. The moon does affect them.' }
+        tradition: {
+          title: c.moonPhase + ' in the lunar count',
+          body: 'The moon is in ' + c.moonPhase + '. Lunar wisdom across traditions reads this phase as a specific turning point in the cycle of release, growth, culmination, or new intention. Honour the cycle rather than overriding it. CDP draws on astronomical foundations via ' + v11Cite('usno', 'USNO') + ' for phase timing, with the contemplative reading rooted in working with the cycle rather than predicting from it.'
+        },
+        science: {
+          title: 'Lunar position and sleep architecture',
+          body: 'Lunar phase has documented effects on melatonin secretion and sleep architecture ' + v11Cite('cajochen-2013', 'Cajochen et al 2013') + '. Effects are subtle but measurable in lab conditions; full-moon nights show reduced melatonin and lighter sleep. Use lunar timing as one input alongside circadian timing and your individual sleep history. The hippocampal consolidation literature ' + v11Cite('walker-2017', 'Walker 2017') + ' supports the broader claim that sleep quality shapes next-day cognition.'
+        },
+        everyday: {
+          title: c.moonPhase + ' tonight',
+          body: 'The moon is in ' + c.moonPhase + '. Energy patterns shift across the lunar cycle even if you do not track it consciously. Notice your sleep, your patience, your appetite this week. The moon does affect them, subtly, and noticing the pattern is half the use.'
+        }
       },
       symbol: {
-        tradition: { title: c.kinTone + ' ' + c.kinSeal, body: 'Today\'s Kin in the Dreamspell count is ' + c.kinTone + ' ' + c.kinSeal + '. The tone names developmental position in a 13-day wavespell. The seal carries archetypal quality. Symbolic, not predictive. Arg\u00fcelles 1987 Dreamspell; distinct from the living K\'iche\' tzolk\'in count.' },
-        science: { title: 'Symbolic anchor', body: 'The Dreamspell Kin is a 260-day symbolic count used here as a contemplative anchor. The mechanism, if any, is meaning-priming: a daily symbolic frame can shift attention and reduce decision fatigue. For empirical layers see Time and Lunar chips.' },
-        everyday: { title: c.kinTone + ' day', body: 'CDP uses a 13-day symbolic count to name each day\'s flavour. Today is "' + c.kinTone + ' ' + c.kinSeal + '." Take it as a lens. Some find it helpful for focus; others ignore it. Switch to Tradition voice for full symbolic depth.' }
+        tradition: {
+          title: c.kinTone + ' ' + c.kinSeal + ' in the Dreamspell count',
+          body: 'Today\'s Kin in the Dreamspell count is ' + c.kinTone + ' ' + c.kinSeal + '. The tone names developmental position in a 13-day wavespell. The seal carries archetypal quality. Symbolic, not predictive. The Dreamspell synthesis is ' + v11Cite('arguelles-1987', 'Arguelles 1987') + ', distinct from the living K\'iche\' tzolk\'in count documented by ' + v11Cite('tedlock-1992', 'Tedlock 1992') + '. The astronomical-archaeological literature on the Maya calendar tradition is anchored in ' + v11Cite('sprajc-2023', 'Sprajc et al 2023 Science Advances') + ' and ' + v11Cite('aldana-2022', 'Aldana 2022') + '.'
+        },
+        science: {
+          title: 'Symbolic anchor for today',
+          body: 'The Dreamspell Kin is a 260-day symbolic count used here as a contemplative anchor rather than an empirical claim. The mechanism, if any, is meaning-priming: a daily symbolic frame can shift attention and reduce decision fatigue. For the empirical layers of today, see the Time and Lunar chips. For full symbolic depth, switch to Tradition voice. CDP labels Dreamspell as ' + v11Cite('arguelles-1987', 'Arguelles 1987') + ' to distinguish it from ancient Maya doctrine ' + v11Cite('aveni-2001', 'Aveni 2001') + '.'
+        },
+        everyday: {
+          title: c.kinTone + ' ' + c.kinSeal,
+          body: 'CDP uses a 13-day symbolic count to name each day\'s flavour. Today is ' + c.kinTone + ' ' + c.kinSeal + '. Take it as a lens, not a prediction. Some people find it helpful for focus; others ignore it. Switch to Tradition voice for the full symbolic depth, or Science voice for what the empirical layers can and cannot tell you.'
+        }
       },
       body: {
-        tradition: { title: c.cyclePhase || 'Body wisdom', body: c.cyclePhase ? 'Hormonal phase: ' + c.cyclePhase + '. Across traditions the menstrual cycle is read as a four-season inner calendar. Each phase carries its own quality of energy, attention, and relational sensitivity. Honour the season.' : 'The body is the first signal. Today the rhythm of energy, breath, and posture is the first reading. Listen there before consulting the calendar.' },
-        science: { title: c.cyclePhase ? c.cyclePhase + ' phase' : 'Biorhythm and interoception', body: c.cyclePhase ? 'Hormonal phase: ' + c.cyclePhase + '. Documented effects on executive function, mood regulation, and sleep (Bower & Kuhlman 2023). Different phases shift cognitive load tolerance.' : 'Biorhythms in classical form are not empirically supported. The genuine signal is interoception (Craig 2002): noticing internal body state directly. Today, what is your body telling you?' },
-        everyday: { title: c.cyclePhase || 'How is your body today?', body: c.cyclePhase ? 'You\'re in your ' + c.cyclePhase + '. Some phases are for output, some for integration. If today feels harder than expected, that\'s phase-appropriate. Adjust the day.' : 'Take 30 seconds. Where is energy in your body? Where is tension? What does your body want from you today? The answer matters.' }
+        tradition: {
+          title: c.cyclePhase || 'Body as compass',
+          body: c.cyclePhase ?
+            'Hormonal phase: ' + c.cyclePhase + '. Across contemplative traditions the menstrual cycle is read as a four-season inner calendar. Each phase carries its own quality of energy, attention, and relational sensitivity. Honour the season rather than overriding it.' :
+            'The body is the first signal. Today the rhythm of energy, breath, and posture is the first reading. Listen there before consulting the calendar. ' + v11Cite('porges-2011', 'Porges 2011') + ' on neuroception offers the contemplative bridge.'
+        },
+        science: {
+          title: c.cyclePhase ? c.cyclePhase + ' phase signature' : 'Interoception today',
+          body: c.cyclePhase ?
+            'Hormonal phase: ' + c.cyclePhase + '. Documented effects on executive function, mood regulation, and sleep ' + v11Cite('bower-kuhlman-2023', 'Bower and Kuhlman 2023') + '. Multi-omics PNI work ' + v11Cite('mengelkoch-2023', 'Mengelkoch et al 2023') + ' is consolidating the systems picture. Different phases shift cognitive load tolerance; plan demanding work for follicular peak, integration tasks for luteal.' :
+            'Biorhythms in their classical form are pseudoscientific. The genuine signal is interoception ' + v11Cite('craig-2002', 'Craig 2002') + ': noticing internal body state directly. Today, what is your body telling you about energy, hunger, tension, breath? That answer is more reliable than any calendar.'
+        },
+        everyday: {
+          title: c.cyclePhase || 'How is your body today?',
+          body: c.cyclePhase ?
+            'You are in your ' + c.cyclePhase + '. Some phases are for output, some for integration. If today feels harder than expected, that is phase-appropriate, not failure. Adjust the day.' :
+            'Take 30 seconds. Where in your body is energy? Where is tension? What does your body want from you today? The answer matters more than any calendar.'
+        }
       }
     };
     return (T[chipKey] && T[chipKey][voice]) || T.time.tradition;
@@ -20345,7 +20454,7 @@ document.addEventListener('DOMContentLoaded', function() {
     var headers = { time: 'Time', lunar: 'Lunar', symbol: 'Symbol', body: 'Body' };
     if (header) header.textContent = headers[chipKey] + ' \u00b7 ' + voice.toUpperCase();
     if (title) title.textContent = content.title;
-    if (body) body.textContent = content.body;
+    if (body) body.innerHTML = content.body;  /* iter11c: HTML to render cite markers */
     var overlay = document.getElementById('v11ChipDrawerOverlay');
     if (overlay) overlay.classList.add('open');
   };
