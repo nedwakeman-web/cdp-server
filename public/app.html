@@ -4144,6 +4144,11 @@ select.entry-input option{background:#0D1E33;color:#E8EDF4}
       <div id="cyclePhaseName" style="font-family:'Cormorant Garamond',serif;font-size:18px;color:var(--text)"></div>
       <div id="cyclePhaseDesc" style="font-size:13px;color:var(--text3);margin-top:3px;line-height:1.55"></div>
     </div>
+    <!-- iter12c: explicit clear-data link for users with stale cycle data -->
+    <div style="margin-top:14px;font-size:12px;color:var(--text3);line-height:1.55">
+      <a onclick="if(confirm('Remove the cycle date and the cycle-awareness toggle from this device. The Oracle will stop using cycle data in your Readings. You can re-enter the date at any time.')) clearCycleData();"
+         style="color:var(--gold);text-decoration:underline;cursor:pointer">Clear cycle data from this device</a>
+    </div>
   </div>
 
   <button class="save-btn" onclick="saveAndLoad()">✦ Save &amp; Calculate My Cosmic Signature</button>
@@ -6060,15 +6065,32 @@ function saveCycleEnabled(enabled) {
   try { localStorage.setItem('cdp_cycle_enabled', enabled ? '1' : '0'); } catch(e) {}
 }
 function isCycleEnabled() {
-  // Default: true if cycle data exists, false otherwise.
-  var explicit = null;
-  try { explicit = localStorage.getItem('cdp_cycle_enabled'); } catch(e) {}
-  if (explicit === '1') return true;
-  if (explicit === '0') return false;
-  // If never set, default to "on if data exists"
+  // iter12c: EXPLICIT opt-in only. Cycle awareness is sensitive data and
+  // must never default to on. A user must tick the checkbox in Profile.
+  // Without explicit '1', cycle data does not flow to the Oracle, even
+  // if cdp_cycle_start happens to be in localStorage from a stale session
+  // or a previous user on a shared device.
   try {
-    return !!localStorage.getItem('cdp_cycle_start');
+    return localStorage.getItem('cdp_cycle_enabled') === '1';
   } catch(e) { return false; }
+}
+
+// iter12c: utility for clearing stale cycle data from the device. Used
+// by the "Clear cycle data" link in Profile.
+function clearCycleData() {
+  try {
+    localStorage.removeItem('cdp_cycle_enabled');
+    localStorage.removeItem('cdp_cycle_start');
+  } catch(e) {}
+  // Also clear the visible inputs and the phase preview
+  var cb = document.getElementById('pCycleEnabled');
+  if (cb) cb.checked = false;
+  var ds = document.getElementById('pCycleStart');
+  if (ds) ds.value = '';
+  var dl = document.getElementById('pCycleLen');
+  if (dl) dl.value = '';
+  var disp = document.getElementById('cyclePhaseDisplay');
+  if (disp) disp.style.display = 'none';
 }
 
 function getCycleContext() {
@@ -20923,8 +20945,16 @@ document.addEventListener('DOMContentLoaded', function() {
         if (currentReading.profile.lifePath) userProfile.lifePath = currentReading.profile.lifePath;
         if (currentReading.profile.birthKin) userProfile.birthKin = currentReading.profile.birthKin;
       }
-      /* Cycle data flag - tells the server whether user has cycle context */
-      userProfile.hasCycleData = !!coordinates.cyclePhase;
+      /* iter12c: explicit tracksCycle gate. Only true if user has
+         explicitly opted in via the Profile checkbox. The server will
+         strip cyclePhase if tracksCycle is false, as a defence in depth. */
+      userProfile.tracksCycle = (typeof isCycleEnabled === 'function') ? isCycleEnabled() : false;
+      userProfile.hasCycleData = !!coordinates.cyclePhase && userProfile.tracksCycle;
+      /* Strip cyclePhase from coordinates if user has not opted in.
+         This is the FIRST line of defence; the server has a SECOND. */
+      if (!userProfile.tracksCycle) {
+        coordinates.cyclePhase = '';
+      }
       /* Tier */
       try {
         var tier = localStorage.getItem('cdp_tier') || 'free';
