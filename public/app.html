@@ -371,6 +371,13 @@ button img[aria-hidden="true"] {
   font-style: normal !important;
 }
 
+
+/* iter11g: prevent overlap of v6 compass prompt and iter11e voice-aware
+   question line. The iter11e question line replaces v6CompassPrompt's role
+   as the primary inviting text. Hide v6CompassPrompt entirely when the
+   iter11 voice-aware question is in the DOM (which is always now). */
+#scompass #v6CompassPrompt { display: none !important; }
+
 /* iter11e: voice-aware question line above the cards.
    A single inviting question that changes with voice. Sits above the card
    stack (or above the horizontal grid on mobile). */
@@ -3539,7 +3546,7 @@ select.entry-input option{background:#0D1E33;color:#E8EDF4}
   <button class="quiet-menu-item" onclick="closeQuietMenu();showScreen(&apos;sstreak&apos;,null)">Streak</button>
   <button class="quiet-menu-item" onclick="closeQuietMenu();if(typeof openShare===&apos;function&apos;)openShare()">Share &amp; Invite</button>
   <div style="height:1px;background:rgba(201,160,80,0.15);margin:8px 0"></div>
-  <button class="quiet-menu-item" onclick="closeQuietMenu();setTimeout(function(){if(typeof openAuth===&apos;function&apos;)openAuth();else console.warn(&apos;[iter10] openAuth not found&apos;);},40)" style="color:var(--gold)">Sign In</button>
+  <button id="cdpSignInMenuItem" class="quiet-menu-item" onclick="if(window.currentUser){if(confirm(&apos;Sign out?&apos;)){closeQuietMenu();if(typeof signOut===&apos;function&apos;)signOut();else if(typeof signOutUser===&apos;function&apos;)signOutUser();}}else{closeQuietMenu();setTimeout(function(){if(typeof openAuth===&apos;function&apos;)openAuth();else console.warn(&apos;[iter10] openAuth not found&apos;);},40);}" style="color:var(--gold)">Sign In</button>
 </aside>
 <script>
 (function(){
@@ -11667,6 +11674,96 @@ function closeModal(){document.getElementById('dayModal').classList.remove('open
 // SUPABASE  -  Auth, Profile Sync, Reading History
 // ══════════════════════════════════════════════════════════
 const SUPABASE_URL = 'https://rbezcpwevlycslhnbtry.supabase.co';
+
+/* iter11g: bulletproof OAuth callback handler.
+   Supabase SDK detectSessionInUrl is timing-dependent and was failing for Ned's
+   sessions (token sat in URL hash unprocessed). This handler runs IMMEDIATELY
+   on script parse, BEFORE Supabase init, and manually:
+   1. Detects access_token=... in URL hash
+   2. Decodes the JWT to extract user details
+   3. Stores the full session object into localStorage under cdp_auth_v1
+      (the same storageKey Supabase expects, so when SDK later calls
+      getSession() it finds the stored session)
+   4. Strips the OAuth fragment from the URL so it cannot reappear or
+      confuse the SDK on re-init
+   5. Sets currentUser global immediately so the UI knows we're signed in
+*/
+(function _iter11gOAuthCallback() {
+  try {
+    var hash = window.location.hash || '';
+    if (hash.indexOf('access_token=') === -1) return;
+    
+    var params = {};
+    hash.replace(/^#/, '').split('&').forEach(function(kv) {
+      var p = kv.split('=');
+      if (p[0]) params[p[0]] = decodeURIComponent(p[1] || '');
+    });
+    
+    var accessToken = params.access_token;
+    if (!accessToken) return;
+    
+    // Decode JWT payload (the middle section between the two dots)
+    var jwtParts = accessToken.split('.');
+    if (jwtParts.length !== 3) return;
+    var payload = JSON.parse(atob(jwtParts[1].replace(/-/g,'+').replace(/_/g,'/')));
+    
+    var now = Math.floor(Date.now() / 1000);
+    if (payload.exp && payload.exp <= now) {
+      console.warn('[iter11g OAuth] received token already expired - skipping');
+      return;
+    }
+    
+    // Build the Supabase session object shape expected in localStorage
+    var session = {
+      access_token: accessToken,
+      refresh_token: params.refresh_token || '',
+      provider_token: params.provider_token || '',
+      expires_in: parseInt(params.expires_in || '3600', 10),
+      expires_at: parseInt(params.expires_at || payload.exp || '0', 10),
+      token_type: params.token_type || 'bearer',
+      user: {
+        id: payload.sub,
+        aud: payload.aud,
+        role: payload.role,
+        email: payload.email,
+        email_confirmed_at: payload.email_confirmed_at,
+        phone: payload.phone || '',
+        user_metadata: payload.user_metadata || {},
+        app_metadata: payload.app_metadata || {},
+        is_anonymous: payload.is_anonymous || false
+      }
+    };
+    
+    // Store in the same key Supabase uses
+    try {
+      localStorage.setItem('cdp_auth_v1', JSON.stringify(session));
+      console.log('[iter11g OAuth] session stored for', session.user.email);
+    } catch(e) {
+      console.warn('[iter11g OAuth] localStorage write failed:', e.message);
+    }
+    
+    // Set the currentUser global immediately so the UI knows
+    window.currentUser = session.user;
+    
+    // Strip OAuth fragment from URL (prevent re-processing on next reload)
+    try {
+      var cleanUrl = window.location.pathname + window.location.search;
+      window.history.replaceState({}, document.title, cleanUrl);
+      console.log('[iter11g OAuth] URL fragment stripped');
+    } catch(e) {}
+    
+    // Update auth UI now if updateAuthUI is ready, else queue
+    if (typeof window.updateAuthUI === 'function') {
+      try { window.updateAuthUI(); } catch(e) {}
+    } else {
+      // Queue for when updateAuthUI becomes available (after script defines it)
+      window._iter11gPendingAuthUI = true;
+    }
+  } catch(e) {
+    console.warn('[iter11g OAuth callback handler] failed:', e.message);
+  }
+})();
+
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJiZXpjcHdldmx5Y3NsaG5idHJ5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUyMzA1OTIsImV4cCI6MjA5MDgwNjU5Mn0.1ggwJt5Mr3Bvsk9eJEQulXeT8iAQiguosLI-pdseMC0';
 let sb = null;
 let currentUser = null;
@@ -12056,6 +12153,11 @@ function initSupabase() {
 
 // ── AUTH UI ──
 function updateAuthUI() {
+  /* iter11g: flush any queued auth UI from the early OAuth callback. */
+  if (window._iter11gPendingAuthUI) {
+    window._iter11gPendingAuthUI = false;
+    /* fall through to normal logic below */
+  }
   const area = document.getElementById('authBtnArea');
   if (!area) return;
   if (currentUser) {
@@ -17840,12 +17942,19 @@ document.addEventListener('cdp:reading-ready', function() {
   font-style: italic;
 }
 .v6-compass-yesterday {
-  margin-top: 8px;
+  /* iter11g: clean block layout, full width below the prompt input,
+     no italic per Ned, single line of returning-user context. */
+  display: block;
+  position: relative;
+  margin: 14px auto 0;
+  max-width: 560px;
+  padding: 0 18px;
   font-family: 'EB Garamond', Georgia, serif;
-  font-size: 12px;
+  font-size: 13px;
   font-style: normal;
-  color: rgba(201, 160, 80, 0.65);
+  color: rgba(201, 160, 80, 0.72);
   text-align: center;
+  line-height: 1.5;
 }
 .v6-compass-cta {
   background: transparent;
@@ -20831,5 +20940,56 @@ document.addEventListener('DOMContentLoaded', function() {
 })();
 </script>
 
+
+<script id="iter11g-menu-updater">
+
+/* iter11g: dynamic Sign In menu label based on auth state. Reflects
+   "Signed in as [name]" when currentUser is present. */
+window._iter11gUpdateSignInMenu = function() {
+  var item = document.getElementById('cdpSignInMenuItem');
+  if (!item) return;
+  if (window.currentUser) {
+    var name = window.currentUser.user_metadata?.full_name ||
+               window.currentUser.user_metadata?.name ||
+               window.currentUser.email ||
+               'Signed in';
+    var firstName = String(name).split(' ')[0].split('@')[0];
+    item.textContent = 'Signed in as ' + firstName;
+  } else {
+    item.textContent = 'Sign In';
+  }
+};
+/* Wire to auth state changes - this is set up in the closure that already runs */
+(function() {
+  var origUpdate = window.updateAuthUI;
+  if (typeof origUpdate === 'function') {
+    window.updateAuthUI = function() {
+      var r = origUpdate.apply(this, arguments);
+      try { window._iter11gUpdateSignInMenu(); } catch(e) {}
+      return r;
+    };
+  } else {
+    /* updateAuthUI not defined yet at this script position - hook later */
+    document.addEventListener('DOMContentLoaded', function() {
+      if (typeof window.updateAuthUI === 'function') {
+        var origUpdate2 = window.updateAuthUI;
+        window.updateAuthUI = function() {
+          var r = origUpdate2.apply(this, arguments);
+          try { window._iter11gUpdateSignInMenu(); } catch(e) {}
+          return r;
+        };
+      }
+    });
+  }
+  /* Initial call after a short delay to catch the post-OAuth state */
+  setTimeout(function() {
+    try { window._iter11gUpdateSignInMenu(); } catch(e) {}
+  }, 500);
+  setTimeout(function() {
+    try { window._iter11gUpdateSignInMenu(); } catch(e) {}
+  }, 1800);
+})();
+
+</script>
 </body>
 </html>
