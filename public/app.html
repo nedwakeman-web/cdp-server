@@ -128,15 +128,16 @@ button img[aria-hidden="true"] {
   justify-content: center;
 }
 .topbar .nav.nav-iter10d .npill {
+  /* iter10e: smaller pills per Ned spec - tighter padding, smaller font */
   background: transparent;
-  border: 1px solid rgba(201,160,80,0.25);
-  color: rgba(245, 228, 196, 0.85);
+  border: 1px solid rgba(201,160,80,0.22);
+  color: rgba(245, 228, 196, 0.82);
   font-family: 'Cinzel', Georgia, serif;
-  font-size: 11px;
-  letter-spacing: 0.20em;
+  font-size: 9.5px;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
-  padding: 7px 18px;
-  border-radius: 3px;
+  padding: 5px 12px;
+  border-radius: 2px;
   cursor: pointer;
   transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
 }
@@ -150,6 +151,16 @@ button img[aria-hidden="true"] {
   color: var(--gold);
   border-color: var(--gold);
 }
+
+/* iter10e: voice toggle removed from topbar-right (was crowding the row).
+   Voice continues to be reachable via "Pin Current Voice as Default" in the
+   quiet menu. A future iteration will provide a per-surface voice chip
+   under the reading date header. */
+.topbar-right #langToggleBar,
+.topbar-right .cdp-voice-bar {
+  display: none !important;
+}
+
 /* On narrow viewports, hide Home to keep Compass + Reading visible */
 @media (max-width: 580px) {
   .topbar .nav.nav-iter10d .npill[onclick*="location.href"] { display: none; }
@@ -3056,15 +3067,16 @@ select.entry-input option{background:#0D1E33;color:#E8EDF4}
   <button class="quiet-menu-close" onclick="closeQuietMenu()" aria-label="Close menu">&times;</button>
   <div class="quiet-menu-header">Menu</div>
 
-  <!-- iter10d: Daily Card + Calendar at top (per Ned). Compass + Reading
-       are now in the top-bar pills so they don't need to repeat here, but
-       we keep them as fallback items lower down. -->
+  <!-- iter10e: Tiers at top (always-visible upgrade reminder), then Daily Card,
+       Calendar per Ned spec. Compass + Reading are now in the top-bar pills so
+       they don't need to repeat here, but we keep them as fallback items lower down. -->
+  <button class="quiet-menu-item" onclick="closeQuietMenu();showTierOverview()" style="color:var(--gold);font-weight:500">Tiers <span style="font-size:9px;letter-spacing:0.15em;color:rgba(201,160,80,0.55);text-transform:uppercase;margin-left:8px">Upgrade</span></button>
   <button class="quiet-menu-item" onclick="closeQuietMenu();showScreen(&apos;scard&apos;,null);renderCard()">Daily Card</button>
   <button class="quiet-menu-item" onclick="closeQuietMenu();showScreen(&apos;sc&apos;,null)">Calendar</button>
   <button class="quiet-menu-item" onclick="closeQuietMenu();showScreen(&apos;sp&apos;,null)">Profiles</button>
   <button class="quiet-menu-item cdp-compat-tab" onclick="closeQuietMenu();showScreen(&apos;scompat&apos;,null);initCompatScreen()">Compatibility</button>
   <button class="quiet-menu-item" onclick="closeQuietMenu();showScreen(&apos;sctx&apos;,null);renderContext()">My Year</button>
-  <button class="quiet-menu-item" onclick="closeQuietMenu();showTierOverview()" style="color:#c9a050">Tiers</button>
+  <!-- iter10e: Tiers moved to top of menu; removed from here to avoid duplication. -->
   <button class="quiet-menu-item" onclick="closeQuietMenu();showScreen(&apos;shist&apos;,null);renderHistory()">History</button>
   <button class="quiet-menu-item" onclick="closeQuietMenu();openHelp()">Guide</button>
   <button class="quiet-menu-item" onclick="closeQuietMenu();openFeedback()">Feedback</button>
@@ -12143,6 +12155,7 @@ async function saveReadingToSupabase(dateStr, tier, reading) {
     const minimalPayload = {
       user_id: currentUser.id,
       reading_date: dateStr,
+      date: dateStr,
       tier: tier,
       synthesis: reading.synthesis?.slice(0, 500) || null,
       ud: currentReading?.num?.ud || null,
@@ -17112,8 +17125,9 @@ document.addEventListener('cdp:reading-ready', function() {
    These elements stay in the DOM but are not visible. */
 #scompass .v6-compass-cta,
 #scompass #v19CompassCta,
-#scompass .v6-compass-image-caption,
-#scompass a[onclick*="openTwoTelescopesIntro"] { display: none !important; }
+#scompass .v6-compass-image-caption { display: none !important; }
+/* iter10e: "First time?" link kept visible so users have explicit entry to the Two Telescopes intro */
+
 
 
 /* iter9: BEST DAY pane styling matched to mockup_v6.
@@ -19977,7 +19991,7 @@ window.setCalView = function(view) {
 };
 // Initialise toggle state on first calendar visit
 document.addEventListener('DOMContentLoaded', function() {
-  setTimeout(function() { setCalView('month'); }, 100);
+  setTimeout(function() { setCalView('bestday'); /* iter10e: Calendar lands on Best Day For per Ned spec + mockup_v6 */ }, 100);
 });
 </script>
 </body>
