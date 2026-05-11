@@ -118,7 +118,44 @@ button img[aria-hidden="true"] {
    button are hidden at all widths. The quiet-menu icon on the right is the
    primary navigation surface, exposing all screens, settings, and Sign In.
    The voice toggle keeps a small affordance to the left of the menu icon. */
-.topbar .nav { display: none !important; }
+.topbar > .nav:not(.nav-iter10d) { display: none !important; }
+/* iter10d: legacy 6-pill nav stays hidden, new 3-pill nav (Compass/Reading/Home) shows */
+.topbar .nav.nav-iter10d {
+  display: flex !important;
+  gap: 8px;
+  align-items: center;
+  flex: 1;
+  justify-content: center;
+}
+.topbar .nav.nav-iter10d .npill {
+  background: transparent;
+  border: 1px solid rgba(201,160,80,0.25);
+  color: rgba(245, 228, 196, 0.85);
+  font-family: 'Cinzel', Georgia, serif;
+  font-size: 11px;
+  letter-spacing: 0.20em;
+  text-transform: uppercase;
+  padding: 7px 18px;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+.topbar .nav.nav-iter10d .npill:hover {
+  background: rgba(201,160,80,0.10);
+  color: var(--gold);
+  border-color: rgba(201,160,80,0.55);
+}
+.topbar .nav.nav-iter10d .npill.on {
+  background: rgba(201,160,80,0.18);
+  color: var(--gold);
+  border-color: var(--gold);
+}
+/* On narrow viewports, hide Home to keep Compass + Reading visible */
+@media (max-width: 580px) {
+  .topbar .nav.nav-iter10d .npill[onclick*="location.href"] { display: none; }
+  .topbar .nav.nav-iter10d { gap: 4px; }
+  .topbar .nav.nav-iter10d .npill { padding: 6px 10px; font-size: 10px; letter-spacing: 0.15em; }
+}
 .topbar .nav-hamburger { display: none !important; }
 #cdpReadCountBadge,
 .cdp-read-count-badge,
@@ -126,7 +163,24 @@ button img[aria-hidden="true"] {
 .topbar-right .signin-btn,
 .topbar-right #authBtnArea { display: none !important; }
 /* Brand cycling text (a swappable phrase under "Cosmic Daily Planner") - remove */
-#presenceText { display: none !important; }
+#presenceText, #presenceBar { display: none !important; }
+/* iter10c: defensive orphan-leak guard.
+   When #calMonthView or #calBestDayView are direct children of body
+   (i.e. some JS reparented them at runtime, breaking the .screen
+   containment), force-hide them. They should only render inside #sc,
+   which has its own display: none/block based on .on class. */
+body > #calMonthView,
+body > #calBestDayView,
+body > #calGrid {
+  display: none !important;
+}
+/* When #sc has .on, descendant calMonthView / calBestDayView render normally.
+   When #sc lacks .on (i.e. on Compass, Reading, etc.) the parent's
+   display: none cascades and hides them inside #sc. Orphans get caught above. */
+
+/* iter10b: hide the entire presence bar wrapper, not just the inner text.
+   The wrapper contains other children (action text, buttons) that were
+   still appearing visible on the topbar. */
 /* Quiet menu trigger must always be visible (was @media-gated before) */
 .quiet-menu-btn.quiet-menu-btn-right {
   display: inline-flex !important;
@@ -2945,6 +2999,11 @@ select.entry-input option{background:#0D1E33;color:#E8EDF4}
     <button class="npill" onclick="if(typeof openShare===&apos;function&apos;)openShare()" title="Save, copy, or share your reading">Share &amp; Invite</button>
     <button class="npill" onclick="showScreen(&apos;sstreak&apos;,this)">Streak</button>
   </div>
+  <div class="nav nav-iter10d" style="display:flex;gap:8px;align-items:center">
+    <button class="npill" data-v19-nav="static" onclick="showScreen(&apos;scompass&apos;,this)">Compass</button>
+    <button class="npill" onclick="showScreen(&apos;sr&apos;,this);if(!currentReading)showModeSelector()">Reading</button>
+    <button class="npill" onclick="window.location.href=&apos;/&apos;" title="The Two Telescopes overview">Home</button>
+  </div>
   <!-- Mobile hamburger (Sonia #50) -->
   <button class="nav-hamburger" onclick="toggleMobileNav()" id="navHamburger">
     <span id="hamburgerIcon">&#9776;</span>
@@ -2997,9 +3056,9 @@ select.entry-input option{background:#0D1E33;color:#E8EDF4}
   <button class="quiet-menu-close" onclick="closeQuietMenu()" aria-label="Close menu">&times;</button>
   <div class="quiet-menu-header">Menu</div>
 
-  <!-- iter9: primary navigation in Ned's exact order. -->
-  <button class="quiet-menu-item" onclick="closeQuietMenu();showScreen(&apos;scompass&apos;,null)">Compass</button>
-  <button class="quiet-menu-item" onclick="closeQuietMenu();showScreen(&apos;sr&apos;,null);if(typeof currentReading!==&apos;undefined&apos;&amp;&amp;!currentReading)showModeSelector()">Reading</button>
+  <!-- iter10d: Daily Card + Calendar at top (per Ned). Compass + Reading
+       are now in the top-bar pills so they don't need to repeat here, but
+       we keep them as fallback items lower down. -->
   <button class="quiet-menu-item" onclick="closeQuietMenu();showScreen(&apos;scard&apos;,null);renderCard()">Daily Card</button>
   <button class="quiet-menu-item" onclick="closeQuietMenu();showScreen(&apos;sc&apos;,null)">Calendar</button>
   <button class="quiet-menu-item" onclick="closeQuietMenu();showScreen(&apos;sp&apos;,null)">Profiles</button>
@@ -3009,6 +3068,9 @@ select.entry-input option{background:#0D1E33;color:#E8EDF4}
   <button class="quiet-menu-item" onclick="closeQuietMenu();showScreen(&apos;shist&apos;,null);renderHistory()">History</button>
   <button class="quiet-menu-item" onclick="closeQuietMenu();openHelp()">Guide</button>
   <button class="quiet-menu-item" onclick="closeQuietMenu();openFeedback()">Feedback</button>
+  <div style="height:1px;background:rgba(201,160,80,0.15);margin:6px 0"></div>
+  <button class="quiet-menu-item" onclick="closeQuietMenu();showScreen(&apos;scompass&apos;,null)" style="opacity:.7">Compass</button>
+  <button class="quiet-menu-item" onclick="closeQuietMenu();showScreen(&apos;sr&apos;,null);if(typeof currentReading!==&apos;undefined&apos;&amp;&amp;!currentReading)showModeSelector()" style="opacity:.7">Reading</button>
 
   <!-- iter9: "Open the app on..." control moved from Profile. The
        select element with id v65OpenScreenSelect is preserved (required ID). -->
