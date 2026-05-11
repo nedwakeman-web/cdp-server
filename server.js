@@ -8,6 +8,24 @@ const bestDay = require('./best-day');
 const threeVoice = require('./oracle-three-voice-prompt');
 const { THREE_VOICE_INSTRUCTION, THREE_VOICE_SCHEMA, validateThreeVoiceReading, renderSectionThreeVoice, scrubHouseStyle } = threeVoice;
 
+// ══════════════════════════════════════════════════════════════════
+// iter12: Compass Coordinate Drawer
+// Loads structured bibliography for chip-tap Oracle drawers and
+// exposes POST /api/compass/coordinate-drawer further down.
+// ══════════════════════════════════════════════════════════════════
+const fs = require('fs');
+let CDP_BIBLIOGRAPHY = null;
+try {
+  const bibPath = path.join(__dirname, 'bibliography.json');
+  const raw = fs.readFileSync(bibPath, 'utf8');
+  CDP_BIBLIOGRAPHY = JSON.parse(raw);
+  console.log('[coordinate-drawer] bibliography loaded:',
+    Object.keys(CDP_BIBLIOGRAPHY.entries || {}).length, 'entries');
+} catch (e) {
+  console.warn('[coordinate-drawer] bibliography NOT loaded:', e.message);
+  console.warn('[coordinate-drawer] expected at', path.join(__dirname, 'bibliography.json'));
+}
+
 // ── CORS, accept all origins (frontend is public; auth handled by tier logic) ──
 app.use((req, res, next) => {
   const origin = req.headers.origin || '*';
@@ -3337,6 +3355,390 @@ Plain language, real wisdom, no decoration.`;
   } catch (e) {
     console.error('[POST /api/compass/reply exception]', e);
     res.status(500).json({ ok: false, error: 'reply_failed' });
+  }
+});
+
+
+// ── /api/compass/coordinate-drawer ─────────────────────────────────
+// iter12: when a user taps a chip on the Compass surface, return
+// Oracle-generated, bibliography-anchored prose for that chip in their
+// current voice. Falls back to graceful static content if the
+// Anthropic call fails or the bibliography is unavailable.
+//
+// Request body:
+//   {
+//     chip: "time" | "lunar" | "symbol" | "body",
+//     voice: "tradition" | "science" | "everyday",
+//     coordinates: { pd, ud, personalYear, moonPhase, moonAge,
+//                    kinSeal, kinTone, kinNumber, isGAP, isMasterDay,
+//                    cyclePhase },
+//     userProfile: { firstName, lifePath, birthKin, hasCycleData, tier }
+//   }
+//
+// Response:
+//   { title, body_html, citations[], voice, chip, source, ms }
+// ─────────────────────────────────────────────────────────────────────
+
+// Voice register instructions (Two Telescopes architecture).
+const CDP_DRAWER_VOICES = {
+  tradition: "Speak in the TRADITION voice. This is the symbolic-archetypal register.\n" +
+    "You draw on Pythagorean numerology, Mayan/Dreamspell calendrics, lunar wisdom across\n" +
+    "contemplative traditions, psychological astrology, and contemporary women's-health\n" +
+    "practitioner literature. The day is read symbolically as a quality, an invitation, a\n" +
+    "season. Practitioner literature (Hill 2019, Pope & Wurlitzer 2017, Greene 1976, Tarnas\n" +
+    "2006) is cited authentically when symbolic claims are made. Maya/Dreamspell references\n" +
+    "ALWAYS clearly distinguish Argüelles 1987 Dreamspell from the living K'iche' tzolk'in\n" +
+    "(Tedlock 1992). Tone: reflective, layered, evocative without being mystical-hype. Never\n" +
+    "overclaim. Never use phrases like 'the universe wants', 'manifest', 'vibration', or\n" +
+    "'energy' as physical claims.",
+  science: "Speak in the SCIENCE voice. This is the empirically-grounded register.\n" +
+    "You draw on peer-reviewed cognitive neuroscience (Bremer 2022, Walker 2017, Barrett\n" +
+    "2017, Clark 2016), affective neuroscience (Craig 2002, Porges 2011), circadian biology\n" +
+    "(Cajochen 2013, Cajochen & Schmidt 2024), psychoneuroimmunology (Bower & Kuhlman 2023,\n" +
+    "Mengelkoch 2023), psychoneuroendocrinology (Klusmann 2022, 2023), pain neuroscience\n" +
+    "(Riley 1999, Morales-Lalaguna 2025), sleep medicine (Baker & Lee 2023), and clinical\n" +
+    "psychology (Lange 2024 on PMDD/PMS). You are HONEST about what is established, what is\n" +
+    "suggestive, what is null. When a high-quality null exists you CITE IT (Jang 2025 on\n" +
+    "cycle/cognition is the model case: the cycle does not measurably alter cognitive\n" +
+    "performance on standardised tasks, BUT it modulates the systems within which cognition\n" +
+    "operates, HPA reactivity, sleep architecture, pain perception, mood, inflammation,\n" +
+    "all of which are documented). For astrology and symbolic frames you cite Carlson 1985\n" +
+    "Nature and Hartmann 2006 as honest counterweights. Tone: precise, calibrated, with\n" +
+    "effect-size language where available, never wellness-overclaim. Symbolic frameworks are\n" +
+    "clearly labelled as contemplative-anchor rather than predictive mechanism.",
+  everyday: "Speak in the EVERYDAY voice. This is the plain-speech register. No jargon\n" +
+    "from either side. Same content as the other voices, named in language a smart friend\n" +
+    "would use over coffee. Cite occasionally and only where it adds weight; you can also\n" +
+    "simply say 'the research suggests' or 'the practitioner tradition holds' without a full\n" +
+    "citation. Tone: warm, direct, practical. Never patronising. Never hedging or wishy-washy.\n" +
+    "The reader is a sophisticated adult who wants to know what today is for and what to\n" +
+    "notice."
+};
+
+const CDP_DRAWER_CHIPS = {
+  time: "The TIME chip is about TODAY'S NUMEROLOGICAL/CYCLICAL SIGNATURE, the quality\n" +
+    "of attention this specific day asks for. Personal Day numerology is the primary input.\n" +
+    "If today is a master number day (11, 22, 33, 44) flag that with its specific quality.",
+  lunar: "The LUNAR chip is about WHERE WE ARE IN THE LUNAR CYCLE. Moon phase, days\n" +
+    "since new moon, proximity to full or new moon. CDP-specific concepts: Black Moon (2\n" +
+    "days before new moon, a tricky preparatory window) and Shiva Moon (2 days after new\n" +
+    "moon, a blissful settling window) are part of the lunar lexicon when relevant.",
+  symbol: "The SYMBOL chip is about TODAY'S DREAMSPELL KIN, the symbolic-archetypal\n" +
+    "day-quality from Argüelles 1987. Tone (1-13) names the developmental position in a\n" +
+    "13-day wavespell. Seal (the named archetype like Red Skywalker, White Wind, Blue Hand)\n" +
+    "carries the archetypal quality. Galactic Activation Portals (GAP days, 52 canonical\n" +
+    "entries) deserve specific note when present.",
+  body: "The BODY chip is about WHAT THE BODY IS DOING TODAY and how to read it as a\n" +
+    "compass. Interoception is the empirical backbone. If cycle data is available, hormonal\n" +
+    "phase is the primary input AND is treated honestly: the cycle modulates the systems\n" +
+    "within which cognition operates (HPA, sleep, pain, mood, inflammation) even when\n" +
+    "cognitive performance on objective tasks does not measurably shift (Jang 2025). The\n" +
+    "four-seasons framing (inner winter/spring/summer/autumn) is practitioner literature\n" +
+    "(Hill 2019, Pope & Wurlitzer 2017) and labelled as such."
+};
+
+// In-memory response cache, TTL 1 hour, soft cap 500 entries.
+const CDP_DRAWER_CACHE = new Map();
+const CDP_DRAWER_CACHE_TTL_MS = 60 * 60 * 1000;
+
+function cdpDrawerCacheKey(chip, voice, coords, profile) {
+  const c = coords || {};
+  const p = profile || {};
+  return [
+    chip, voice,
+    c.pd || '', c.moonPhase || '', c.kinTone || '', c.kinSeal || '',
+    c.cyclePhase || '', c.isGAP ? '1' : '0', c.isMasterDay ? '1' : '0',
+    (p.firstName || '').slice(0, 16)
+  ].join('|');
+}
+
+function cdpResolveReferences(chip, voice, coords) {
+  if (!CDP_BIBLIOGRAPHY || !CDP_BIBLIOGRAPHY.entries) return [];
+  const key = chip + '_' + voice;
+  const defaults = (CDP_BIBLIOGRAPHY.voice_chip_default_refs || {})[key] || [];
+  const refs = [...defaults];
+  const claimToEntries = CDP_BIBLIOGRAPHY.claim_to_entries || {};
+  if (chip === 'body' && coords && coords.cyclePhase) {
+    (claimToEntries['systems_cycle_affects'] || []).forEach(r => {
+      if (!refs.includes(r)) refs.push(r);
+    });
+  }
+  if (chip === 'time' && coords && coords.isMasterDay) {
+    (claimToEntries['pythagorean_lineage'] || []).forEach(r => {
+      if (!refs.includes(r)) refs.push(r);
+    });
+  }
+  if (chip === 'symbol' && coords && coords.isGAP) {
+    (claimToEntries['maya_astronomy'] || []).forEach(r => {
+      if (!refs.includes(r)) refs.push(r);
+    });
+  }
+  return refs.filter(r => CDP_BIBLIOGRAPHY.entries[r]);
+}
+
+function cdpBuildDrawerPrompt(chip, voice, coords, profile, refIds) {
+  const voiceInstr = CDP_DRAWER_VOICES[voice] || CDP_DRAWER_VOICES.tradition;
+  const chipRole = CDP_DRAWER_CHIPS[chip] || CDP_DRAWER_CHIPS.time;
+  const refsBlock = refIds.map(refId => {
+    const e = CDP_BIBLIOGRAPHY.entries[refId];
+    if (!e) return '';
+    const authors = Array.isArray(e.authors) ? e.authors.join('; ') : (e.authors || '');
+    const where = e.journal || e.publisher || '';
+    return '  ' + refId + ': ' + authors + ' (' + e.year + '). ' + e.title + '. ' + where + '. ' + (e.note || '');
+  }).filter(Boolean).join('\n');
+  
+  const c = coords || {};
+  const coordsLines = [];
+  if (c.pd) coordsLines.push('Personal Day: ' + c.pd);
+  if (c.ud) coordsLines.push('Universal Day: ' + c.ud);
+  if (c.personalYear) coordsLines.push('Personal Year: ' + c.personalYear);
+  if (c.moonPhase) coordsLines.push('Moon phase: ' + c.moonPhase + (c.moonAge ? ' (day ' + c.moonAge + ' of cycle)' : ''));
+  if (c.kinTone && c.kinSeal) coordsLines.push('Dreamspell Kin: ' + c.kinTone + ' ' + c.kinSeal + (c.kinNumber ? ' (Kin ' + c.kinNumber + ')' : ''));
+  if (c.isGAP) coordsLines.push('Galactic Activation Portal day');
+  if (c.isMasterDay) coordsLines.push('Master number day (carries amplified quality)');
+  if (c.cyclePhase) coordsLines.push('Hormonal phase: ' + c.cyclePhase);
+  
+  const p = profile || {};
+  const profileLines = [];
+  if (p.firstName) profileLines.push("Reader's name: " + p.firstName);
+  if (p.lifePath) profileLines.push("Reader's Life Path: " + p.lifePath);
+  
+  return 'You are composing the ' + chip.toUpperCase() + ' drawer for the Cosmic Daily Planner\n' +
+    'Compass surface. CDP synthesises Pythagorean numerology, Western psychological astrology,\n' +
+    'Mayan/Dreamspell calendrics, and lunar cycles into a daily personalised reading. The\n' +
+    "central premise is Two Telescopes: ancient contemplative traditions and modern\n" +
+    'neuroscience are not competing explanations, they point at the same coordinates from\n' +
+    'different epistemic positions.\n\n' +
+    voiceInstr + '\n\n' +
+    chipRole + '\n\n' +
+    "TODAY'S COORDINATES:\n" + coordsLines.join('\n') + '\n\n' +
+    'READER CONTEXT:\n' + (profileLines.join('\n') || '(no profile-specific data provided)') + '\n\n' +
+    'AVAILABLE REFERENCES (cite by id using <span class="v11-cite" data-ref="REF_ID">Display Text</span>):\n' +
+    refsBlock + '\n\n' +
+    'OUTPUT RULES:\n' +
+    '- Output STRICTLY a single JSON object with exactly these keys: title, body_html.\n' +
+    '- title: 4-9 words. Names the coordinate concretely. No quotes inside the title.\n' +
+    '- body_html: 100-160 words of prose in valid HTML. Use <p> tags for paragraphs. Wrap\n' +
+    '  citation markers as <span class="v11-cite" data-ref="ref-id">Author Year</span>.\n' +
+    '  Use 2-4 distinct citations. Cite only refs from the AVAILABLE REFERENCES list above.\n' +
+    '- Voice register MUST match the voice instruction above.\n' +
+    '- No em-dashes (U+2014) or en-dashes (U+2013) anywhere, use commas, colons, or\n' +
+    '  restructure the sentence.\n' +
+    '- No exclamation marks anywhere.\n' +
+    '- No \'manifest\', \'vibration\', \'energy field\', \'the universe wants you\', \'evidence-based\'\n' +
+    '  as a marketing word.\n' +
+    '- If the topic is the menstrual cycle in the Science voice, you MUST be honest about\n' +
+    '  what the empirical literature does and does not show. The cycle modulates many\n' +
+    '  systems (HPA, sleep, pain, mood, inflammation) but Jang 2025 found no robust effect\n' +
+    '  on cognitive performance tasks specifically, that nuance is required.\n' +
+    '- If the topic involves astrology in the Science voice, you MUST acknowledge the\n' +
+    '  sceptical literature (Carlson 1985 Nature, Hartmann 2006) appropriately.\n\n' +
+    'OUTPUT FORMAT (JSON only, no preamble, no markdown fences):\n' +
+    '{"title":"...","body_html":"<p>...</p>"}';
+}
+
+function cdpExtractCitations(bodyHtml) {
+  const cites = [];
+  if (!bodyHtml || !CDP_BIBLIOGRAPHY) return cites;
+  const re = /<span\s+class="v11-cite"\s+data-ref="([^"]+)"[^>]*>([^<]+)<\/span>/g;
+  const seen = new Set();
+  let m;
+  while ((m = re.exec(bodyHtml)) !== null) {
+    const refId = m[1];
+    if (seen.has(refId)) continue;
+    seen.add(refId);
+    const e = CDP_BIBLIOGRAPHY.entries[refId];
+    if (!e) continue;
+    cites.push({
+      ref: refId,
+      display: m[2],
+      authors: Array.isArray(e.authors) ? e.authors.join(', ') : (e.authors || ''),
+      year: e.year,
+      title: e.title,
+      journal: e.journal || null,
+      publisher: e.publisher || null,
+      doi: e.doi || null,
+      url: e.url || null,
+      type: e.type || null,
+      lineage: e.lineage || null
+    });
+  }
+  return cites;
+}
+
+function cdpSanitiseDrawerHtml(s) {
+  if (!s) return '';
+  let out = s.replace(/\u2014/g, ', ').replace(/\u2013/g, ', ');
+  out = out.replace(/!/g, '.');
+  out = out.replace(/,\s*,/g, ',');
+  out = out.replace(/,\s*\./g, '.');
+  return out;
+}
+
+function cdpFallbackDrawer(chip, voice, coords) {
+  const c = coords || {};
+  const cite = (refId, text) => {
+    if (!CDP_BIBLIOGRAPHY || !CDP_BIBLIOGRAPHY.entries || !CDP_BIBLIOGRAPHY.entries[refId]) return text;
+    return '<span class="v11-cite" data-ref="' + refId + '">' + text + '</span>';
+  };
+  const F = {
+    time: {
+      tradition: {
+        title: 'Personal Day ' + (c.pd || '?') + ' in the Pythagorean count',
+        body_html: '<p>In Pythagorean numerology today reduces to ' + (c.pd || '?') + '. Each number carries a specific quality of attention. ' + cite('drayer-2002', 'Drayer 2002') + ' offers the practitioner depth; ' + cite('kahn-2001', 'Kahn 2001') + ' anchors the historical lineage in the school at Croton. Read today as a quality, not a script.</p>'
+      },
+      science: {
+        title: 'Cognitive rhythm signature today',
+        body_html: '<p>Personal-day signatures correlate loosely with shifts in default-mode network activity versus salience-network engagement, per ' + cite('bremer-2022', 'Bremer 2022') + '. Hippocampal consolidation favours reflective windows, per ' + cite('walker-2017', 'Walker 2017') + '. One input among many, not a deterministic claim.</p>'
+      },
+      everyday: {
+        title: "Today's quality",
+        body_html: '<p>Today has a specific feel. Easier to do some things, harder to do others. Work with the day rather than around it.</p>'
+      }
+    },
+    lunar: {
+      tradition: {
+        title: (c.moonPhase || 'Moon') + ' tonight',
+        body_html: '<p>The moon is in ' + (c.moonPhase || 'transition') + '. Lunar wisdom across traditions reads this phase as a turning point in the cycle. CDP draws phase timing from ' + cite('usno', 'USNO') + '.</p>'
+      },
+      science: {
+        title: 'Lunar position and sleep',
+        body_html: '<p>Lunar phase has measurable effects on melatonin and sleep architecture in controlled conditions, per ' + cite('cajochen-2013', 'Cajochen et al 2013') + '. Subtle but real; one input alongside circadian timing and sleep history.</p>'
+      },
+      everyday: {
+        title: (c.moonPhase || 'Moon') + ' tonight',
+        body_html: '<p>The moon is in ' + (c.moonPhase || 'transition') + '. Notice your sleep, your patience, your appetite this week.</p>'
+      }
+    },
+    symbol: {
+      tradition: {
+        title: (c.kinTone || '') + ' ' + (c.kinSeal || 'Kin'),
+        body_html: '<p>The Dreamspell synthesis is ' + cite('arguelles-1987', 'Arguelles 1987') + ", distinct from the living K'iche' tzolk'in documented by " + cite('tedlock-1992', 'Tedlock 1992') + '. Read symbolically, not as prediction.</p>'
+      },
+      science: {
+        title: 'Symbolic anchor for today',
+        body_html: '<p>The Dreamspell Kin is a 260-day symbolic count, ' + cite('arguelles-1987', 'Arguelles 1987') + ', used here as a contemplative anchor. For empirical claims about natal astrology, the sceptical literature includes ' + cite('carlson-1985', 'Carlson 1985') + '.</p>'
+      },
+      everyday: {
+        title: (c.kinTone || '') + ' ' + (c.kinSeal || 'today'),
+        body_html: '<p>CDP uses a 13-day symbolic count. Take it as a lens, not a prediction.</p>'
+      }
+    },
+    body: {
+      tradition: {
+        title: c.cyclePhase ? (c.cyclePhase + ' phase') : 'Body as compass',
+        body_html: c.cyclePhase
+          ? "<p>Hormonal phase: " + c.cyclePhase + ". Across contemplative women's-health practitioner literature (" + cite('hill-2019', 'Hill 2019') + ', ' + cite('pope-wurlitzer-2017', 'Pope and Wurlitzer 2017') + '), each phase carries its own quality of energy, attention, and relational sensitivity.</p>'
+          : '<p>The body is the first signal. ' + cite('porges-2011', 'Porges 2011') + ' on neuroception offers the bridge between contemplative attention and physiological reading.</p>'
+      },
+      science: {
+        title: c.cyclePhase ? (c.cyclePhase + ' phase signature') : 'Interoception today',
+        body_html: c.cyclePhase
+          ? '<p>The cycle modulates the systems within which cognition operates. ' + cite('klusmann-2023', 'Klusmann 2023') + ' shows higher HPA reactivity in luteal phase. ' + cite('baker-lee-2023', 'Baker and Lee 2023') + ' documents sleep architecture changes. ' + cite('riley-1999', 'Riley 1999') + ' shows phase-dependent pain perception. ' + cite('jang-2025', 'Jang 2025') + ' finds no robust effect on cognitive performance tasks specifically, even as these underlying systems shift.</p>'
+          : '<p>The genuine body signal is interoception, ' + cite('craig-2002', 'Craig 2002') + ': noticing internal state directly.</p>'
+      },
+      everyday: {
+        title: c.cyclePhase ? (c.cyclePhase + ' phase') : 'How is your body today?',
+        body_html: c.cyclePhase
+          ? '<p>You are in ' + c.cyclePhase + '. Some phases are for output, some for integration, per ' + cite('hill-2019', 'Hill 2019') + '. Adjust the day to match.</p>'
+          : '<p>Take 30 seconds. Where is energy in your body. Where is tension. The answer matters.</p>'
+      }
+    }
+  };
+  return (F[chip] && F[chip][voice]) || F.time.tradition;
+}
+
+app.post('/api/compass/coordinate-drawer', async (req, res) => {
+  const t0 = Date.now();
+  try {
+    const body = req.body || {};
+    const chip = String(body.chip || '').toLowerCase();
+    const voice = String(body.voice || 'tradition').toLowerCase();
+    const coords = body.coordinates || {};
+    const profile = body.userProfile || {};
+    
+    const VALID_CHIPS = ['time', 'lunar', 'symbol', 'body'];
+    const VALID_VOICES = ['tradition', 'science', 'everyday'];
+    if (!VALID_CHIPS.includes(chip)) {
+      return res.status(400).json({ error: 'invalid chip', valid: VALID_CHIPS });
+    }
+    if (!VALID_VOICES.includes(voice)) {
+      return res.status(400).json({ error: 'invalid voice', valid: VALID_VOICES });
+    }
+    if (!CDP_BIBLIOGRAPHY) {
+      return res.status(500).json({ error: 'bibliography unavailable on server' });
+    }
+    
+    // Cache check
+    const cacheKey = cdpDrawerCacheKey(chip, voice, coords, profile);
+    const cachedEntry = CDP_DRAWER_CACHE.get(cacheKey);
+    if (cachedEntry && (Date.now() - cachedEntry.t) < CDP_DRAWER_CACHE_TTL_MS) {
+      return res.json(Object.assign({}, cachedEntry.payload, { cached: true, ms: Date.now() - t0 }));
+    }
+    
+    const refIds = cdpResolveReferences(chip, voice, coords);
+    let result;
+    let source = 'oracle';
+    
+    if (!process.env.ANTHROPIC_API_KEY) {
+      result = cdpFallbackDrawer(chip, voice, coords);
+      source = 'fallback_no_apikey';
+    } else {
+      try {
+        const sys = cdpBuildDrawerPrompt(chip, voice, coords, profile, refIds);
+        const userMsg = 'Compose the drawer JSON for this chip and these coordinates. Output JSON only.';
+        let raw = await callAPI('claude-sonnet-4-6', 1024, sys, userMsg);
+        raw = (raw || '').replace(/^```json\s*/i, '').replace(/^```\s*/, '').replace(/```\s*$/, '').trim();
+        
+        let parsed = null;
+        try {
+          parsed = JSON.parse(raw);
+        } catch (parseErr) {
+          const m = raw.match(/\{[\s\S]*\}/);
+          if (m) {
+            try { parsed = JSON.parse(m[0]); } catch (e2) { parsed = null; }
+          }
+        }
+        
+        if (!parsed || !parsed.title || !parsed.body_html) {
+          console.warn('[coordinate-drawer] invalid JSON shape, using fallback');
+          result = cdpFallbackDrawer(chip, voice, coords);
+          source = 'fallback_bad_json';
+        } else {
+          parsed.title = cdpSanitiseDrawerHtml(parsed.title);
+          parsed.body_html = cdpSanitiseDrawerHtml(parsed.body_html);
+          result = parsed;
+        }
+      } catch (apiErr) {
+        console.error('[coordinate-drawer] Anthropic call failed:', apiErr.message);
+        result = cdpFallbackDrawer(chip, voice, coords);
+        source = 'fallback_api_error';
+      }
+    }
+    
+    const citations = cdpExtractCitations(result.body_html);
+    const payload = {
+      title: result.title,
+      body_html: result.body_html,
+      citations: citations,
+      voice: voice,
+      chip: chip,
+      coordinates_echo: coords,
+      generated_at: new Date().toISOString(),
+      source: source
+    };
+    
+    // Cache (with soft cap)
+    CDP_DRAWER_CACHE.set(cacheKey, { t: Date.now(), payload: payload });
+    if (CDP_DRAWER_CACHE.size > 500) {
+      const oldest = [...CDP_DRAWER_CACHE.entries()].sort((a, b) => a[1].t - b[1].t)[0];
+      if (oldest) CDP_DRAWER_CACHE.delete(oldest[0]);
+    }
+    
+    return res.json(Object.assign({}, payload, { cached: false, ms: Date.now() - t0 }));
+  } catch (e) {
+    console.error('[coordinate-drawer] handler error:', e.stack || e.message);
+    return res.status(500).json({ error: 'internal error', detail: e.message });
   }
 });
 
