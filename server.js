@@ -3669,6 +3669,15 @@ app.post('/api/compass/coordinate-drawer', async (req, res) => {
       return res.status(500).json({ error: 'bibliography unavailable on server' });
     }
     
+    // iter12c PRIVACY GATE: strip cyclePhase unless the user has explicitly
+    // opted in via userProfile.tracksCycle. This is the second line of defence;
+    // the frontend strips cyclePhase too. Two defences because cycle data is
+    // sensitive and applying it to the wrong user is a serious product failure.
+    if (coords && coords.cyclePhase && profile.tracksCycle !== true) {
+      console.log('[coordinate-drawer] stripping cyclePhase, tracksCycle not set');
+      delete coords.cyclePhase;
+    }
+    
     // Cache check
     const cacheKey = cdpDrawerCacheKey(chip, voice, coords, profile);
     const cachedEntry = CDP_DRAWER_CACHE.get(cacheKey);
