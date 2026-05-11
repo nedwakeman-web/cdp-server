@@ -6703,10 +6703,24 @@ async function loadReading(dateStr, tier) {
     sessionStorage.setItem('cdp_active_job', JSON.stringify({ jobId, dateStr, tier: activeTier, startedAt: Date.now() }));
 
     const startedAt = Date.now();
-    // Kill switch  -  if no response after 5 minutes (280s buffer for 240s server deadline), show clear error
-    const maxWait = 5 * 60 * 1000;
+    // iter12d: tighter per-tier client timeout. Match server deadline plus 10s
+    // buffer for network jitter. Previous fixed 300s left a 60-120s gap where
+    // server had already errored but client kept polling. Now the client
+    // surfaces server errors promptly and only times out if the server is
+    // genuinely unreachable.
+    const _serverDeadlines = { free: 90, seeker: 90, initiate: 180, mystic: 240, oracle: 240 };
+    const _serverDeadlineSec = _serverDeadlines[activeTier] || 240;
+    const maxWait = (_serverDeadlineSec + 15) * 1000;
+    console.log('[iter12d reading] tier=' + activeTier + ' serverDeadline=' + _serverDeadlineSec + 's clientMaxWait=' + (_serverDeadlineSec + 15) + 's');
+    var _iter12dPollCount = 0;
     pollingTimer = setInterval(async () => {
       try {
+        // iter12d: per-poll diagnostic log so hangs are debuggable from console
+        _iter12dPollCount += 1;
+        var _elapsedSec = Math.round((Date.now() - startedAt) / 1000);
+        if (_iter12dPollCount === 1 || _iter12dPollCount % 5 === 0) {
+          console.log('[iter12d poll #' + _iter12dPollCount + '] elapsed=' + _elapsedSec + 's tier=' + activeTier + ' maxWait=' + (maxWait/1000) + 's');
+        }
         // Timeout check
         if (Date.now() - startedAt > maxWait) {
           clearInterval(pollingTimer); pollingTimer = null;
@@ -6778,6 +6792,11 @@ async function loadReading(dateStr, tier) {
 
         const poll = await pollRes.json();
 
+        // iter12d: log poll response status at first occurrence and on any non-pending
+        if (poll.status !== 'pending' || _iter12dPollCount === 1) {
+          console.log('[iter12d poll resp]', poll.status, poll.error ? 'err=' + poll.error : '');
+        }
+
         const elapsed = Math.round((Date.now() - startedAt) / 1000);
         const maxSec = {free:90, seeker:90, initiate:180, mystic:240, oracle:240}[activeTier] || 300;
         const pct = Math.min(96, Math.round((elapsed / maxSec) * 100));
@@ -6843,7 +6862,37 @@ async function loadReading(dateStr, tier) {
           } else {
             const errMsg = poll.error || 'Reading generation failed';
             console.error('Reading error from server:', errMsg);
-            if (sd) { sd.style.opacity='0'; setTimeout(()=>{ if(sd){ sd.innerHTML='<div style="color:var(--text2);font-size:15px;text-align:center"><div style="margin-bottom:12px;color:#ff9999">⚠ ' + errMsg.includes('overloaded') ? '⚠ Anthropic API is under load, this happens during peak times. Try Full Reading (faster) or wait 30 seconds and retry.' : errMsg.slice(0,120) + '</div><button onclick="loadReading(\''+dateStr+'\',\''+activeTier+'\')" style="background:none;border:1px solid var(--gold3);border-radius:2px;color:var(--gold);padding:6px 14px;cursor:pointer">Try again ✶</button></div>'; sd.style.opacity='1'; } },400); }
+            if (sd) {
+              // iter12d: fixed malformed error display. Build the human-readable
+              // message FIRST so the ternary cannot get tangled with string
+              // concatenation. Previous version had operator-precedence bug
+              // that produced invisible error UI for all reading failures.
+              var humanMsg;
+              if (errMsg.indexOf('job_deadline_exceeded') >= 0) {
+                humanMsg = 'The Reading exceeded the time limit. This happens when the LLM is under high load. Please try again, your reading will generate immediately.';
+              } else if (errMsg.indexOf('overloaded') >= 0) {
+                humanMsg = 'Anthropic API is under load, this happens during peak times. Try Full Reading (faster) or wait 30 seconds and retry.';
+              } else if (errMsg.indexOf('hard_timeout') >= 0) {
+                humanMsg = 'The Reading is taking longer than expected. Please retry, this normally resolves quickly.';
+              } else {
+                humanMsg = errMsg.slice(0, 160);
+              }
+              console.error('[iter12d reading error]', errMsg, 'displayed as:', humanMsg);
+              sd.style.opacity = '0';
+              setTimeout(function() {
+                if (!sd) return;
+                sd.innerHTML = '<div style="color:var(--text2);font-size:15px;text-align:center;max-width:520px;margin:0 auto;padding:32px 16px">' +
+                  '<div style="margin-bottom:16px;font-size:24px;opacity:.5">⚠</div>' +
+                  '<div style="margin-bottom:14px;color:#ff9999;font-family:\'Cormorant Garamond\',serif;font-size:18px">The Oracle could not complete the Reading</div>' +
+                  '<div style="margin-bottom:24px;color:var(--text2);font-size:14px;line-height:1.65">' + humanMsg + '</div>' +
+                  '<button onclick="loadReading(\'' + dateStr + '\',\'' + activeTier + '\')" style="background:none;border:1px solid var(--gold);border-radius:2px;color:var(--gold);padding:10px 24px;cursor:pointer;font-family:\'EB Garamond\',serif;font-size:13px;letter-spacing:.2em;text-transform:uppercase">Try Again ✶</button>' +
+                  '</div>';
+                sd.style.opacity = '1';
+                // Also remove the skeleton status bar so the user sees only the error
+                var _sb = document.getElementById('skeletonStatusBar');
+                if (_sb) { _sb.style.transition = 'opacity .4s'; _sb.style.opacity = '0'; setTimeout(function(){ _sb && _sb.remove(); }, 400); }
+              }, 400);
+            }
           }
         }
       } catch(pollErr) {
