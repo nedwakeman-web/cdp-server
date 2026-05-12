@@ -1175,21 +1175,31 @@ Do NOT truncate any field. Every field in the JSON schema populated to maximum d
     const minCites = {seeker: 4, initiate: 6, mystic: 8, oracle: 10}[tier] || 6;
     const maxCites = {seeker: 8, initiate: 12, mystic: 16, oracle: 20}[tier] || 12;
     
-    cdpCitationInstruction = '\n\n═══ INLINE CITATION REQUIREMENT (iter12d) ═══\n' +
-      'In every Science-voice or scholarly claim, wrap the source citation as ' +
-      '<span class="v11-cite" data-ref="REF_ID">Author Year</span> where REF_ID ' +
-      'is from the AVAILABLE REFERENCES list above. Use ' + minCites + ' to ' + maxCites + ' ' +
-      'inline citations across the Reading. Distribute across sections.\n\n' +
+    cdpCitationInstruction = '\n\n═══ INLINE CITATION REQUIREMENT (HARD MANDATE) ═══\n' +
+      'EVERY factual, scholarly, or empirical claim in the Reading prose MUST be ' +
+      'wrapped using this EXACT HTML pattern, with no exceptions:\n\n' +
+      '  <span class="v11-cite" data-ref="REF_ID">Author Year</span>\n\n' +
+      'where REF_ID is from the AVAILABLE REFERENCES list above. ' +
+      'You MUST produce ' + minCites + ' to ' + maxCites + ' such citation spans ' +
+      'distributed across the Reading sections.\n\n' +
+      'CORRECT (the span wrapper makes the citation a tappable popover):\n' +
+      '  "The constructed emotion framework <span class=\"v11-cite\" data-ref=\"barrett-2017\">Barrett 2017</span> suggests..."\n' +
+      '  "Saturn-Neptune transitions <span class=\"v11-cite\" data-ref=\"tarnas-2006\">Tarnas 2006</span> mark civilisational..."\n' +
+      '  "Per <span class=\"v11-cite\" data-ref=\"walker-2017\">Walker 2017</span>, sleep consolidates..."\n\n' +
+      'WRONG (plain text is invisible to the reader as a citation, this fails):\n' +
+      '  "Barrett 2017 suggests..." (NO span wrapper, FAILS)\n' +
+      '  "Tarnas argues..." (NO ref ID, FAILS)\n' +
+      '  "According to research..." (NO author, FAILS)\n\n' +
       'DISCIPLINE:\n' +
-      '- Empirical claims about brain, body, sleep, mood: cite peer-reviewed sources (Bremer 2022, Walker 2017, Barrett 2017, Craig 2002).\n' +
-      '- Practitioner claims about cycle phases or symbolic frames: cite practitioner literature (Hill 2019, Pope and Wurlitzer 2017) authentically AS practitioner literature.\n' +
-      '- Astrology mechanism in Science voice MUST include sceptical balance: cite Carlson 1985 (Nature) for the empirical limit.\n' +
-      '- Cycle and cognition: Jang 2025 is the bounded NULL on cognitive performance tasks. Cite alongside positive findings about HPA, sleep, pain.\n' +
-      '- Maya calendrics: distinguish peer-reviewed Maya astronomy (Sprajc 2023, Aldana 2022, Aveni 2001) from Dreamspell (Arguelles 1987 modern system). Tedlock 1992 for the living K\'iche\' count.\n' +
-      '- Numerology: cite Drayer 2002, Kahn 2001, Riedweg 2005 as scholarship on the Pythagorean tradition.\n\n' +
-      'Cite naturally inline: "per Bremer 2022" or "the literature (Walker 2017) suggests" rather than "according to research."\n' +
-      'The Reading must be honest to a sceptic, a scientist, AND an academic. ' +
-      'No claim without a citation. No citation without a real source from the list.\n' +
+      '- Empirical brain/body/sleep/mood claims: cite peer-reviewed sources (bremer-2022, walker-2017, barrett-2017, craig-2002, clark-2016).\n' +
+      '- Practitioner cycle/symbolic claims: cite practitioner literature (hill-2019, pope-wurlitzer-2017) AS practitioner literature.\n' +
+      '- Astrology mechanism in Science context MUST include sceptical balance: cite carlson-1985.\n' +
+      '- Cycle and cognition: jang-2025 is the bounded NULL, cite alongside positive findings.\n' +
+      '- Maya: distinguish peer-reviewed (sprajc-2023, aldana-2022, aveni-2001) from Dreamspell (arguelles-1987).\n' +
+      '- Numerology: drayer-2002, kahn-2001, riedweg-2005 as Pythagorean lineage scholarship.\n\n' +
+      'BEFORE SUBMITTING JSON: scan your prose. Every place you mention an author, ' +
+      'study, theorist, or research finding MUST have the <span class="v11-cite" ' +
+      'data-ref="..."> wrapper. If you wrote "Barrett 2017" without the span, fix it.\n' +
       '═══════════════════════════════════════════════\n';
   }
 
@@ -1256,7 +1266,15 @@ Miller & Clark (2018) Synthese, predictive processing and emotion
 Bortolotti et al. (2025) Frontiers in Neuroscience, supercomplexity: aesthetics and cognition
 Foster & Roenneberg (2008) Current Biology, human responses to geophysical daily, annual, lunar cycles
 
-WHERE RELEVANT: cite specific sources in readings to substantiate claims. Every factual claim traceable to a named authority. Symbolic claims explicitly labelled as symbolic.
+CITATION FORMAT IS MANDATORY:
+Every factual or scholarly claim must be wrapped as <span class="v11-cite" data-ref="REF_ID">Author Year</span> using ONLY ref IDs from the AVAILABLE REFERENCES block below. This is a HARD REQUIREMENT, not a guideline. The frontend renders these markers as tappable citation popovers. Without the span wrapper the citation is invisible to the reader and the Reading fails its scholarly purpose.
+
+EXAMPLE (this is what every cited claim must look like):
+"The default mode network, <span class=\"v11-cite\" data-ref=\"bremer-2022\">Bremer 2022</span>, is most active in reflective states like a Personal Day 7."
+"Saturn-Neptune transitions historically reshape civilisational structures, <span class=\"v11-cite\" data-ref=\"tarnas-2006\">Tarnas 2006</span>."
+
+NEVER cite as plain inline text. NEVER write "Tarnas 2006 argues..." without the span wrapper. Symbolic claims explicitly labelled as symbolic.
+
 ${voiceInstruction}${cdpReferencesBlock}${cdpCitationInstruction}`;
 
   const user = `PROFILE:
