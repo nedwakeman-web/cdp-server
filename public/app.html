@@ -6712,8 +6712,27 @@ async function loadReading(dateStr, tier) {
     const _serverDeadlineSec = _serverDeadlines[activeTier] || 240;
     const maxWait = (_serverDeadlineSec + 15) * 1000;
     console.log('[iter12d reading] tier=' + activeTier + ' serverDeadline=' + _serverDeadlineSec + 's clientMaxWait=' + (_serverDeadlineSec + 15) + 's');
+    // iter12f: assign each polling loop a unique session ID. The top of 
+    // each iteration checks this against the current window._pollingSessionId. 
+    // If they differ, this loop has been superseded and exits cleanly.
+    if (window._pollingSessionId) { 
+      // Kill any prior session
+      window._pollingSessionId = null;
+    }
+    if (pollingTimer) { 
+      try { clearInterval(pollingTimer); } catch(e) {} 
+      pollingTimer = null; 
+    }
+    var _thisSessionId = Date.now() + '_' + Math.random().toString(36).slice(2, 8);
+    window._pollingSessionId = _thisSessionId;
     var _iter12dPollCount = 0;
     pollingTimer = setInterval(async () => {
+      // iter12f: if a newer polling loop has started, this orphaned loop exits.
+      if (window._pollingSessionId !== _thisSessionId) {
+        console.log('[iter12f poll] orphaned loop exiting, session changed');
+        try { clearInterval(pollingTimer); } catch(e) {}
+        return;
+      }
       try {
         // iter12d: per-poll diagnostic log so hangs are debuggable from console
         _iter12dPollCount += 1;
@@ -6957,7 +6976,17 @@ function checkResumeJob() {
     </div>`;
     activeJobId = jobId;
     const resumeStart = Date.now();
+    // iter12f: session ID for orphan-loop protection
+    if (window._pollingSessionId) { window._pollingSessionId = null; }
+    var _resumeSessionId = Date.now() + '_' + Math.random().toString(36).slice(2, 8);
+    window._pollingSessionId = _resumeSessionId;
     pollingTimer = setInterval(async () => {
+      // iter12f: exit if superseded
+      if (window._pollingSessionId !== _resumeSessionId) {
+        console.log('[iter12f resume poll] orphaned loop exiting');
+        try { clearInterval(pollingTimer); } catch(e) {}
+        return;
+      }
       try {
         const pollRes = await fetch(API_BASE + `/api/reading/status/${jobId}`);
         const poll = await pollRes.json();
@@ -8228,6 +8257,10 @@ function renderSkeletonReading(dateStr, tier) {
 
 function startPolling(jobId, dateStr, tier, startedAt) {
   if (pollingTimer) return;
+  // iter12f: assign session ID for this polling loop
+  if (window._pollingSessionId) { window._pollingSessionId = null; }
+  var _thisSessionId = Date.now() + '_' + Math.random().toString(36).slice(2, 8);
+  window._pollingSessionId = _thisSessionId;
   // Show progress dot in topbar so user knows reading is loading while on other tabs
   const _dot = document.getElementById('readingProgressDot');
   if (_dot) _dot.style.display = 'block';
@@ -8235,6 +8268,12 @@ function startPolling(jobId, dateStr, tier, startedAt) {
   const tierLabels = {free:'Daily Snapshot',seeker:'Full Reading',initiate:'Monthly Arc',mystic:'Yearly Reading',oracle:'Oracle'};
   showLoadPill(tierLabels[tier]||'Reading');
   pollingTimer = setInterval(async () => {
+    // iter12f: exit orphaned loops
+    if (window._pollingSessionId !== _thisSessionId) {
+      console.log('[iter12f startPolling] orphaned loop exiting');
+      try { clearInterval(pollingTimer); } catch(e) {}
+      return;
+    }
     try {
       const elapsed = Math.round((Date.now() - startedAt) / 1000);
       const pollRes = await fetch(API_BASE + '/api/reading/status/' + jobId);
