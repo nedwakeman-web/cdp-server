@@ -1367,31 +1367,40 @@ Do NOT truncate any field. Every field in the JSON schema populated to maximum d
     const minCites = {seeker: 4, initiate: 6, mystic: 8, oracle: 10}[tier] || 6;
     const maxCites = {seeker: 8, initiate: 12, mystic: 16, oracle: 20}[tier] || 12;
     
-    cdpCitationInstruction = '\n\n═══ INLINE CITATION REQUIREMENT (HARD MANDATE) ═══\n' +
-      'EVERY factual, scholarly, or empirical claim in the Reading prose MUST be ' +
-      'wrapped using this EXACT HTML pattern, with no exceptions:\n\n' +
-      '  <span class="v11-cite" data-ref="REF_ID">Author Year</span>\n\n' +
-      'where REF_ID is from the AVAILABLE REFERENCES list above. ' +
-      'You MUST produce ' + minCites + ' to ' + maxCites + ' such citation spans ' +
-      'distributed across the Reading sections.\n\n' +
-      'CORRECT (the span wrapper makes the citation a tappable popover):\n' +
-      '  "The constructed emotion framework <span class=\"v11-cite\" data-ref=\"barrett-2017\">Barrett 2017</span> suggests..."\n' +
-      '  "Saturn-Neptune transitions <span class=\"v11-cite\" data-ref=\"tarnas-2006\">Tarnas 2006</span> mark civilisational..."\n' +
-      '  "Per <span class=\"v11-cite\" data-ref=\"walker-2017\">Walker 2017</span>, sleep consolidates..."\n\n' +
-      'WRONG (plain text is invisible to the reader as a citation, this fails):\n' +
-      '  "Barrett 2017 suggests..." (NO span wrapper, FAILS)\n' +
-      '  "Tarnas argues..." (NO ref ID, FAILS)\n' +
-      '  "According to research..." (NO author, FAILS)\n\n' +
-      'DISCIPLINE:\n' +
-      '- Empirical brain/body/sleep/mood claims: cite peer-reviewed sources (bremer-2022, walker-2017, barrett-2017, craig-2002, clark-2016).\n' +
-      '- Practitioner cycle/symbolic claims: cite practitioner literature (hill-2019, pope-wurlitzer-2017) AS practitioner literature.\n' +
-      '- Astrology mechanism in Science context MUST include sceptical balance: cite carlson-1985.\n' +
-      '- Cycle and cognition: jang-2025 is the bounded NULL, cite alongside positive findings.\n' +
-      '- Maya: distinguish peer-reviewed (sprajc-2023, aldana-2022, aveni-2001) from Dreamspell (arguelles-1987).\n' +
-      '- Numerology: drayer-2002, kahn-2001, riedweg-2005 as Pythagorean lineage scholarship.\n\n' +
-      'BEFORE SUBMITTING JSON: scan your prose. Every place you mention an author, ' +
-      'study, theorist, or research finding MUST have the <span class="v11-cite" ' +
-      'data-ref="..."> wrapper. If you wrote "Barrett 2017" without the span, fix it.\n' +
+    cdpCitationInstruction = '\n\n═══ AUTHOR ATTRIBUTION REQUIREMENT ═══\n' +
+      'Your prose MUST explicitly mention the following authors and years inline, by name, ' +
+      'where their work supports a claim you make. This is required for scholarly integrity ' +
+      'and is a HARD requirement, not a guideline.\n\n' +
+      'You must include between ' + minCites + ' and ' + maxCites + ' inline author-year mentions ' +
+      'distributed across the Reading sections, drawn from the AVAILABLE REFERENCES list above.\n\n' +
+      'EXAMPLES of correct inline format (any of these patterns work):\n' +
+      '  - "as Bremer 2022 describes, the default mode network..."\n' +
+      '  - "the practitioner framework (Hill 2019) calls this inner winter"\n' +
+      '  - "per Walker 2017, sleep consolidates..."\n' +
+      '  - "Tarnas 2006 explored Saturn-Neptune cycles"\n' +
+      '  - "Klusmann et al 2023 documented HPA reactivity"\n' +
+      '  - "Pope and Wurlitzer 2017 frame this as..."\n\n' +
+      'WRITE THE AUTHORS DIRECTLY INTO YOUR PROSE. The server-side post-processor will ' +
+      'wrap each author-year mention as a tappable citation marker automatically. ' +
+      'You do not need to add HTML span tags yourself, just write the author and year as ' +
+      'natural inline text.\n\n' +
+      'WHICH AUTHORS TO CITE:\n' +
+      '- Neuroscience claims (DMN, sleep, emotion, predictive processing): Bremer 2022, Walker 2017, Barrett 2017, Craig 2002, Clark 2016\n' +
+      '- Circadian or lunar physiology: Cajochen 2013, Cajochen and Schmidt 2024\n' +
+      '- Astrology (symbolic): Tarnas 2006, Greene 1976\n' +
+      '- Astrology empirical limits (when Science voice or sceptic context): Carlson 1985, Hartmann 2006\n' +
+      '- Maya astronomy (peer-reviewed): Sprajc 2023, Aldana 2022, Aveni 2001\n' +
+      '- Dreamspell (modern symbolic system): Arguelles 1987\n' +
+      '- Living Maya tradition: Tedlock 1992\n' +
+      '- Numerology lineage: Drayer 2002, Kahn 2001, Riedweg 2005\n' +
+      '- Psychoneuroimmunology: Bower and Kuhlman 2023, Mengelkoch 2023\n' +
+      '- Polyvagal/autonomic: Porges 2011\n';
+    if (tracksCycle) {
+      cdpCitationInstruction += '- Menstrual cycle (with explicit user opt-in): Hill 2019, Pope and Wurlitzer 2017 (practitioner literature), Klusmann 2023 (HPA reactivity), Baker and Lee 2023 (sleep architecture), Riley 1999 (pain), Lange 2024 (PMDD), Jang 2025 (BOUNDED NULL on cognitive performance, always cite alongside positive findings for intellectual honesty)\n';
+    }
+    cdpCitationInstruction += '\n' +
+      'BEFORE COMPLETING the JSON, verify that your prose contains ' + minCites + ' to ' + maxCites + ' ' +
+      'inline author-year mentions. Count them. If fewer, add more where claims warrant.\n' +
       '═══════════════════════════════════════════════\n';
   }
 
@@ -1458,14 +1467,10 @@ Miller & Clark (2018) Synthese, predictive processing and emotion
 Bortolotti et al. (2025) Frontiers in Neuroscience, supercomplexity: aesthetics and cognition
 Foster & Roenneberg (2008) Current Biology, human responses to geophysical daily, annual, lunar cycles
 
-CITATION FORMAT IS MANDATORY:
-Every factual or scholarly claim must be wrapped as <span class="v11-cite" data-ref="REF_ID">Author Year</span> using ONLY ref IDs from the AVAILABLE REFERENCES block below. This is a HARD REQUIREMENT, not a guideline. The frontend renders these markers as tappable citation popovers. Without the span wrapper the citation is invisible to the reader and the Reading fails its scholarly purpose.
+SCHOLARLY CITATIONS:
+Where the Reading makes a factual, scientific, or scholarly claim, mention the source author and year inline in the prose: "Bremer 2022", "Tarnas 2006", "Hill 2019", etc. The server-side post-processor will automatically wrap these mentions as tappable citation markers. You do not need to add HTML span tags yourself. Just write the author-year as natural inline text. Symbolic claims must be labelled as symbolic.
 
-EXAMPLE (this is what every cited claim must look like):
-"The default mode network, <span class=\"v11-cite\" data-ref=\"bremer-2022\">Bremer 2022</span>, is most active in reflective states like a Personal Day 7."
-"Saturn-Neptune transitions historically reshape civilisational structures, <span class=\"v11-cite\" data-ref=\"tarnas-2006\">Tarnas 2006</span>."
-
-NEVER cite as plain inline text. NEVER write "Tarnas 2006 argues..." without the span wrapper. Symbolic claims explicitly labelled as symbolic.
+See the AVAILABLE REFERENCES list and AUTHOR ATTRIBUTION REQUIREMENT below for specifics.
 
 ${voiceInstruction}${cdpReferencesBlock}${cdpCitationInstruction}`;
 
