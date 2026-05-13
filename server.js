@@ -1475,6 +1475,8 @@ Miller & Clark (2018) Synthese, predictive processing and emotion
 Bortolotti et al. (2025) Frontiers in Neuroscience, supercomplexity: aesthetics and cognition
 Foster & Roenneberg (2008) Current Biology, human responses to geophysical daily, annual, lunar cycles
 
+WHERE RELEVANT: cite specific sources in readings to substantiate claims. Every factual claim traceable to a named authority. Symbolic claims explicitly labelled as symbolic.
+
 SCHOLARLY CITATIONS:
 Where the Reading makes a factual, scientific, or scholarly claim, mention the source author and year inline in the prose: "Bremer 2022", "Tarnas 2006", "Hill 2019", etc. The server-side post-processor will automatically wrap these mentions as tappable citation markers. You do not need to add HTML span tags yourself. Just write the author-year as natural inline text. Symbolic claims must be labelled as symbolic.
 
