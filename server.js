@@ -26,6 +26,198 @@ try {
   console.warn('[coordinate-drawer] expected at', path.join(__dirname, 'bibliography.json'));
 }
 
+// ══════════════════════════════════════════════════════════════════════════
+// iter12f: CITATION POST-PROCESSOR
+//
+// After Sonnet returns Reading JSON, scan every prose field for author-year
+// patterns ("Bremer 2022", "Pope and Wurlitzer 2017") and wrap them with
+// <span class="v11-cite" data-ref="REF_ID">...</span> markers.
+//
+// This guarantees citations appear regardless of whether the model followed
+// the explicit citation-format instruction. Prompt-engineering proved
+// unreliable in iter12d/e; post-processing is the deterministic path.
+//
+// Build the lookup index ONCE at server boot from bibliography.json so the
+// post-processor is fast (single regex pass per prose field).
+// ══════════════════════════════════════════════════════════════════════════
+const CITATION_INDEX = (function buildCitationIndex() {
+  if (!CDP_BIBLIOGRAPHY || !CDP_BIBLIOGRAPHY.entries) return null;
+  
+  const patterns = [];
+  
+  for (const [refId, entry] of Object.entries(CDP_BIBLIOGRAPHY.entries)) {
+    if (!entry || !entry.year) continue;
+    const year = String(entry.year);
+    
+    // Get authors as array of surnames
+    let surnames = [];
+    if (Array.isArray(entry.authors)) {
+      surnames = entry.authors.map(a => {
+        // Convention: bibliography.json uses "Surname, Firstname" format.
+        // Surname can be compound (e.g., "Hugo Wurlitzer, Sjanie" or
+        // "Van Dam, N.").
+        // Strategy: take everything before the comma as the surname phrase,
+        // then take the last word of that phrase as the regex matcher.
+        // This handles compound surnames correctly.
+        const s = a.trim();
+        let surnamePart;
+        if (s.indexOf(',') > -1) {
+          surnamePart = s.split(',')[0].trim();
+        } else {
+          // Format like "First Last" - take last word
+          const parts = s.split(/\s+/);
+          surnamePart = parts[parts.length - 1];
+        }
+        // Take the last word of the surname phrase (handles "Hugo Wurlitzer" -> "Wurlitzer")
+        const surWords = surnamePart.split(/\s+/);
+        const finalSurname = surWords[surWords.length - 1];
+        return finalSurname;
+      }).filter(s => s && s.length >= 3 && /^[A-Z]/.test(s));
+    } else if (typeof entry.authors === 'string') {
+      surnames = [entry.authors.split(/[\s,]+/)[0]];
+    }
+    
+    if (surnames.length === 0) continue;
+    
+    // Build all citation patterns this entry matches:
+    //  - "Surname YEAR"                  → single author or "et al"
+    //  - "Surname1 and Surname2 YEAR"    → two authors
+    //  - "Surname1 et al YEAR"           → many authors
+    //  - "Surname1 et al. YEAR"          → with period
+    //  - "Surname, YEAR"                 → comma-style
+    
+    const s1 = surnames[0];
+    const escS1 = s1.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    
+    if (surnames.length === 1) {
+      // Single author: "Smith 2022" or "Smith, 2022" or "Smith (2022)"
+      patterns.push({
+        regex: new RegExp('\\b(' + escS1 + ')(\\s+and\\s+\\w+)?(\\s*,?\\s*\\(?\\s*' + year + '\\)?)\\b', 'g'),
+        refId: refId,
+        display: s1 + ' ' + year,
+        priority: 1
+      });
+    } else if (surnames.length === 2) {
+      // Two authors: "Pope and Wurlitzer 2017"
+      const s2 = surnames[1];
+      const escS2 = s2.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      patterns.push({
+        regex: new RegExp('\\b' + escS1 + '\\s+and\\s+' + escS2 + '\\s*,?\\s*\\(?\\s*' + year + '\\)?\\b', 'g'),
+        refId: refId,
+        display: s1 + ' and ' + s2 + ' ' + year,
+        priority: 2
+      });
+      // Also catch just first author with year (e.g., "Pope 2017")
+      patterns.push({
+        regex: new RegExp('\\b' + escS1 + '\\s*,?\\s*\\(?\\s*' + year + '\\)?\\b', 'g'),
+        refId: refId,
+        display: s1 + ' ' + year,
+        priority: 1
+      });
+    } else {
+      // 3+ authors: "Klusmann et al 2023" or just "Klusmann 2023"
+      patterns.push({
+        regex: new RegExp('\\b' + escS1 + '\\s+et\\s+al\\.?\\s*,?\\s*\\(?\\s*' + year + '\\)?\\b', 'g'),
+        refId: refId,
+        display: s1 + ' et al ' + year,
+        priority: 2
+      });
+      patterns.push({
+        regex: new RegExp('\\b' + escS1 + '\\s*,?\\s*\\(?\\s*' + year + '\\)?\\b', 'g'),
+        refId: refId,
+        display: s1 + ' ' + year,
+        priority: 1
+      });
+    }
+  }
+  
+  // Sort by priority DESC so longer multi-author patterns match before single-author
+  patterns.sort((a, b) => b.priority - a.priority);
+  
+  console.log('[citation-postprocessor] index built:', patterns.length, 'patterns for',
+    Object.keys(CDP_BIBLIOGRAPHY.entries).length, 'entries');
+  return patterns;
+})();
+
+/**
+ * Wrap "Author Year" mentions with <span class="v11-cite" data-ref="REF_ID">
+ * Skip text already inside an existing v11-cite span.
+ */
+function wrapCitations(text) {
+  if (!text || typeof text !== 'string') return text;
+  if (!CITATION_INDEX || CITATION_INDEX.length === 0) return text;
+  
+  // To avoid wrapping inside already-wrapped citations, we mask existing
+  // v11-cite spans, do the replacement, then restore.
+  const existingSpans = [];
+  let masked = text.replace(/<span\s+class="v11-cite"[^>]*>[^<]*<\/span>/g, function(m) {
+    existingSpans.push(m);
+    return '\u0001CITE_PLACEHOLDER_' + (existingSpans.length - 1) + '\u0001';
+  });
+  
+  // Apply each pattern. Highest priority (multi-author) first to prevent
+  // single-author patterns matching part of a multi-author string.
+  for (const pattern of CITATION_INDEX) {
+    masked = masked.replace(pattern.regex, function(match) {
+      // Skip if match is inside our placeholder
+      if (match.indexOf('\u0001') >= 0) return match;
+      return '<span class="v11-cite" data-ref="' + pattern.refId + '">' + match + '</span>';
+    });
+  }
+  
+  // Restore existing spans
+  masked = masked.replace(/\u0001CITE_PLACEHOLDER_(\d+)\u0001/g, function(_, idx) {
+    return existingSpans[parseInt(idx, 10)] || '';
+  });
+  
+  return masked;
+}
+
+/**
+ * Walk a Reading JSON object and apply wrapCitations to every string value.
+ * Returns count of citations wrapped for logging.
+ */
+function postProcessCitations(obj) {
+  let wrapped = 0;
+  const visited = new WeakSet();
+  
+  function walk(node) {
+    if (node === null || node === undefined) return;
+    if (typeof node === 'string') return; // handled in parent
+    if (typeof node !== 'object') return;
+    if (visited.has(node)) return;
+    visited.add(node);
+    
+    if (Array.isArray(node)) {
+      for (let i = 0; i < node.length; i++) {
+        if (typeof node[i] === 'string') {
+          const before = (node[i].match(/v11-cite/g) || []).length;
+          node[i] = wrapCitations(node[i]);
+          const after = (node[i].match(/v11-cite/g) || []).length;
+          wrapped += (after - before);
+        } else {
+          walk(node[i]);
+        }
+      }
+    } else {
+      for (const key of Object.keys(node)) {
+        if (typeof node[key] === 'string') {
+          const before = (node[key].match(/v11-cite/g) || []).length;
+          node[key] = wrapCitations(node[key]);
+          const after = (node[key].match(/v11-cite/g) || []).length;
+          wrapped += (after - before);
+        } else {
+          walk(node[key]);
+        }
+      }
+    }
+  }
+  
+  walk(obj);
+  return wrapped;
+}
+
+
 // ── CORS, accept all origins (frontend is public; auth handled by tier logic) ──
 app.use((req, res, next) => {
   const origin = req.headers.origin || '*';
@@ -1445,6 +1637,22 @@ Generate the FULL ORACLE READING as valid JSON (no markdown, no fences, no pream
     }
   }
 
+  // iter12f: post-process citations into v11-cite spans
+  // This wraps any "Author Year" pattern in prose fields with the
+  // structured citation marker so the frontend can render popovers,
+  // regardless of whether the model followed the inline-citation
+  // instruction in the prompt.
+  try {
+    const citesWrapped = postProcessCitations(reading);
+    if (citesWrapped > 0) {
+      console.log('[reading-gen citations] wrapped', citesWrapped, 'inline citations from bibliography');
+    } else {
+      console.log('[reading-gen citations] no author-year patterns found in prose');
+    }
+  } catch (e) {
+    console.warn('[reading-gen citations] post-processor failed:', e.message);
+  }
+  
   return {reading, planets, moon, kin, num, aspects, weekAhead};
 }
 
