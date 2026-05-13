@@ -1574,7 +1574,7 @@ Generate the FULL ORACLE READING as valid JSON (no markdown, no fences, no pream
 
   const maxTok = {free:800, seeker:3000, initiate:5000, mystic:8000, oracle:16000}[tier] || 8192;
   // Use Haiku for lighter tiers, much faster, still quality
-  const genModel = (tier === 'seeker' || tier === 'initiate') ? 'claude-haiku-4-5-20251001' : 'claude-sonnet-4-6';
+  const genModel = 'claude-sonnet-4-6';
   
   // iter12d: structured timing logs for diagnosing slow Readings.
   // Each line lands in Railway logs and lets us see exactly where time went.
@@ -1751,7 +1751,7 @@ Generate ONLY these sections as valid JSON:
 
   const maxTok1 = {free:400, seeker:1800, initiate:2200, mystic:2800, oracle:3500}[tier] || 2000;
   // Use Haiku for seeker/free Phase1 (fast enough), Sonnet for deeper tiers
-  const p1Model = (tier === 'seeker' || tier === 'free') ? 'claude-haiku-4-5-20251001' : 'claude-sonnet-4-6';
+  const p1Model = (tier === 'free') ? 'claude-haiku-4-5-20251001' : 'claude-sonnet-4-6';
   const raw1 = await callAPI(p1Model, maxTok1, sys1, user1);
 
   try {
