@@ -1580,7 +1580,9 @@ Generate the FULL ORACLE READING as valid JSON (no markdown, no fences, no pream
   },
   "closing_line": "<One final sentence, italic, specific to ${firstName}, not inspirational fluff. The truth of where they actually are, spoken with warmth and precision. The sentence they will carry.>",
   "sources": "Astronomy: Swiss Ephemeris (Koch & Treindl, Astrodienst AG, ae_2026.pdf); USNO Moon Phases. Maya calendrics: Šprajc et al. (2023) Science Advances doi:10.1126/sciadv.abq7675; Aldana (2022) doi:10.34758/qyyd-vx23. Dreamspell: Argüelles (1987) The Mayan Factor. Astrology: Greene (1976) Saturn; Tarnas (2006) Cosmos & Psyche; Hand (2002) Planets in Transit; Brady (1999) Predictive Astrology; Brennan (2017) Hellenistic Astrology. Numerology: Drayer (2002); Kahn (2001) Pythagoras."
-}`;
+}
+
+OUTPUT FORMAT (strict): Respond with ONLY the JSON object above, populated for ${firstName} on ${dateStr}. No markdown code fences. No preamble. No commentary before or after. The very first character of your response must be { and the very last must be }. Citations are written inline inside the prose string values, not after the JSON.`;
 
   const maxTok = {free:800, seeker:3000, initiate:5000, mystic:8000, oracle:16000}[tier] || 8192;
   // Use Haiku for lighter tiers, much faster, still quality
@@ -1600,14 +1602,38 @@ Generate the FULL ORACLE READING as valid JSON (no markdown, no fences, no pream
 
   let reading;
   try {
-    const cleaned = raw.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+    // Strip markdown code fences anywhere in the text (model sometimes wraps,
+    // sometimes adds trailing commentary after the JSON).
+    let cleaned = raw.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+    // Extract the outermost balanced JSON object: scan forward from first '{'
+    // and track brace depth (respecting strings and escapes) until depth=0.
+    // This trims off any chatty prose the model appended after the JSON.
+    const firstBrace = cleaned.indexOf('{');
+    if (firstBrace > -1) {
+      let depth = 0, inStr = false, esc = false, end = -1;
+      for (let i = firstBrace; i < cleaned.length; i++) {
+        const c = cleaned[i];
+        if (esc) { esc = false; continue; }
+        if (c === '\\' && inStr) { esc = true; continue; }
+        if (c === '"') { inStr = !inStr; continue; }
+        if (inStr) continue;
+        if (c === '{') depth++;
+        else if (c === '}') {
+          depth--;
+          if (depth === 0) { end = i; break; }
+        }
+      }
+      if (end > -1) cleaned = cleaned.slice(firstBrace, end + 1);
+    }
     reading = JSON.parse(cleaned);
   } catch(e) {
     try {
-      const repaired = repairJSON(raw.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim());
+      const stripped = raw.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+      const repaired = repairJSON(stripped);
       reading = JSON.parse(repaired);
       reading._repaired = true;
     } catch(e2) {
+      console.warn('[reading-gen PARSE FAIL] tier=' + tier + ' err=' + e.message + ' rawHead=' + (raw || '').slice(0, 200).replace(/\n/g, '\\n'));
       reading = {synthesis: raw, raw: true, parseError: e.message};
     }
   }
