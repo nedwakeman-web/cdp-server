@@ -21903,5 +21903,605 @@ window._iter11gUpdateSignInMenu = function() {
   }, false);
 })();
 </script>
+
+<!-- ════════════════════════════════════════════════════════════════════
+     iter13g: Compass surface v6 destination convergence
+     ════════════════════════════════════════════════════════════════════
+
+     The current Compass surface has the four chip cards (Time, Lunar,
+     Symbol, Body) visible from first load, which makes the surface feel
+     like a dashboard rather than a morning threshold. The user's stated
+     destination architecture: a single open prompt as the primary action,
+     compass as the orienting symbol held back, chip drawers available
+     only after engagement.
+
+     This block converges the Compass surface to that destination state
+     via additive CSS+JS, without editing the existing markup. Two states:
+
+     STATE A (pre-engagement, fresh-load default):
+       visible: cipher, date, personal greeting, compass image, input, helper, three prompt starters
+       hidden:  voice toggle (compact corner instead), four chip cards, threshold buttons,
+                cycling-words area (held until engagement)
+
+     STATE B (post-engagement: user typed, reply lands, or reading loads):
+       visible: all of state A plus full voice toggle, chip cards, threshold buttons
+
+     The state switch is driven by data-engagement-state on #scompass,
+     set by JS observers (input focus, input change, mutation observer
+     watching for reply card / chip drawer appearance).
+
+     The personal greeting alternates based on the day's data:
+       - GAP day flag (from kin data)
+       - Black Moon / Shiva Moon window
+       - Personal Day number, especially master numbers
+       - Day-of-week character
+       - Yesterday's intention continuity (from sessionStorage)
+       - Fallback: gentle time-of-day welcome with first name
+
+     Reversibility: removing body class cdp-v6-active disables this block
+     and restores the previous compass-surface behaviour entirely.
+     ════════════════════════════════════════════════════════════════════ -->
+<style>
+/* The activation flag goes on the body. We default it on. To disable
+   the v6 convergence, document.body.classList.remove('cdp-v6-active'). */
+body.cdp-v6-active #scompass[data-engagement-state="pre"] .v11-voice-toggle,
+body.cdp-v6-active #scompass[data-engagement-state="pre"] .v11-compass-chips,
+body.cdp-v6-active #scompass[data-engagement-state="pre"] .v11-compass-threshold,
+body.cdp-v6-active #scompass[data-engagement-state="pre"] .v6-cycling-words {
+  display: none !important;
+}
+
+/* Tiny corner voice toggle, top-right of compass-frame, pre-engagement.
+   Renders only when iter13g JS has injected .cdp-v6-voice-corner. */
+.cdp-v6-voice-corner {
+  position: absolute;
+  top: 14px;
+  right: 18px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: 'Cinzel', Georgia, serif;
+  font-size: 9px;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: rgba(245, 228, 196, 0.55);
+  z-index: 4;
+}
+.cdp-v6-voice-corner-label {
+  margin-right: 4px;
+}
+.cdp-v6-voice-pill {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Cinzel', Georgia, serif;
+  font-size: 10px;
+  letter-spacing: 0;
+  color: rgba(245, 228, 196, 0.55);
+  background: transparent;
+  border: 1px solid rgba(201, 160, 80, 0.22);
+  cursor: pointer;
+  transition: color 0.18s, border-color 0.18s, background 0.18s;
+  padding: 0;
+}
+.cdp-v6-voice-pill:hover {
+  color: rgba(245, 228, 196, 0.95);
+  border-color: rgba(201, 160, 80, 0.55);
+}
+.cdp-v6-voice-pill.active {
+  background: rgba(129, 205, 198, 0.22);
+  border-color: rgba(129, 205, 198, 0.65);
+  color: rgba(245, 228, 196, 0.98);
+}
+@media (max-width: 759px) {
+  .cdp-v6-voice-corner {
+    top: 10px;
+    right: 12px;
+    font-size: 8px;
+    letter-spacing: 0.28em;
+    gap: 6px;
+  }
+  .cdp-v6-voice-pill {
+    width: 20px;
+    height: 20px;
+    font-size: 9px;
+  }
+}
+
+/* Personal greeting, injected above the input. */
+.cdp-v6-greeting {
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-style: italic;
+  font-weight: 300;
+  font-size: clamp(20px, 3.4vw, 28px);
+  color: rgba(201, 160, 80, 0.92);
+  line-height: 1.4;
+  text-align: center;
+  margin: 18px auto 14px;
+  max-width: 560px;
+  padding: 0 18px;
+  letter-spacing: 0.01em;
+  opacity: 0;
+  transition: opacity 0.6s ease;
+}
+.cdp-v6-greeting.cdp-v6-visible {
+  opacity: 1;
+}
+@media (max-width: 759px) {
+  .cdp-v6-greeting {
+    font-size: 17px;
+    margin: 14px auto 12px;
+    padding: 0 14px;
+  }
+}
+
+/* Three soft prompt-starter links below the input. Tap to populate. */
+.cdp-v6-starters {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  margin: 14px auto 8px;
+  max-width: 480px;
+  padding: 0 18px;
+  opacity: 0;
+  transition: opacity 0.6s ease;
+}
+.cdp-v6-starters.cdp-v6-visible {
+  opacity: 0.88;
+}
+.cdp-v6-starter {
+  display: inline-block;
+  font-family: 'EB Garamond', Georgia, serif;
+  font-style: italic;
+  font-size: 13.5px;
+  color: rgba(245, 228, 196, 0.62);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 6px 10px;
+  transition: color 0.18s;
+  text-align: center;
+  line-height: 1.4;
+  letter-spacing: 0.01em;
+}
+.cdp-v6-starter::before {
+  content: "\u25CC  ";  /* dotted circle U+25CC, gentle bullet */
+  color: rgba(201, 160, 80, 0.55);
+  margin-right: 4px;
+}
+.cdp-v6-starter:hover {
+  color: rgba(245, 228, 196, 0.95);
+}
+@media (max-width: 759px) {
+  .cdp-v6-starter {
+    font-size: 13px;
+  }
+}
+
+/* Held-back compass on pre-engagement: slightly faded and contemplative.
+   Mobile: do not shrink further (already tightened by iter13a). */
+body.cdp-v6-active #scompass[data-engagement-state="pre"] .v6-compass-image-wrap {
+  opacity: 0.92;
+}
+
+/* The compass-frame becomes positioning context for the voice corner. */
+body.cdp-v6-active #scompass .v6-compass-frame {
+  position: relative;
+}
+</style>
+<script>
+/* ════════════════════════════════════════════════════════════════════
+   iter13g: v6 destination Compass surface convergence (JS layer)
+   ════════════════════════════════════════════════════════════════════ */
+(function iter13gCompassV6() {
+  // Activate the v6 layer
+  function activate() {
+    if (!document.body) return false;
+    if (!document.body.classList.contains('cdp-v6-active')) {
+      document.body.classList.add('cdp-v6-active');
+    }
+    var scompass = document.getElementById('scompass');
+    if (!scompass) return false;
+    if (!scompass.getAttribute('data-engagement-state')) {
+      scompass.setAttribute('data-engagement-state', 'pre');
+    }
+    return true;
+  }
+
+  // Compute the personal greeting based on the day's data. The data
+  // comes from the global currentReading or, if absent, from a fallback
+  // chain that uses just the date.
+  function computeGreeting() {
+    var firstName = '';
+    try {
+      if (typeof getFirstName === 'function') firstName = getFirstName() || '';
+    } catch (e) {}
+    var name = firstName ? ' ' + firstName : '';
+
+    var now = new Date();
+    var hour = now.getHours();
+    var dayOfWeek = now.getDay();  // 0 Sun, 1 Mon, ... 6 Sat
+    var dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday',
+                    'Thursday', 'Friday', 'Saturday'];
+    var dayName = dayNames[dayOfWeek];
+
+    var greetings = [];
+
+    // Try to read reading data
+    var r = null, kin = null, moon = null, num = null;
+    try {
+      if (typeof currentReading === 'object' && currentReading) {
+        r = currentReading.reading || null;
+        kin = currentReading.kin || null;
+        moon = currentReading.moon || null;
+        num = currentReading.num || null;
+      }
+    } catch (e) {}
+
+    // GAP-day aware
+    if (kin && kin.isGAP) {
+      greetings.push('Today is a Galactic Activation Portal' + name + '. Doors open quickly.');
+      greetings.push('A portal day' + name + '. What wants to land?');
+    }
+
+    // Lunar-window aware
+    if (moon && moon.isBlack) {
+      greetings.push('Black Moon window' + name + '. Two days before new, the threshold thins.');
+    } else if (moon && moon.isShiva) {
+      greetings.push('Shiva Moon window' + name + '. The settling phase.');
+    } else if (moon && moon.phase) {
+      var p = String(moon.phase || '').toLowerCase();
+      if (p.indexOf('new') >= 0) {
+        greetings.push('A new moon arrived overnight' + name + '. What seed are you planting?');
+      } else if (p.indexOf('full') >= 0) {
+        greetings.push('Full moon' + name + '. The illuminating phase, what is asking to be seen?');
+      } else if (p.indexOf('waxing') >= 0 && p.indexOf('crescent') >= 0) {
+        greetings.push('Waxing crescent' + name + '. The seed phase, what is being built?');
+      } else if (p.indexOf('waning') >= 0 && p.indexOf('crescent') >= 0) {
+        greetings.push('Waning crescent' + name + '. The releasing phase, what is being shed?');
+      }
+    }
+
+    // Personal-Day aware (master numbers first)
+    if (num) {
+      var ud = num.udM && num.udM.n ? num.udM.n : (num.pd || num.ud);
+      var udMeaning = {
+        11: 'Master Illuminator, the pattern beneath the noise',
+        22: 'Master Builder, structure into form',
+        33: 'Master Teacher, the field that holds others',
+        44: 'Master Organiser, the long arc',
+        1: 'a new arc begins',
+        2: 'partnership and listening',
+        3: 'expression and creativity',
+        4: 'foundation and order',
+        5: 'freedom and change',
+        6: 'responsibility and care',
+        7: 'inquiry, not action',
+        8: 'execution and power',
+        9: 'completion and release'
+      };
+      var meaning = udMeaning[ud];
+      if (meaning) {
+        if ([11, 22, 33, 44].indexOf(ud) >= 0) {
+          greetings.push('Personal Day ' + ud + name + '. ' + meaning + '.');
+        } else {
+          greetings.push('A Personal Day ' + ud + name + '. ' + meaning + '.');
+        }
+      }
+    }
+
+    // Continuity: yesterday's intention
+    try {
+      var rawIntent = sessionStorage.getItem('cdp_compass_yesterday')
+                   || localStorage.getItem('cdp_last_intention');
+      if (rawIntent) {
+        var parsed = JSON.parse(rawIntent);
+        if (parsed && parsed.text && parsed.date) {
+          var iDate = new Date(parsed.date);
+          var today = new Date();
+          var diffDays = Math.round((today - iDate) / (24 * 3600 * 1000));
+          if (diffDays === 1 && parsed.text.length < 80) {
+            var safeText = parsed.text.replace(/[<>]/g, '').slice(0, 80);
+            greetings.push('Morning' + name + '. How did "' + safeText + '" land?');
+          }
+        }
+      }
+    } catch (e) {}
+
+    // Day-of-week character
+    if (dayOfWeek === 1) {  // Monday
+      greetings.push('Monday' + name + '. The week is unwritten.');
+      greetings.push('Mondays carry the resetting weight' + name + '. Where do you start?');
+    } else if (dayOfWeek === 3) {  // Wednesday
+      greetings.push('Mid-week' + name + '. What is asking attention today?');
+    } else if (dayOfWeek === 5) {  // Friday
+      greetings.push('Friday' + name + '. What wants to land before the weekend?');
+    } else if (dayOfWeek === 0 || dayOfWeek === 6) {  // Weekend
+      greetings.push('A weekend morning' + name + '. What is alive right now?');
+    }
+
+    // Time-of-day fallback (always present so we always have something)
+    if (hour < 6) {
+      greetings.push('Early hours' + name + '. What is on your mind?');
+    } else if (hour < 12) {
+      greetings.push('Morning' + name + '. What is alive right now?');
+      greetings.push('Where are you today' + name + '?');
+    } else if (hour < 17) {
+      greetings.push('Afternoon' + name + '. What is asking attention?');
+    } else if (hour < 21) {
+      greetings.push('Evening' + name + '. What is the day asking you to land?');
+    } else {
+      greetings.push('Late' + name + '. What is the night holding?');
+    }
+
+    // Pick one deterministically per day so the greeting is stable
+    // across page reloads on the same day. Hash the date string + length.
+    var dateStr = now.toISOString().slice(0, 10);
+    var hash = 0;
+    for (var i = 0; i < dateStr.length; i++) {
+      hash = ((hash << 5) - hash) + dateStr.charCodeAt(i);
+      hash = hash & hash;
+    }
+    var idx = Math.abs(hash) % greetings.length;
+    return greetings[idx];
+  }
+
+  // Compute three prompt starters based on day's data
+  function computeStarters() {
+    var starters = [];
+    try {
+      var kin = (typeof currentReading === 'object' && currentReading) ? currentReading.kin : null;
+      var num = (typeof currentReading === 'object' && currentReading) ? currentReading.num : null;
+      var moon = (typeof currentReading === 'object' && currentReading) ? currentReading.moon : null;
+
+      if (num && (num.pd || num.ud)) {
+        var pd = num.pd || num.ud;
+        starters.push('What does Personal Day ' + pd + ' ask of me?');
+      }
+      if (kin && kin.full) {
+        starters.push('Walk me through today\u2019s Kin coordinates.');
+      }
+      if (moon && moon.phase) {
+        starters.push('How does the ' + moon.phase + ' shape this day?');
+      }
+    } catch (e) {}
+
+    // Always include a few day-shape starters as fallback
+    var fallback = [
+      'Where am I today?',
+      'What should I focus on?',
+      'What is the day asking me to release?',
+      'How does yesterday\u2019s intention sit now?',
+      'What decision am I sitting with?'
+    ];
+    while (starters.length < 3) {
+      var f = fallback.shift();
+      if (!f) break;
+      if (starters.indexOf(f) < 0) starters.push(f);
+    }
+    return starters.slice(0, 3);
+  }
+
+  // Inject the greeting element above the input
+  function injectGreeting(scompass) {
+    var inputWrap = scompass.querySelector('.v6-compass-input-wrap');
+    if (!inputWrap) return;
+    var existing = scompass.querySelector('.cdp-v6-greeting');
+    if (existing) return;
+    var greeting = computeGreeting();
+    var el = document.createElement('p');
+    el.className = 'cdp-v6-greeting';
+    el.textContent = greeting;
+    inputWrap.parentNode.insertBefore(el, inputWrap);
+    requestAnimationFrame(function() {
+      el.classList.add('cdp-v6-visible');
+    });
+  }
+
+  // Inject the three prompt-starter chips below the input
+  function injectStarters(scompass) {
+    var inputWrap = scompass.querySelector('.v6-compass-input-wrap');
+    if (!inputWrap) return;
+    var existing = scompass.querySelector('.cdp-v6-starters');
+    if (existing) return;
+    var helperEl = scompass.querySelector('.v6-compass-helper');
+    var starters = computeStarters();
+    var container = document.createElement('div');
+    container.className = 'cdp-v6-starters';
+    starters.forEach(function(text) {
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'cdp-v6-starter';
+      btn.textContent = text;
+      btn.addEventListener('click', function(ev) {
+        ev.preventDefault();
+        var inputEl = document.getElementById('v19Intention');
+        if (inputEl) {
+          inputEl.value = text;
+          inputEl.focus();
+          // Fire an input event so any listeners pick up the change
+          try {
+            inputEl.dispatchEvent(new Event('input', { bubbles: true }));
+          } catch (e) {}
+        }
+      });
+      container.appendChild(btn);
+    });
+    // Insert AFTER input-wrap, BEFORE helper (helper sits at the bottom)
+    if (helperEl && helperEl.parentNode === inputWrap.parentNode) {
+      inputWrap.parentNode.insertBefore(container, helperEl);
+    } else {
+      inputWrap.parentNode.appendChild(container);
+    }
+    requestAnimationFrame(function() {
+      container.classList.add('cdp-v6-visible');
+    });
+  }
+
+  // Inject the compact voice-corner control top-right
+  function injectVoiceCorner(scompass) {
+    var existing = scompass.querySelector('.cdp-v6-voice-corner');
+    if (existing) return;
+    var frame = scompass.querySelector('.v6-compass-frame');
+    if (!frame) return;
+    var sourceToggle = scompass.querySelector('.v11-voice-toggle');
+    var activeVoice = 'tradition';
+    try {
+      if (document.body && document.body.dataset && document.body.dataset.compassVoice) {
+        activeVoice = document.body.dataset.compassVoice;
+      } else if (sourceToggle) {
+        var activeBtn = sourceToggle.querySelector('.v11-voice-btn.active, [aria-selected="true"]');
+        if (activeBtn) {
+          if (activeBtn.dataset && activeBtn.dataset.voice) activeVoice = activeBtn.dataset.voice;
+        }
+      }
+    } catch (e) {}
+
+    var corner = document.createElement('div');
+    corner.className = 'cdp-v6-voice-corner';
+    corner.innerHTML = '<span class="cdp-v6-voice-corner-label">Voice</span>';
+    var voices = [
+      { id: 'tradition', label: 'T' },
+      { id: 'science',   label: 'S' },
+      { id: 'everyday',  label: 'E' }
+    ];
+    voices.forEach(function(v) {
+      var pill = document.createElement('button');
+      pill.type = 'button';
+      pill.className = 'cdp-v6-voice-pill' + (v.id === activeVoice ? ' active' : '');
+      pill.setAttribute('data-voice', v.id);
+      pill.setAttribute('aria-label', 'Voice: ' + v.id);
+      pill.textContent = v.label;
+      pill.addEventListener('click', function(ev) {
+        ev.preventDefault();
+        // Defer to the canonical voice-toggle if present
+        try {
+          if (typeof setCompassVoice === 'function') {
+            setCompassVoice(v.id);
+          } else if (sourceToggle) {
+            // Fall back to clicking the matching button in the legacy toggle
+            var legacyBtn = sourceToggle.querySelector('[data-voice="' + v.id + '"]');
+            if (legacyBtn) legacyBtn.click();
+          }
+        } catch (e) {
+          console.warn('[iter13g] voice toggle dispatch failed:', e.message);
+        }
+        // Sync visual state
+        corner.querySelectorAll('.cdp-v6-voice-pill').forEach(function(p) {
+          p.classList.toggle('active', p.getAttribute('data-voice') === v.id);
+        });
+      });
+      corner.appendChild(pill);
+    });
+    frame.appendChild(corner);
+  }
+
+  // Mark the surface engaged. Reveals chips, threshold, voice toggle.
+  function markEngaged() {
+    var scompass = document.getElementById('scompass');
+    if (!scompass) return;
+    if (scompass.getAttribute('data-engagement-state') === 'engaged') return;
+    scompass.setAttribute('data-engagement-state', 'engaged');
+    // The compact voice-corner can stay; the full voice-toggle is still hidden
+    // unless the page navigates somewhere that wants it. We just allow the
+    // existing chips and threshold to appear by removing the hidden state.
+  }
+
+  // Wire engagement signals: input has content, reply card appears, reading loads
+  function wireEngagementSignals(scompass) {
+    var input = document.getElementById('v19Intention');
+    if (input) {
+      input.addEventListener('input', function() {
+        if (input.value && input.value.trim().length > 2) markEngaged();
+      });
+      input.addEventListener('focus', function() {
+        // Don't engage on focus alone; only when user actually types something
+      });
+    }
+    // Observe DOM mutations for reply card or chip drawer appearance
+    if (window.MutationObserver) {
+      var observer = new MutationObserver(function(mutations) {
+        for (var i = 0; i < mutations.length; i++) {
+          var m = mutations[i];
+          for (var j = 0; j < m.addedNodes.length; j++) {
+            var node = m.addedNodes[j];
+            if (node.nodeType !== 1) continue;
+            // Reply card has class .cdp-compass-reply or similar
+            if (node.classList && (
+                node.classList.contains('cdp-compass-reply') ||
+                node.classList.contains('compass-reply') ||
+                node.classList.contains('cdp-coordinate-drawer'))) {
+              markEngaged();
+              return;
+            }
+            // Or check descendants
+            if (node.querySelector && (
+                node.querySelector('.cdp-compass-reply') ||
+                node.querySelector('.compass-reply') ||
+                node.querySelector('.cdp-coordinate-drawer'))) {
+              markEngaged();
+              return;
+            }
+          }
+        }
+      });
+      observer.observe(scompass, { childList: true, subtree: true });
+    }
+    // Also engage when currentReading transitions from null to populated
+    try {
+      var lastCR = null;
+      setInterval(function() {
+        if (typeof currentReading === 'object' && currentReading && currentReading.reading) {
+          if (lastCR !== currentReading) {
+            lastCR = currentReading;
+            markEngaged();
+          }
+        }
+      }, 1200);
+    } catch (e) {}
+  }
+
+  // Initialise: try once on DOMContentLoaded, again on a small delay so
+  // the existing markup definitely exists.
+  function init() {
+    if (!activate()) {
+      setTimeout(init, 400);
+      return;
+    }
+    var scompass = document.getElementById('scompass');
+    if (!scompass) {
+      setTimeout(init, 400);
+      return;
+    }
+    try {
+      injectVoiceCorner(scompass);
+      injectGreeting(scompass);
+      injectStarters(scompass);
+      wireEngagementSignals(scompass);
+    } catch (e) {
+      console.warn('[iter13g] init error:', e.message);
+    }
+    // If we are already on the scompass surface and currentReading has
+    // loaded by the time init runs, we are already in engaged state.
+    try {
+      if (typeof currentReading === 'object' && currentReading && currentReading.reading) {
+        markEngaged();
+      }
+    } catch (e) {}
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function() {
+      setTimeout(init, 300);
+    });
+  } else {
+    setTimeout(init, 300);
+  }
+})();
+</script>
 </body>
 </html>
