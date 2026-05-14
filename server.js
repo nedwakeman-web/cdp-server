@@ -2109,6 +2109,76 @@ app.post('/api/reading/start', async (req, res) => {
       reading.next_tier_teaser = activeTier === 'oracle' ? ''
         : `A higher tier reading would add ${activeTier === 'free' ? 'three more sections including lunar pacing and Kin' : activeTier === 'seeker' ? 'transits, Dreamspell depth, and body-compass sections' : activeTier === 'initiate' ? 'shadow, pacing, and body-compass sections' : 'depth synthesis and natal integration'}.`;
 
+      // ── DEEP-SECTION LEGACY PROJECTION ────────────────────────────
+      // The frontend renders these legacy section objects in fillAISections:
+      //   reading.numerology     { headline, body, three_energies? }
+      //   reading.astrology      { main_transit_headline, main_transit_body, saturn_neptune? }
+      //   reading.dreamspell     { headline, body, disclaimer? }
+      //   reading.moon_section   { headline, body }
+      //   reading.body_section   { headline, body }
+      //   reading.shadow_section { headline, body }
+      //
+      // We project each orchestrator section onto its legacy counterpart so
+      // every panel in the rendered reading has prose, not just the top
+      // synthesis. The picked voice for `body` follows the user's readingLang
+      // preference (modern/scientific → science_text, otherwise tradition_text).
+      // We also retain the multi-voice payload on each projected object so the
+      // future client-side voice toggle can swap without another API call.
+      const projectSection = (sec, fallbackHeadline) => {
+        if (!sec) return null;
+        return {
+          headline: sec.headline || fallbackHeadline || '',
+          body: stripHtml(pickVoiceHtml(sec)),
+          tradition: stripHtml(sec.tradition_text || ''),
+          science: stripHtml(sec.science_text || ''),
+          everyday: stripHtml(sec.everyday_text || ''),
+          citations: Array.isArray(sec.citations) ? sec.citations.slice() : []
+        };
+      };
+
+      reading.numerology = projectSection(sm.numerology, 'The day in number');
+      reading.dreamspell = projectSection(sm.dreamspell, kin && kin.full ? kin.full : 'Today\u2019s Kin');
+      reading.moon_section = projectSection(sm.lunar, moon && moon.phase ? moon.phase : 'The moon, today');
+      reading.body_section = projectSection(sm.body, 'Body, today');
+      reading.shadow_section = projectSection(sm.shadow, 'Where today might catch you');
+      reading.pacing_section = projectSection(sm.pacing, 'Pacing across the day');
+
+      // Astrology has two sub-fields the frontend reads: main transit and
+      // Saturn-Neptune. Map both off the transits section, putting the bulk
+      // of the prose in main_transit_body and a derived short paragraph in
+      // saturn_neptune if the section happens to discuss it.
+      if (sm.transits) {
+        const transitsBody = stripHtml(pickVoiceHtml(sm.transits));
+        reading.astrology = {
+          main_transit_headline: sm.transits.headline || 'The sky, this morning',
+          main_transit_body: transitsBody,
+          saturn_neptune: /saturn|neptune/i.test(transitsBody) ? transitsBody : '',
+          tradition: stripHtml(sm.transits.tradition_text || ''),
+          science: stripHtml(sm.transits.science_text || ''),
+          everyday: stripHtml(sm.transits.everyday_text || ''),
+          citations: Array.isArray(sm.transits.citations) ? sm.transits.citations.slice() : []
+        };
+      } else {
+        reading.astrology = null;
+      }
+
+      // Oracle-only sections: depth synthesis and natal integration.
+      // Expose as reading.depth_synthesis and reading.natal_integration so
+      // the Oracle-tier render can surface them as their own panels.
+      reading.depth_synthesis = projectSection(sm.depth_synthesis, 'How the frameworks converge today');
+      reading.natal_integration = projectSection(sm.natal_integration, 'Today against your natal chart');
+
+      // Three-energies block for the numerology three-square legacy render
+      // (Day / Day+Month / Full-date integrated with personal year).
+      // Built from the deterministic numerology data we already computed.
+      if (num && reading.numerology) {
+        reading.numerology.three_energies = {
+          day:        { n: num.ud,            label: num.udM && num.udM.n ? 'Master ' + num.udM.n : 'Universal Day ' + num.ud },
+          day_month:  { n: num.pd || num.ud,  label: 'Personal Day ' + (num.pd || num.ud) },
+          full_date:  { n: num.py,            label: 'Personal Year ' + num.py }
+        };
+      }
+
       // Assemble final job payload. Frontend expects { reading, planets,
       // moon, kin, num, aspects, weekAhead } in job.result.
       const job = jobs.get(jobId);
