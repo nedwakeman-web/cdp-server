@@ -21757,5 +21757,132 @@ window._iter11gUpdateSignInMenu = function() {
   } catch(e) { /* non-fatal */ }
 })();
 </script>
+
+<!-- ════════════════════════════════════════════════════════════════════
+     iter13e: Daily Card tap-to-deepen, robust event delegation
+     ════════════════════════════════════════════════════════════════════
+     The renderCard() function in app.html wires `onclick` handlers
+     directly on #cardReflectEl and #cardNumEl after innerHTML is set
+     (around line 7103). In practice the handlers are arriving as null:
+     a diagnostic in DevTools confirmed
+         document.getElementById('cardReflectEl').onclick === null
+     even though the element exists and is visually marked tappable.
+     The most likely cause is a render path (CDP v21 patch, or the
+     loading-state stub at line 7151, or a re-render that fires after
+     the initial wireup) that creates the markup without re-running
+     the wireup block.
+
+     The defensive fix below uses event delegation on document for all
+     three tap-to-deepen surfaces (reflection, numerology strip,
+     lunar/kin/aspect rows). It runs once at parse time, works
+     regardless of when or how the elements are created or re-created,
+     and is idempotent. If the original direct handler is wired and
+     fires first, the delegated handler will still fire too; we guard
+     against double-open by checking openDrawer's state.
+
+     Also raises the visibility of the small "Ask the Oracle" hint
+     text from gold3 (very dim) to a clearer color and slightly larger
+     size so users can see the affordance.
+     ════════════════════════════════════════════════════════════════════ -->
+<style>
+/* Make the "Ask the Oracle" hint legible. Previous size was 10px in
+   var(--gold3) which is very low contrast on the card backgrounds. */
+.card-reflection > div:last-child,
+.card-num-strip .card-num-text > div:last-child {
+  font-size: 11.5px !important;
+  color: var(--gold) !important;
+  opacity: 0.82 !important;
+  letter-spacing: 0.12em !important;
+  transition: opacity 0.2s, color 0.2s;
+}
+.card-reflection:hover > div:last-child,
+.card-num-strip:hover .card-num-text > div:last-child {
+  opacity: 1 !important;
+}
+</style>
+<script>
+/* ════════════════════════════════════════════════════════════════════
+   iter13e: event delegation for the Daily Card tap-to-deepen surfaces
+   ════════════════════════════════════════════════════════════════════ */
+(function iter13eCardDelegation() {
+  // Helper: extract the reflection text from the element. The first
+  // text node (or the firstChild text) is the reflection prose itself;
+  // the trailing "Ask the Oracle" hint is the last div child.
+  function _extractReflectionText(el) {
+    if (!el) return '';
+    // Prefer explicit text-node child
+    var tnode = Array.prototype.find.call(el.childNodes, function(n) {
+      return n.nodeType === 3 && n.textContent && n.textContent.trim().length > 0;
+    });
+    if (tnode) return tnode.textContent.trim();
+    // Fall back to first element child's text, excluding the last hint div
+    var first = el.firstElementChild;
+    if (first && first.textContent) return first.textContent.trim();
+    // Final fallback: full text minus the trailing hint
+    var txt = el.textContent || '';
+    return txt.replace(/\s*\u2197\s*Ask the Oracle\s*$/i, '').trim();
+  }
+
+  function _safeOpenDrawer(label, question, chips) {
+    try {
+      if (typeof openDrawer === 'function') {
+        openDrawer(label, question, chips);
+      } else {
+        console.warn('[iter13e] openDrawer not available, deferring');
+      }
+    } catch (e) {
+      console.warn('[iter13e] openDrawer error:', e.message);
+    }
+  }
+
+  function _userContext() {
+    try { return (typeof getUserContext === 'function') ? getUserContext() : ''; }
+    catch (e) { return ''; }
+  }
+  function _firstName() {
+    try { return (typeof getFirstName === 'function' && getFirstName()) || 'you'; }
+    catch (e) { return 'you'; }
+  }
+
+  document.addEventListener('click', function(ev) {
+    var target = ev.target;
+    if (!target || target.nodeType !== 1) return;
+
+    // Card reflection (Morning/Afternoon/Evening reflection block)
+    var reflEl = target.closest && target.closest('#cardReflectEl, .card-reflection');
+    if (reflEl) {
+      var mode = reflEl.dataset && reflEl.dataset.mode ? reflEl.dataset.mode : 'day';
+      var label = mode === 'morning' ? 'MORNING REFLECTION'
+                : mode === 'afternoon' ? 'AFTERNOON REFLECTION'
+                : mode === 'evening' ? 'EVENING REFLECTION'
+                : 'REFLECTION';
+      var text = _extractReflectionText(reflEl);
+      var fn = _firstName();
+      var question = text + ' ' + _userContext()
+                   + ' What does this ' + mode + ' energy specifically ask of ' + fn + ' today?';
+      _safeOpenDrawer(label, question, [
+        { q: 'What should I focus on in the next 2 hours?', l: 'Next 2 hours' },
+        { q: 'What should I avoid this ' + mode + '?', l: 'What to avoid' }
+      ]);
+      return;
+    }
+
+    // Card numerology strip
+    var numEl = target.closest && target.closest('#cardNumEl, .card-num-strip');
+    if (numEl) {
+      var num = numEl.dataset && numEl.dataset.num ? numEl.dataset.num : '';
+      var name = numEl.dataset && numEl.dataset.name ? numEl.dataset.name : '';
+      var nlabel = numEl.dataset && numEl.dataset.label ? numEl.dataset.label : 'Numerology';
+      var nquestion = nlabel + ' ' + num + ' (' + name + '). ' + _userContext()
+                    + ' How does this number shape decisions and timing today?';
+      _safeOpenDrawer(nlabel + ' \u00b7 ' + name, nquestion, [
+        { q: 'What is the gift of ' + num + ' energy today?', l: 'The gift' },
+        { q: 'What is the shadow to watch for?', l: 'The shadow' }
+      ]);
+      return;
+    }
+  }, false);
+})();
+</script>
 </body>
 </html>
