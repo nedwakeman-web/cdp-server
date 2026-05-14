@@ -239,7 +239,13 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use(express.json());
+// iter13d: raise JSON body-parser limit. Default 100kb is too small for
+// follow-up Q&A calls (/api/ask, /api/cosmic, etc) which bundle the full
+// reading payload as context. Oracle-tier readings now include 10 sections
+// with three voices each plus citation metadata, easily exceeding 100kb.
+// 4mb covers Oracle worst case with comfortable headroom. Hard requests
+// are still bounded by the 413 ceiling so this is not an attack vector.
+app.use(express.json({ limit: '4mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
 
 // ── SECURITY HEADERS ─────────────────────────────────────────────
