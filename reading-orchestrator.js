@@ -50,18 +50,24 @@ const SECTION_LIBRARY = {
   synthesis: {
     id: 'synthesis',
     title: 'Today, in one breath',
-    role: 'Integrating opener. Names the one thing today asks. Two paragraphs maximum.',
+    role: 'Integrating opener. Names the day\u2019s strongest convergence across the bibliography registers and how it lands for this specific person. Two paragraphs maximum.',
     model: 'sonnet',
     maxTokens: 1600,
     phase1: true,
     bibliographyClaims: ['default_mode_network', 'predictive_processing', 'attention_modulation'],
-    instruction: `Compose the opening movement of today's reading.
-Two paragraphs maximum, each four to six sentences. The first paragraph names today's
-through-line - what the four frameworks converge on. The second names how that lands
-for this specific person given their intention and recent thread. Refer to the user
-by first name once, then by pronoun or by "you". The synthesis should read like a
-clear-eyed friend who has read the day's data and knows the person. No mystic
-posturing, no medical jargon, no exclamations.`
+    instruction: `Compose the opening movement of today's reading as a bridge.
+
+CDP is built on the premise that contemplative tradition and current science do not compete; they arrive at the same coordinates from different epistemic positions. The synthesis is where the bridge is shown. Your job is to find the strongest convergence the day offers across two or more of the bibliography's registers (Pythagorean numerology, lunar and astronomical, Mayan and Dreamspell calendrics, Western psychological astrology, contemplative tradition, current neuroscience including predictive processing and interoception and circadian science, depth psychology, attachment science, psychoneuroimmunology, and where relevant strategic and operational wisdom), and name it cleanly.
+
+Two paragraphs maximum, each four to six sentences.
+
+First paragraph: name the convergence. Not a list of what each framework says. The single through-line that two or more registers point to today. State the through-line in plain words first, then briefly cite the named authorities from each register that support it (for example: Drayer 2002 on the Personal Day quality, Cajochen and Schmidt 2024 on circadian cognition, both pointing to the same posture for the day). The convergence is the work product. The cited authorities prove the bridge.
+
+Second paragraph: name how that convergence lands for this person specifically. If named threads have been supplied, weave one or two of them through the convergence as the concrete situation the day's coordinates speak to. Do not quote the thread label verbatim and do not list all the threads; read the day's frame through the user's situation in plain prose. If today is dated to a named thread, prioritise that thread. If no threads are supplied, name the chapter of the user's life the convergence speaks to (using their profile context, recent intentions, or yesterday's thread).
+
+Refer to the user by first name once at most, then by pronoun or by "you". The synthesis should read like a clear-eyed friend who has read the day's data and knows the person. No mystic posturing. No medical jargon. No exclamations. No framework headline at the door; the convergence emerges as you compose it.
+
+If the day's data, the user's situation, and the named threads together point to a day of pause rather than push, you may compose a synthesis that says so plainly in the same JSON shape. This is the honest no when no useful reading is available; it is a wisdom move, not a failure.`
   },
 
   numerology: {
@@ -341,15 +347,64 @@ function condenseHistory(recentHistory) {
   return parts.join('. ');
 }
 
+function normaliseThreads(rawThreads, dateStr) {
+  // Read named threads from either the profile (legacy) or the explicit
+  // threads argument (Build B). Returns a structured array with a date-flag
+  // marking which threads fall on today. Defensive against malformed input.
+  if (!rawThreads) return [];
+  let arr = rawThreads;
+  if (!Array.isArray(arr)) {
+    if (typeof arr === 'string') {
+      // Legacy comma-separated string from older profile shape
+      arr = arr.split(',').map(s => ({ label: s.trim() })).filter(t => t.label);
+    } else {
+      return [];
+    }
+  }
+  const today = (dateStr || '').slice(0, 10);
+  const out = [];
+  for (const t of arr) {
+    if (!t) continue;
+    let label, date;
+    if (typeof t === 'string') {
+      label = t.trim();
+      date = '';
+    } else if (typeof t === 'object') {
+      label = (t.label || t.name || '').toString().trim();
+      date = (t.date || '').toString().trim();
+    } else {
+      continue;
+    }
+    if (!label) continue;
+    if (label.length > 100) label = label.slice(0, 100);
+    out.push({
+      label,
+      date,
+      isToday: date && date === today,
+      status: (t && t.status) ? String(t.status).slice(0, 200) : ''
+    });
+    if (out.length >= 10) break;
+  }
+  return out;
+}
+
 function buildSharedContext({ profile, dateStr, planets, moon, kin, num, aspects,
                               weekAhead, recentHistory, yesterdayIntention,
-                              natalPlanets }) {
+                              natalPlanets, threads }) {
   const p = profile || {};
   const firstName = p.nickname || (p.name ? p.name.split(' ')[0] : 'you');
-  const ctx = [
-    p.context, p.building, p.chapter,
-    p.active_threads ? (Array.isArray(p.active_threads) ? p.active_threads.join(', ') : p.active_threads) : null
-  ].filter(Boolean).join('. ');
+
+  // Named threads: prefer explicit threads argument (Build B contract).
+  // Fall back to profile.active_threads (legacy) if no explicit threads passed.
+  const rawThreads = (threads !== undefined && threads !== null)
+                     ? threads
+                     : p.active_threads;
+  const namedThreads = normaliseThreads(rawThreads, dateStr);
+  const todaysThreads = namedThreads.filter(t => t.isToday);
+
+  // profileContext no longer folds in active_threads (now structured).
+  // It keeps the long-form chapter context that shapes register and tone.
+  const ctx = [p.context, p.building, p.chapter].filter(Boolean).join('. ');
 
   const natal = buildNatalAnchors(p, natalPlanets);
 
@@ -365,16 +420,15 @@ function buildSharedContext({ profile, dateStr, planets, moon, kin, num, aspects
   const tracksCycle = (p.tracksCycle === true) && p.cyclePhase;
   const cyclePhase = tracksCycle ? p.cyclePhase : null;
 
-  // Master number flag for numerology section
   const isMasterDay = num && num.udM && num.udM.n && [11,22,33,44].indexOf(num.udM.n) >= 0;
-
-  // GAP day flag
   const isGAP = !!(kin && kin.isGAP);
 
   return {
     firstName,
     dateStr,
     profileContext: ctx,
+    namedThreads,
+    todaysThreads,
     intention,
     yesterdayThread,
     historySummary,
@@ -532,6 +586,27 @@ JSON schema:
     ? `\nGALACTIC ACTIVATION PORTAL DAY: today's Kin is a GAP. Symbolic significance per Arguelles 1987.`
     : '';
 
+  // Named threads (Build B): surface as a structured list. The synthesis
+  // section weaves these through the convergence; other sections may
+  // reference them where genuinely apt but should not force them.
+  let threadsLine = '';
+  if (sharedContext.namedThreads && sharedContext.namedThreads.length > 0) {
+    const todays = sharedContext.todaysThreads || [];
+    const others = sharedContext.namedThreads.filter(t => !t.isToday);
+    const parts = [];
+    if (todays.length > 0) {
+      const list = todays.map(t => `"${t.label}"`).join(', ');
+      parts.push(`Named thread(s) dated TODAY (prioritise these): ${list}`);
+    }
+    if (others.length > 0) {
+      const list = others.slice(0, 5).map(t => `"${t.label}"`).join(', ');
+      parts.push(`Other active named thread(s) (background context): ${list}`);
+    }
+    threadsLine = '\n' + parts.join('. ') + '. Weave one or two through the prose where the day\u2019s coordinates genuinely speak to them. Do not list them. Do not force them. The synthesis section in particular should read the day\u2019s convergence through the user\u2019s actual situation as named in the threads.';
+  } else {
+    threadsLine = '\nNo named threads supplied. Compose from the day\u2019s coordinates and the user\u2019s profile context.';
+  }
+
   const user = `Person: ${sharedContext.firstName}${sharedContext.profileContext ? '. Context: ' + sharedContext.profileContext : ''}.
 Date: ${sharedContext.dateStr}.
 
@@ -539,7 +614,7 @@ Today's coordinates across the four frameworks:
 - Numerology: Universal Day ${sharedContext.universalDay}${sharedContext.universalDayMaster ? ' (master ' + sharedContext.universalDayMaster + ')' : ''}, Personal Day ${sharedContext.personalDay}, Personal Year ${sharedContext.personalYear}, Life Path ${sharedContext.lifePath}.${masterLine}
 - Lunar: ${sharedContext.moonPhase}, day ${sharedContext.daysSinceNew} of cycle. ${sharedContext.moonNote}
 - Dreamspell: ${sharedContext.kinFull || ('Kin ' + sharedContext.kinNumber)}.${gapLine}
-- Body: interoception, circadian state.${cycleLine}${natalLine}${intentionLine}${yesterdayLine}${historyLine}
+- Body: interoception, circadian state.${cycleLine}${natalLine}${intentionLine}${yesterdayLine}${historyLine}${threadsLine}
 
 Available bibliography references for this section (use 3-6):
 ${refBlock || '  (no specific references; compose from frameworks named above)'}
@@ -801,6 +876,7 @@ module.exports = {
   composeReading,
   composeSection,
   buildSharedContext,
+  normaliseThreads,
   sectionPlanForTier,
   SECTION_LIBRARY,
   TIER_PLANS,
