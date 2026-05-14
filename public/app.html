@@ -10316,6 +10316,25 @@ async function fetchInsight(question, followUpChips) {
   }
 
   try {
+    // iter13f: trim readingData before sending. The full Oracle reading
+    // payload includes 10 sections with three voices each plus sectionMap
+    // duplicates plus citationMeta plus the legacy projection bridge. Sent
+    // verbatim it routinely exceeds 4mb and was producing 413 errors on
+    // /api/ask. The server only needs the synthesis prose and key cosmic
+    // data to answer a follow-up question, not the full reading object.
+    const r = currentReading?.reading || {};
+    const trimmedReadingData = {
+      synthesis: typeof r.synthesis === 'string' ? r.synthesis.slice(0, 1200) : '',
+      priorities: Array.isArray(r.priorities)
+        ? r.priorities.slice(0, 3).map(p => ({
+            title: typeof p?.title === 'string' ? p.title.slice(0, 100) : '',
+            action: typeof p?.action === 'string' ? p.action.slice(0, 200) : ''
+          }))
+        : [],
+      shadow_work: typeof r.shadow_work === 'string' ? r.shadow_work.slice(0, 400)
+                : typeof r.shadow === 'string' ? r.shadow.slice(0, 400) : ''
+    };
+
     const res = await fetch(API_BASE + '/api/ask', {
       method: 'POST', headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({
@@ -10323,7 +10342,7 @@ async function fetchInsight(question, followUpChips) {
         systemPrompt: sysPrompt,
         context: readingCtx || moonCtx + ' ' + kinCtx,
         profile,
-        readingData: currentReading?.reading || {}
+        readingData: trimmedReadingData
       })
     });
 
