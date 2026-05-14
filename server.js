@@ -1980,14 +1980,32 @@ app.post('/api/reading/start', async (req, res) => {
               const m = txt.match(/^[^.!?]+[.!?]/);
               return m ? m[0].trim() : txt.slice(0, 160);
             };
+            // iter13b: defensive string coercion for headline. If the model
+            // ever returns a non-string headline, the frontend forEach over
+            // priorities would crash and leave the panel blank.
+            const _str = (v, fallback) => {
+              if (v == null) return fallback || '';
+              if (typeof v === 'string') return v;
+              if (typeof v === 'number') return String(v);
+              if (typeof v === 'object') {
+                if (typeof v.tradition === 'string') return v.tradition;
+                if (typeof v.science   === 'string') return v.science;
+                if (typeof v.everyday  === 'string') return v.everyday;
+                if (typeof v.headline  === 'string') return v.headline;
+                if (typeof v.body      === 'string') return v.body;
+                if (typeof v.text      === 'string') return v.text;
+                return fallback || '';
+              }
+              return String(v);
+            };
             const synth = phase1Payload.synthesis;
             const numer = phase1Payload.numerology;
             const legacyP1 = {
               synthesis: _strip(_pickVoice(synth)),
               priorities: [
-                synth ? { title: synth.headline || 'Today',
+                synth ? { title: _str(synth.headline, 'Today'),
                           action: _firstSentence(synth.everyday_text || synth.tradition_text || '') } : null,
-                numer ? { title: numer.headline || 'The day in number',
+                numer ? { title: _str(numer.headline, 'The day in number'),
                           action: _firstSentence(numer.everyday_text || numer.tradition_text || '') } : null
               ].filter(Boolean),
               // Sections payload preserved for the next generation of
@@ -2036,6 +2054,27 @@ app.post('/api/reading/start', async (req, res) => {
       };
       const stripHtml = (s) => String(s || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
 
+      // iter13b: defensive string coercion. If the model returns an object
+      // where a string was expected (e.g. headline as {tradition, science})
+      // or returns nothing at all, we always emit a string. Without this,
+      // the frontend's forEach over priorities/focus/ease can crash with
+      // "(...).replace is not a function" on the first non-string field.
+      const _str = (v, fallback) => {
+        if (v == null) return fallback || '';
+        if (typeof v === 'string') return v;
+        if (typeof v === 'number') return String(v);
+        if (typeof v === 'object') {
+          if (typeof v.tradition === 'string') return v.tradition;
+          if (typeof v.science   === 'string') return v.science;
+          if (typeof v.everyday  === 'string') return v.everyday;
+          if (typeof v.headline  === 'string') return v.headline;
+          if (typeof v.body      === 'string') return v.body;
+          if (typeof v.text      === 'string') return v.text;
+          return fallback || '';
+        }
+        return String(v);
+      };
+
       // Map orchestrator sections to legacy fields
       reading.synthesis = stripHtml(pickVoiceHtml(sm.synthesis));
       reading.shadow = stripHtml(pickVoiceHtml(sm.shadow));
@@ -2052,7 +2091,7 @@ app.post('/api/reading/start', async (req, res) => {
       const buildPriority = (sec, fallback) => {
         if (!sec) return fallback;
         return {
-          title: sec.headline || fallback.title,
+          title: _str(sec.headline, fallback.title),
           action: firstSentence(sec.everyday_text || sec.tradition_text || sec.science_text || '') || fallback.action
         };
       };
@@ -2065,10 +2104,10 @@ app.post('/api/reading/start', async (req, res) => {
       // Focus_on / ease_off: derive four-item arrays from synthesis + body
       // and shadow. Short evocative phrases.
       reading.focus_on = [
-        sm.numerology ? (sm.numerology.headline || 'The day in number') : 'The opening of the day',
-        sm.lunar ? (sm.lunar.headline || 'Lunar pacing') : 'Pacing',
-        sm.dreamspell ? (sm.dreamspell.headline || 'Today\u2019s Kin') : 'Symbolic anchor',
-        sm.body ? (sm.body.headline || 'Body as compass') : 'Body and breath'
+        sm.numerology ? _str(sm.numerology.headline, 'The day in number') : 'The opening of the day',
+        sm.lunar ? _str(sm.lunar.headline, 'Lunar pacing') : 'Pacing',
+        sm.dreamspell ? _str(sm.dreamspell.headline, 'Today\u2019s Kin') : 'Symbolic anchor',
+        sm.body ? _str(sm.body.headline, 'Body as compass') : 'Body and breath'
       ];
       reading.ease_off = [
         sm.shadow ? 'Where today might catch you' : 'Forcing a result',
@@ -2127,7 +2166,7 @@ app.post('/api/reading/start', async (req, res) => {
       const projectSection = (sec, fallbackHeadline) => {
         if (!sec) return null;
         return {
-          headline: sec.headline || fallbackHeadline || '',
+          headline: _str(sec.headline, fallbackHeadline || ''),
           body: stripHtml(pickVoiceHtml(sec)),
           tradition: stripHtml(sec.tradition_text || ''),
           science: stripHtml(sec.science_text || ''),
