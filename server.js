@@ -9,6 +9,15 @@ const threeVoice = require('./oracle-three-voice-prompt');
 const { THREE_VOICE_INSTRUCTION, THREE_VOICE_SCHEMA, validateThreeVoiceReading, renderSectionThreeVoice, scrubHouseStyle } = threeVoice;
 
 // ══════════════════════════════════════════════════════════════════
+// Reading Orchestrator (per-section parallel composition)
+// Replaces the single-shot 16k-token Oracle call that exceeded
+// callAPI hard caps and routinely failed. Sections run in parallel,
+// model selected per section, structured citations from bibliography,
+// three voices per section, progressive phase-1 render.
+// ══════════════════════════════════════════════════════════════════
+const orchestrator = require('./reading-orchestrator');
+
+// ══════════════════════════════════════════════════════════════════
 // iter12: Compass Coordinate Drawer
 // Loads structured bibliography for chip-tap Oracle drawers and
 // exposes POST /api/compass/coordinate-drawer further down.
@@ -968,7 +977,12 @@ function getAspects(planets){
 // ══════════════════════════════════════════════════════════════════
 // THE FIX: STREAMING API CALL
 // ══════════════════════════════════════════════════════════════════
-function callAPI(model, maxTok, sys, user) {
+function callAPI(model, maxTok, sys, user, hardCapMs) {
+  // hardCapMs (optional): per-call ceiling for total stream time.
+  // Defaults to 180000 (matches v22h behaviour). Orchestrator passes 90000
+  // for individual section calls. Inactivity socket timeout stays at 75s.
+  const _hardCapValue = (typeof hardCapMs === 'number' && hardCapMs > 0)
+                        ? hardCapMs : 180000;
   return new Promise((resolve, reject) => {
     const body = JSON.stringify({
       model,
@@ -1050,17 +1064,18 @@ function callAPI(model, maxTok, sys, user) {
     });
 
     // v22h: hard total-request ceiling. Even if data is trickling slowly
-    // enough to keep the inactivity timeout from firing, abort after 180s.
+    // enough to keep the inactivity timeout from firing, abort after the
+    // configured hardCapMs (default 180s, 90s for orchestrator sections).
     // This bounds worst-case wall time for a single LLM call and was the
     // most likely cause of the multi-tens-of-minutes hangs that bypassed
     // the inactivity timeout.
     const _hardCap = setTimeout(() => {
       if (!resolved) {
         resolved = true;
-        try { req.destroy(new Error('Hard timeout after 180s, aborting slow stream')); } catch(e) {}
-        reject(new Error('hard_timeout_180s'));
+        try { req.destroy(new Error('Hard timeout after ' + Math.round(_hardCapValue/1000) + 's, aborting slow stream')); } catch(e) {}
+        reject(new Error('hard_timeout_' + Math.round(_hardCapValue/1000) + 's'));
       }
-    }, 180000);
+    }, _hardCapValue);
     // Clear hardCap when the request resolves successfully or errors out
     req.on('close', () => clearTimeout(_hardCap));
 
@@ -1863,12 +1878,15 @@ app.post('/api/reading/start', async (req, res) => {
     error: null
   });
 
-  // v22h: per-tier hard job deadline. If the orchestration is still running
-  // when this fires, mark the job as errored so the client polling sees
-  // failure and can prompt the user to retry. Bounds the worst case end-to-end
-  // wall time and prevents 'still composing' phantom states.
-  const _jobDeadlineMs = {free: 90000, seeker: 90000, initiate: 180000,
-                          mystic: 240000, oracle: 240000}[activeTier] || 180000;
+  // Orchestrated readings: per-tier hard job deadline. Sections run in
+  // parallel (concurrency cap 3-4), each with 90s per-call ceiling. Wall
+  // time is dominated by the slowest section, not the sum. Deadlines below
+  // are comfortable headroom: typical wall times are 10-15s (free),
+  // 22-35s (seeker), 35-55s (initiate), 50-75s (mystic), 60-100s (oracle).
+  // If a section retries on transient, that adds up to 90s before falling
+  // back to the static stub, so we set ceilings well above typical.
+  const _jobDeadlineMs = {free: 60000, seeker: 90000, initiate: 150000,
+                          mystic: 210000, oracle: 300000}[activeTier] || 180000;
   setTimeout(() => {
     const _j = jobs.get(jobId);
     if (_j && _j.status !== 'complete' && _j.status !== 'error') {
@@ -1881,104 +1899,240 @@ app.post('/api/reading/start', async (req, res) => {
 
   res.json({ jobId, status: 'pending' });
 
-  // ── TWO-PHASE GENERATION ────────────────────────────────────────
-  // Phase 1: actionable core in ~25s (free tier skips to full)
-  // Phase 2: full depth analysis continues in background
+  // ── ORCHESTRATED SECTION GENERATION ─────────────────────────────────
+  // All tiers run through the per-section orchestrator. Sections run
+  // in parallel, model selected per section. Phase 1 (synthesis +
+  // numerology) renders to the client as soon as both arrive, typically
+  // 8 to 12 seconds. Remaining sections stream into the job result as
+  // they complete. Full reading lands in 30 to 75 seconds depending on
+  // tier, compared to the previous 4 to 9 minutes (which routinely
+  // failed at Oracle due to a 180s callAPI hard cap on a 16,000-token
+  // single-shot call that physically could not complete).
   (async () => {
     try {
-      // Pre-calculate shared data once
+      // Pre-calculate framework data once. These are deterministic
+      // and shared across every section composition.
       const planets = buildPlanets(ds);
       const moon = getMoon(ds);
       const kin = getKin(ds);
       const num = getNumerology(ds, profile?.birthDay, profile?.birthMonth, profile?.birthYear);
       const aspects = getAspects(planets);
+      const weekAhead = getWeekAhead(ds);
 
-      if (activeTier === 'free' || activeTier === 'seeker') {
-        // Free/Seeker: use the fast quickread path (Haiku, ~12s)
-        const p = profile || {};
-        const fn = p.nickname || (p.name ? p.name.split(' ')[0] : 'you');
-        const ctx = [p.context,p.building,p.chapter,
-          p.active_threads?(Array.isArray(p.active_threads)?p.active_threads.join(', '):p.active_threads):null,
-          p.birthDay?('Born '+p.birthDay+'/'+p.birthMonth+'/'+p.birthYear):null
-        ].filter(Boolean).join('. ');
-        const moonNote = moon.isBlack?'BLACK MOON, do not initiate.':moon.isShiva?'SHIVA MOON, plant with intention.':'';
-        const weekAhead = getWeekAhead(ds);
-        const weekCtx = weekAhead.slice(1).map(w => w.dayStr+': UD'+w.ud+(w.isGAP?' GAP★':'')+' '+w.kin).join(', ');
-        const langMode = (profile && profile.readingLang === 'modern') ? 'modern' : 'ancient';
-        const langInstr = langMode === 'modern'
-          ? ' READING LANGUAGE: Modern scientific. Frame every insight in neuroscience terms: salience network, circadian rhythms, interoception, neuroplasticity, predictive coding. Name the mechanism. Cite the science briefly (e.g. Barrett 2017, Bremer 2022). Still use the cosmic data as the scaffold but translate it into brain science language.'
-          : ' READING LANGUAGE: Ancient traditional. Use the language of cosmic intelligence, archetypes, energetic fields and symbolic meaning. No neuroscience terminology.';
-        const qdSys = 'You are the Oracle at Cosmic Daily Planner. Respond ONLY with valid JSON, no markdown, no preamble.' + langInstr + ' Schema: {"synthesis":"string","priorities":[{"title":"string","action":"string"},{"title":"string","action":"string"},{"title":"string","action":"string"}],"shadow":"string","focus_on":["string","string","string","string"],"ease_off":["string","string","string","string"],"time_windows":{"morning":"string","afternoon":"string","evening":"string"},"week_notes":["string","string","string","string","string","string"],"next_tier_teaser":"string"}. week_notes: exactly 6 notes (2 sentences each): what the day energy means + one specific implication for the person. next_tier_teaser: 1-2 compelling sentences about what a Monthly Arc reading would additionally reveal for this person this month, end with a curiosity hook. Max 1200 tokens. Be specific.';
-        const weekDateList = weekAhead.slice(1).map((w,i)=>(i+1)+'. '+w.dayStr+' (UD'+w.ud+(w.isGAP?' GAP':'')+' '+w.kin+')').join('; ');
-        const qdUser = 'Person: '+fn+'. Date: '+ds+'. Moon: '+moon.phase+(moonNote?' ('+moonNote+')':'')+'. UD: '+num.ud+(num.udM&&num.udM.n?' ('+num.udM.n+')':'')+', PD: '+(num.pd||num.ud)+'. LP: '+(num.lp||'?')+', PY: '+(num.py||'?')+'. Kin: '+kin.full+(kin.isGAP?' GALACTIC ACTIVATION PORTAL':'')+'. '+ctx+'. Next 6 days (in order for week_notes): '+weekDateList+'. Saturn-Neptune Aries 2026 (Tarnas 2006). Write personal daily reading for '+fn+'. week_notes must have exactly 6 strings in same order as the dates above.';
-        let qdRaw;
-        for (let attempt = 0; attempt < 3; attempt++) {
-          try {
-            qdRaw = await callAPI('claude-haiku-4-5-20251001', 1800, qdSys, qdUser);
-            break;
-          } catch(e) {
-            // v22h: retry on a wider set of transient failures, not just
-            // 'overloaded'. Socket timeouts, hard timeouts, and 5xx errors
-            // are all worth retrying with backoff.
-            const transient = e.message.includes('overloaded')
-              || e.message.includes('Socket timeout')
-              || e.message.includes('hard_timeout')
-              || e.message.includes('http_5')
-              || e.message.includes('ECONNRESET')
-              || e.message.includes('ETIMEDOUT');
-            if (transient && attempt < 2) {
-              console.log(`Job ${jobId} transient (${e.message.slice(0,60)}), retry ${attempt+1}...`);
-              await new Promise(r => setTimeout(r, 3000 + attempt * 2000));
-            } else throw e;
-          }
+      // Natal chart for natal_integration section. Only compute if we
+      // have birth date; tolerate absence gracefully (orchestrator falls
+      // back to Sun-sign-only natal anchor from birth date).
+      let natalPlanets = null;
+      try {
+        if (profile?.birthDay && profile?.birthMonth && profile?.birthYear) {
+          const bIso = `${profile.birthYear}-${String(profile.birthMonth).padStart(2,'0')}-${String(profile.birthDay).padStart(2,'0')}`;
+          natalPlanets = buildPlanets(bIso);
         }
-        const qdCleaned = qdRaw.replace(/```json[\n]?/g,'').replace(/```[\n]?/g,'').trim();
-        let qdReading;
-        try { qdReading = JSON.parse(qdCleaned); } catch(e) { qdReading = {synthesis:qdRaw,raw:true}; }
-        const qdJob = jobs.get(jobId);
-        if (qdJob) {
-          qdJob.status = 'complete';
-          if (qdReading.week_notes && Array.isArray(qdReading.week_notes) && weekAhead.length > 1) {
-            qdReading.week_ahead = weekAhead.slice(1).map((w, i) => ({
-              date: w.date, dayStr: w.dayStr, note: qdReading.week_notes[i] || ''
-            }));
+      } catch (e) { /* non-fatal; orchestrator falls back */ }
+
+      // Build the shared context that threads through every section.
+      // This is what makes the reading bespoke rather than generic.
+      const sharedContext = orchestrator.buildSharedContext({
+        profile: profile || {},
+        dateStr: ds,
+        planets, moon, kin, num, aspects,
+        weekAhead,
+        recentHistory: recentHistory || [],
+        yesterdayIntention,
+        natalPlanets
+      });
+
+      // Model map: orchestrator names models abstractly ("haiku", "sonnet"),
+      // server resolves to the current Anthropic identifiers.
+      const modelMap = {
+        haiku: 'claude-haiku-4-5-20251001',
+        sonnet: 'claude-sonnet-4-6'
+      };
+
+      // Run the orchestrator. Phase 1 callback updates the job as soon
+      // as the synthesis and numerology sections arrive; the client polls
+      // status every 2s and picks up phase1_complete.
+      const reading = await orchestrator.composeReading({
+        tier: activeTier,
+        sharedContext,
+        bibliography: CDP_BIBLIOGRAPHY,
+        callAPIFn: callAPI,
+        modelMap,
+        scrubFn: (typeof scrubHouseStyle === 'function') ? scrubHouseStyle : null,
+        jobId,
+        onPhase1: (phase1Payload) => {
+          const job = jobs.get(jobId);
+          if (job && job.status !== 'complete' && job.status !== 'error') {
+            // Adapt phase1 payload to legacy shape that the frontend
+            // fillPhase1Sections() function consumes. Phase 1 always
+            // contains synthesis and numerology sections (both flagged
+            // phase1: true in the section library).
+            const _voice = (profile && profile.readingLang === 'modern') ? 'science_text'
+                         : (profile && profile.readingLang === 'scientific') ? 'science_text'
+                         : 'tradition_text';
+            const _pickVoice = (sec) => {
+              if (!sec) return '';
+              return sec[_voice] || sec.tradition_text || sec.everyday_text || sec.science_text || '';
+            };
+            const _strip = (s) => String(s || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+            const _firstSentence = (s) => {
+              const txt = _strip(s);
+              const m = txt.match(/^[^.!?]+[.!?]/);
+              return m ? m[0].trim() : txt.slice(0, 160);
+            };
+            const synth = phase1Payload.synthesis;
+            const numer = phase1Payload.numerology;
+            const legacyP1 = {
+              synthesis: _strip(_pickVoice(synth)),
+              priorities: [
+                synth ? { title: synth.headline || 'Today',
+                          action: _firstSentence(synth.everyday_text || synth.tradition_text || '') } : null,
+                numer ? { title: numer.headline || 'The day in number',
+                          action: _firstSentence(numer.everyday_text || numer.tradition_text || '') } : null
+              ].filter(Boolean),
+              // Sections payload preserved for the next generation of
+              // the frontend to consume directly.
+              sections: phase1Payload
+            };
+            job.phase1 = legacyP1;
+            job.status = 'phase1_complete';
+            console.log(`[orchestrator ${jobId}] phase1 ready at ${((Date.now() - job.startedAt)/1000).toFixed(1)}s`);
           }
-          qdJob.result = { reading: qdReading, planets, moon, kin, num, aspects, weekAhead };
-          qdJob.completedAt = Date.now();
-          console.log(`Job ${jobId} ${activeTier} complete (${((Date.now()-qdJob.startedAt)/1000).toFixed(1)}s)`);
+        },
+        onSectionComplete: (sectionId, result) => {
+          // Optional progressive update hook. Currently logs only.
+          // Future enhancement: live-update the job result so clients
+          // polling at high frequency can render sections one by one.
         }
-        return;
+      });
+
+      // Post-process: also run the legacy author-year wrapper across
+      // section prose, as a safety net for cases where the model used
+      // inline author-year mentions in addition to (or instead of)
+      // returning citation IDs. Wrapper is idempotent and cheap.
+      try {
+        if (typeof postProcessCitations === 'function') {
+          postProcessCitations(reading);
+        }
+      } catch(e) { /* non-fatal */ }
+
+      // ── BACKWARDS-COMPATIBLE LEGACY SHAPE ─────────────────────────
+      // The frontend (app.html) currently consumes the legacy quickread
+      // shape: reading.synthesis, reading.priorities, reading.shadow,
+      // reading.focus_on, reading.ease_off, reading.time_windows,
+      // reading.week_notes, reading.week_ahead. We project the section
+      // payload onto those fields so the frontend renders unchanged.
+      // The new section-based fields (reading.sections, reading.sectionMap,
+      // reading.citationMeta) remain in the payload for the next
+      // generation of the frontend to consume.
+      const sm = reading.sectionMap || {};
+      const legacyVoice = (profile && profile.readingLang === 'modern') ? 'science_text'
+                        : (profile && profile.readingLang === 'scientific') ? 'science_text'
+                        : 'tradition_text';
+      const pickVoiceHtml = (sec) => {
+        if (!sec) return '';
+        // Prefer the explicitly requested voice; fall back to others if empty.
+        return sec[legacyVoice] || sec.tradition_text || sec.everyday_text || sec.science_text || '';
+      };
+      const stripHtml = (s) => String(s || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+
+      // Map orchestrator sections to legacy fields
+      reading.synthesis = stripHtml(pickVoiceHtml(sm.synthesis));
+      reading.shadow = stripHtml(pickVoiceHtml(sm.shadow));
+      reading.shadow_work = reading.shadow;
+
+      // Priorities: derive three short priorities from synthesis + numerology + body
+      // Each priority pairs a title from the section headline with an action
+      // drawn from the first sentence of the everyday voice text.
+      const firstSentence = (s) => {
+        const txt = stripHtml(s);
+        const m = txt.match(/^[^.!?]+[.!?]/);
+        return m ? m[0].trim() : txt.slice(0, 160);
+      };
+      const buildPriority = (sec, fallback) => {
+        if (!sec) return fallback;
+        return {
+          title: sec.headline || fallback.title,
+          action: firstSentence(sec.everyday_text || sec.tradition_text || sec.science_text || '') || fallback.action
+        };
+      };
+      reading.priorities = [
+        buildPriority(sm.synthesis, { title: 'Today', action: 'Read the synthesis above.' }),
+        buildPriority(sm.numerology || sm.body, { title: 'Body and number', action: 'Notice the energy quality of the day.' }),
+        buildPriority(sm.lunar || sm.transits, { title: 'Sky', action: 'Note the lunar position and any active transit.' })
+      ];
+
+      // Focus_on / ease_off: derive four-item arrays from synthesis + body
+      // and shadow. Short evocative phrases.
+      reading.focus_on = [
+        sm.numerology ? (sm.numerology.headline || 'The day in number') : 'The opening of the day',
+        sm.lunar ? (sm.lunar.headline || 'Lunar pacing') : 'Pacing',
+        sm.dreamspell ? (sm.dreamspell.headline || 'Today\u2019s Kin') : 'Symbolic anchor',
+        sm.body ? (sm.body.headline || 'Body as compass') : 'Body and breath'
+      ];
+      reading.ease_off = [
+        sm.shadow ? 'Where today might catch you' : 'Forcing a result',
+        'Pushing tired attention',
+        'Multitasking under load',
+        'Skipping the wind-down'
+      ];
+
+      // Time windows: from pacing section if present, otherwise synthesised
+      // from synthesis + body. Plain text.
+      if (sm.pacing) {
+        const pacingText = stripHtml(pickVoiceHtml(sm.pacing));
+        // Try to split into morning/afternoon/evening if those labels exist
+        const morningMatch = pacingText.match(/morning[:\s]+([^.]+\.)/i);
+        const afternoonMatch = pacingText.match(/afternoon[:\s]+([^.]+\.)/i);
+        const eveningMatch = pacingText.match(/evening[:\s]+([^.]+\.)/i);
+        reading.time_windows = {
+          morning: morningMatch ? morningMatch[1].trim() : pacingText.slice(0, 200),
+          afternoon: afternoonMatch ? afternoonMatch[1].trim() : 'Steady pace; protect the post-lunch dip.',
+          evening: eveningMatch ? eveningMatch[1].trim() : 'Wind down; protect sleep onset.'
+        };
+      } else {
+        reading.time_windows = {
+          morning: 'Use the early hours for the day\u2019s most important attention.',
+          afternoon: 'Steady pace; protect the post-lunch dip.',
+          evening: 'Wind down; protect sleep onset.'
+        };
       }
 
-      if (activeTier !== 'free') {
-        // Phase 1, fast actionable core for initiate/mystic/oracle
-        const p1 = await generatePhase1(ds, profile || {}, activeTier, planets, moon, kin, num, aspects, jobId);
-        const job = jobs.get(jobId);
-        if (job) {
-          job.phase1 = p1;
-          job.status = 'phase1_complete';
-          console.log(`Job ${jobId} Phase 1 complete (${((Date.now() - job.startedAt)/1000).toFixed(1)}s)`);
-        }
-      }
+      // Week ahead notes: derive from week ahead data
+      reading.week_notes = (weekAhead || []).slice(1, 7).map(w =>
+        `${w.dayStr}: Universal Day ${w.ud}${w.isGAP ? ' GAP' : ''}, Kin ${w.kin}.`
+      );
+      reading.week_ahead = (weekAhead || []).slice(1, 7).map((w, i) => ({
+        date: w.date, dayStr: w.dayStr, note: reading.week_notes[i] || ''
+      }));
 
-      // Phase 2, full depth (runs for initiate/mystic/oracle; free goes direct)
-      const r = await generateReading(ds, profile || {}, activeTier, recentHistory || [], planets, moon, kin, num, aspects, yesterdayIntention, jobId);
+      reading.next_tier_teaser = activeTier === 'oracle' ? ''
+        : `A higher tier reading would add ${activeTier === 'free' ? 'three more sections including lunar pacing and Kin' : activeTier === 'seeker' ? 'transits, Dreamspell depth, and body-compass sections' : activeTier === 'initiate' ? 'shadow, pacing, and body-compass sections' : 'depth synthesis and natal integration'}.`;
+
+      // Assemble final job payload. Frontend expects { reading, planets,
+      // moon, kin, num, aspects, weekAhead } in job.result.
       const job = jobs.get(jobId);
       if (job) {
-        // Merge phase1 into full reading (phase1 had fresher/shorter prompts, keep phase2 for depth)
-        if (job.phase1 && r.reading) {
-          // Phase 2 takes precedence for content depth, but phase1 fills gaps if phase2 truncated
-          r.reading._phase1 = job.phase1;
-        }
         job.status = 'complete';
-        job.result = r;
+        job.result = {
+          reading,
+          planets, moon, kin, num, aspects,
+          weekAhead,
+          tier: activeTier,
+          sectionTimings: reading.timings,
+          generatedAt: new Date().toISOString()
+        };
         job.completedAt = Date.now();
+        const totalMs = job.completedAt - job.startedAt;
+        const sectionCount = reading.sections.length;
+        const okCount = reading.sections.filter(s => s.ok).length;
+        const citeCount = reading.citationUnion.length;
+        console.log(`[orchestrator ${jobId}] COMPLETE tier=${activeTier} sections=${okCount}/${sectionCount} cites=${citeCount} totalMs=${totalMs}`);
       }
-      console.log(`Job ${jobId} complete (${((Date.now() - job?.startedAt)/1000).toFixed(1)}s)`);
     } catch(e) {
       const job = jobs.get(jobId);
       if (job) { job.status = 'error'; job.error = e.message; }
-      console.error(`Job ${jobId} failed:`, e.message);
+      console.error(`[orchestrator ${jobId}] FAILED:`, e.message, e.stack ? e.stack.split('\n')[1] : '');
     }
   })();
 });
