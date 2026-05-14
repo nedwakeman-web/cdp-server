@@ -22503,5 +22503,315 @@ body.cdp-v6-active #scompass .v6-compass-frame {
   }
 })();
 </script>
+
+<!-- ════════════════════════════════════════════════════════════════════
+     iter13h: Compass v6 refinement on top of iter13g
+     ════════════════════════════════════════════════════════════════════
+
+     Three corrections to iter13g based on review:
+
+     1. Remove the top-right corner voice pill. iter13g injected a small
+        T/S/E control top-right of the compass frame, but the existing
+        voice toggle (compacted by iter13a) already sits in a better
+        position. The corner control overlapped mobile screen-edge
+        gesture zones and duplicated the voice control. Hide the corner
+        pills and restore the canonical voice toggle on engaged state.
+
+     2. Move the four chip cards on mobile to appear AFTER the reply
+        in the conversation flow, not between input and reply. CSS
+        flex-order on the compass-frame's mobile breakpoint puts chips
+        at the bottom of the visual stack while their DOM position is
+        preserved (so existing event handlers, the v11OpenChipDrawer
+        wiring, and the bibliography-anchored drawer logic all continue
+        to work untouched). On desktop, the iter13b grid layout already
+        places chips beside the compass which is the correct C-pattern.
+
+     3. Add the v6 subline under the greeting, plus richer prompt
+        starter personalisation, including cycle-aware starters when
+        profile.tracksCycle === true and profile.cyclePhase is set.
+     ════════════════════════════════════════════════════════════════════ -->
+<style>
+/* (1) Hide the iter13g top-right voice corner entirely. */
+body.cdp-v6-active .cdp-v6-voice-corner {
+  display: none !important;
+}
+
+/* Restore the existing voice toggle on engagement. Pre-engagement still
+   hides it (per iter13g rule). Post-engagement shows the canonical
+   toggle that sits above the compass. */
+body.cdp-v6-active #scompass[data-engagement-state="engaged"] .v11-voice-toggle {
+  display: inline-flex !important;
+}
+
+/* (2) Mobile: reorder so chips appear AFTER input/reply, not before. */
+@media (max-width: 759px) {
+  body.cdp-v6-active #scompass[data-engagement-state="engaged"] .v6-compass-frame {
+    display: flex !important;
+    flex-direction: column !important;
+  }
+  body.cdp-v6-active #scompass[data-engagement-state="engaged"] .v6-compass-frame > * {
+    order: 0;
+  }
+  body.cdp-v6-active #scompass[data-engagement-state="engaged"] .v11-compass-chips {
+    order: 90 !important;
+    margin-top: 24px !important;
+    margin-bottom: 14px !important;
+  }
+  body.cdp-v6-active #scompass[data-engagement-state="engaged"] .v11-compass-threshold {
+    order: 95 !important;
+  }
+}
+
+/* (3) Subline under greeting */
+.cdp-v6-subline {
+  font-family: 'EB Garamond', Georgia, serif;
+  font-style: italic;
+  font-size: 13.5px;
+  color: rgba(245, 228, 196, 0.62);
+  text-align: center;
+  margin: 0 auto 18px;
+  max-width: 540px;
+  padding: 0 18px;
+  line-height: 1.55;
+  letter-spacing: 0.01em;
+  opacity: 0;
+  transition: opacity 0.6s ease;
+}
+.cdp-v6-subline.cdp-v6-visible {
+  opacity: 1;
+}
+@media (max-width: 759px) {
+  .cdp-v6-subline {
+    font-size: 12.5px;
+    margin: 0 auto 14px;
+    padding: 0 16px;
+  }
+}
+</style>
+<script>
+/* ════════════════════════════════════════════════════════════════════
+   iter13h: Compass v6 refinement layer (JS)
+   ════════════════════════════════════════════════════════════════════ */
+(function iter13hCompassRefine() {
+
+  // (3) Compute the v6 subline. Static text per the mockup. Stable copy.
+  function computeSubline() {
+    return 'A line, a question, a need, an intention. The Oracle replies in the voice you choose.';
+  }
+
+  function injectSubline(scompass) {
+    if (!scompass) return;
+    var existing = scompass.querySelector('.cdp-v6-subline');
+    if (existing) return;
+    var greetingEl = scompass.querySelector('.cdp-v6-greeting');
+    if (!greetingEl) return;  // wait for iter13g to inject the greeting first
+    var el = document.createElement('p');
+    el.className = 'cdp-v6-subline';
+    el.textContent = computeSubline();
+    greetingEl.parentNode.insertBefore(el, greetingEl.nextSibling);
+    requestAnimationFrame(function() {
+      el.classList.add('cdp-v6-visible');
+    });
+  }
+
+  // (3) Improved prompt starters with personalisation
+  function computeStartersV2() {
+    var starters = [];
+    var profile = null, cr = null, kin = null, num = null, moon = null;
+    try {
+      if (typeof window.profile === 'object') profile = window.profile;
+      if (typeof currentReading === 'object' && currentReading) {
+        cr = currentReading;
+        kin = cr.kin || null;
+        num = cr.num || null;
+        moon = cr.moon || null;
+      }
+    } catch (e) {}
+
+    // First name for personalisation
+    var firstName = '';
+    try { if (typeof getFirstName === 'function') firstName = getFirstName() || ''; } catch (e) {}
+    var nameTag = firstName ? ' for me' : '';
+
+    var now = new Date();
+    var hour = now.getHours();
+    var dayOfWeek = now.getDay();
+
+    // Tier 1: data-driven starters from today's coordinates
+    if (num) {
+      var pd = (num.udM && num.udM.n) ? num.udM.n : (num.pd || num.ud);
+      if (pd) {
+        if ([11, 22, 33, 44].indexOf(pd) >= 0) {
+          starters.push('What does Master Number ' + pd + ' ask of me today?');
+        } else {
+          starters.push('What does Personal Day ' + pd + ' ask of me?');
+        }
+      }
+    }
+    if (kin && kin.full) {
+      if (kin.isGAP) {
+        starters.push('What does this Galactic Activation Portal open?');
+      } else {
+        starters.push('Walk me through ' + kin.full + '.');
+      }
+    }
+    if (moon && moon.phase) {
+      if (moon.isBlack) {
+        starters.push('How should I hold the Black Moon window?');
+      } else if (moon.isShiva) {
+        starters.push('What does the Shiva Moon settle?');
+      } else {
+        starters.push('How does the ' + moon.phase + ' shape this day?');
+      }
+    }
+
+    // Tier 2: continuity from yesterday's intention
+    try {
+      var rawIntent = sessionStorage.getItem('cdp_compass_yesterday')
+                   || localStorage.getItem('cdp_last_intention');
+      if (rawIntent) {
+        var parsed = JSON.parse(rawIntent);
+        if (parsed && parsed.text && parsed.date) {
+          var iDate = new Date(parsed.date);
+          var diffDays = Math.round((now - iDate) / (24 * 3600 * 1000));
+          if (diffDays >= 1 && diffDays <= 2 && parsed.text.length < 100) {
+            var safeText = parsed.text.replace(/[<>"]/g, '').slice(0, 70);
+            starters.push('How is "' + safeText + '" sitting now?');
+          }
+        }
+      }
+    } catch (e) {}
+
+    // Tier 3: cycle-aware starters (strictly gated on opt-in)
+    try {
+      if (profile && profile.tracksCycle === true
+          && typeof profile.cyclePhase === 'string'
+          && profile.cyclePhase.length > 0) {
+        var phase = profile.cyclePhase.toLowerCase();
+        if (phase.indexOf('luteal') >= 0) {
+          starters.push('What does the luteal phase ask of me today?');
+        } else if (phase.indexOf('menstrual') >= 0 || phase.indexOf('bleed') >= 0) {
+          starters.push('How should I match work to the menstrual phase?');
+        } else if (phase.indexOf('follicular') >= 0) {
+          starters.push('How do I use the follicular energy today?');
+        } else if (phase.indexOf('ovulat') >= 0) {
+          starters.push('What is the ovulatory window inviting?');
+        } else {
+          starters.push('How is my body asking me to pace today?');
+        }
+      }
+    } catch (e) {}
+
+    // Tier 4: day-of-week character
+    var dowStarters = {
+      0: 'What does this Sunday want me to release?',
+      1: 'Where do I start this Monday?',
+      2: 'What is asking for steadiness today?',
+      3: 'What is mid-week asking me to land?',
+      4: 'What is becoming clear today?',
+      5: 'What wants to land before the weekend?',
+      6: 'What is alive right now?'
+    };
+    if (dowStarters[dayOfWeek]) {
+      starters.push(dowStarters[dayOfWeek]);
+    }
+
+    // Tier 5: time-of-day fallbacks
+    if (hour < 11) {
+      starters.push('What should I focus on this morning?');
+    } else if (hour < 17) {
+      starters.push('What am I avoiding right now?');
+    } else if (hour < 21) {
+      starters.push('What is the day asking me to land?');
+    } else {
+      starters.push('What is sitting unfinished as the day closes?');
+    }
+
+    // Tier 6: evergreen fallbacks
+    var evergreen = [
+      'Where am I today?',
+      'What decision am I sitting with?',
+      'What am I being asked to notice?',
+      'What is the most useful thing to ask now?'
+    ];
+    while (starters.length < 6) {
+      var f = evergreen.shift();
+      if (!f) break;
+      if (starters.indexOf(f) < 0) starters.push(f);
+    }
+
+    // Pick exactly 3, deterministic per day so the suggestions are stable
+    // on reload, but rotate fresh each day. Hash today's date string and
+    // use modulo to walk through the list.
+    var dateStr = now.toISOString().slice(0, 10);
+    var hash = 0;
+    for (var i = 0; i < dateStr.length; i++) {
+      hash = ((hash << 5) - hash) + dateStr.charCodeAt(i);
+      hash = hash & hash;
+    }
+    var seed = Math.abs(hash);
+    var picked = [];
+    var remaining = starters.slice();
+    while (picked.length < 3 && remaining.length > 0) {
+      var idx = seed % remaining.length;
+      picked.push(remaining.splice(idx, 1)[0]);
+      seed = Math.floor(seed / remaining.length || 1) + (seed * 17) + 31;
+    }
+    return picked;
+  }
+
+  // Rebuild starters using the improved algorithm
+  function rebuildStarters(scompass) {
+    if (!scompass) return;
+    var container = scompass.querySelector('.cdp-v6-starters');
+    if (!container) return;
+    var starters = computeStartersV2();
+    // Wipe existing buttons
+    while (container.firstChild) container.removeChild(container.firstChild);
+    starters.forEach(function(text) {
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'cdp-v6-starter';
+      btn.textContent = text;
+      btn.addEventListener('click', function(ev) {
+        ev.preventDefault();
+        var inputEl = document.getElementById('v19Intention');
+        if (inputEl) {
+          inputEl.value = text;
+          inputEl.focus();
+          try {
+            inputEl.dispatchEvent(new Event('input', { bubbles: true }));
+          } catch (e) {}
+        }
+      });
+      container.appendChild(btn);
+    });
+  }
+
+  // Initialise after iter13g has had a moment to do its work
+  function init() {
+    var scompass = document.getElementById('scompass');
+    if (!scompass) {
+      setTimeout(init, 400);
+      return;
+    }
+    try {
+      injectSubline(scompass);
+      rebuildStarters(scompass);
+    } catch (e) {
+      console.warn('[iter13h] init error:', e.message);
+    }
+  }
+
+  // Run later than iter13g so iter13g's greeting and starters exist first
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function() {
+      setTimeout(init, 800);
+    });
+  } else {
+    setTimeout(init, 800);
+  }
+})();
+</script>
 </body>
 </html>
