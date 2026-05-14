@@ -635,10 +635,18 @@ function defaultScrub(s) {
 }
 
 function scrubSection(section, externalScrub) {
-  const fn = externalScrub || defaultScrub;
+  // iter13c: NEVER use the external scrubber here. The external
+  // scrubHouseStyle from oracle-three-voice-prompt.js is designed to
+  // walk a whole reading object and recursively scrub its fields. When
+  // called on a single string field (as we do here for each voice text),
+  // it tries to walk the string as if it were an object, fails, and
+  // returns the literal seventeen-character string "[object Object]".
+  // The defaultScrub below works on strings directly and is correct here.
+  // The whole-reading scrubber, if needed, should run at a different layer.
+  const fn = defaultScrub;
   const out = Object.assign({}, section);
   for (const k of ['headline', 'tradition_text', 'science_text', 'everyday_text']) {
-    if (out[k]) out[k] = fn(out[k]);
+    if (out[k] && typeof out[k] === 'string') out[k] = fn(out[k]);
   }
   return out;
 }
