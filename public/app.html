@@ -6663,6 +6663,19 @@ async function loadReading(dateStr, tier) {
     // Beta 2: fetch recent reading history for Oracle continuity
     recentReadingHistory = await fetchRecentHistory();
 
+    // Build B: read named threads from cdpThreadsAPI (Build A storage layer).
+    // The synthesis section in the orchestrator weaves them through the
+    // day's convergence. Defensive: if cdpThreadsAPI is absent (older
+    // build cached on the client), pass an empty array.
+    let buildBnamedThreads = [];
+    try {
+      if (window.cdpThreadsAPI && typeof window.cdpThreadsAPI.active === 'function') {
+        buildBnamedThreads = window.cdpThreadsAPI.active() || [];
+      }
+    } catch (e) {
+      console.warn('[Build B] cdpThreadsAPI read failed:', e.message);
+    }
+
     let jobId = null;
     const startRes = await fetch(API_BASE + '/api/reading/start', {
       method: 'POST', headers: {'Content-Type': 'application/json'},
@@ -6671,7 +6684,8 @@ async function loadReading(dateStr, tier) {
         profile: {...profile, intention, cycleContext: getCycleContext(), readingLang: localStorage.getItem('cdp_lang')||'ancient'},
         tier: activeTier,
         user_id: currentUser?.id || null,
-        recentHistory: recentReadingHistory
+        recentHistory: recentReadingHistory,
+        threads: buildBnamedThreads
       })
     });
     if (!startRes.ok) {
@@ -6685,7 +6699,8 @@ async function loadReading(dateStr, tier) {
             profile: {...profile, intention, cycleContext: getCycleContext()},
             tier: activeTier,
             user_id: currentUser?.id || null,
-            recentHistory: recentReadingHistory
+            recentHistory: recentReadingHistory,
+            threads: buildBnamedThreads
           })
         });
         if (!retryRes.ok) throw new Error('Server returned ' + retryRes.status + ' - please try again');
