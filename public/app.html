@@ -22813,5 +22813,736 @@ body.cdp-v6-active #scompass[data-engagement-state="engaged"] .v11-voice-toggle 
   }
 })();
 </script>
+
+<!-- ════════════════════════════════════════════════════════════════════
+     iter13i: Build A, named threads and integrity-grade greeting
+     ════════════════════════════════════════════════════════════════════
+
+     Build A from CDP Strategic Volume 15: the continuity foundation.
+
+     What it does:
+
+     1. Adds a "named threads" data layer. The user can name what they
+        are actively working on, holding, or navigating. Each thread has
+        a label, optional status, optional date, and timestamps. Stored
+        in localStorage as cdp_active_threads for now; Supabase
+        persistence is a follow-up.
+
+     2. Adds a quiet UI affordance on the Compass surface: a small
+        "What are you working on?" link below the helper. Tapping it
+        opens a modal where the user can add, edit, or remove threads.
+        No more than ten active threads visible at once; older threads
+        auto-archive.
+
+     3. Rewrites the greeting algorithm so named threads are the
+        highest-priority signal. The greeting reads from threads first,
+        recent intentions second, framework data third, time of day
+        fourth. Voice principles from Volume 15 section 5 applied:
+        no AI-poetic copy, no framework headlines, no performative
+        wisdom, no therapist register where it does not belong, no
+        hedged-and-apologetic. Name usage sparing.
+
+     4. Rewrites the prompt starters so a thread that is current today
+        surfaces first, with thread-specific starter prompts.
+
+     Architectural scope discipline: this is Build A only. Builds B
+     (orchestrator prompts that read threads in readings), C (citation
+     drawer), and D (honest no) are separate sessions. This block
+     deliberately stops at the greeting and prompt-starter layer so it
+     ships clean and the follow-ups can land cleanly on top.
+
+     Reversibility: removing the body class cdp-v6-active disables this
+     block alongside iter13g/h. Threads themselves stay in localStorage
+     until the user deletes them.
+     ════════════════════════════════════════════════════════════════════ -->
+<style>
+/* "What are you working on?" trigger on Compass surface */
+.cdp-threads-trigger {
+  display: inline-block;
+  margin: 6px auto 0;
+  font-family: 'EB Garamond', Georgia, serif;
+  font-style: italic;
+  font-size: 12.5px;
+  color: rgba(201, 160, 80, 0.72);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 6px 10px;
+  letter-spacing: 0.01em;
+  text-decoration: underline;
+  text-decoration-color: rgba(201, 160, 80, 0.32);
+  text-underline-offset: 3px;
+  transition: color 0.18s, text-decoration-color 0.18s;
+  opacity: 0;
+  transition: opacity 0.6s ease;
+}
+.cdp-threads-trigger.cdp-v6-visible {
+  opacity: 0.92;
+}
+.cdp-threads-trigger:hover {
+  color: rgba(245, 228, 196, 0.95);
+  text-decoration-color: rgba(201, 160, 80, 0.65);
+}
+
+/* Modal scrim and dialog for the threads editor */
+.cdp-threads-scrim {
+  position: fixed;
+  inset: 0;
+  background: rgba(8, 16, 28, 0.72);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+.cdp-threads-scrim.cdp-threads-open {
+  opacity: 1;
+  pointer-events: auto;
+}
+.cdp-threads-dialog {
+  background: #0e1a2e;
+  border: 1px solid rgba(201, 160, 80, 0.42);
+  border-radius: 6px;
+  width: 92%;
+  max-width: 560px;
+  max-height: 86vh;
+  overflow-y: auto;
+  padding: 28px 28px 22px;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.5);
+  font-family: 'EB Garamond', Georgia, serif;
+  color: rgba(245, 228, 196, 0.94);
+}
+.cdp-threads-title {
+  font-family: 'Cinzel', Georgia, serif;
+  font-size: 13px;
+  letter-spacing: 0.22em;
+  color: rgba(201, 160, 80, 0.95);
+  text-transform: uppercase;
+  margin: 0 0 6px;
+}
+.cdp-threads-sub {
+  font-family: 'EB Garamond', Georgia, serif;
+  font-style: italic;
+  font-size: 13.5px;
+  color: rgba(245, 228, 196, 0.62);
+  margin: 0 0 22px;
+  line-height: 1.55;
+}
+.cdp-threads-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+.cdp-thread-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap: 8px;
+  align-items: center;
+  padding: 10px 12px;
+  background: rgba(16, 32, 52, 0.55);
+  border: 1px solid rgba(165, 132, 89, 0.22);
+  border-radius: 4px;
+}
+.cdp-thread-row input[type="text"],
+.cdp-thread-row input[type="date"] {
+  background: transparent;
+  border: none;
+  color: rgba(245, 228, 196, 0.94);
+  font-family: 'EB Garamond', Georgia, serif;
+  font-size: 14px;
+  padding: 4px 0;
+  outline: none;
+  width: 100%;
+}
+.cdp-thread-row input[type="text"]::placeholder {
+  color: rgba(245, 228, 196, 0.38);
+  font-style: italic;
+}
+.cdp-thread-row input[type="text"]:focus,
+.cdp-thread-row input[type="date"]:focus {
+  border-bottom: 1px solid rgba(201, 160, 80, 0.55);
+}
+.cdp-thread-remove {
+  background: transparent;
+  border: 1px solid rgba(201, 160, 80, 0.22);
+  color: rgba(245, 228, 196, 0.52);
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+.cdp-thread-remove:hover {
+  color: rgba(245, 228, 196, 0.95);
+  border-color: rgba(201, 160, 80, 0.65);
+}
+.cdp-threads-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(165, 132, 89, 0.18);
+}
+.cdp-threads-add {
+  background: transparent;
+  border: 1px solid rgba(201, 160, 80, 0.45);
+  color: rgba(201, 160, 80, 0.95);
+  font-family: 'Cinzel', Georgia, serif;
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  padding: 8px 14px;
+  border-radius: 2px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.cdp-threads-add:hover {
+  background: rgba(201, 160, 80, 0.14);
+  color: rgba(245, 228, 196, 0.98);
+}
+.cdp-threads-done {
+  background: rgba(201, 160, 80, 0.92);
+  border: 1px solid rgba(201, 160, 80, 1);
+  color: #0e1a2e;
+  font-family: 'Cinzel', Georgia, serif;
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  padding: 8px 18px;
+  border-radius: 2px;
+  cursor: pointer;
+  font-weight: 600;
+}
+.cdp-threads-done:hover {
+  background: rgba(245, 228, 196, 0.98);
+}
+.cdp-threads-empty {
+  font-family: 'EB Garamond', Georgia, serif;
+  font-style: italic;
+  font-size: 13.5px;
+  color: rgba(245, 228, 196, 0.5);
+  text-align: center;
+  padding: 18px 12px;
+  line-height: 1.6;
+}
+@media (max-width: 600px) {
+  .cdp-thread-row {
+    grid-template-columns: 1fr auto;
+    gap: 6px;
+  }
+  .cdp-thread-row input[type="date"] {
+    grid-column: 1 / 2;
+  }
+  .cdp-thread-row .cdp-thread-remove {
+    grid-row: 1 / 3;
+    grid-column: 2 / 3;
+  }
+}
+</style>
+<script>
+/* ════════════════════════════════════════════════════════════════════
+   iter13i: Build A, named threads and integrity-grade greeting
+   ════════════════════════════════════════════════════════════════════ */
+(function iter13iBuildA() {
+  var THREADS_KEY = 'cdp_active_threads';
+  var THREADS_MAX_ACTIVE = 10;
+
+  // ─── Data layer ──────────────────────────────────────────────────
+  function loadThreads() {
+    try {
+      var raw = localStorage.getItem(THREADS_KEY);
+      if (!raw) return [];
+      var parsed = JSON.parse(raw);
+      if (!Array.isArray(parsed)) return [];
+      return parsed;
+    } catch (e) { return []; }
+  }
+  function saveThreads(threads) {
+    try {
+      localStorage.setItem(THREADS_KEY, JSON.stringify(threads));
+    } catch (e) {
+      console.warn('[iter13i] thread save failed:', e.message);
+    }
+  }
+  function newThreadId() {
+    return 't' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+  }
+  function getActiveThreads() {
+    var all = loadThreads();
+    return all.filter(function(t) { return !t.archived; });
+  }
+  // Expose the API globally so future builds (orchestrator prompt rewrite,
+  // reading-side context) can read named threads as well.
+  window.cdpThreadsAPI = {
+    list: loadThreads,
+    active: getActiveThreads,
+    save: saveThreads,
+    newId: newThreadId
+  };
+
+  // ─── Thread classification for the greeting ──────────────────────
+  function classifyThreads() {
+    var threads = getActiveThreads();
+    var today = new Date();
+    var todayStr = today.toISOString().slice(0, 10);
+    var todays = [];
+    var recent = [];
+    threads.forEach(function(thr) {
+      if (!thr.label || typeof thr.label !== 'string') return;
+      if (thr.date && thr.date === todayStr) {
+        todays.push(thr);
+      } else if (thr.lastReferenced) {
+        var ref = new Date(thr.lastReferenced);
+        var days = Math.round((today - ref) / (24 * 3600 * 1000));
+        if (days >= 0 && days <= 14) recent.push(thr);
+      } else {
+        // No date and no referenced timestamp; treat as background context
+        recent.push(thr);
+      }
+    });
+    return { todays: todays, recent: recent, all: threads };
+  }
+
+  // ─── Voice-disciplined greeting (Build A rewrite) ────────────────
+  function safeFirstName() {
+    var name = '';
+    try {
+      if (typeof getFirstName === 'function') name = getFirstName() || '';
+    } catch (e) {}
+    return name;
+  }
+
+  function buildBuildAGreeting() {
+    var name = safeFirstName();
+    var nameTag = name ? ' ' + name : '';
+    var classified = classifyThreads();
+    var now = new Date();
+    var hour = now.getHours();
+    var dow = now.getDay();
+
+    // Tier 0: thread dated today (highest priority signal)
+    if (classified.todays.length > 0) {
+      var first = classified.todays[0];
+      var label = String(first.label).replace(/[<>"]/g, '').trim().slice(0, 80);
+      if (classified.todays.length === 1) {
+        // Direct acknowledgement, small and plain.
+        if (hour < 12) {
+          return 'Morning' + nameTag + '. ' + label + ' is today.';
+        } else if (hour < 17) {
+          return label + ' is today' + nameTag + '. Where are you with it?';
+        } else if (hour < 21) {
+          return 'Evening' + nameTag + '. How did ' + label + ' land?';
+        } else {
+          return 'Late' + nameTag + '. How did ' + label + ' land?';
+        }
+      } else {
+        // Multiple today-dated threads: name without listing.
+        if (hour < 12) {
+          return 'Morning' + nameTag + '. A full day on the schedule.';
+        } else {
+          return 'A full day' + nameTag + '. Where are you with it?';
+        }
+      }
+    }
+
+    // Tier 1: recent thread carrying soft context
+    if (classified.recent.length > 0) {
+      // Pick deterministically per day so the pick is stable on reload
+      var dateStr = now.toISOString().slice(0, 10);
+      var hash = 0;
+      for (var i = 0; i < dateStr.length; i++) {
+        hash = ((hash << 5) - hash) + dateStr.charCodeAt(i);
+        hash = hash & hash;
+      }
+      var pick = classified.recent[Math.abs(hash) % classified.recent.length];
+      var rlabel = String(pick.label).replace(/[<>"]/g, '').trim().slice(0, 80);
+      if (hour < 12) {
+        return 'Morning' + nameTag + '. How is ' + rlabel + ' sitting?';
+      } else if (hour < 17) {
+        return 'Where are you with ' + rlabel + nameTag + '?';
+      } else if (hour < 21) {
+        return 'Evening' + nameTag + '. ' + rlabel + ' been on your mind?';
+      } else {
+        return 'Late' + nameTag + '. Still thinking about ' + rlabel + '?';
+      }
+    }
+
+    // Tier 2: yesterday's intention if stored (continuity from prior reading)
+    try {
+      var raw = sessionStorage.getItem('cdp_compass_yesterday')
+             || localStorage.getItem('cdp_last_intention');
+      if (raw) {
+        var parsed = JSON.parse(raw);
+        if (parsed && parsed.text && parsed.date) {
+          var iDate = new Date(parsed.date);
+          var diff = Math.round((now - iDate) / (24 * 3600 * 1000));
+          if (diff === 1 && parsed.text.length < 80) {
+            var safe = parsed.text.replace(/[<>"]/g, '').slice(0, 70);
+            return 'Morning' + nameTag + '. How did "' + safe + '" land?';
+          }
+        }
+      }
+    } catch (e) {}
+
+    // Tier 3: small, present, time-of-day-aware fallback. No AI-poetic copy.
+    // No framework headline. No performative wisdom. Voice principles:
+    // Volume 15 section 5.
+    if (hour < 6) {
+      return 'Early hours' + nameTag + '.';
+    } else if (hour < 12) {
+      if (dow === 1) return 'Morning' + nameTag + '. Monday again.';
+      if (dow === 5) return 'Morning' + nameTag + '. End of the week.';
+      if (dow === 0 || dow === 6) return 'Morning' + nameTag + '. Weekend.';
+      return 'Morning' + nameTag + '.';
+    } else if (hour < 17) {
+      return 'Afternoon' + nameTag + '.';
+    } else if (hour < 21) {
+      if (dow === 5) return 'Evening' + nameTag + '. Long week.';
+      return 'Evening' + nameTag + '.';
+    } else {
+      return 'Still up' + nameTag + '?';
+    }
+  }
+
+  // ─── Voice-disciplined prompt starters (Build A rewrite) ──────────
+  function buildBuildAStarters() {
+    var classified = classifyThreads();
+    var starters = [];
+
+    // Tier 0: thread dated today produces thread-specific starters
+    if (classified.todays.length > 0) {
+      var first = classified.todays[0];
+      var label = String(first.label).replace(/[<>"]/g, '').trim().slice(0, 80);
+      starters.push('Help me prepare for ' + label + '.');
+      starters.push('What is the most useful frame for ' + label + '?');
+    }
+
+    // Tier 1: recent thread produces soft-context starters
+    if (classified.recent.length > 0 && starters.length < 2) {
+      var pick = classified.recent[0];
+      var rlabel = String(pick.label).replace(/[<>"]/g, '').trim().slice(0, 80);
+      starters.push('How is ' + rlabel + ' sitting now?');
+    }
+
+    // Tier 2: open generic options that read as direct, not AI-poetic
+    var openOptions = [
+      'Frame a decision I am sitting with.',
+      'Walk me through what is coming today.',
+      'Listen for a minute while I think out loud.',
+      'Tell me what the day is asking.',
+      'I have a specific question.'
+    ];
+
+    // Fill to three deterministically by day
+    var now = new Date();
+    var dateStr = now.toISOString().slice(0, 10);
+    var hash = 0;
+    for (var i = 0; i < dateStr.length; i++) {
+      hash = ((hash << 5) - hash) + dateStr.charCodeAt(i);
+      hash = hash & hash;
+    }
+    var seed = Math.abs(hash);
+    while (starters.length < 3 && openOptions.length > 0) {
+      var idx = seed % openOptions.length;
+      var pick = openOptions.splice(idx, 1)[0];
+      if (starters.indexOf(pick) < 0) starters.push(pick);
+      seed = Math.floor(seed / Math.max(openOptions.length, 1)) + (seed * 17) + 31;
+    }
+    return starters.slice(0, 3);
+  }
+
+  // ─── Inject the Compass-surface affordance ───────────────────────
+  function injectThreadsTrigger() {
+    var scompass = document.getElementById('scompass');
+    if (!scompass) return;
+    var helper = scompass.querySelector('.v6-compass-helper');
+    if (!helper) return;
+    if (scompass.querySelector('.cdp-threads-trigger')) return;
+    var btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'cdp-threads-trigger';
+    btn.textContent = 'What are you working on?';
+    btn.setAttribute('aria-label', 'Open active threads editor');
+    btn.addEventListener('click', function(ev) {
+      ev.preventDefault();
+      openThreadsEditor();
+    });
+    helper.parentNode.insertBefore(btn, helper.nextSibling);
+    requestAnimationFrame(function() {
+      btn.classList.add('cdp-v6-visible');
+    });
+    refreshTriggerLabel();
+  }
+
+  function refreshTriggerLabel() {
+    var trigger = document.querySelector('.cdp-threads-trigger');
+    if (!trigger) return;
+    var active = getActiveThreads();
+    if (active.length === 0) {
+      trigger.textContent = 'What are you working on?';
+    } else if (active.length === 1) {
+      trigger.textContent = '1 active thread. Edit or add.';
+    } else {
+      trigger.textContent = active.length + ' active threads. Edit or add.';
+    }
+  }
+
+  // ─── Modal editor ────────────────────────────────────────────────
+  function openThreadsEditor() {
+    var existing = document.getElementById('cdpThreadsScrim');
+    if (existing) {
+      existing.classList.add('cdp-threads-open');
+      return;
+    }
+    var scrim = document.createElement('div');
+    scrim.id = 'cdpThreadsScrim';
+    scrim.className = 'cdp-threads-scrim';
+    scrim.addEventListener('click', function(ev) {
+      if (ev.target === scrim) closeThreadsEditor();
+    });
+
+    var dialog = document.createElement('div');
+    dialog.className = 'cdp-threads-dialog';
+    dialog.innerHTML = ''
+      + '<p class="cdp-threads-title">Active threads</p>'
+      + '<p class="cdp-threads-sub">'
+      + 'What are you actively working on, holding, or navigating? '
+      + 'Name the threads you want CDP to know about. The greeting and '
+      + 'the reading draw on these. Add a date if the thread has a moment '
+      + 'today or this week. Up to ten active at once. Edit or remove any time.'
+      + '</p>'
+      + '<div class="cdp-threads-list" id="cdpThreadsList"></div>'
+      + '<div class="cdp-threads-actions">'
+      +   '<button class="cdp-threads-add" id="cdpThreadAddBtn">Add a thread</button>'
+      +   '<button class="cdp-threads-done" id="cdpThreadsDoneBtn">Done</button>'
+      + '</div>';
+    scrim.appendChild(dialog);
+    document.body.appendChild(scrim);
+
+    renderThreadsList();
+
+    document.getElementById('cdpThreadAddBtn').addEventListener('click', function() {
+      addBlankThread();
+      renderThreadsList(true);
+    });
+    document.getElementById('cdpThreadsDoneBtn').addEventListener('click', function() {
+      commitThreadsFromList();
+      closeThreadsEditor();
+      refreshTriggerLabel();
+      refreshGreetingAndStarters();
+    });
+
+    requestAnimationFrame(function() {
+      scrim.classList.add('cdp-threads-open');
+    });
+  }
+  function closeThreadsEditor() {
+    var scrim = document.getElementById('cdpThreadsScrim');
+    if (!scrim) return;
+    scrim.classList.remove('cdp-threads-open');
+    setTimeout(function() {
+      if (scrim && scrim.parentNode) scrim.parentNode.removeChild(scrim);
+    }, 300);
+  }
+
+  function renderThreadsList(focusLast) {
+    var listEl = document.getElementById('cdpThreadsList');
+    if (!listEl) return;
+    var threads = getActiveThreads();
+    listEl.innerHTML = '';
+    if (threads.length === 0) {
+      var empty = document.createElement('div');
+      empty.className = 'cdp-threads-empty';
+      empty.textContent = 'No threads yet. Add what you are working on, holding, or navigating right now.';
+      listEl.appendChild(empty);
+      return;
+    }
+    threads.forEach(function(thr, idx) {
+      var row = document.createElement('div');
+      row.className = 'cdp-thread-row';
+      row.dataset.threadId = thr.id;
+
+      var labelInput = document.createElement('input');
+      labelInput.type = 'text';
+      labelInput.placeholder = 'What you are working on';
+      labelInput.value = thr.label || '';
+      labelInput.maxLength = 80;
+      row.appendChild(labelInput);
+
+      var dateInput = document.createElement('input');
+      dateInput.type = 'date';
+      dateInput.value = thr.date || '';
+      dateInput.title = 'Date today, this week, or leave blank';
+      row.appendChild(dateInput);
+
+      var remove = document.createElement('button');
+      remove.type = 'button';
+      remove.className = 'cdp-thread-remove';
+      remove.textContent = '\u00d7';
+      remove.title = 'Remove this thread';
+      remove.addEventListener('click', function() {
+        removeThread(thr.id);
+        renderThreadsList();
+      });
+      row.appendChild(remove);
+
+      listEl.appendChild(row);
+
+      if (focusLast && idx === threads.length - 1) {
+        setTimeout(function() { labelInput.focus(); }, 30);
+      }
+    });
+  }
+
+  function addBlankThread() {
+    var threads = loadThreads();
+    var actives = threads.filter(function(t) { return !t.archived; });
+    if (actives.length >= THREADS_MAX_ACTIVE) {
+      // Auto-archive the oldest active thread
+      actives.sort(function(a, b) {
+        return (a.dateAdded || 0) - (b.dateAdded || 0);
+      });
+      var oldest = actives[0];
+      threads.forEach(function(t) {
+        if (t.id === oldest.id) t.archived = true;
+      });
+    }
+    threads.push({
+      id: newThreadId(),
+      label: '',
+      date: '',
+      status: '',
+      dateAdded: new Date().toISOString(),
+      lastReferenced: new Date().toISOString(),
+      archived: false
+    });
+    saveThreads(threads);
+  }
+
+  function removeThread(id) {
+    var threads = loadThreads();
+    threads = threads.filter(function(t) { return t.id !== id; });
+    saveThreads(threads);
+  }
+
+  function commitThreadsFromList() {
+    var listEl = document.getElementById('cdpThreadsList');
+    if (!listEl) return;
+    var rows = listEl.querySelectorAll('.cdp-thread-row');
+    var threads = loadThreads();
+    var updatedById = {};
+    rows.forEach(function(row) {
+      var id = row.dataset.threadId;
+      var labelInput = row.querySelector('input[type="text"]');
+      var dateInput = row.querySelector('input[type="date"]');
+      var label = labelInput ? labelInput.value.trim() : '';
+      var date = dateInput ? dateInput.value : '';
+      updatedById[id] = { label: label, date: date };
+    });
+    var cleaned = threads.map(function(t) {
+      if (updatedById.hasOwnProperty(t.id)) {
+        t.label = updatedById[t.id].label;
+        t.date = updatedById[t.id].date;
+        t.lastReferenced = new Date().toISOString();
+      }
+      return t;
+    });
+    // Drop any thread whose label is empty (treated as removed by leaving blank)
+    cleaned = cleaned.filter(function(t) {
+      return t.label && t.label.trim().length > 0;
+    });
+    saveThreads(cleaned);
+  }
+
+  // ─── Refresh greeting and starters after thread edits ──────────────
+  function refreshGreetingAndStarters() {
+    var scompass = document.getElementById('scompass');
+    if (!scompass) return;
+
+    // Refresh greeting
+    var greetingEl = scompass.querySelector('.cdp-v6-greeting');
+    if (greetingEl) {
+      try {
+        var newText = buildBuildAGreeting();
+        greetingEl.textContent = newText;
+      } catch (e) {
+        console.warn('[iter13i] greeting refresh failed:', e.message);
+      }
+    }
+
+    // Refresh prompt starters
+    var startersContainer = scompass.querySelector('.cdp-v6-starters');
+    if (startersContainer) {
+      try {
+        var newStarters = buildBuildAStarters();
+        while (startersContainer.firstChild) {
+          startersContainer.removeChild(startersContainer.firstChild);
+        }
+        newStarters.forEach(function(text) {
+          var btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'cdp-v6-starter';
+          btn.textContent = text;
+          btn.addEventListener('click', function(ev) {
+            ev.preventDefault();
+            var inputEl = document.getElementById('v19Intention');
+            if (inputEl) {
+              inputEl.value = text;
+              inputEl.focus();
+              try {
+                inputEl.dispatchEvent(new Event('input', { bubbles: true }));
+              } catch (e) {}
+            }
+          });
+          startersContainer.appendChild(btn);
+        });
+      } catch (e) {
+        console.warn('[iter13i] starter refresh failed:', e.message);
+      }
+    }
+  }
+
+  // ─── Apply Build A on top of iter13g and iter13h ──────────────────
+  function applyBuildA() {
+    // Inject the trigger
+    injectThreadsTrigger();
+    // Replace the greeting that iter13g placed with the Build A version
+    refreshGreetingAndStarters();
+  }
+
+  function init() {
+    var scompass = document.getElementById('scompass');
+    if (!scompass) {
+      setTimeout(init, 400);
+      return;
+    }
+    try {
+      applyBuildA();
+    } catch (e) {
+      console.warn('[iter13i] init error:', e.message);
+    }
+  }
+
+  // Run later than iter13g and iter13h so their elements exist first
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function() {
+      setTimeout(init, 1100);
+    });
+  } else {
+    setTimeout(init, 1100);
+  }
+})();
+</script>
 </body>
 </html>
