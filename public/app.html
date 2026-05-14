@@ -8672,17 +8672,41 @@ function fillPhase1Sections(p1) {
   if (p1.priorities?.length) {
     const priEl = document.getElementById('ai-priorities');
     if (priEl) {
+      // iter13b: coerce every field to string before render. The model or
+      // a legacy adapter can return objects under .title/.rationale/.action
+      // (e.g. {tradition, science, everyday} multi-voice payloads or
+      // section-shaped objects). Coercing here means the row always renders
+      // rather than throwing TypeError and leaving the panel blank.
+      const _safeStr = (v) => {
+        if (v == null) return '';
+        if (typeof v === 'string') return v;
+        if (typeof v === 'number') return String(v);
+        // Object: try common multi-voice keys, otherwise stringify a fallback.
+        if (typeof v === 'object') {
+          if (typeof v.tradition === 'string') return v.tradition;
+          if (typeof v.science   === 'string') return v.science;
+          if (typeof v.everyday  === 'string') return v.everyday;
+          if (typeof v.headline  === 'string') return v.headline;
+          if (typeof v.body      === 'string') return v.body;
+          if (typeof v.text      === 'string') return v.text;
+          return '';
+        }
+        return String(v);
+      };
       let ph = '<div class="r-section"><div class="sec-label">Today\'s Priorities <span style="font-size:11px;color:var(--teal);letter-spacing:.1em">· Deep analysis composing…</span></div>';
       p1.priorities.forEach((pri, i) => {
-        const st = (pri.title||'').replace(/'/g,"\'").slice(0,80);
-        const sr = (pri.rationale||'').replace(/'/g,"\'").slice(0,150);
-        const sa = (pri.action||'').replace(/'/g,"\'").slice(0,100);
+        const _t = _safeStr(pri && pri.title);
+        const _r = _safeStr(pri && (pri.rationale || pri.body));
+        const _a = _safeStr(pri && pri.action);
+        const st = _t.replace(/'/g,"\'").slice(0,80);
+        const sr = _r.replace(/'/g,"\'").slice(0,150);
+        const sa = _a.replace(/'/g,"\'").slice(0,100);
         ph += `<div class="priority-item tappable" onclick="tapPriority('${st}','${sr}','${sa}')">
           <div class="pri-num">${i+1}</div>
           <div style="flex:1">
-            <div class="pri-title">${pri.title||''} <span style="font-size:12px;color:var(--gold3)">↗</span></div>
-            <div class="pri-body">${pri.rationale||''}</div>
-            ${pri.action?`<div class="pri-action">→ ${pri.action}</div>`:''}
+            <div class="pri-title">${_t} <span style="font-size:12px;color:var(--gold3)">↗</span></div>
+            <div class="pri-body">${_r}</div>
+            ${_a?`<div class="pri-action">→ ${_a}</div>`:''}
           </div>
         </div>`;
       });
@@ -9077,17 +9101,38 @@ function fillAISections(data, dateStr) {
   // Priorities
   const priEl = document.getElementById('ai-priorities');
   if (priEl && r?.priorities?.length) {
+    // iter13b: same defensive coercion as fillPhase1Sections. Without
+    // this, any non-string field crashes the forEach and leaves the
+    // panel as an empty skeleton.
+    const _safeStr = (v) => {
+      if (v == null) return '';
+      if (typeof v === 'string') return v;
+      if (typeof v === 'number') return String(v);
+      if (typeof v === 'object') {
+        if (typeof v.tradition === 'string') return v.tradition;
+        if (typeof v.science   === 'string') return v.science;
+        if (typeof v.everyday  === 'string') return v.everyday;
+        if (typeof v.headline  === 'string') return v.headline;
+        if (typeof v.body      === 'string') return v.body;
+        if (typeof v.text      === 'string') return v.text;
+        return '';
+      }
+      return String(v);
+    };
     let ph = '<div class="r-section"><div class="sec-label">Today’s Priorities</div>';
     r.priorities.forEach((pri, i) => {
-      const st = (pri.title||'').replace(/'/g,"\'").slice(0,80);
-      const sr = (pri.rationale||'').replace(/'/g,"\'").slice(0,150);
-      const sa = (pri.action||'').replace(/'/g,"\'").slice(0,100);
+      const _t = _safeStr(pri && pri.title);
+      const _r = _safeStr(pri && (pri.rationale || pri.body));
+      const _a = _safeStr(pri && pri.action);
+      const st = _t.replace(/'/g,"\'").slice(0,80);
+      const sr = _r.replace(/'/g,"\'").slice(0,150);
+      const sa = _a.replace(/'/g,"\'").slice(0,100);
       ph += `<div class="priority-item tappable" onclick="tapPriority('${st}','${sr}','${sa}')" title="Tap for specific guidance">
         <div class="pri-num">${i+1}</div>
         <div style="flex:1">
-          <div class="pri-title">${pri.title||''} <span style="font-size:12px;color:var(--gold3)">↗</span></div>
-          <div class="pri-body">${pri.rationale||pri.body||''}</div>
-          ${pri.action?`<div class="pri-action">→ ${pri.action}</div>`:''}
+          <div class="pri-title">${_t} <span style="font-size:12px;color:var(--gold3)">↗</span></div>
+          <div class="pri-body">${_r}</div>
+          ${_a?`<div class="pri-action">→ ${_a}</div>`:''}
         </div>
       </div>`;
     });
@@ -9488,17 +9533,36 @@ function renderReading(data, dateStr) {
 
   // 3. TODAY'S PRIORITIES (Sonia #55  -  action first)
   if (r.priorities?.length) {
+    // iter13b: defensive string coercion (see fillPhase1Sections for context)
+    const _safeStr = (v) => {
+      if (v == null) return '';
+      if (typeof v === 'string') return v;
+      if (typeof v === 'number') return String(v);
+      if (typeof v === 'object') {
+        if (typeof v.tradition === 'string') return v.tradition;
+        if (typeof v.science   === 'string') return v.science;
+        if (typeof v.everyday  === 'string') return v.everyday;
+        if (typeof v.headline  === 'string') return v.headline;
+        if (typeof v.body      === 'string') return v.body;
+        if (typeof v.text      === 'string') return v.text;
+        return '';
+      }
+      return String(v);
+    };
     html += `<div class="r-section"><div class="sec-label">Today's Priorities</div>`;
     r.priorities.forEach((pri, i) => {
-      const safeTitle = (pri.title||'').replace(/'/g,"\\'").slice(0,80);
-      const safeRat = (pri.rationale||'').replace(/'/g,"\\'").slice(0,150);
-      const safeAct = (pri.action||'').replace(/'/g,"\\'").slice(0,100);
+      const _t = _safeStr(pri && pri.title);
+      const _r = _safeStr(pri && (pri.rationale || pri.body));
+      const _a = _safeStr(pri && pri.action);
+      const safeTitle = _t.replace(/'/g,"\\'").slice(0,80);
+      const safeRat = _r.replace(/'/g,"\\'").slice(0,150);
+      const safeAct = _a.replace(/'/g,"\\'").slice(0,100);
       html += `<div class="priority-item tappable" onclick="tapPriority('${safeTitle}','${safeRat}','${safeAct}')" title="Tap for specific guidance">
         <div class="pri-num">${i+1}</div>
         <div style="flex:1">
-          <div class="pri-title">${pri.title||''} <span style="font-size:12px;color:var(--gold3)">↗</span></div>
-          <div class="pri-body">${pri.rationale||pri.body||''}</div>
-          ${pri.action?`<div class="pri-action">→ ${pri.action}</div>`:''}
+          <div class="pri-title">${_t} <span style="font-size:12px;color:var(--gold3)">↗</span></div>
+          <div class="pri-body">${_r}</div>
+          ${_a?`<div class="pri-action">→ ${_a}</div>`:''}
         </div>
       </div>`;
     });
@@ -21496,59 +21560,103 @@ window._iter11gUpdateSignInMenu = function() {
   }
 }
 
-/* ── Desktop Compass: side-by-side compass + chips ─────────────────────
-   The existing rules already absolute-position the chips at right:5% over
-   the compass area. We refine that here to ensure clean spacing at typical
-   desktop widths (1024-1440px) and add subtle separation. */
+/* ── Desktop Compass: side-by-side compass + chips via CSS grid ─────────
+   iter13b: the previous absolute-positioned chips were anchored to
+   .v6-compass-frame, which means when the user submits and reply content
+   appears below the compass, the frame grows tall and the chips float
+   to the vertical centre of the EXPANDED frame, overlaying the reply.
+   The fix is to position the chips relative to the compass IMAGE itself
+   so they never drift down the page as content is added below.
+
+   Approach: use CSS grid on the frame so image-wrap and chips become
+   sibling cells in a two-column row, with all other items spanning both
+   columns above and below. No markup change required, just rewrite the
+   layout via CSS.
+   ───────────────────────────────────────────────────────────────────── */
 @media (min-width: 760px) {
-  /* Give the compass image a fixed visual centre so absolute-positioned
-     chips line up against a known anchor. */
-  #scompass .v6-compass-image-wrap {
-    max-width: 460px;
-    margin: 12px auto 18px;
+  #scompass .v6-compass-frame {
+    display: grid;
+    grid-template-columns: 1fr 220px;
+    grid-auto-flow: row dense;
+    column-gap: 24px;
+    row-gap: 0;
+    max-width: 820px;
+    align-items: start;
   }
-  /* Chips: tighter right inset on narrow desktops, fixed width that does
-     not overflow the compass-frame max-width of 720px. */
+  /* Every direct child of the frame spans both columns by default. The
+     image-wrap and chips are the ONLY items that occupy single columns,
+     forming the two-column row in the middle of the surface. */
+  #scompass .v6-compass-frame > * {
+    grid-column: 1 / -1;
+  }
+  /* Compass image: column 1, second row. */
+  #scompass .v6-compass-image-wrap {
+    grid-column: 1 / 2 !important;
+    grid-row: var(--cdp-compass-row, auto);
+    max-width: 460px;
+    margin: 12px 0 18px;
+    width: 100%;
+    justify-self: end;
+  }
+  /* Chips: column 2, same row as image-wrap. position:static so they no
+     longer float relative to the frame. */
   #scompass .v11-compass-chips {
-    right: 2% !important;
-    width: 190px !important;
-    max-width: 190px !important;
-    gap: 7px !important;
+    position: static !important;
+    grid-column: 2 / 3 !important;
+    grid-row: var(--cdp-compass-row, auto);
+    transform: none !important;
+    top: auto !important;
+    right: auto !important;
+    width: 200px !important;
+    max-width: 200px !important;
+    margin: 12px 0 18px !important;
+    gap: 8px !important;
+    align-self: center;
+    justify-self: start;
+    display: flex !important;
+    flex-direction: column !important;
   }
   #scompass .v11-compass-card {
-    width: 190px !important;
-    min-width: 190px !important;
-    max-width: 190px !important;
-    padding: 9px 11px 8px !important;
-    min-height: 64px !important;
+    width: 200px !important;
+    min-width: 200px !important;
+    max-width: 200px !important;
+    padding: 10px 12px 9px !important;
+    min-height: 66px !important;
+    background: rgba(8, 26, 45, 0.62) !important;
   }
   #scompass .v11-compass-card .v11-chip-icon {
     font-size: 16px !important;
+    margin-bottom: 4px !important;
   }
   #scompass .v11-compass-card .v11-chip-eyebrow {
     font-size: 9px !important;
+    margin-bottom: 4px !important;
   }
   #scompass .v11-compass-card .v11-chip-label {
     font-size: 13px !important;
+    line-height: 1.3 !important;
   }
 }
 @media (min-width: 1100px) {
-  /* Wider desktops: a touch more breathing room and slightly larger cards. */
+  #scompass .v6-compass-frame {
+    grid-template-columns: 1fr 240px;
+    column-gap: 32px;
+    max-width: 920px;
+  }
   #scompass .v6-compass-image-wrap {
     max-width: 520px;
   }
   #scompass .v11-compass-chips {
-    right: 4% !important;
-    width: 210px !important;
-    max-width: 210px !important;
-    gap: 8px !important;
+    width: 220px !important;
+    max-width: 220px !important;
+    gap: 9px !important;
   }
   #scompass .v11-compass-card {
-    width: 210px !important;
-    min-width: 210px !important;
-    max-width: 210px !important;
-    padding: 11px 13px 10px !important;
-    min-height: 68px !important;
+    width: 220px !important;
+    min-width: 220px !important;
+    max-width: 220px !important;
+    padding: 12px 14px 11px !important;
+    min-height: 72px !important;
   }
 }
 
