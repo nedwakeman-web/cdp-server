@@ -21390,5 +21390,264 @@ window._iter11gUpdateSignInMenu = function() {
 })();
 
 </script>
+
+<!-- ════════════════════════════════════════════════════════════════════
+     iter13a: Compass layout refinement and mobile load-pill compaction
+     ════════════════════════════════════════════════════════════════════
+
+     Goals:
+     (1) Compass surface on mobile: smaller voice toggle, smaller chip
+         cards, more breathing room around the compass image, less
+         vertical-space crowding overall.
+     (2) Compass surface on desktop: keep four chips to the right of the
+         compass image as previously, but tightened so the layout reads as
+         intentional rather than absolute-positioned over the compass.
+     (3) Reading load pill on mobile: collapsible to a compact icon-only
+         pin so it does not block the rest of the page while a reading is
+         composing. Tap to expand for full progress detail.
+
+     This block is additive CSS only; no markup or JavaScript classes are
+     renamed. Cascade order is naturally higher than the earlier CSS
+     because this block lands after the main stylesheet.
+     ════════════════════════════════════════════════════════════════════ -->
+<style>
+/* ── Mobile Compass: compact voice toggle ──────────────────────────── */
+@media (max-width: 759px) {
+  #scompass .v11-voice-toggle {
+    max-width: 200px;
+    margin: 6px auto 10px;
+    padding: 2px;
+    border-radius: 999px;
+  }
+  #scompass .v11-voice-btn {
+    padding: 5px 10px;
+    font-size: 9px;
+    letter-spacing: 0.14em;
+    border-radius: 999px;
+  }
+  /* Tighten cycling words area so it does not eat vertical space */
+  #scompass .v6-cycling-words {
+    margin-top: 4px;
+    margin-bottom: 8px;
+    min-height: 16px;
+  }
+  #scompass .v6-cycling-word {
+    font-size: 11px;
+  }
+  /* Date sits tighter to cipher */
+  #scompass .v6-compass-date {
+    margin: 6px 0 2px;
+    font-size: 12px;
+  }
+  /* Cipher slightly smaller on mobile */
+  #scompass .v6-cipher-wrap {
+    height: 44px;
+    margin: 4px auto 2px;
+  }
+  #scompass .v6-cipher-wrap > svg.v6-cipher {
+    width: 46px;
+    height: 28px;
+  }
+  /* Compass image wrap: less internal whitespace */
+  #scompass .v6-compass-image-wrap {
+    margin: 6px auto 4px;
+    max-width: 290px;
+  }
+  /* Compass image fills its wrap without crushing */
+  #scompass #v6CompassImage {
+    width: 100%;
+    height: auto;
+  }
+  /* Chip cards: tighter footprint so the 2x2 grid does not dominate.
+     The eyebrow stays readable; the body label is single line where
+     possible to reduce vertical bulk. */
+  #scompass .v11-compass-chips {
+    margin: 14px auto 10px !important;
+    max-width: 360px !important;
+    gap: 7px !important;
+    padding: 0 16px !important;
+  }
+  #scompass .v11-compass-card {
+    min-height: 66px !important;
+    padding: 10px 8px 9px !important;
+    border-radius: 4px !important;
+  }
+  #scompass .v11-compass-card .v11-chip-icon {
+    font-size: 15px !important;
+    margin-bottom: 3px !important;
+  }
+  #scompass .v11-compass-card .v11-chip-eyebrow {
+    font-size: 8.5px !important;
+    letter-spacing: 0.18em !important;
+    margin-bottom: 3px !important;
+  }
+  #scompass .v11-compass-card .v11-chip-label {
+    font-size: 12px !important;
+    line-height: 1.25 !important;
+  }
+  /* Threshold buttons sit tight beneath chips */
+  #scompass .v11-compass-threshold {
+    margin-top: 10px !important;
+  }
+  /* Intention input narrower margin so the helper line is visible above
+     the fold on typical phone heights (640-820px viewport). */
+  #scompass .v6-compass-input-wrap {
+    margin-top: 12px;
+  }
+}
+
+/* ── Desktop Compass: side-by-side compass + chips ─────────────────────
+   The existing rules already absolute-position the chips at right:5% over
+   the compass area. We refine that here to ensure clean spacing at typical
+   desktop widths (1024-1440px) and add subtle separation. */
+@media (min-width: 760px) {
+  /* Give the compass image a fixed visual centre so absolute-positioned
+     chips line up against a known anchor. */
+  #scompass .v6-compass-image-wrap {
+    max-width: 460px;
+    margin: 12px auto 18px;
+  }
+  /* Chips: tighter right inset on narrow desktops, fixed width that does
+     not overflow the compass-frame max-width of 720px. */
+  #scompass .v11-compass-chips {
+    right: 2% !important;
+    width: 190px !important;
+    max-width: 190px !important;
+    gap: 7px !important;
+  }
+  #scompass .v11-compass-card {
+    width: 190px !important;
+    min-width: 190px !important;
+    max-width: 190px !important;
+    padding: 9px 11px 8px !important;
+    min-height: 64px !important;
+  }
+  #scompass .v11-compass-card .v11-chip-icon {
+    font-size: 16px !important;
+  }
+  #scompass .v11-compass-card .v11-chip-eyebrow {
+    font-size: 9px !important;
+  }
+  #scompass .v11-compass-card .v11-chip-label {
+    font-size: 13px !important;
+  }
+}
+@media (min-width: 1100px) {
+  /* Wider desktops: a touch more breathing room and slightly larger cards. */
+  #scompass .v6-compass-image-wrap {
+    max-width: 520px;
+  }
+  #scompass .v11-compass-chips {
+    right: 4% !important;
+    width: 210px !important;
+    max-width: 210px !important;
+    gap: 8px !important;
+  }
+  #scompass .v11-compass-card {
+    width: 210px !important;
+    min-width: 210px !important;
+    max-width: 210px !important;
+    padding: 11px 13px 10px !important;
+    min-height: 68px !important;
+  }
+}
+
+/* ── Mobile load pill: collapsible compact mode ─────────────────────── */
+@media (max-width: 759px) {
+  #cdpLoadPill {
+    bottom: 14px !important;
+    right: 14px !important;
+    max-width: calc(100vw - 28px) !important;
+    padding: 8px 12px !important;
+    box-shadow: 0 2px 14px rgba(0,0,0,0.45) !important;
+  }
+  /* Collapsed state: icon only. Triggered by data-collapsed="1". */
+  #cdpLoadPill[data-collapsed="1"] {
+    padding: 8px !important;
+    max-width: 44px !important;
+    border-radius: 999px !important;
+  }
+  #cdpLoadPill[data-collapsed="1"] > div:first-child > div:nth-child(2),
+  #cdpLoadPill[data-collapsed="1"] > div:first-child > div:nth-child(3),
+  #cdpLoadPill[data-collapsed="1"] > div:nth-child(2) {
+    display: none !important;
+  }
+  #cdpLoadPill[data-collapsed="1"] > div:first-child {
+    gap: 0 !important;
+  }
+  /* The discreet collapse toggle: an "x" button injected in JS below. */
+  .iter13a-pill-collapse {
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 18px;
+    height: 18px;
+    border: none;
+    background: rgba(245, 228, 196, 0.10);
+    color: rgba(245, 228, 196, 0.55);
+    font-size: 11px;
+    line-height: 18px;
+    text-align: center;
+    border-radius: 50%;
+    cursor: pointer;
+    padding: 0;
+    z-index: 2;
+  }
+  .iter13a-pill-collapse:hover {
+    color: rgba(245, 228, 196, 0.95);
+    background: rgba(245, 228, 196, 0.18);
+  }
+  #cdpLoadPill[data-collapsed="1"] .iter13a-pill-collapse {
+    display: none;
+  }
+}
+/* On desktop, no collapse toggle needed (pill is unobtrusive at 280px max). */
+@media (min-width: 760px) {
+  .iter13a-pill-collapse { display: none; }
+}
+</style>
+<script>
+/* ════════════════════════════════════════════════════════════════════
+   iter13a: load pill collapse toggle (mobile)
+   When the reading pill appears on a narrow viewport, allow the user to
+   collapse it to a compact icon-only pin in the bottom-right corner so
+   it does not overlay other content. Tap the pin to expand again.
+   ════════════════════════════════════════════════════════════════════ */
+(function iter13aPillCollapse() {
+  function wirePill() {
+    var pill = document.getElementById('cdpLoadPill');
+    if (!pill) return;
+    if (pill.querySelector('.iter13a-pill-collapse')) return;
+    // Inject the collapse button
+    var btn = document.createElement('button');
+    btn.className = 'iter13a-pill-collapse';
+    btn.setAttribute('aria-label', 'Collapse progress pill');
+    btn.textContent = '\u2212';  // minus sign U+2212, not an en-dash
+    btn.onclick = function(ev) {
+      ev.stopPropagation();
+      pill.setAttribute('data-collapsed', '1');
+    };
+    pill.appendChild(btn);
+    // Tap the collapsed pill to expand
+    pill.addEventListener('click', function() {
+      if (pill.getAttribute('data-collapsed') === '1') {
+        pill.removeAttribute('data-collapsed');
+      }
+    });
+  }
+  // Re-wire whenever the pill is shown (showLoadPill displays it)
+  document.addEventListener('DOMContentLoaded', wirePill);
+  if (document.readyState !== 'loading') wirePill();
+  // Also observe for show events
+  var pillObserver = null;
+  try {
+    var target = document.getElementById('cdpLoadPill');
+    if (target && window.MutationObserver) {
+      pillObserver = new MutationObserver(function() { wirePill(); });
+      pillObserver.observe(target, { attributes: true, attributeFilter: ['style'] });
+    }
+  } catch(e) { /* non-fatal */ }
+})();
+</script>
 </body>
 </html>
