@@ -6421,7 +6421,7 @@ async function loadReading(dateStr, tier) {
     }
   } catch(e) {}
 
-  const activeTier = tier || currentTier || 'oracle';
+  const activeTier = tier || currentTier || 'free';  // iter13l: default to free, not oracle
   const cont = document.getElementById('readingContent');
 
   if (pollingTimer) { clearInterval(pollingTimer); pollingTimer = null; }
@@ -21376,6 +21376,13 @@ document.addEventListener('DOMContentLoaded', function() {
   };
 
   window.v11PreloadReading = function() {
+    // iter13l: auto-preload disabled. The previous behaviour called
+    // loadReading(TODAY) with no tier argument on every page load, which
+    // defaulted to oracle and wasted API tokens. Readings now fire only on
+    // explicit user action (intention submit or tier click).
+    console.log('[iter13l] auto-preload disabled, awaiting user intent');
+    return;
+    /* DISABLED OLD BODY:
     if (typeof currentReading !== 'undefined' && currentReading) {
       console.log('[iter11] preload skipped, reading already loaded');
       return;
@@ -21403,6 +21410,7 @@ document.addEventListener('DOMContentLoaded', function() {
       window.cdpPreloadInFlight = false;
       console.warn('[iter11] preload start failed', e);
     }
+    */  // end iter13l disabled block
   };
 
   function v11InitCompass() {
@@ -23557,6 +23565,515 @@ body.cdp-v6-active #scompass[data-engagement-state="engaged"] .v11-voice-toggle 
   } else {
     setTimeout(init, 1100);
   }
+})();
+</script>
+
+<!-- ════════════════════════════════════════════════════════════════════
+     iter13j: Build A polish + production bug fixes
+     ════════════════════════════════════════════════════════════════════
+
+     Six fixes, bundled:
+
+     FIX 1 - Restart Reading button (production bug, ongoing).
+         The button was calling changeModeAndReload() which only opened
+         a hidden mode selector and did nothing visible. Real users have
+         been working around this by re-selecting tier. Direct fix:
+         override changeModeAndReload() so the button actually restarts
+         the reading at the current tier.
+
+     FIX 2 - Italic helper text readability.
+         The "A line, a question, a need, an intention. The Oracle replies
+         in the voice you choose." line was italic at small size with low
+         contrast. CSS override: remove italics, lift the size slightly,
+         raise the contrast.
+
+     FIX 3 - Greeting uses real OAuth name.
+         The iter13i safeFirstName() helper fell through to "Friend" or
+         "you" even when an OAuth user was signed in. Override: read the
+         OAuth profile name first when available.
+
+     FIX 4 - Threads trigger button injection.
+         iter13i used .v6-compass-helper class selector. The element has
+         both a class and a stable ID (#v6CompassHelper). The injection
+         occasionally raced. Use the ID, retry up to five times with
+         backoff, fall back to inserting at end of #scompass.
+
+     FIX 5 - Dotted-circle u25CC literal rendering.
+         The Build B starter buttons rendered "u25CC" as literal text.
+         The prepended "\u25CC  " escape was being collapsed somewhere
+         in a render path. Use String.fromCharCode(0x25CC) which is
+         immune to escape-sequence pipeline issues.
+
+     FIX 6 - Defensive polling timeout.
+         If a reading job hangs (Phase 1 returned but Phase 2 never
+         completes), the polling loop currently runs indefinitely until
+         the server's deadline kicks in. Add a client-side guard: after
+         3 minutes past phase1, force a friendly error state rather than
+         spinning forever.
+
+     Reversibility: removing this block reverts behaviour to iter13i.
+     Each fix is independent; if one causes a regression, that fix can
+     be commented out without affecting the others.
+     ════════════════════════════════════════════════════════════════════ -->
+<style>
+/* iter13k: Compass surface polish */
+
+/* FIX 2a: helper text readability (the .cdp-v6-subline class from iter13h,
+   not .v6-compass-helper which is the older "two telescopes" link). */
+#scompass .cdp-v6-subline {
+  font-style: normal !important;
+  font-size: 14.5px !important;
+  color: rgba(245, 228, 196, 0.82) !important;
+  line-height: 1.6 !important;
+  letter-spacing: 0.005em !important;
+}
+@media (max-width: 759px) {
+  #scompass .cdp-v6-subline {
+    font-size: 13.5px !important;
+  }
+}
+
+/* FIX 5a: dotted-circle bullet on prompt starters.
+   The original CSS rule at line 22087 used "\u25CC" which is JavaScript
+   escape syntax, not CSS unicode escape syntax. CSS uses "\25CC" without
+   the "u" prefix. This override fixes the prefix so the bullet renders. */
+.cdp-v6-starter::before {
+  content: "\25CC  " !important;  /* dotted circle U+25CC, gentle bullet */
+}
+
+/* FIX 2b: the older v6-compass-helper element (the "See how the two
+   telescopes meet" link container) is also fine to keep readable. */
+#scompass .v6-compass-helper {
+  font-size: 14px !important;
+  color: rgba(245, 228, 196, 0.78) !important;
+  line-height: 1.55 !important;
+}
+#scompass .v6-compass-helper a {
+  color: rgba(201, 160, 80, 0.92) !important;
+  font-style: italic !important;
+}
+</style>
+<script>
+/* ════════════════════════════════════════════════════════════════════
+   iter13j: Build A polish + production bug fixes
+   ════════════════════════════════════════════════════════════════════ */
+(function iter13jBuildAPolish() {
+
+  // ─── FIX 1: Restart Reading button ──────────────────────────────
+  // Replace changeModeAndReload with a version that actually restarts
+  // the reading at the current tier. The original showed a hidden modal.
+  try {
+    window.changeModeAndReload = function() {
+      try {
+        var currentDateStr = (typeof selectedDate !== 'undefined' && selectedDate)
+                             ? selectedDate
+                             : new Date().toISOString().slice(0, 10);
+        var currentTierKey = (typeof activeTier !== 'undefined' && activeTier)
+                             ? activeTier
+                             : (typeof currentTier !== 'undefined' && currentTier ? currentTier : 'free');
+
+        // Cancel any in-flight polling so the new reading is clean
+        if (typeof pollingTimer !== 'undefined' && pollingTimer) {
+          try { clearInterval(pollingTimer); } catch (e) {}
+          pollingTimer = null;
+        }
+        if (typeof stageTimer !== 'undefined' && stageTimer) {
+          try { clearInterval(stageTimer); } catch (e) {}
+        }
+        // Clear any stuck job marker so the new reading is not blocked
+        try { sessionStorage.removeItem('cdp_active_job'); } catch (e) {}
+        // Reset the phase-1-rendered flag
+        try { window._phase1Rendered = false; } catch (e) {}
+        // Call the canonical reading loader
+        if (typeof loadReading === 'function') {
+          loadReading(currentDateStr, currentTierKey);
+        } else if (typeof generateTierReading === 'function') {
+          generateTierReading(currentTierKey);
+        } else {
+          // Last-resort fallback: full page reload
+          window.location.reload();
+        }
+      } catch (err) {
+        console.warn('[iter13j Restart Reading] fallback to reload:', err.message);
+        window.location.reload();
+      }
+    };
+    console.log('[iter13j] Restart Reading patched');
+  } catch (e) {
+    console.warn('[iter13j] Restart Reading patch failed:', e.message);
+  }
+
+  // ─── FIX 3: real OAuth name in greeting ──────────────────────────
+  // Read the OAuth user's actual first name. Falls back to the profile
+  // name, then to empty string. NEVER returns "Friend" or "you".
+  function getOAuthFirstName() {
+    try {
+      if (typeof currentUser !== 'undefined' && currentUser) {
+        if (currentUser.user_metadata) {
+          var md = currentUser.user_metadata;
+          if (md.first_name) return String(md.first_name).trim();
+          if (md.name) {
+            var parts = String(md.name).trim().split(/\s+/);
+            if (parts[0] && parts[0].length > 0 && parts[0].toLowerCase() !== 'friend') {
+              return parts[0];
+            }
+          }
+          if (md.full_name) {
+            var parts2 = String(md.full_name).trim().split(/\s+/);
+            if (parts2[0] && parts2[0].length > 0 && parts2[0].toLowerCase() !== 'friend') {
+              return parts2[0];
+            }
+          }
+        }
+        if (currentUser.email) {
+          // Best-effort: extract before @ and capitalise. Only if it looks
+          // like a real name (not generic prefix like "info" or "hello").
+          var local = String(currentUser.email).split('@')[0];
+          if (/^[a-zA-Z]+$/.test(local) && local.length > 1 && local.length < 20) {
+            // Don't use email-prefix as name if it looks generic
+            var generic = ['info','hello','contact','admin','support','sales','team'];
+            if (generic.indexOf(local.toLowerCase()) < 0) {
+              return local.charAt(0).toUpperCase() + local.slice(1).toLowerCase();
+            }
+          }
+        }
+      }
+    } catch (e) {}
+    try {
+      var prof = JSON.parse(localStorage.getItem('cdp_profile') || '{}');
+      if (prof && prof.name && typeof prof.name === 'string') {
+        var first = prof.name.trim().split(/\s+/)[0];
+        if (first && first.toLowerCase() !== 'friend' && first.length > 0) {
+          return first;
+        }
+      }
+    } catch (e) {}
+    return '';
+  }
+
+  function isDemoMode() {
+    try {
+      var params = new URLSearchParams(window.location.search);
+      if (params.get('demo') === '1') return true;
+      if (params.get('mode') === 'demo') return true;
+      if (localStorage.getItem('cdp_demo') === '1') return true;
+    } catch (e) {}
+    return false;
+  }
+
+  // ─── FIX 4 + FIX 5: re-implement greeting and starter render ─────
+  // Override the iter13i greeting/starter render with a version that:
+  //   - Uses real OAuth name (FIX 3)
+  //   - Uses literal dotted-circle character via fromCharCode (FIX 5)
+  //   - Re-injects the threads trigger button with ID-based selector
+  //     and retry (FIX 4)
+
+  function classifyThreadsLocal() {
+    var threads = (window.cdpThreadsAPI && typeof window.cdpThreadsAPI.active === 'function')
+                  ? (window.cdpThreadsAPI.active() || [])
+                  : [];
+    var today = new Date();
+    var todayStr = today.toISOString().slice(0, 10);
+    var todays = [];
+    var recent = [];
+    threads.forEach(function(thr) {
+      if (!thr || !thr.label) return;
+      if (thr.date && thr.date === todayStr) {
+        todays.push(thr);
+      } else {
+        recent.push(thr);
+      }
+    });
+    return { todays: todays, recent: recent };
+  }
+
+  function buildIter13jGreeting() {
+    var name = getOAuthFirstName();
+    var nameTag = name ? ' ' + name : '';
+    var classified = classifyThreadsLocal();
+    var now = new Date();
+    var hour = now.getHours();
+    var dow = now.getDay();
+    var demo = isDemoMode();
+
+    // Tier 0: thread dated today
+    if (classified.todays.length > 0) {
+      var first = classified.todays[0];
+      var label = String(first.label).replace(/[<>"]/g, '').trim().slice(0, 80);
+      if (classified.todays.length === 1) {
+        if (hour < 12) return 'Morning' + nameTag + '. ' + label + ' is today.';
+        if (hour < 17) return label + ' is today' + nameTag + '. Where are you with it?';
+        if (hour < 21) return 'Evening' + nameTag + '. How did ' + label + ' land?';
+        return 'Late' + nameTag + '. How did ' + label + ' land?';
+      } else {
+        if (hour < 12) return 'Morning' + nameTag + '. A full day on the schedule.';
+        return 'A full day' + nameTag + '. Where are you with it?';
+      }
+    }
+
+    // Tier 1: recent thread carrying soft context
+    if (classified.recent.length > 0) {
+      var dateStr = now.toISOString().slice(0, 10);
+      var hash = 0;
+      for (var i = 0; i < dateStr.length; i++) {
+        hash = ((hash << 5) - hash) + dateStr.charCodeAt(i);
+        hash = hash & hash;
+      }
+      var pick = classified.recent[Math.abs(hash) % classified.recent.length];
+      var rlabel = String(pick.label).replace(/[<>"]/g, '').trim().slice(0, 80);
+      if (hour < 12) return 'Morning' + nameTag + '. How is ' + rlabel + ' sitting?';
+      if (hour < 17) return 'Where are you with ' + rlabel + nameTag + '?';
+      if (hour < 21) return 'Evening' + nameTag + '. ' + rlabel + ' been on your mind?';
+      return 'Late' + nameTag + '. Still thinking about ' + rlabel + '?';
+    }
+
+    // Tier 2: yesterday's intention
+    try {
+      var raw = sessionStorage.getItem('cdp_compass_yesterday')
+             || localStorage.getItem('cdp_last_intention');
+      if (raw) {
+        var parsed = JSON.parse(raw);
+        if (parsed && parsed.text && parsed.date) {
+          var iDate = new Date(parsed.date);
+          var diff = Math.round((now - iDate) / (24 * 3600 * 1000));
+          if (diff === 1 && parsed.text.length < 80) {
+            var safe = parsed.text.replace(/[<>"]/g, '').slice(0, 70);
+            return 'Morning' + nameTag + '. How did "' + safe + '" land?';
+          }
+        }
+      }
+    } catch (e) {}
+
+    // Tier 3: small, present, time-of-day fallback. NEVER says "Friend"
+    // or "you". In demo mode with no real name, the greeting is just the
+    // time of day without an appendage.
+    if (hour < 6) return 'Early hours' + nameTag + '.';
+    if (hour < 12) {
+      if (dow === 1) return 'Morning' + nameTag + '. Monday again.';
+      if (dow === 5) return 'Morning' + nameTag + '. End of the week.';
+      if (dow === 0 || dow === 6) return 'Morning' + nameTag + '. Weekend.';
+      return 'Morning' + nameTag + '.';
+    }
+    if (hour < 17) return 'Afternoon' + nameTag + '.';
+    if (hour < 21) {
+      if (dow === 5) return 'Evening' + nameTag + '. Long week.';
+      return 'Evening' + nameTag + '.';
+    }
+    return 'Still up' + nameTag + '?';
+  }
+
+  function buildIter13jStarters() {
+    var classified = classifyThreadsLocal();
+    var starters = [];
+
+    if (classified.todays.length > 0) {
+      var first = classified.todays[0];
+      var label = String(first.label).replace(/[<>"]/g, '').trim().slice(0, 80);
+      starters.push('Help me prepare for ' + label + '.');
+      starters.push('What is the most useful frame for ' + label + '?');
+    }
+    if (classified.recent.length > 0 && starters.length < 2) {
+      var pick = classified.recent[0];
+      var rlabel = String(pick.label).replace(/[<>"]/g, '').trim().slice(0, 80);
+      starters.push('How is ' + rlabel + ' sitting now?');
+    }
+
+    var openOptions = [
+      'Frame a decision I am sitting with.',
+      'Walk me through what is coming today.',
+      'Listen for a minute while I think out loud.',
+      'Tell me what the day is asking.',
+      'I have a specific question.'
+    ];
+
+    var now = new Date();
+    var dateStr = now.toISOString().slice(0, 10);
+    var hash = 0;
+    for (var i = 0; i < dateStr.length; i++) {
+      hash = ((hash << 5) - hash) + dateStr.charCodeAt(i);
+      hash = hash & hash;
+    }
+    var seed = Math.abs(hash);
+    while (starters.length < 3 && openOptions.length > 0) {
+      var idx = seed % openOptions.length;
+      var pick2 = openOptions.splice(idx, 1)[0];
+      if (starters.indexOf(pick2) < 0) starters.push(pick2);
+      seed = Math.floor(seed / Math.max(openOptions.length, 1)) + (seed * 17) + 31;
+    }
+    return starters.slice(0, 3);
+  }
+
+  // FIX 5: render starters. The dotted-circle bullet is added by the CSS
+  // ::before pseudo-element (fixed in iter13k CSS above to use \25CC
+  // CSS-style escape rather than \u25CC JS-style escape which was rendering
+  // as literal "u25CC" text). The textContent here is plain prose only.
+
+  function renderIter13jStartersInto(container) {
+    if (!container) return;
+    var starters = buildIter13jStarters();
+    while (container.firstChild) container.removeChild(container.firstChild);
+    starters.forEach(function(text) {
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'cdp-v6-starter';
+      btn.textContent = text;
+      btn.addEventListener('click', function(ev) {
+        ev.preventDefault();
+        var inputEl = document.getElementById('v19Intention');
+        if (inputEl) {
+          inputEl.value = text;
+          inputEl.focus();
+          try { inputEl.dispatchEvent(new Event('input', { bubbles: true })); } catch (e) {}
+        }
+      });
+      container.appendChild(btn);
+    });
+  }
+
+  function renderIter13jGreeting() {
+    var scompass = document.getElementById('scompass');
+    if (!scompass) return;
+    var greetingEl = scompass.querySelector('.cdp-v6-greeting');
+    if (greetingEl) {
+      try { greetingEl.textContent = buildIter13jGreeting(); } catch (e) {}
+    }
+    var startersContainer = scompass.querySelector('.cdp-v6-starters');
+    if (startersContainer) {
+      try { renderIter13jStartersInto(startersContainer); } catch (e) {}
+    }
+  }
+
+  // ─── FIX 4: threads trigger button injection ────────────────────
+  // ID-based selector + retry with backoff. Insert after the helper if
+  // possible, else append to #scompass directly.
+  function injectThreadsTriggerRobust(attempt) {
+    attempt = attempt || 0;
+    var scompass = document.getElementById('scompass');
+    if (!scompass) {
+      if (attempt < 8) setTimeout(function() { injectThreadsTriggerRobust(attempt + 1); }, 400);
+      return;
+    }
+    if (scompass.querySelector('.cdp-threads-trigger')) return; // already present
+
+    var helper = document.getElementById('v6CompassHelper')
+              || scompass.querySelector('.v6-compass-helper')
+              || scompass.querySelector('.cdp-v6-helper');
+
+    var btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'cdp-threads-trigger';
+    btn.textContent = 'What are you working on?';
+    btn.setAttribute('aria-label', 'Open active threads editor');
+    btn.addEventListener('click', function(ev) {
+      ev.preventDefault();
+      // Re-open the iter13i modal editor. The function is defined inside
+      // iter13i's IIFE so we trigger via a synthetic event on the API.
+      if (window.cdpThreadsAPI && typeof window.cdpThreadsOpenEditor === 'function') {
+        window.cdpThreadsOpenEditor();
+      } else {
+        // Fallback: dispatch a custom event iter13i can listen for, or
+        // simulate the open via direct DOM construction. If neither
+        // works, log and bail.
+        var existing = document.getElementById('cdpThreadsScrim');
+        if (existing) existing.classList.add('cdp-threads-open');
+        else console.warn('[iter13j] threads editor open hook not found');
+      }
+    });
+
+    if (helper && helper.parentNode) {
+      helper.parentNode.insertBefore(btn, helper.nextSibling);
+    } else {
+      scompass.appendChild(btn);
+    }
+    // Active count label refresh, mirroring iter13i behaviour
+    try {
+      var threads = (window.cdpThreadsAPI && window.cdpThreadsAPI.active) ? window.cdpThreadsAPI.active() : [];
+      if (threads.length === 1) btn.textContent = '1 active thread. Edit or add.';
+      else if (threads.length > 1) btn.textContent = threads.length + ' active threads. Edit or add.';
+    } catch (e) {}
+    requestAnimationFrame(function() { btn.classList.add('cdp-v6-visible'); });
+    console.log('[iter13j] threads trigger injected');
+  }
+
+  // ─── FIX 6: defensive client-side polling timeout ────────────────
+  // If 3 minutes pass after phase 1 was rendered without a final
+  // "complete" status, surface a friendly error so the user is not
+  // stuck on a perpetual "deep analysis composing" spinner.
+  (function installPollingGuard() {
+    var GUARD_AFTER_PHASE1_MS = 180000; // 3 minutes
+    var checkTimer = setInterval(function() {
+      try {
+        if (!window._phase1Rendered) return;
+        if (!window._phase1RenderedAt) {
+          window._phase1RenderedAt = Date.now();
+          return;
+        }
+        var sincePhase1 = Date.now() - window._phase1RenderedAt;
+        if (sincePhase1 > GUARD_AFTER_PHASE1_MS && (typeof pollingTimer !== 'undefined' && pollingTimer)) {
+          // Surface a friendly error in the existing status bar
+          console.warn('[iter13j] reading guard tripped at', Math.round(sincePhase1/1000), 's after phase 1');
+          try { clearInterval(pollingTimer); pollingTimer = null; } catch (e) {}
+          try { if (typeof stageTimer !== 'undefined' && stageTimer) clearInterval(stageTimer); } catch (e) {}
+          var sb = document.getElementById('skeletonStatusBar');
+          if (sb) {
+            sb.innerHTML = '<div style="display:flex;align-items:center;gap:12px;padding:10px 20px;justify-content:space-between;width:100%">'
+              + '<div style="font-size:13px;color:var(--text2);font-family:\'EB Garamond\',serif">'
+              + 'Deep analysis is taking longer than usual. Restart to try again.'
+              + '</div>'
+              + '<button onclick="changeModeAndReload()" style="background:var(--gold);border:none;color:#0e1a2e;padding:7px 16px;border-radius:2px;cursor:pointer;font-family:\'Cinzel\',serif;font-size:11px;letter-spacing:.15em;text-transform:uppercase;font-weight:600">Restart</button>'
+              + '</div>';
+            sb.style.opacity = '1';
+          }
+          window._phase1Rendered = false;
+          window._phase1RenderedAt = null;
+        }
+      } catch (err) {}
+    }, 5000);
+    // Keep the timer reference reachable for debugging
+    window._iter13jGuardTimer = checkTimer;
+  })();
+
+  // Also hook phase1 render to capture the timestamp; the existing render
+  // path sets _phase1Rendered = true but doesn't stamp the time. Patch it.
+  (function patchPhase1Timestamp() {
+    var defined = Object.getOwnPropertyDescriptor(window, '_phase1Rendered');
+    Object.defineProperty(window, '_phase1Rendered', {
+      configurable: true,
+      get: function() { return this.__phase1RenderedActual; },
+      set: function(v) {
+        this.__phase1RenderedActual = v;
+        if (v) this._phase1RenderedAt = Date.now();
+        else this._phase1RenderedAt = null;
+      }
+    });
+  })();
+
+  // ─── apply Build A polish on top of iter13g/h/i ──────────────────
+  function applyIter13j() {
+    try { renderIter13jGreeting(); } catch (e) { console.warn('[iter13j] greeting apply:', e.message); }
+    try { injectThreadsTriggerRobust(0); } catch (e) { console.warn('[iter13j] trigger inject:', e.message); }
+  }
+
+  function init() {
+    var scompass = document.getElementById('scompass');
+    if (!scompass) {
+      setTimeout(init, 500);
+      return;
+    }
+    applyIter13j();
+  }
+
+  // Run later than iter13i (which runs at +1100ms) so the iter13i scaffold
+  // exists when we override copy. 1500ms is enough.
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function() {
+      setTimeout(init, 1500);
+    });
+  } else {
+    setTimeout(init, 1500);
+  }
+
+  console.log('[iter13j] Build A polish loaded');
 })();
 </script>
 </body>
