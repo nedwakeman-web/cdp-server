@@ -247,6 +247,8 @@ app.use((req, res, next) => {
 // realistic worst case with headroom; the frontend has been updated to
 // trim readingData before send so this should be defensive only.
 app.use(express.json({ limit: '16mb' }));
+const composeDepth = require('./lib/compose-depth');
+composeDepth.register(app);
 app.use(express.static(path.join(__dirname, 'public')));
 
 // ── SECURITY HEADERS ─────────────────────────────────────────────
