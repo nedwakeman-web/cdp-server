@@ -247,8 +247,6 @@ app.use((req, res, next) => {
 // realistic worst case with headroom; the frontend has been updated to
 // trim readingData before send so this should be defensive only.
 app.use(express.json({ limit: '16mb' }));
-const composeDepth = require('./lib/compose-depth');
-composeDepth.register(app);
 app.use(express.static(path.join(__dirname, 'public')));
 
 // ── SECURITY HEADERS ─────────────────────────────────────────────
@@ -3196,6 +3194,11 @@ setInterval(() => {
 app.get('/app', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'app.html'));
 });
+// /the-thinking → premise page (the-thinking.html), served explicitly so the
+// catch-all below does not return index.html for this path.
+app.get('/the-thinking', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'the-thinking.html'));
+});
 // Catch-all → landing page (index.html)
 // Must come AFTER all API routes
 // ── FEEDBACK endpoint ────────────────────────────────────────────────────
@@ -3292,21 +3295,14 @@ const astroService = {
   },
   getKin: (dateIso) => {
     try {
-      const base = new Date('1987-07-26T00:00:00Z');
-      const t = new Date(dateIso + 'T00:00:00Z');
-      let diff = Math.round((t - base) / 86400000);
-      const endYr = t.getUTCFullYear();
-      for (let yr = 1988; yr <= endYr; yr++) {
-        if ((yr % 4 === 0 && yr % 100 !== 0) || yr % 400 === 0) {
-          const feb29 = new Date(yr + '-02-29T00:00:00Z');
-          if (feb29 > base && feb29 <= t) diff--;
-        }
-      }
-      const kin = ((diff % 260) + 260) % 260 + 1;
-      const toneNum = ((kin - 1) % 13) + 1;
-      const sealIdx = (kin - 1) % 20;
+      // P0-01 fix: delegate to the canonical getKin (Foundation for the Law of
+      // Time anchor, 8 Jul 2024 = Kin 1, leap days excluded) so the calendar,
+      // day-data and best-day surfaces use the SAME count as the reading. The
+      // previous body used a separate 1987-07-26 base and a divergent GAP set,
+      // which left these surfaces a constant 227 off from the reading.
+      const k = getKin(dateIso);
       const seals = ['dragon','wind','night','seed','serpent','worldbridger','hand','star','moon','dog','monkey','human','skywalker','wizard','eagle','warrior','earth','mirror','storm','sun'];
-      return { kin, seal: seals[sealIdx], tone: toneNum, isGAP: isGAPKin(kin) };
+      return { kin: k.kin, seal: seals[(k.kin - 1) % 20], tone: k.toneNum, isGAP: k.isGAP };
     } catch(e) {
       return { kin: 1, seal: 'dragon', tone: 1, isGAP: false };
     }
