@@ -38,7 +38,7 @@
   if (window.__cdpHomeMounted) return;
   window.__cdpHomeMounted = true;
 
-  var NAVY = '#031731';
+  var NAVY = '#0A1828';
   var GOLD = '#C9A050';
   var GOLD_SOFT = '#E8C878';
   var GOLD_LINE = 'rgba(201,160,80,0.18)';
@@ -51,9 +51,9 @@
   function injectStyle() {
     if (document.getElementById('cdph-style')) return;
     var css = [
-      '.cdph-handle{position:fixed;top:50%;transform:translateY(-50%);z-index:430;width:24px;height:150px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:' + TEXT_DIM + ';background:' + NAVY + ';border:1px solid ' + GOLD_LINE + ';padding:0;font-family:Georgia,serif;transition:color .2s,border-color .2s;}',
-      '.cdph-handle:hover{color:' + GOLD + ';border-color:' + GOLD + ';}',
-      '.cdph-handle span{writing-mode:vertical-rl;text-orientation:mixed;font-size:10px;letter-spacing:2px;text-transform:uppercase;white-space:nowrap;}',
+      '.cdph-handle{position:fixed;top:50%;transform:translateY(-50%);z-index:430;width:27px;height:auto;min-height:120px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:' + GOLD + ';background:#122440;border:1px solid ' + GOLD + ';padding:16px 4px;font-family:Georgia,serif;transition:color .2s,border-color .2s,background .2s;}',
+      '.cdph-handle:hover{color:' + GOLD_SOFT + ';background:#16294a;}',
+      '.cdph-handle span{writing-mode:vertical-rl;text-orientation:mixed;font-size:10.5px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;white-space:nowrap;}',
       '.cdph-handle-left{left:0;border-left:none;border-radius:0 3px 3px 0;}',
       '.cdph-handle-right{right:0;border-right:none;border-radius:3px 0 0 3px;}',
       '.cdph-handle-right span{transform:rotate(180deg);}',
@@ -554,12 +554,12 @@
   function mount() {
     injectStyle();
     drawers.left = buildDrawer('left', 'Vault and patterns');
-    drawers.right = buildDrawer('right', 'People and reach');
+    drawers.right = buildDrawer('right', 'People and readings');
     scrim = el('div', 'cdph-scrim');
     scrim.addEventListener('click', closeAll);
 
     document.body.appendChild(buildHandle('left', 'Vault and patterns'));
-    document.body.appendChild(buildHandle('right', 'People and reach'));
+    document.body.appendChild(buildHandle('right', 'People and readings'));
     document.body.appendChild(drawers.left);
     document.body.appendChild(drawers.right);
     document.body.appendChild(scrim);
