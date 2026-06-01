@@ -4900,6 +4900,21 @@ try {
   console.error('CDP v21 patch failed to register:', e.message);
 }
 
+// ── Compose-depth route: the bounded, lens-disciplined Compass reflection ─────
+// POST /api/compose/depth, backed by the tested coordinates and lenses modules.
+// Additive and bounded (4000 tokens, single request), so it cannot hang the way
+// a long reading can. Drop coordinates.js, lenses.js, and compose-depth.js into
+// the repo root alongside this file for the require to resolve.
+try {
+  let _composeDepth;
+  try { _composeDepth = require('./lib/compose-depth'); }
+  catch (_e) { _composeDepth = require('./compose-depth'); }
+  _composeDepth.register(app);
+  console.log('CDP compose-depth route registered');
+} catch (e) {
+  console.error('CDP compose-depth failed to register:', e.message);
+}
+
 // ── Catch-all SPA route ──────────────────────────────────────────────────────
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
