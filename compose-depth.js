@@ -96,7 +96,7 @@ async function handler(req, res) {
   const anchorLine = intention.anchor && intention.anchor.label
     ? '\n\nIt points at a moment: ' + intention.anchor.label + (intention.anchor.date ? ' (' + intention.anchor.date + ')' : '')
     : '';
-  const userContent = 'The person is holding this concern and has reached for depth on it:\n\n' + intention.text.trim() + anchorLine;
+  const userContent = 'The person is holding this and has reached for depth on it:\n\n' + intention.text.trim() + anchorLine;
 
   try {
     const upstream = await fetch(ANTHROPIC_URL, {
