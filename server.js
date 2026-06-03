@@ -793,9 +793,10 @@ const TONES=['Magnetic','Lunar','Electric','Self-Existing','Overtone','Rhythmic'
   'Resonant','Galactic','Solar','Planetary','Spectral','Crystal','Cosmic'];
 const KIN_COLORS=['Red','White','Blue','Yellow','Red','White','Blue','Yellow','Red','White',
   'Blue','Yellow','Red','White','Blue','Yellow','Red','White','Blue','Yellow'];
-const GAP=new Set([1,2,3,4,5,8,9,10,11,12,19,20,21,22,23,26,27,28,29,30,
-  53,54,55,56,57,60,61,62,63,64,71,72,73,74,75,78,79,80,81,82,
-  105,106,107,108,109,112,113,114,115,116,133,134]);
+const GAP=new Set([1,20,22,39,43,50,51,58,64,69,72,77,85,88,93,96,
+  106,107,108,109,110,111,112,113,114,115,
+  146,147,148,149,150,151,152,153,154,155,
+  165,168,173,176,184,189,192,197,203,210,211,218,222,239,241,260]);
 
 function getKin(dateStr){
   const d=new Date(dateStr+'T12:00:00Z');
