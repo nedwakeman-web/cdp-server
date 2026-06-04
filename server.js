@@ -983,6 +983,54 @@ function getAspects(planets){
 }
 
 // ══════════════════════════════════════════════════════════════════
+// ATTACHMENT BLOCKS: turn brought-in files into model content blocks
+// ══════════════════════════════════════════════════════════════════
+// The Compass and the Oracle ask let a person bring in an image, a PDF,
+// or a text file so the reply can consider it. The client sends a small
+// wire shape; this builder validates it server-side (the client cannot be
+// trusted) and returns Anthropic content blocks. Count, size, and media
+// type are all bounded here. Anything unknown or oversized is skipped.
+const ATT_MAX_FILES = 4;
+const ATT_IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/gif', 'image/webp'];
+const ATT_B64_MAX = 6_800_000;   // base64 chars, about 5MB of binary
+const ATT_TEXT_MAX = 20000;      // characters of a brought-in text file
+
+function buildAttachmentBlocks(attachments) {
+  const blocks = [];
+  if (!Array.isArray(attachments)) return blocks;
+  let count = 0;
+  for (const a of attachments) {
+    if (count >= ATT_MAX_FILES) break;
+    if (!a || typeof a !== 'object') continue;
+    const name = (typeof a.name === 'string' ? a.name : 'attachment').slice(0, 200);
+    if (a.kind === 'image') {
+      if (typeof a.data !== 'string' || a.data.length === 0 || a.data.length > ATT_B64_MAX) continue;
+      const mt = ATT_IMAGE_TYPES.includes(a.mediaType) ? a.mediaType : 'image/png';
+      blocks.push({ type: 'image', source: { type: 'base64', media_type: mt, data: a.data } });
+      count += 1;
+    } else if (a.kind === 'document') {
+      if (typeof a.data !== 'string' || a.data.length === 0 || a.data.length > ATT_B64_MAX) continue;
+      blocks.push({ type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: a.data } });
+      count += 1;
+    } else if (a.kind === 'text') {
+      if (typeof a.textContent !== 'string' || a.textContent.length === 0) continue;
+      const text = a.textContent.slice(0, ATT_TEXT_MAX);
+      blocks.push({ type: 'text', text: 'Attached file "' + name + '":\n\n' + text });
+      count += 1;
+    }
+  }
+  return blocks;
+}
+
+// Compose a user message that may carry attachments. When there are none, the
+// plain string is returned, preserving the existing behaviour exactly.
+function userContentWith(text, attachments) {
+  const blocks = buildAttachmentBlocks(attachments);
+  if (blocks.length === 0) return text;
+  return [{ type: 'text', text }].concat(blocks);
+}
+
+// ══════════════════════════════════════════════════════════════════
 // THE FIX: STREAMING API CALL
 // ══════════════════════════════════════════════════════════════════
 function callAPI(model, maxTok, sys, user, hardCapMs) {
@@ -2375,8 +2423,13 @@ RULES:
       p.birthDay ? `Born: ${p.birthDay}/${p.birthMonth}/${p.birthYear}${p.birthTime ? ' at ' + p.birthTime : ''}${p.birthLocation ? ' in ' + p.birthLocation : ''}` : '',
     ].filter(Boolean).join('\n');
 
-    const ans = await callAPI('claude-sonnet-4-6', 2500, sys,
-      `${fullContext}\n\nQuestion from ${firstName}: ${question}`);
+    const askAttBlocks = buildAttachmentBlocks(req.body.attachments);
+    const sysWithAtt = askAttBlocks.length
+      ? sys + `\n\nThe reader has attached ${askAttBlocks.length === 1 ? 'a file' : askAttBlocks.length + ' files'} (image, document, or text). Examine what it contains and let your answer draw on it concretely where it bears on their question.`
+      : sys;
+    const askText = `${fullContext}\n\nQuestion from ${firstName}: ${question}`;
+    const askContent = userContentWith(askText, req.body.attachments);
+    const ans = await callAPI('claude-sonnet-4-6', 2500, sysWithAtt, askContent);
     res.json({answer: ans});
   } catch(e) {
     console.error('Ask error:', e.message);
@@ -2648,8 +2701,8 @@ function getDreamspellSynastry(kinA, kinB) {
 
   const chromaticDesc = {
     'same-tribe': colorA + ' tribe, you share the same chromatic family. Natural resonance in how you process and express energy. You understand each other\'s fundamental mode without explanation.',
-    'chromatic-partner': colorA + ' and ' + colorB + ' - complementary partner colours. This is one of the most harmonious pairings in Dreamspell. Your energies naturally complete each other.',
-    'cross-family': colorA + ' and ' + colorB + ' - different colour families. Your modes of engaging with reality are genuinely different, which creates richness and the need for translation.',
+    'chromatic-partner': colorA + ' and ' + colorB + ' are complementary partner colours. This is one of the most harmonious pairings in Dreamspell. Your energies naturally complete each other.',
+    'cross-family': colorA + ' and ' + colorB + ' belong to different colour families. Your modes of engaging with reality are genuinely different, which creates richness and the need for translation.',
   }[chromatic];
 
   // Tonal relationship
@@ -3974,18 +4027,28 @@ Plain language, real wisdom, no decoration.`;
 
     const systemPrompt = baseSystem + voiceRules;
 
+    // If the person brought files in, tell the voice to look at them and refer
+    // to what they actually show, still within the breath-length reply.
+    const attBlocks = buildAttachmentBlocks(req.body && req.body.attachments);
+    const attachClause = attBlocks.length
+      ? `\n\nTHE PERSON HAS BROUGHT IN ${attBlocks.length === 1 ? 'a file' : attBlocks.length + ' files'} (an image, a document, or text) alongside what they wrote. Look at what it actually contains and let your reply refer to it concretely, in light of their intention and today. Do not describe the file mechanically; respond to what it shows. Stay within the breath length.`
+      : '';
+    const fullSystem = systemPrompt + attachClause;
+
     const userMessage = safeName
       ? `${safeName} wrote: "${cleanIntention}"`
       : `The user wrote: "${cleanIntention}"`;
+    const userContent = userContentWith(userMessage, req.body && req.body.attachments);
+    const replyMaxTok = attBlocks.length ? 360 : 220;
 
     // ─── ANTHROPIC CALL ──────────────────────────────────────────
     let replyText = '';
     try {
       replyText = await callAPI(
         'claude-sonnet-4-6',
-        220,
-        systemPrompt,
-        userMessage
+        replyMaxTok,
+        fullSystem,
+        userContent
       );
     } catch (apiErr) {
       console.error('[POST /api/compass/reply anthropic error]', apiErr.message);
