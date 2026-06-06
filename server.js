@@ -1159,8 +1159,33 @@ function callAPI(model, maxTok, sys, user, hardCapMs) {
 // Converts user profile + reading history into a rich Oracle brief.
 // Called by generateReading(), replaces the old ad-hoc profileBlock.
 // ══════════════════════════════════════════════════════════════════
+// Normalise saved Vessel profile fields (model.ts StoredProfile) to the names
+// buildProfileContext and the compatibility route already read. Additive and
+// backward compatible: a legacy field is never overwritten, nothing is dropped,
+// so a profile that only carries the old shape reads exactly as before.
+function normaliseProfileFields(p) {
+  if (!p || typeof p !== 'object') return p;
+  const n = Object.assign({}, p);
+  if (n.birthDate && (!n.birthYear || !n.birthMonth || !n.birthDay)) {
+    const m = String(n.birthDate).match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (m) {
+      n.birthYear = n.birthYear || Number(m[1]);
+      n.birthMonth = n.birthMonth || Number(m[2]);
+      n.birthDay = n.birthDay || Number(m[3]);
+    }
+  }
+  if (!n.birthLocation && n.birthPlace) n.birthLocation = n.birthPlace;
+  if (!n.name && n.fullName) n.name = n.fullName;
+  if (!n.relationships && n.keyPeople) n.relationships = n.keyPeople;
+  if (!n.active_threads && n.projects) n.active_threads = n.projects;
+  if (!n.intentions && n.currentIntentions) n.intentions = n.currentIntentions;
+  return n;
+}
+
 function buildProfileContext(p, recentHistory = [], yesterdayIntention = null) {
   if (!p || Object.keys(p).length === 0) return 'No personal profile provided, give a universal reading grounded in the cosmic data.';
+
+  p = normaliseProfileFields(p);
 
   const lines = [];
 
@@ -2096,9 +2121,18 @@ app.post('/api/reading/start', async (req, res) => {
           }
         },
         onSectionComplete: (sectionId, result) => {
-          // Optional progressive update hook. Currently logs only.
-          // Future enhancement: live-update the job result so clients
-          // polling at high frequency can render sections one by one.
+          // Progressive accumulation. Each section is recorded on the job as
+          // it lands, so the status endpoint reports genuine progress and a
+          // render can show sections arriving one by one rather than a counter
+          // against nothing. Purely additive: the happy-path assembly below
+          // still produces the authoritative result.
+          const job = jobs.get(jobId);
+          if (!job || job.status === 'complete' || job.status === 'error') return;
+          if (!job.partialMap) { job.partialMap = {}; job.sectionsReady = 0; }
+          if (sectionId && result && !job.partialMap[sectionId]) {
+            job.partialMap[sectionId] = result;
+            job.sectionsReady = Object.keys(job.partialMap).length;
+          }
         }
       });
 
@@ -2338,10 +2372,12 @@ app.get('/api/reading/status/:jobId', (req, res) => {
   // Phase 1 complete, return actionable core while phase 2 continues
   if (job.status === 'phase1_complete' && job.phase1) {
     const elapsed = Math.round((Date.now() - job.startedAt) / 1000);
-    return res.json({ status: 'phase1_complete', phase1: job.phase1, elapsed, tier: job.tier });
+    return res.json({ status: 'phase1_complete', phase1: job.phase1, elapsed, tier: job.tier,
+      sectionsReady: job.sectionsReady || 0,
+      sectionsDone: job.partialMap ? Object.keys(job.partialMap) : [] });
   }
   const elapsed = Math.round((Date.now() - job.startedAt) / 1000);
-  res.json({ status: 'pending', elapsed, tier: job.tier });
+  res.json({ status: 'pending', elapsed, tier: job.tier, sectionsReady: job.sectionsReady || 0 });
 });
 
 // ── LEGACY SYNC READING ──
@@ -2887,8 +2923,8 @@ app.post('/api/compatibility', async (req, res) => {
   if (!personA || !personB) return res.status(400).json({ error: 'Both people required' });
 
   try {
-    const pA = personA;
-    const pB = personB;
+    const pA = normaliseProfileFields(personA);
+    const pB = normaliseProfileFields(personB);
 
     const today = new Date().toISOString().slice(0, 10);
 
@@ -3052,9 +3088,34 @@ app.post('/api/compatibility', async (req, res) => {
     const lpBStr  = numB ? String(numB.lp) : 'unknown';
     const lpAnm   = (numA && numA.lpM) ? numA.lpM.n : '';
     const lpBnm   = (numB && numB.lpM) ? numB.lpM.n : '';
-    const ctxA    = pA.context ? 'Context: ' + pA.context : '';
-    const ctxB    = pB.context ? 'Context: ' + pB.context : '';
-    const userCtx = customContext ? 'USER CONTEXT: ' + customContext : '';
+    // Lived personal context, treated as a primary input alongside the six
+    // symbolic frameworks. Consumes the full saved profile when present and is
+    // backward compatible: when only .context exists it reads as it did before.
+    // Accepts both the saved-profile field names and the legacy ones.
+    function richContext(pp) {
+      const bits = [];
+      const roles = pp.roles;
+      if (roles) bits.push('Roles in life: ' + (Array.isArray(roles) ? roles.join(', ') : roles));
+      const proj = pp.projects || pp.active_threads || pp.activeThreads;
+      if (proj) bits.push('What they are carrying now: ' + (Array.isArray(proj) ? proj.join(', ') : proj));
+      const ints = pp.currentIntentions || pp.intentions;
+      if (ints) bits.push('Current intentions: ' + (Array.isArray(ints) ? ints.join(', ') : ints));
+      const kp = pp.keyPeople || pp.relationships;
+      if (kp) {
+        const kpStr = (typeof kp === 'object' && !Array.isArray(kp))
+          ? Object.keys(kp).map(function(k) { return k + ': ' + (Array.isArray(kp[k]) ? kp[k].join(', ') : kp[k]); }).join('; ')
+          : (Array.isArray(kp) ? kp.join(', ') : kp);
+        bits.push('People who matter to them: ' + kpStr);
+      }
+      if (pp.location) bits.push('Lives in: ' + pp.location);
+      if (pp.context) bits.push('In their own words and the user notes: ' + pp.context);
+      return bits.length ? bits.join('\n') : '';
+    }
+    const ctxA    = richContext(pA);
+    const ctxB    = richContext(pB);
+    const relationship = (req.body.relationship || pB.relationship || pA.relationship || '').toString().trim();
+    const relLine = relationship ? 'STATED RELATIONSHIP: ' + nameB + ' is ' + relationship + ' to ' + nameA + '.' : '';
+    const userCtx = customContext ? 'WHAT THE USER WROTE ABOUT THIS CONNECTION: ' + customContext : '';
     const aspList = aspectList || 'Insufficient birth data for precise aspects';
     const aspJSON = synAspects.slice(0, 5).map(function(a) {
       return '{"aspect":"' + a.desc.replace(/"/g, "'") + '","interpretation":"<3 sentences: what this cross-aspect means for ' + nameA + ' and ' + nameB + ' specifically>"}';
@@ -3069,8 +3130,10 @@ app.post('/api/compatibility', async (req, res) => {
       + '3. Dreamspell synastry (chromatic family, tonal relationship, combined Kin, Arguelles 1987)\n'
       + '4. Natal lunar phase archetypes (birth emotional rhythm, Brady 1999)\n'
       + '5. Biorhythm cross-analysis today (physical, emotional, intellectual cycle synchrony)\n'
-      + '6. Chinese astrology (solar year signs, CNY-corrected, three-harmony and six-clash system)\n\n'
+      + '6. Chinese astrology (solar year signs, CNY-corrected, three-harmony and six-clash system)\n'
+      + 'PLUS the lived personal context provided below. It is a primary input, not background colour.\n\n'
       + 'RULES:\n'
+      + '- You have been told real things about ' + nameA + ' and ' + nameB + ': their roles, what they are carrying, who matters to them, how they relate, and what the user wrote about this connection. Treat this lived context as a primary input. Let it shape the reading as much as the six symbolic frameworks. Where a framework illuminates something in their actual situation, connect the two explicitly by name. Never give a generic reading when specific context is present.\n'
       + '- Address ' + nameA + ' directly. Use both names. Never "Person A" or "Person B".\n'
       + '- Synthesise ALL SIX frameworks. When multiple frameworks agree on a dynamic, name that convergence explicitly, it is the most reliable signal.\n'
       + '- When frameworks diverge, name the paradox and explain what it means for this specific relationship.\n'
@@ -3087,11 +3150,14 @@ app.post('/api/compatibility', async (req, res) => {
     const user = 'PERSON A, ' + nameA + ':\n'
       + formatNatal(natalA, kinA, numA, moonPhaseA, pA) + '\n'
       + (chineseA ? 'Chinese sign: ' + chineseAStr + '\n' : '')
-      + ctxA + '\n\n'
+      + (ctxA ? 'LIVED CONTEXT for ' + nameA + ':\n' + ctxA + '\n' : '')
+      + '\n'
       + 'PERSON B, ' + nameB + ':\n'
       + formatNatal(natalB, kinB, numB, moonPhaseB, pB) + '\n'
       + (chineseB ? 'Chinese sign: ' + chineseBStr + '\n' : '')
-      + ctxB + '\n\n'
+      + (ctxB ? 'LIVED CONTEXT for ' + nameB + ':\n' + ctxB + '\n' : '')
+      + '\n'
+      + (relLine ? relLine + '\n\n' : '')
       + 'ASTROLOGICAL CROSS-ASPECTS (approximate, Meeus 1998):\n' + aspList + '\n\n'
       + numCrossText + '\n\n'
       + dreamspellCrossText + '\n\n'
