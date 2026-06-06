@@ -4047,7 +4047,16 @@ Plain language, real wisdom, no decoration.`;
     const attachClause = attBlocks.length
       ? attachmentReflectionNote(attBlocks.length)
       : '';
-    const fullSystem = systemPrompt + attachClause;
+    const broughtHist = Array.isArray(req.body && req.body.brought_in_history)
+      ? req.body.brought_in_history
+          .filter((x) => typeof x === 'string' && x.trim().length > 0)
+          .slice(0, 4)
+          .map((x) => x.trim().slice(0, 120))
+      : [];
+    const continuityClause = broughtHist.length
+      ? '\n\nEarlier, this person brought in: ' + broughtHist.join('; ') + '. If it is natural and they have not raised it, you may gently ask after one of these. You know the names only and never the contents, so ask, do not assume.'
+      : '';
+    const fullSystem = systemPrompt + attachClause + continuityClause;
 
     const userMessage = safeName
       ? `${safeName} wrote: "${cleanIntention}"`
