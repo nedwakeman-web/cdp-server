@@ -1030,6 +1030,20 @@ function userContentWith(text, attachments) {
   return [{ type: 'text', text }].concat(blocks);
 }
 
+// A register-aware reflection instruction, used wherever a reply may carry
+// brought-in files. The person handed the Oracle something they are carrying;
+// the Oracle meets it, it does not summarise or process a file. It reads what
+// was brought through the lens of the day, the coordinates, and what the person
+// is holding, and it answers in the active voice. The register of the file sets
+// the register of the reflection.
+function attachmentReflectionNote(count) {
+  const noun = count === 1 ? 'a file' : count + ' files';
+  return '\n\nThe person has handed you ' + noun + ' (an image, a document, or text), not for you to summarise but to meet. ' +
+    'Look at what it actually contains and let your reply speak to it concretely, read through the lens of the day, the coordinates, and what the person is holding. ' +
+    'Match the register of what was brought in: a deck or document invites clear, strategic reflection with only a light touch of the day energy; an image invites what it shows and what it carries; a worried or personal note invites holding before anything else. ' +
+    'Speak in the active voice. Do not describe the file mechanically, and do not let it expand the length your voice already requires.';
+}
+
 // ══════════════════════════════════════════════════════════════════
 // THE FIX: STREAMING API CALL
 // ══════════════════════════════════════════════════════════════════
@@ -2425,7 +2439,7 @@ RULES:
 
     const askAttBlocks = buildAttachmentBlocks(req.body.attachments);
     const sysWithAtt = askAttBlocks.length
-      ? sys + `\n\nThe reader has attached ${askAttBlocks.length === 1 ? 'a file' : askAttBlocks.length + ' files'} (image, document, or text). Examine what it contains and let your answer draw on it concretely where it bears on their question.`
+      ? sys + attachmentReflectionNote(askAttBlocks.length)
       : sys;
     const askText = `${fullContext}\n\nQuestion from ${firstName}: ${question}`;
     const askContent = userContentWith(askText, req.body.attachments);
@@ -4031,7 +4045,7 @@ Plain language, real wisdom, no decoration.`;
     // to what they actually show, still within the breath-length reply.
     const attBlocks = buildAttachmentBlocks(req.body && req.body.attachments);
     const attachClause = attBlocks.length
-      ? `\n\nTHE PERSON HAS BROUGHT IN ${attBlocks.length === 1 ? 'a file' : attBlocks.length + ' files'} (an image, a document, or text) alongside what they wrote. Look at what it actually contains and let your reply refer to it concretely, in light of their intention and today. Do not describe the file mechanically; respond to what it shows. Stay within the breath length.`
+      ? attachmentReflectionNote(attBlocks.length)
       : '';
     const fullSystem = systemPrompt + attachClause;
 
