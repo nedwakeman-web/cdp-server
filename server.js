@@ -4189,6 +4189,123 @@ Plain language, real wisdom, no decoration.`;
 });
 
 
+// ── /api/greeting ───────────────────────────────────────────────────
+// The home centre opener. Two states, decided by the client, which owns the
+// on device record. The client sends the brightest live thread it already
+// holds (text, a living summary, any brought in names) as "last"; the server
+// stays nameless and never stores it. When "last" is absent the home is in its
+// cold orientation state and the server returns a plain account of what CDP is
+// and what it is for. The line is composed for the person and the day, never a
+// hardcoded string, so it reads correctly for anyone.
+//
+// Request body:
+//   { name, voice, context: { date_str, personal_day, personal_year,
+//     universal_year, kin, moon, is_gap, is_black_moon, is_shiva_moon,
+//     is_master_day, deadline }, last: { text, summary, broughtIn[] } | null }
+// Response: { ok, greeting, voice, cold }
+app.post('/api/greeting', async (req, res) => {
+  try {
+    const { name, voice } = req.body || {};
+    const validVoices = ['tradition', 'science', 'everyday'];
+    const safeVoice = validVoices.includes(voice) ? voice : 'everyday';
+    const safeName = (name && typeof name === 'string') ? name.trim().slice(0, 60) : '';
+
+    const ctx = (req.body && typeof req.body.context === 'object' && req.body.context) ? req.body.context : {};
+    const ctxDateStr = String(ctx.date_str || '').slice(0, 60);
+    const ctxPersonalDay = ctx.personal_day ? String(ctx.personal_day).slice(0, 6) : '';
+    const ctxPersonalYear = ctx.personal_year ? String(ctx.personal_year).slice(0, 6) : '';
+    const ctxUniversalYear = ctx.universal_year ? String(ctx.universal_year).slice(0, 6) : '';
+    const ctxKin = String(ctx.kin || '').slice(0, 120);
+    const ctxMoon = String(ctx.moon || '').slice(0, 80);
+    const ctxIsGAP = !!ctx.is_gap;
+    const ctxIsBlackMoon = !!ctx.is_black_moon;
+    const ctxIsShivaMoon = !!ctx.is_shiva_moon;
+    const ctxIsMaster = !!ctx.is_master_day;
+    const ctxDeadline = String(ctx.deadline || '').slice(0, 160);
+
+    const last = (req.body && typeof req.body.last === 'object' && req.body.last) ? req.body.last : null;
+    const lastText = last && typeof last.text === 'string' ? last.text.trim().slice(0, 280) : '';
+    const lastSummary = last && typeof last.summary === 'string' ? last.summary.trim().slice(0, 280) : '';
+    const lastBrought = last && Array.isArray(last.broughtIn)
+      ? last.broughtIn.filter((x) => typeof x === 'string' && x.trim()).slice(0, 3).map((x) => x.trim().slice(0, 80))
+      : [];
+    const isCold = !lastText && !lastSummary;
+
+    // Shared day scaffold, used as light context, not content to recite.
+    const dayLines = [
+      ctxDateStr ? `Today: ${ctxDateStr}` : '',
+      ctxPersonalDay ? `Personal Day: ${ctxPersonalDay}${ctxIsMaster ? ' (a master number day)' : ''}` : '',
+      ctxPersonalYear ? `Personal Year: ${ctxPersonalYear}` : '',
+      ctxUniversalYear ? `Universal Year: ${ctxUniversalYear}` : '',
+      ctxKin ? `Kin: ${ctxKin}${ctxIsGAP ? ' (Galactic Activation Portal day)' : ''}` : '',
+      ctxMoon ? `Moon: ${ctxMoon}${ctxIsBlackMoon ? ' (Black Moon, two days before new moon)' : ''}${ctxIsShivaMoon ? ' (Shiva Moon, two days after new moon)' : ''}` : '',
+      ctxDeadline ? `A date the person flagged: ${ctxDeadline}` : '',
+    ].filter(Boolean).join('\n');
+
+    const voiceNote = safeVoice === 'tradition'
+      ? 'Voice: warm and plainspoken, with the lightest symbolic colour where it helps. No jargon, no framework names at the door.'
+      : safeVoice === 'science'
+        ? 'Voice: warm and plainspoken, grounded in plain psychology where it helps. No mechanism names at the door, no citations.'
+        : 'Voice: a wise, plainspoken friend. No tradition jargon, no neuroscience jargon, no citations.';
+
+    let system;
+    let userMessage;
+    if (isCold) {
+      system = `You are the opening line of Cosmic Daily Planner, met by someone arriving for the first time. Say plainly what CDP is and what it is for: a quiet place to find the signal in a noisy day and decide how to meet it, read through two lenses, one ancient and one modern, that point at the same thing. Invite, do not instruct. ${voiceNote}
+
+Rules: two or three short sentences, 35 to 60 words. No exclamation marks. No em dashes. No en dashes. Use commas, periods, or colons. Do not ask the person a question. Do not use the word concerns; use what matters, what is alive, or intentions. Do not name frameworks or researchers. Return only the line.`;
+      userMessage = dayLines
+        ? `Compose the first time orientation line. Today's coordinates, as light background only, not to recite:\n${dayLines}`
+        : 'Compose the first time orientation line for a new arrival.';
+    } else {
+      system = `You are the home of Cosmic Daily Planner greeting a returning person. Compose one short, pragmatic opener: a brief nod to what last mattered to them, then a pivot to what is alive for them today, then a light, open door to start something new instead. Meet them, do not interrogate them. ${voiceNote}
+
+Rules: two or three short sentences, 35 to 65 words. Address them by first name once if given. No exclamation marks. No em dashes. No en dashes. Use commas, periods, or colons. Do not ask a generic meta question, and never ask what they are holding. Do not use the word concerns; use what matters, what is alive, or intentions. Do not name frameworks or researchers. Return only the line.`;
+      const broughtClause = lastBrought.length
+        ? `\nThey earlier brought in: ${lastBrought.join('; ')} (you know the names only, never the contents).`
+        : '';
+      userMessage = `${safeName ? safeName + ' is returning.' : 'A returning person.'}
+What last mattered to them: "${lastSummary || lastText}"${broughtClause}
+Today's coordinates, as light background only, not to recite:
+${dayLines || '(none provided)'}`;
+    }
+
+    let text = '';
+    try {
+      text = await callAPI('claude-sonnet-4-6', 320, system, userMessage);
+    } catch (apiErr) {
+      console.error('[POST /api/greeting anthropic error]', apiErr.message);
+      const fallback = isCold
+        ? 'Cosmic Daily Planner is a quiet place to find the signal in a noisy day, and to choose how you meet it. It reads the day through two lenses, one ancient and one modern, that point at the same thing.'
+        : `${safeName ? safeName + ', welcome back. ' : 'Welcome back. '}Pick up where you left off, or start something new below.`;
+      return res.json({ ok: true, greeting: fallback, voice: safeVoice, cold: isCold, fallback: true });
+    }
+
+    if (!text || !text.trim()) {
+      return res.status(502).json({ ok: false, error: 'empty_greeting' });
+    }
+
+    // House style scrubber, same belt and braces as the reply route.
+    let greeting = text.trim().replace(/\n{3,}/g, '\n\n');
+    greeting = greeting
+      .replace(/\s*\u2014\s*/g, ', ')
+      .replace(/(\d)\s*\u2013\s*(\d)/g, '$1-$2')
+      .replace(/\s*\u2013\s*/g, ', ')
+      .replace(/!+/g, '.')
+      .replace(/,\s*,/g, ',')
+      .replace(/\.{2,}/g, '.')
+      .replace(/,\s*\./g, '.')
+      .replace(/\s+,/g, ',')
+      .replace(/\s+\./g, '.');
+
+    res.json({ ok: true, greeting, voice: safeVoice, cold: isCold });
+  } catch (e) {
+    console.error('[POST /api/greeting exception]', e);
+    res.status(500).json({ ok: false, error: 'greeting_failed' });
+  }
+});
+
+
 // ── /api/compass/coordinate-drawer ─────────────────────────────────
 // iter12: when a user taps a chip on the Compass surface, return
 // Oracle-generated, bibliography-anchored prose for that chip in their
