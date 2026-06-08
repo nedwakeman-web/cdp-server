@@ -3999,6 +3999,10 @@ app.post('/api/compass/intention', (req, res) => {
 // Cost / latency identical to v1: ~2-5 seconds, ~$0.01-0.03 per call.
 // =====================================================================
 
+let referencesClause;
+try { ({ referencesClause } = require('./lib/reply-references')); }
+catch (_e) { referencesClause = function () { return ''; }; }
+
 app.post('/api/compass/reply', async (req, res) => {
   try {
     const { intention, voice, name, context } = req.body || {};
@@ -4122,13 +4126,15 @@ Plain language, real wisdom, no decoration.`;
     const continuityClause = broughtHist.length
       ? '\n\nEarlier, this person brought in: ' + broughtHist.join('; ') + '. If it is natural and they have not raised it, you may gently ask after one of these. You know the names only and never the contents, so ask, do not assume.'
       : '';
-    const fullSystem = systemPrompt + attachClause + continuityClause;
+    const refsClause = referencesClause(safeVoice, cleanIntention, req.body && req.body.context);
+    const depthClause = '\n\nDepth. This is not a one line reply. Match your depth to what the person brought. A short intention deserves a focused reflection of two or three real paragraphs that say something specific and useful and end on a clear next move or one true question. If they brought a document, read it and engage its actual content, connect it to their day and to what they are weighing, and tell them something they would not get from a glance. Draw on the reference library above only where it genuinely helps. Never pad, never summarise for its own sake, and hold the house style throughout.';
+    const fullSystem = systemPrompt + attachClause + continuityClause + refsClause + depthClause;
 
     const userMessage = safeName
       ? `${safeName} wrote: "${cleanIntention}"`
       : `The user wrote: "${cleanIntention}"`;
     const userContent = userContentWith(userMessage, req.body && req.body.attachments);
-    const replyMaxTok = attBlocks.length ? 360 : 220;
+    const replyMaxTok = attBlocks.length ? 2000 : (cleanIntention.length > 160 ? 1100 : 700);
 
     // ─── ANTHROPIC CALL ──────────────────────────────────────────
     let replyText = '';
