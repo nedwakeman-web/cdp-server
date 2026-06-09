@@ -21,7 +21,158 @@ const orchestrator = require('./reading-orchestrator');
 // SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are set, in-memory fallback
 // otherwise. Owns the store behind getRecentSummaries / storeSummary /
 // isDurable so the v19_summaries call sites do not change shape.
-const memoryStore = require('./cdp-memory-store');
+// cdp-memory-store, inlined below so server.js has no external module file to place.
+const memoryStore = (function () {
+// ══════════════════════════════════════════════════════════════════
+// cdp-memory-store.js
+// Per-person reading-summary substrate. Owns the summary store behind a
+// stable three-method interface so the rest of server.js does not change
+// shape when persistence moves from memory to Supabase.
+//
+//   getRecentSummaries(userKey, limit)  -> rows, newest LAST, capped
+//   storeSummary(userKey, summary)      -> stored row, or null
+//   isDurable()                         -> true when Supabase is configured
+//
+// Durable mode is used when SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are
+// both present. The service-role key is server only and bypasses RLS by
+// design; it must never be sent to or referenced by any client file. When
+// either variable is absent, the module silently uses an in-memory Map with
+// the same interface, so dev and local keep running. This is the same posture
+// the v19 comment block anticipated.
+//
+// Row shape (what every read site already expects is a subset of this):
+//   { at, date, tier, themes[], insight, user_state, source_reading_id,
+//     created_at }
+// created_at is carried so the existing client continuity breadcrumb, which
+// reads summary.created_at for its age logic, keeps working unchanged.
+// ══════════════════════════════════════════════════════════════════
+
+let createClient = null;
+try {
+  ({ createClient } = require('@supabase/supabase-js'));
+} catch (_e) {
+  // Dependency not installed; fall back to memory.
+  createClient = null;
+}
+
+const SUPABASE_URL = process.env.SUPABASE_URL || '';
+const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+const TABLE = 'reading_summaries';
+const MAX_LIMIT = 50;
+const DEFAULT_LIMIT = 12;
+const MEM_CAP_PER_USER = 200;
+
+let client = null;
+if (createClient && SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY) {
+  try {
+    client = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
+      auth: { persistSession: false, autoRefreshToken: false },
+    });
+    console.log('[cdp-memory-store] durable mode: Supabase table ' + TABLE);
+  } catch (e) {
+    client = null;
+    console.error('[cdp-memory-store] Supabase init failed, using in-memory fallback:', e.message);
+  }
+} else {
+  console.log('[cdp-memory-store] fallback mode: in-memory (set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY for durability across restarts)');
+}
+
+// In-memory degraded path: userKey -> array of rows, oldest first.
+const mem = new Map();
+
+function normalise(summary) {
+  const s = summary || {};
+  const themes = Array.isArray(s.themes)
+    ? s.themes.filter((t) => typeof t === 'string' && t.trim()).map((t) => t.trim().slice(0, 80)).slice(0, 8)
+    : [];
+  const insight = (typeof s.insight === 'string' ? s.insight : '').trim().slice(0, 1200);
+  const at = Number.isFinite(s.at) ? s.at : Date.now();
+  return {
+    at,
+    date: (typeof s.date === 'string' && s.date) ? s.date.slice(0, 20) : new Date(at).toISOString().slice(0, 10),
+    tier: (typeof s.tier === 'string' && s.tier) ? s.tier.slice(0, 24) : null,
+    themes,
+    insight,
+    user_state: (typeof s.user_state === 'string' && s.user_state) ? s.user_state.slice(0, 240) : null,
+    source_reading_id: s.source_reading_id ? String(s.source_reading_id).slice(0, 120) : null,
+    created_at: new Date(at).toISOString(),
+  };
+}
+
+function isDurable() {
+  return !!client;
+}
+
+async function storeSummary(userKey, summary) {
+  if (!userKey) return null;
+  const row = normalise(summary);
+  if (!row.insight) return null; // nothing worth persisting
+
+  if (!client) {
+    if (!mem.has(userKey)) mem.set(userKey, []);
+    const list = mem.get(userKey);
+    list.push(row);
+    if (list.length > MEM_CAP_PER_USER) list.splice(0, list.length - MEM_CAP_PER_USER);
+    return row;
+  }
+
+  try {
+    const { data, error } = await client
+      .from(TABLE)
+      .insert({
+        user_key: userKey,
+        at: row.at,
+        date: row.date,
+        tier: row.tier,
+        themes: row.themes,
+        insight: row.insight,
+        user_state: row.user_state,
+        source_reading_id: row.source_reading_id,
+      })
+      .select('at, date, tier, themes, insight, user_state, source_reading_id, created_at')
+      .single();
+    if (error) {
+      console.error('[cdp-memory-store storeSummary]', error.message);
+      return null;
+    }
+    return data;
+  } catch (e) {
+    console.error('[cdp-memory-store storeSummary exception]', e.message);
+    return null;
+  }
+}
+
+async function getRecentSummaries(userKey, limit) {
+  if (!userKey) return [];
+  const cap = Math.min(Math.max(parseInt(limit, 10) || DEFAULT_LIMIT, 1), MAX_LIMIT);
+
+  if (!client) {
+    const list = mem.get(userKey) || [];
+    return list.slice(-cap); // newest last
+  }
+
+  try {
+    const { data, error } = await client
+      .from(TABLE)
+      .select('at, date, tier, themes, insight, user_state, source_reading_id, created_at')
+      .eq('user_key', userKey)
+      .order('at', { ascending: false })
+      .limit(cap);
+    if (error) {
+      console.error('[cdp-memory-store getRecentSummaries]', error.message);
+      return [];
+    }
+    // Query returns newest first; reverse to newest LAST to match the
+    // in-memory contract the read sites were written against.
+    return (data || []).slice().reverse();
+  } catch (e) {
+    console.error('[cdp-memory-store getRecentSummaries exception]', e.message);
+    return [];
+  }
+}
+
+return { getRecentSummaries, storeSummary, isDurable };
+})();
 
 // ══════════════════════════════════════════════════════════════════
 // iter12: Compass Coordinate Drawer
