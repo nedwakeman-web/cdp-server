@@ -2553,8 +2553,13 @@ Return only a JSON object and nothing else, no preface and no code fence: {"link
       const cleaned = String(raw).replace(/```json/g, '').replace(/```/g, '').trim();
       const parsed = JSON.parse(cleaned);
       if (parsed && typeof parsed.observation === 'string') {
-        const obs = parsed.observation.trim();
-        out = { linked: !!parsed.linked && obs.length > 0, observation: obs.length > 0 ? obs : '' };
+        const obs = parsed.observation
+          .replace(/\u2014/g, ', ')
+          .replace(/\u2013/g, ', ')
+          .replace(/\s+([,.;:])/g, '$1')
+          .replace(/\s{2,}/g, ' ')
+          .trim();
+        out = { linked: !!parsed.linked && obs.length > 0, observation: obs };
       }
     } catch (_e) {
       out = { linked: false, observation: '' };
