@@ -14932,9 +14932,7 @@ function buildProfileCard(p, isActive) {
 
 
 function openHelp() {
-  var drawers = document.querySelectorAll('#helpDrawer');
-  var d = drawers[drawers.length-1];
-  if (d) d.style.display = 'block';
+  window.open('/guide.html', '_blank', 'noopener');
 }
 function closeHelp() {
   document.querySelectorAll('#helpDrawer').forEach(function(d){ d.style.display='none'; });
