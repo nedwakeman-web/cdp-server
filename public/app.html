@@ -41,7 +41,7 @@
   --red:#cc4444;--master:#C8A0FF;
 }
 html{font-size:16px;-webkit-text-size-adjust:none}
-body{background:#0A1828;color:var(--text);font-family:'EB Garamond',Georgia,serif;
+body{background:#031831;color:var(--text);font-family:'EB Garamond',Georgia,serif;
   line-height:1.88;min-height:100vh;transition:background .3s,color .3s;position:relative}
 body.light{--bg:#F5F0E8;--bg2:#EDE6D6;--bg3:#E4DBC8;--bg4:#F8F4EC;
   --text:#1A1208;--text2:#3D3220;--text3:#7A6A50;--div:rgba(0,0,0,0.10);--div2:rgba(0,0,0,0.06);
@@ -2811,7 +2811,7 @@ select.entry-input option{background:#0D1E33;color:#E8EDF4}
   /* End V13 voice baseline + compare */
 
 </style>
-</head>
+<style>b,strong{font-weight:normal}</style></head>
 <body>
 <!-- DEV BUILD BANNER (auto-scoped to dev and beta hosts) -->
 <div id="cdp-dev-banner" style="display:none;background:#B8942A;color:#fff;text-align:center;padding:6px 12px;font-family:Helvetica,Arial,sans-serif;font-size:12px;letter-spacing:.05em;position:relative;z-index:9998">
@@ -7426,7 +7426,7 @@ function cleanText(t) {
   }
   return s.trim()
     .replace(/^[_*]+|[_*]+$/g, '')
-    .replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>')
+    .replace(/\*\*(.*?)\*\*/g,'$1')
     .replace(/\*(.*?)\*/g,'<em>$1</em>')
     .replace(/_(.*?)_/g,'<em>$1</em>');
 }
@@ -8664,7 +8664,7 @@ function fillPhase1Sections(p1) {
       if (_p1Synth.startsWith('{')) {
         try { const _pj=JSON.parse(_p1Synth); _p1Synth=_pj.synthesis||''; } catch(e){ _p1Synth=''; }
       }
-      const synthText = _p1Synth.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/\*(.*?)\*/g,'$1').trim();
+      const synthText = _p1Synth.replace(/\*\*(.*?)\*\*/g,'$1').replace(/\*(.*?)\*/g,'$1').trim();
       // Show phase 1 synthesis in the stage display area  
       const sd = document.getElementById('stageDisplay');
       if (sd) {
@@ -9080,7 +9080,7 @@ function fillAISections(data, dateStr) {
         try { const _p=JSON.parse(_synthRaw); _synthRaw = _p.synthesis||''; } catch(e){ _synthRaw=''; }
       }
     }
-    const synthText = _synthRaw.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/\*(.*?)\*/g,'$1').trim();
+    const synthText = _synthRaw.replace(/\*\*(.*?)\*\*/g,'$1').replace(/\*(.*?)\*/g,'$1').trim();
     // If voiced, attach data attributes so toggle can swap in place
     const voicedAttrs = _synthVoiced
       ? ' class="cdp-voiced" data-tradition="' + escapeAttr(_synthVoiced.tradition) + '"' +
@@ -9534,7 +9534,7 @@ function renderReading(data, dateStr) {
 
   // 1. SYNTHESIS
   const synthText = hasAI
-    ? String(r.synthesis||'').replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/\*(.*?)\*/g,'$1').replace(/^[_*]+|[_*]+$/g,'').trim()
+    ? String(r.synthesis||'').replace(/\*\*(.*?)\*\*/g,'$1').replace(/\*(.*?)\*/g,'$1').replace(/^[_*]+|[_*]+$/g,'').trim()
     : '';
   if (synthText) {
     html += `<div class="synthesis tappable" onclick="tapSynthesis()" title="Tap for deeper insight">
