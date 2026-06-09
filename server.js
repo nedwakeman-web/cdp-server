@@ -17,6 +17,12 @@ const { THREE_VOICE_INSTRUCTION, THREE_VOICE_SCHEMA, validateThreeVoiceReading, 
 // ══════════════════════════════════════════════════════════════════
 const orchestrator = require('./reading-orchestrator');
 
+// Durable per-person reading-summary substrate. Supabase-backed when
+// SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are set, in-memory fallback
+// otherwise. Owns the store behind getRecentSummaries / storeSummary /
+// isDurable so the v19_summaries call sites do not change shape.
+const memoryStore = require('./cdp-memory-store');
+
 // ══════════════════════════════════════════════════════════════════
 // iter12: Compass Coordinate Drawer
 // Loads structured bibliography for chip-tap Oracle drawers and
@@ -247,6 +253,7 @@ app.use((req, res, next) => {
 // realistic worst case with headroom; the frontend has been updated to
 // trim readingData before send so this should be defensive only.
 app.use(express.json({ limit: '16mb' }));
+try { require('./cdp-share-server')(app); } catch (e) { console.warn('[cdp] share routes not mounted:', e && e.message); }
 app.use(express.static(path.join(__dirname, 'public')));
 
 // ── SECURITY HEADERS ─────────────────────────────────────────────
@@ -1945,14 +1952,14 @@ app.post('/api/reading/start', async (req, res) => {
   const ds = date || new Date().toISOString().slice(0, 10);
   const jobId = newJobId();
   const activeTier = tier || 'oracle';
+  const readerKey = (typeof v19_userKey === 'function') ? v19_userKey(req) : null;
 
   // v22 memory continuity: pull yesterday-intention from server-side store.
   // Same logic as /api/reading single-shot path. Plumbed into Phase 2.
   let yesterdayIntention = null;
   try {
-    const userKey = (typeof v19_userKey === 'function') ? v19_userKey(req) : null;
-    if (userKey && typeof v19_intentions !== 'undefined' && v19_intentions.get) {
-      const userMap = v19_intentions.get(userKey);
+    if (readerKey && typeof v19_intentions !== 'undefined' && v19_intentions.get) {
+      const userMap = v19_intentions.get(readerKey);
       if (userMap) {
         const dateNow = new Date(ds + 'T12:00:00Z');
         const dateYest = new Date(dateNow.getTime() - 86400000);
@@ -2349,6 +2356,9 @@ app.post('/api/reading/start', async (req, res) => {
         const okCount = reading.sections.filter(s => s.ok).length;
         const citeCount = reading.citationUnion.length;
         console.log(`[orchestrator ${jobId}] COMPLETE tier=${activeTier} sections=${okCount}/${sectionCount} cites=${citeCount} totalMs=${totalMs}`);
+        // Continuity substrate: persist a compact summary now the full reading
+        // text exists. Non-blocking, keyed by the request key captured above.
+        persistReadingSummary(readerKey, reading, activeTier, ds);
       }
     } catch(e) {
       const job = jobs.get(jobId);
@@ -2409,6 +2419,9 @@ app.post('/api/reading', async (req, res) => {
     const elapsed = Date.now() - tStart;
     console.log(`[reading DONE] tier=${reqTier} elapsed=${elapsed}ms hasReading=${!!r} hasError=${!!r?.error}`);
     res.json(r);
+    // Continuity substrate: persist a compact summary after the reading has
+    // been returned to the person. Non-blocking, keyed by the request key.
+    persistReadingSummary(userKey, r && r.reading, reqTier, ds);
   } catch(e) {
     const elapsed = Date.now() - tStart;
     console.error(`[reading ERROR] tier=${reqTier} elapsed=${elapsed}ms message=${e.message}`);
@@ -2509,14 +2522,12 @@ app.post('/api/patterns', async (req, res) => {
     // synthesis works from the brought items alone.
     let memory = [];
     try {
-      if (typeof v19_userKey === 'function' && typeof v19_summaries !== 'undefined') {
-        const uid = v19_userKey(req);
-        if (uid && v19_summaries.has(uid)) {
-          memory = (v19_summaries.get(uid) || [])
-            .slice(-12)
-            .map((s) => ({ themes: Array.isArray(s.themes) ? s.themes : [], insight: (s.insight || '').trim() }))
-            .filter((s) => s.insight);
-        }
+      const uid = (typeof v19_userKey === 'function') ? v19_userKey(req) : null;
+      if (uid) {
+        const rows = await memoryStore.getRecentSummaries(uid, 12);
+        memory = rows
+          .map((s) => ({ themes: Array.isArray(s.themes) ? s.themes : [], insight: (s.insight || '').trim() }))
+          .filter((s) => s.insight);
       }
     } catch (_e) {
       memory = [];
@@ -3850,7 +3861,10 @@ console.log('[v18] Endpoints attached: /api/invitations, /api/invitations/:token
 
 const v19_streaks = new Map();      // userId -> { current, longest, lastVisit, history[] }
 const v19_intentions = new Map();   // userId -> { date -> intentionText }
-const v19_summaries = new Map();    // userId -> array of summary records
+// Reading summaries now live in cdp-memory-store.js (Supabase-backed with an
+// in-memory fallback). The former in-memory v19_summaries Map was removed: all
+// summary reads and writes go through memoryStore so they persist across
+// Railway restarts when SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are set.
 const v19_emails = new Map();       // userId -> { email, timezone, capturedAt }
 const v19_compassCache = new Map(); // userId+date -> compass context
 
@@ -3924,6 +3938,84 @@ function v19_userKey(req) {
       || (req.query && req.query.user_id)
       || (req.headers['x-cdp-anon-id'])
       || null;
+}
+
+// ── Reliable reading-summary write (continuity substrate) ───────────
+// Derive a compact summary from a produced reading and persist it durably,
+// keyed by the request's user key. Derivation is from the structured reading
+// (synthesis, priorities, section headlines), not a second model call, so the
+// write is cheap and reliable and never dominates reading cost. These are
+// top-level function declarations: hoisted, so the reading routes defined
+// earlier in the file can call them at request time.
+function deriveSummaryFromReading(reading, tier, dateStr) {
+  const r = reading || {};
+  const themes = [];
+  const pushTheme = (t) => {
+    if (typeof t !== 'string') return;
+    const v = t.trim();
+    if (v && !themes.some((x) => x.toLowerCase() === v.toLowerCase())) themes.push(v.slice(0, 80));
+  };
+  // Section presence as coarse themes, the same lightweight scheme the client
+  // used, plus focus_on phrases where present.
+  if (r.numerology) pushTheme('numerology');
+  if (r.dreamspell) pushTheme('dreamspell');
+  if (r.astrology) pushTheme('astrology');
+  if (r.moon_section || r.lunar) pushTheme('lunar');
+  if (r.body_section) pushTheme('body');
+  if (r.shadow || r.shadow_work || r.shadow_section) pushTheme('shadow');
+  if (Array.isArray(r.focus_on)) r.focus_on.forEach(pushTheme);
+
+  // Insight: one or two grounded sentences naming the through-line. Prefer the
+  // synthesis, then the first priority, then any summary or intro field.
+  const strip = (s) => String(s == null ? '' : s).replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+  let src = '';
+  if (r.synthesis) src = strip(r.synthesis);
+  else if (Array.isArray(r.priorities) && r.priorities.length) {
+    const p = r.priorities[0];
+    src = strip(typeof p === 'string' ? p : (p && (p.action || p.rationale || p.title)) || '');
+  } else if (r.summary) src = strip(r.summary);
+  else if (r.intro) src = strip(r.intro);
+
+  const sentences = src.match(/[^.!?]+[.!?]+/g);
+  let insight = sentences ? sentences.slice(0, 2).join(' ').trim() : src;
+  insight = insight.slice(0, 600);
+  // House style on stored prose: no em or en dashes, no exclamation marks.
+  insight = insight
+    .replace(/\s*\u2014\s*/g, ', ')
+    .replace(/\s*\u2013\s*/g, ', ')
+    .replace(/!+/g, '.')
+    .replace(/\s+([,.])/g, '$1')
+    .trim();
+
+  return {
+    at: Date.now(),
+    date: dateStr || new Date().toISOString().slice(0, 10),
+    tier: tier || null,
+    themes: themes.slice(0, 8),
+    insight,
+    user_state: null,
+    source_reading_id: r.id || null,
+  };
+}
+
+// Fire-and-forget durable persist. Never blocks or throws into the reading
+// path: the reading is the product, so callers return it to the person first
+// and then persist; on a write failure we log and move on.
+function persistReadingSummary(userKey, reading, tier, dateStr) {
+  if (!userKey || !reading) return;
+  Promise.resolve()
+    .then(() => {
+      const summary = deriveSummaryFromReading(reading, tier, dateStr);
+      if (!summary.insight) return null;
+      return memoryStore.storeSummary(userKey, summary).then((stored) => {
+        if (stored) {
+          v19_metrics.recordSummaryStore(summary.themes.length, summary.insight.length);
+          console.log(`[reading summary persisted] user=${String(userKey).slice(0, 8)} themes=${summary.themes.length} durable=${memoryStore.isDurable()}`);
+        }
+        return stored;
+      });
+    })
+    .catch((e) => console.error('[persistReadingSummary]', e.message));
 }
 
 function v19_dayString(date, timezone) {
@@ -4314,7 +4406,29 @@ app.post('/api/greeting', async (req, res) => {
     const lastBrought = last && Array.isArray(last.broughtIn)
       ? last.broughtIn.filter((x) => typeof x === 'string' && x.trim()).slice(0, 3).map((x) => x.trim().slice(0, 80))
       : [];
-    const isCold = !lastText && !lastSummary;
+    let isCold = !lastText && !lastSummary;
+
+    // Server-side continuity fallback. A returning person on a fresh device or
+    // a cleared client sends no `last`, but still carries a user key. Read the
+    // most recent durable summary and use its insight as the returning
+    // material, so they get a real returning line rather than the cold branch.
+    // The client value always wins when supplied, since it reflects the live
+    // session; this only fires when the client sent nothing.
+    let returningSummary = lastSummary;
+    if (isCold) {
+      try {
+        const uk = (typeof v19_userKey === 'function') ? v19_userKey(req) : null;
+        if (uk) {
+          const rows = await memoryStore.getRecentSummaries(uk, 1);
+          const recent = (rows && rows.length) ? rows[rows.length - 1] : null; // newest last
+          const insight = (recent && typeof recent.insight === 'string') ? recent.insight.trim().slice(0, 280) : '';
+          if (insight) {
+            returningSummary = insight;
+            isCold = false;
+          }
+        }
+      } catch (_e) { /* non-fatal: fall back to the cold orientation line */ }
+    }
 
     // Shared day scaffold, used as light context, not content to recite.
     const dayLines = [
@@ -4350,7 +4464,7 @@ Rules: two or three short sentences, 35 to 65 words. Address them by first name 
         ? `\nThey earlier brought in: ${lastBrought.join('; ')} (you know the names only, never the contents).`
         : '';
       userMessage = `${safeName ? safeName + ' is returning.' : 'A returning person.'}
-What last mattered to them: "${lastSummary || lastText}"${broughtClause}
+What last mattered to them: "${returningSummary || lastText}"${broughtClause}
 Today's coordinates, as light background only, not to recite:
 ${dayLines || '(none provided)'}`;
     }
@@ -4908,35 +5022,35 @@ app.post('/api/streak/visit', (req, res) => {
 // builds the surface that uses these summaries to make readings feel
 // continuous. Schema deliberately small: timestamp, themes, key
 // insight (one sentence), user_state. Total target: 180-220 words.
-app.post('/api/memory/summary', (req, res) => {
+app.post('/api/memory/summary', async (req, res) => {
   try {
     const userId = v19_userKey(req);
-    const { themes, insight, user_state, source_reading_id } = req.body || {};
+    const { themes, insight, user_state, source_reading_id, tier, date } = req.body || {};
 
     if (!userId) return res.status(400).json({ error: 'user_id required' });
     if (typeof insight !== 'string' || insight.length > 1200) {
       return res.status(400).json({ error: 'insight required (max 1200 chars)' });
     }
 
-    const record = {
-      created_at: new Date().toISOString(),
-      themes: Array.isArray(themes) ? themes.slice(0, 8) : [],
+    const stored = await memoryStore.storeSummary(userId, {
+      at: Date.now(),
+      date: typeof date === 'string' ? date : undefined,
+      tier: typeof tier === 'string' ? tier : null,
+      themes: Array.isArray(themes) ? themes : [],
       insight: insight.trim(),
-      user_state: typeof user_state === 'string' ? user_state.slice(0, 240) : null,
+      user_state: typeof user_state === 'string' ? user_state : null,
       source_reading_id: source_reading_id || null,
-    };
+    });
 
-    if (!v19_summaries.has(userId)) v19_summaries.set(userId, []);
-    const list = v19_summaries.get(userId);
-    list.push(record);
+    if (!stored) return res.status(500).json({ error: 'summary store failed' });
 
-    // Bound to 200 most recent summaries per user
-    if (list.length > 200) list.splice(0, list.length - 200);
+    v19_metrics.recordSummaryStore(
+      Array.isArray(stored.themes) ? stored.themes.length : 0,
+      (stored.insight || '').length
+    );
 
-    v19_metrics.recordSummaryStore(record.themes.length, record.insight.length);
-
-    console.log(`[v19 summary_stored] user=${userId.slice(0,8)} themes=${record.themes.length}`);
-    res.json({ ok: true, count: list.length });
+    console.log(`[v19 summary_stored] user=${userId.slice(0, 8)} themes=${Array.isArray(stored.themes) ? stored.themes.length : 0} durable=${memoryStore.isDurable()}`);
+    res.json({ ok: true, durable: memoryStore.isDurable() });
   } catch (e) {
     console.error('[POST /api/memory/summary exception]', e);
     res.status(500).json({ error: 'summary store failed' });
@@ -4985,7 +5099,7 @@ app.post('/api/v19/record-prompt', (req, res) => {
 // Optional theme filter. v20 will use this to inject 1-3 relevant
 // past summaries into the prompt for a new reading; v19 just exposes
 // the data path so the foundation is real.
-app.get('/api/memory/recent', (req, res) => {
+app.get('/api/memory/recent', async (req, res) => {
   try {
     const userId = v19_userKey(req);
     if (!userId) return res.json({ ok: true, summaries: [] });
@@ -4993,14 +5107,17 @@ app.get('/api/memory/recent', (req, res) => {
     const limit = Math.min(parseInt(req.query.limit, 10) || 7, 30);
     const themeFilter = req.query.theme;
 
-    const all = v19_summaries.get(userId) || [];
-    let filtered = all;
+    // Store returns newest LAST. When a theme filter is present, fetch a wider
+    // window so the filter has material, then trim to the limit.
+    const fetchN = themeFilter ? 50 : limit;
+    const rows = await memoryStore.getRecentSummaries(userId, fetchN);
+    let recent = rows.slice().reverse(); // most recent first, the client contract
     if (themeFilter) {
-      filtered = all.filter(s => s.themes.some(t => t.toLowerCase() === themeFilter.toLowerCase()));
+      const tf = String(themeFilter).toLowerCase();
+      recent = recent
+        .filter((s) => Array.isArray(s.themes) && s.themes.some((t) => String(t).toLowerCase() === tf))
+        .slice(0, limit);
     }
-
-    // Most recent first
-    const recent = filtered.slice().reverse().slice(0, limit);
 
     res.json({ ok: true, count: recent.length, summaries: recent });
   } catch (e) {
@@ -5031,7 +5148,7 @@ app.get('/api/memory/recent', (req, res) => {
 //     summaries_used: [{ created_at, themes }, ...],
 //     estimated_tokens: 380
 //   }
-app.get('/api/memory/context', (req, res) => {
+app.get('/api/memory/context', async (req, res) => {
   try {
     const userId = v19_userKey(req);
     if (!userId) return res.json({ ok: true, block: '', summaries_used: [], estimated_tokens: 0 });
@@ -5042,7 +5159,7 @@ app.get('/api/memory/context', (req, res) => {
       ? themesQuery.split(',').map(t => t.trim().toLowerCase()).filter(Boolean)
       : [];
 
-    const all = v19_summaries.get(userId) || [];
+    const all = await memoryStore.getRecentSummaries(userId, 50);
     if (all.length === 0) {
       return res.json({ ok: true, block: '', summaries_used: [], estimated_tokens: 0 });
     }
@@ -5192,10 +5309,10 @@ app.get('/api/v19/health', (req, res) => {
     ok: true,
     version: 'v19-fallback',
     storage: 'in-memory',
+    summary_store: memoryStore.isDurable() ? 'supabase' : 'in-memory',
     counts: {
       streaks: v19_streaks.size,
       intentions: v19_intentions.size,
-      summaries: v19_summaries.size,
       emails: v19_emails.size,
     },
     metrics: v19_metrics.snapshot(),
