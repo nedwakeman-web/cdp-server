@@ -2487,6 +2487,74 @@ RULES:
   }
 });
 
+// Emerging patterns synthesis. Layer two of the pattern engine: it never hunts
+// for patterns in raw text on its own. It is handed the verified resonance from
+// the person's own marked taps (layer one) plus the things they have brought
+// and their recent reading coordinates, and its one job is to notice whether a
+// lighter or passing item connects to something recurring or central, a link
+// the person may not have named. Observation only. It names the absence of a
+// link as readily as the presence of one, so the rail never invents a pattern.
+app.post('/api/patterns', async (req, res) => {
+  try {
+    const { lens, facts, items, readings } = req.body || {};
+    const safeItems = Array.isArray(items)
+      ? items.filter((s) => typeof s === 'string' && s.trim()).slice(0, 24)
+      : [];
+    const landedCount = (facts && typeof facts.landedCount === 'number') ? facts.landedCount : 0;
+    // Honesty before eagerness: too little material to find a real link.
+    if (safeItems.length < 2 && landedCount < 3) {
+      return res.json({ linked: false, observation: '' });
+    }
+
+    const voiceWord = lens === 'science' ? 'Science' : lens === 'tradition' ? 'Tradition' : 'Everyday';
+
+    const factLines = [];
+    if (facts) {
+      if (facts.topVoice) factLines.push('Most often the reading that lands for them arrives through the ' + facts.topVoice + ' voice.');
+      if (facts.topFramework) factLines.push('The framework they return to most is ' + facts.topFramework + '.');
+      if (typeof facts.bridges === 'number' && facts.bridges > 0) {
+        factLines.push('A lens that is not their usual one has landed ' + facts.bridges + ' times; these crossings are the moments that matter most.');
+      }
+    }
+
+    const material = [
+      factLines.length ? 'Verified resonance, drawn from their own marked taps:\n' + factLines.join('\n') : '',
+      safeItems.length ? 'Things they have brought, most recent first, questions and passing comments and deliberate intentions all as equal material:\n' + safeItems.map((s, i) => (i + 1) + '. ' + s).join('\n') : '',
+      (Array.isArray(readings) && readings.length) ? 'Recent reading coordinates, for provenance only:\n' + readings.slice(0, 12).join('\n') : '',
+    ].filter(Boolean).join('\n\n');
+
+    const sys = `You are the reflective intelligence of Cosmic Daily Planner, writing one short observation for the Emerging patterns panel.
+
+You are given verified resonance drawn from the person's own marked taps, a list of things they have brought, and their recent reading coordinates. The list mixes deliberate intentions with passing questions and offhand comments, and you treat them as equal material, because a brief question is often the first surfacing of something that has not yet been named.
+
+Your one job is to notice whether a lighter or passing item connects to something recurring or central in the material, and if it does, to put that link in front of the person as an observation they can recognise.
+
+Constraints. Speak only from the material given. Introduce no number, sign, transit, theme, or fact that is not present in it. Observation only, never a forecast, never advice, never an instruction. Do not end with a question. Do not ask the person what they are holding or carrying or sitting with, since that register is not used here. Write in the ${voiceWord} voice, in plain grounded prose, with no decorative or AI poetic phrasing. Symbolic claims stay marked as symbolic, and any mechanism you name must be one the material supports. If there is no genuine through-line, do not manufacture one.`;
+
+    const user = material + `
+
+Return only a JSON object and nothing else, no preface and no code fence: {"linked": boolean, "observation": string}. Set linked to true only when there is a genuine through-line connecting a lighter or passing item to a recurring or central concern in this material. When there is no real link, set linked to false and observation to an empty string. The observation, when present, is two to four sentences of plain prose, observation only, with no closing question and no instruction.`;
+
+    const raw = await callAPI('claude-sonnet-4-6', 700, sys, user);
+    let out = { linked: false, observation: '' };
+    try {
+      const cleaned = String(raw).replace(/```json/g, '').replace(/```/g, '').trim();
+      const parsed = JSON.parse(cleaned);
+      if (parsed && typeof parsed.observation === 'string') {
+        const obs = parsed.observation.trim();
+        out = { linked: !!parsed.linked && obs.length > 0, observation: obs.length > 0 ? obs : '' };
+      }
+    } catch (_e) {
+      out = { linked: false, observation: '' };
+    }
+    res.json(out);
+  } catch (e) {
+    console.error('Patterns synthesis error:', e.message);
+    // Degrade silently: the deterministic floor on the client still stands.
+    res.status(200).json({ linked: false, observation: '' });
+  }
+});
+
 app.post('/api/calendar', (req, res) => {
   const {year, month, profile} = req.body;
   const y = year || new Date().getFullYear();
