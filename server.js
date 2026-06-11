@@ -3468,7 +3468,7 @@ app.post('/api/compatibility', async (req, res) => {
       + '  "framework_convergence": "<3 paragraphs. Para 1: where ALL SIX frameworks agree and why that convergence matters. Para 2: where they diverge and what the paradox means. Para 3: the single most important signal across all frameworks for this relationship.>"\n'
       + '}';
 
-    const raw1 = await callAPI('claude-sonnet-4-6', 3000, sys, u1, 55000);
+    const raw1 = await callAPI('claude-sonnet-4-6', 2000, sys, u1, 38000);
     const s1 = parseJSON(raw1) || { synthesis: raw1, raw: true };
 
     // Return call 1 immediately - client renders before Railway can time out
