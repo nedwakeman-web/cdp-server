@@ -3436,29 +3436,47 @@ app.post('/api/compatibility', async (req, res) => {
       + '  "sources": "Astrology: approximate natal positions Meeus (1998) Astronomical Algorithms. Synastry: Greene (1976); Arroyo (1978); Sasportas (1989); Tarnas (2006). Numerology: Drayer (2002); Millman (1993). Dreamspell: Arguelles (1987) modern system. Biorhythms: Teltscher, Fliess, Swoboda (classical three-cycle theory). Natal moon phase archetypes."\n'
       + '}';
 
-    // Phase 1: fast synthesis, headline, gifts, tensions, topic, question, closing.
-    // Returned immediately so the client renders within Railway's timeout window.
-    const sysP1 = sys;
-    const userP1 = user + '\n\nPHASE 1 ONLY. Return ONLY these fields as valid JSON:\n'
-      + '{ "headline", "synthesis", "framework_convergence", "gifts", "tensions", "topic_specific", "a_question_to_sit_with", "closing", "sources" }\n'
-      + 'Use the same field definitions as the full schema. 4-6 sentences per body field. Valid JSON only.';
+    // ── 7-CALL PROGRESSIVE COMPATIBILITY ARCHITECTURE ──────────────────
+    // Each call is 2500-3500 tokens and fires sequentially in the background.
+    // Call 1 result is returned immediately to the client (within Railway timeout).
+    // Calls 2-7 stream into the job store; client polls /api/compatibility/depth.
+    // The client renders each section the moment it arrives.
 
-    const rawP1 = await callAPI('claude-sonnet-4-6', 4500, sysP1, userP1, 55000);
-    let p1;
-    try {
-      const c1 = rawP1.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-      p1 = JSON.parse(c1);
-    } catch(e) {
-      try { p1 = JSON.parse(repairJSON(rawP1.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim())); }
-      catch(e2) { p1 = { synthesis: rawP1, raw: true }; }
+    if (!global._compatJobs) global._compatJobs = new Map();
+    const jobKey = nameA + '|' + nameB + '|' + topic + '|' + Date.now();
+
+    // Helper: parse a raw API response into a plain object
+    function parseJSON(raw) {
+      const cleaned = raw.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+      try { return JSON.parse(cleaned); }
+      catch(e) {
+        try { return JSON.parse(repairJSON(cleaned)); }
+        catch(e2) { return null; }
+      }
     }
 
-    // Send phase 1 immediately, including the jobKey so client can poll phase 2
+    // Shared data blob passed to every call so each one has full framework context
+    const sharedData = '\n\nFRAMEWORK DATA ALREADY COMPUTED (use verbatim in your section):\n'
+      + numCrossText + '\n\n' + dreamspellCrossText + '\n\n'
+      + moonPhaseCrossText + '\n\n' + (bioText || '') + '\n\n' + chineseText;
+
+    // CALL 1: Headline + synthesis + framework convergence (~15s, returned immediately)
+    const u1 = user + '\n\nRETURN ONLY this JSON object, no other text:\n'
+      + '{\n'
+      + '  "headline": "<One sentence: the essential truth of this connection, specific and grounded in the data>",\n'
+      + '  "synthesis": "<5-6 sentences synthesising ALL SIX frameworks. Name every convergence explicitly. Address ' + nameA + ' directly.>",\n'
+      + '  "framework_convergence": "<3 paragraphs. Para 1: where ALL SIX frameworks agree and why that convergence matters. Para 2: where they diverge and what the paradox means. Para 3: the single most important signal across all frameworks for this relationship.>"\n'
+      + '}';
+
+    const raw1 = await callAPI('claude-sonnet-4-6', 3000, sys, u1, 55000);
+    const s1 = parseJSON(raw1) || { synthesis: raw1, raw: true };
+
+    // Return call 1 immediately - client renders before Railway can time out
     res.json({
-      reading: p1,
+      reading: s1,
       phase: 1,
       jobKey,
-      sectionsReady: Object.keys(p1).filter(k => k !== 'sources' && p1[k]).length,
+      sectionsReady: Object.keys(s1).filter(k => s1[k]).length,
       natalA: natalA ? natalA.slice(0, 7) : null,
       natalB: natalB ? natalB.slice(0, 7) : null,
       kinA, kinB, numA, numB,
@@ -3466,26 +3484,15 @@ app.post('/api/compatibility', async (req, res) => {
       chineseA, chineseB, chineseCompat,
       bioA: bioA ? { physical: bioA.physical, emotional: bioA.emotional, intellectual: bioA.intellectual, composite: bioA.composite } : null,
       bioB: bioB ? { physical: bioB.physical, emotional: bioB.emotional, intellectual: bioB.intellectual, composite: bioB.composite } : null,
-      bioSynastry,
-      numCross, dreamspellCross, moonPhaseCross,
-      synAspects,
+      bioSynastry, numCross, dreamspellCross, moonPhaseCross, synAspects,
       nameA, nameB, topic
     });
 
-    // Phase 2 fires in background and caches result for /api/compatibility/depth
-    // Client polls this endpoint after receiving phase 1.
-    const jobKey = nameA + '|' + nameB + '|' + topic + '|' + Date.now();
-    const userP2 = user + '\n\nPHASE 2 ONLY. Return ONLY these fields as valid JSON:\n'
-      + '{ "chinese_connection", "key_aspects", "numerology_connection", "dreamspell_connection", "natal_moon_connection", "biorhythm_today", "for_them" }\n'
-      + 'for_them must be { "for_a": "4 sentences for ' + nameA + '", "for_b": "4 sentences for ' + nameB + '" }\n'
-      + 'key_aspects: array of { "aspect": "Planet X sign aspect Planet Y sign (orb)", "strength": 1-5, "interpretation": "2-3 paragraphs" }\n'
-      + 'Valid JSON only.';
-
-    // Store phase 2 promise in a global map so the depth endpoint can resolve it
-    if (!global._compatJobs) global._compatJobs = new Map();
+    // Initialise job store
     global._compatJobs.set(jobKey, {
-      status: 'pending',
-      p1,
+      status: 'composing',
+      sections: Object.assign({}, s1),
+      sectionNames: Object.keys(s1).filter(k => s1[k]),
       nameA, nameB, topic,
       natalA: natalA ? natalA.slice(0, 7) : null,
       natalB: natalB ? natalB.slice(0, 7) : null,
@@ -3494,32 +3501,111 @@ app.post('/api/compatibility', async (req, res) => {
       bioA: bioA ? { physical: bioA.physical, emotional: bioA.emotional, intellectual: bioA.intellectual, composite: bioA.composite } : null,
       bioB: bioB ? { physical: bioB.physical, emotional: bioB.emotional, intellectual: bioB.intellectual, composite: bioB.composite } : null,
       bioSynastry, numCross, dreamspellCross, moonPhaseCross, synAspects,
-      jobKey,
-      started: Date.now(),
+      jobKey, started: Date.now(),
     });
 
-    // Fire phase 2 async - Railway timeout does not apply since response already sent
+    // ── BACKGROUND: calls 2-7 fire sequentially, each section drops as it lands ──
     (async () => {
       const job = global._compatJobs.get(jobKey);
       if (!job) return;
-      try {
-        const rawP2 = await callAPI('claude-sonnet-4-6', 6000, sysP1, userP2, 120000);
-        let p2;
-        try {
-          const c2 = rawP2.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-          p2 = JSON.parse(c2);
-        } catch(e) {
-          try { p2 = JSON.parse(repairJSON(rawP2.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim())); }
-          catch(e2) { p2 = {}; }
+
+      function merge(obj) {
+        if (!obj || typeof obj !== 'object') return;
+        Object.assign(job.sections, obj);
+        for (const k of Object.keys(obj)) {
+          if (!job.sectionNames.includes(k)) job.sectionNames.push(k);
         }
+        console.log('[compat] section landed:', Object.keys(obj).join(', '), '| total:', job.sectionNames.length);
+      }
+
+      try {
+        // CALL 2: Gifts + tensions - the core relational truth
+        const u2 = user + sharedData + '\n\nRETURN ONLY this JSON object:\n'
+          + '{\n'
+          + '  "gifts": {\n'
+          + '    "headline": "<One sentence: the genuine strength of this connection>",\n'
+          + '    "body": "<3 substantial paragraphs. Each names a specific gift, grounds it in at least two frameworks by name, and says what it means in their actual lived situation. Be specific to ' + nameA + ' and ' + nameB + '.>"\n'
+          + '  },\n'
+          + '  "tensions": {\n'
+          + '    "headline": "<One sentence: the core growth edge, honest not harsh>",\n'
+          + '    "body": "<3 substantial paragraphs. Each names a specific tension, grounds it in at least two frameworks, says what it is trying to build. Do not bypass difficulty.>"\n'
+          + '  }\n'
+          + '}';
+        const r2 = parseJSON(await callAPI('claude-sonnet-4-6', 3000, sys, u2, 90000));
+        if (r2) merge(r2);
+
+        // CALL 3: Six synastry aspects in full depth
+        const u3 = user + '\n\nRETURN ONLY this JSON object:\n'
+          + '{\n'
+          + '  "key_aspects": [\n'
+          + synAspects.slice(0, 6).map(a =>
+              '    { "aspect": "' + a.desc.replace(/"/g, "'") + '", "strength": ' + a.str + ', '
+              + '"interpretation": "<3 full paragraphs: what this aspect means specifically for ' + nameA + ' and ' + nameB + ', how it manifests in daily life, and what working with it well looks like>" }'
+            ).join(',\n')
+          + '\n  ]\n'
+          + '}';
+        const r3 = parseJSON(await callAPI('claude-sonnet-4-6', 3500, sys, u3, 90000));
+        if (r3) merge(r3);
+
+        // CALL 4: Six framework deep dives
+        const u4 = user + sharedData + '\n\nRETURN ONLY this JSON object:\n'
+          + '{\n'
+          + '  "numerology_connection": "<3 paragraphs: LP ' + lpAStr + ' and LP ' + lpBStr + ' in depth. Personal Year dynamic. Combined frequency ' + (numCross ? numCross.combined : '?') + '. What this numerological pairing asks of them this year specifically.>",\n'
+          + '  "dreamspell_connection": "<3 paragraphs: ' + kinAStr + ' and ' + kinBStr + '. Chromatic family relationship. Tonal dynamic. Combined Kin meaning. What their galactic signatures ask of this connection.>",\n'
+          + '  "natal_moon_connection": "<3 paragraphs: how their birth moon phase archetypes interact emotionally, day to day and in pressure moments. What each needs from the other to feel emotionally met.>",\n'
+          + '  "biorhythm_today": "<2 paragraphs: the specific biorhythm picture on ' + today + '. What is in phase, what is out of phase, and the practical wisdom for navigating today together.>",\n'
+          + '  "chinese_connection": "<2 paragraphs: ' + chineseAStr + ' and ' + chineseBStr + '. The ' + (chineseCompat ? chineseCompat.t : 'neutral') + ' dynamic. What this layer reveals about loyalty, trust, and long-term endurance that the other frameworks approach differently.>"\n'
+          + '}';
+        const r4 = parseJSON(await callAPI('claude-sonnet-4-6', 3500, sys, u4, 90000));
+        if (r4) merge(r4);
+
+        // CALL 5: Topic-specific reading
+        const u5 = user + sharedData
+          + '\n\nPrevious synthesis: ' + (job.sections.synthesis || '')
+          + '\n\nRETURN ONLY this JSON object:\n'
+          + '{\n'
+          + '  "topic_specific": {\n'
+          + '    "headline": "<One sentence capturing the essence of ' + nameA + ' and ' + nameB + ' on the topic: ' + topicDesc + '>",\n'
+          + '    "body": "<4 substantial paragraphs specifically about ' + topicDesc + '. Draw on all six frameworks. Be concrete, practical, and name specific dynamics between ' + nameA + ' and ' + nameB + '. Reference their actual context where relevant.>"\n'
+          + '  }\n'
+          + '}';
+        const r5 = parseJSON(await callAPI('claude-sonnet-4-6', 3000, sys, u5, 90000));
+        if (r5) merge(r5);
+
+        // CALL 6: Personal guidance for each person
+        const u6 = user + sharedData
+          + '\n\nKey tensions identified: ' + (job.sections.tensions && typeof job.sections.tensions === 'object' ? job.sections.tensions.body || '' : '')
+          + '\n\nRETURN ONLY this JSON object:\n'
+          + '{\n'
+          + '  "for_them": {\n'
+          + '    "for_a": "<6 sentences addressed directly to ' + nameA + '. Name the specific gift they bring to this connection that only they can provide. Name the specific blind spot the frameworks reveal. Give them one concrete thing to try. Warm, precise, honest. Not advice. Recognition.>",\n'
+          + '    "for_b": "<6 sentences addressed directly to ' + nameB + '. Same structure: their unique gift, their specific blind spot, one concrete thing to try.>"\n'
+          + '  }\n'
+          + '}';
+        const r6 = parseJSON(await callAPI('claude-sonnet-4-6', 2500, sys, u6, 90000));
+        if (r6) merge(r6);
+
+        // CALL 7: Year arc, the question, and the closing
+        const currentYear = new Date().getFullYear();
+        const u7 = user + sharedData
+          + '\n\nEverything established above is context. Now write the closing sections.\n'
+          + 'RETURN ONLY this JSON object:\n'
+          + '{\n'
+          + '  "year_arc": "<3 paragraphs: what ' + currentYear + ' specifically asks of this connection. Use both Personal Years (' + (numA ? numA.py : '?') + ' for ' + nameA + ', ' + (numB ? numB.py : '?') + ' for ' + nameB + '), the current planetary context (Saturn-Neptune Aries conjunction, Tarnas), and the Dreamspell year energies. What is being built, what is being released, and what this year is asking them to decide about their connection.>",\n'
+          + '  "a_question_to_sit_with": "<One question for them both. Not rhetorical. Genuinely open. The question that if they sat with it honestly together would unlock something important. It should feel slightly uncomfortable to ask. Ground it in the most significant convergence across the six frameworks.>",\n'
+          + '  "closing": "<One final sentence. The deepest truth of this connection. Warm, precise, honest. The thing you would say to them both if you could only say one thing.>",\n'
+          + '  "sources": "Astrology: approximate natal positions (Meeus 1998, Astronomical Algorithms). Synastry: Greene (1976); Arroyo (1978); Sasportas (1989); Tarnas (2006). Numerology: Drayer (2002); Millman (1993). Dreamspell: Arguelles (1987), modern system, distinct from K\'iche\' tradition. Biorhythms: Teltscher, Fliess, Swoboda (classical three-cycle theory). Natal moon phase archetypes: Brady (1999). Chinese astrology: solar year signs, CNY-corrected."\n'
+          + '}';
+        const r7 = parseJSON(await callAPI('claude-sonnet-4-6', 3000, sys, u7, 90000));
+        if (r7) merge(r7);
+
         job.status = 'complete';
-        job.p2 = p2;
-        job.reading = Object.assign({}, p1, p2);
-        job.sectionsReady = Object.keys(job.reading).filter(k => k !== 'sources' && job.reading[k]).length;
-        console.log('[compatibility] phase 2 complete for', nameA, '/', nameB, '- sections:', job.sectionsReady);
-      } catch(e2) {
-        console.error('[compatibility] phase 2 error:', e2.message);
-        if (job) { job.status = 'error'; job.error = e2.message; }
+        console.log('[compat] all 7 sections complete for', nameA, '/', nameB, '| total sections:', job.sectionNames.length);
+
+      } catch(bgErr) {
+        console.error('[compat] background error:', bgErr.message);
+        job.status = 'error';
+        job.error = bgErr.message;
       }
     })();
 
@@ -3537,30 +3623,31 @@ app.post('/api/compatibility/depth', (req, res) => {
   const job = global._compatJobs.get(jobKey);
   if (!job) return res.status(404).json({ status: 'not_found' });
   const elapsed = Math.round((Date.now() - job.started) / 1000);
-  if (job.status === 'complete') {
-    // Clean up after delivery
-    global._compatJobs.delete(jobKey);
-    return res.json({
-      status: 'complete',
-      reading: job.reading,
-      sectionsReady: job.sectionsReady,
-      elapsed,
-      natalA: job.natalA, natalB: job.natalB,
-      kinA: job.kinA, kinB: job.kinB,
-      numA: job.numA, numB: job.numB,
-      moonPhaseA: job.moonPhaseA, moonPhaseB: job.moonPhaseB,
-      chineseA: job.chineseA, chineseB: job.chineseB, chineseCompat: job.chineseCompat,
-      bioA: job.bioA, bioB: job.bioB, bioSynastry: job.bioSynastry,
-      numCross: job.numCross, dreamspellCross: job.dreamspellCross,
-      moonPhaseCross: job.moonPhaseCross, synAspects: job.synAspects,
-      nameA: job.nameA, nameB: job.nameB, topic: job.topic,
-    });
-  }
-  if (job.status === 'error') {
-    return res.json({ status: 'error', error: job.error, elapsed, reading: job.p1, sectionsReady: job.sectionsReady });
-  }
-  // Still pending
-  return res.json({ status: 'pending', sectionsReady: Object.keys(job.p1 || {}).filter(k => k !== 'sources' && job.p1[k]).length, elapsed });
+  const sectionsReady = job.sectionNames ? job.sectionNames.length : 0;
+
+  // Always return the current sections so the client can render incrementally.
+  // The client merges each poll response into its displayed reading.
+  const base = {
+    status: job.status,
+    elapsed,
+    sectionsReady,
+    sectionNames: job.sectionNames || [],
+    reading: job.sections || {},
+    natalA: job.natalA, natalB: job.natalB,
+    kinA: job.kinA, kinB: job.kinB,
+    numA: job.numA, numB: job.numB,
+    moonPhaseA: job.moonPhaseA, moonPhaseB: job.moonPhaseB,
+    chineseA: job.chineseA, chineseB: job.chineseB, chineseCompat: job.chineseCompat,
+    bioA: job.bioA, bioB: job.bioB, bioSynastry: job.bioSynastry,
+    numCross: job.numCross, dreamspellCross: job.dreamspellCross,
+    moonPhaseCross: job.moonPhaseCross, synAspects: job.synAspects,
+    nameA: job.nameA, nameB: job.nameB, topic: job.topic,
+  };
+
+  if (job.status === 'complete') global._compatJobs.delete(jobKey);
+  if (job.status === 'error') base.error = job.error;
+
+  return res.json(base);
 });
 
 // ── HEALTH ENDPOINT, used by frontend wake check and Railway monitors ──
