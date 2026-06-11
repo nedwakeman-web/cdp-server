@@ -3436,22 +3436,29 @@ app.post('/api/compatibility', async (req, res) => {
       + '  "sources": "Astrology: approximate natal positions Meeus (1998) Astronomical Algorithms. Synastry: Greene (1976); Arroyo (1978); Sasportas (1989); Tarnas (2006). Numerology: Drayer (2002); Millman (1993). Dreamspell: Arguelles (1987) modern system. Biorhythms: Teltscher, Fliess, Swoboda (classical three-cycle theory). Natal moon phase archetypes."\n'
       + '}';
 
-    const raw = await callAPI('claude-sonnet-4-6', 12000, sys, user);
-    let reading;
+    // Phase 1: fast synthesis, headline, gifts, tensions, topic, question, closing.
+    // Returned immediately so the client renders within Railway's timeout window.
+    const sysP1 = sys;
+    const userP1 = user + '\n\nPHASE 1 ONLY. Return ONLY these fields as valid JSON:\n'
+      + '{ "headline", "synthesis", "framework_convergence", "gifts", "tensions", "topic_specific", "a_question_to_sit_with", "closing", "sources" }\n'
+      + 'Use the same field definitions as the full schema. 4-6 sentences per body field. Valid JSON only.';
+
+    const rawP1 = await callAPI('claude-sonnet-4-6', 4500, sysP1, userP1, 55000);
+    let p1;
     try {
-      const cleaned = raw.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-      reading = JSON.parse(cleaned);
+      const c1 = rawP1.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+      p1 = JSON.parse(c1);
     } catch(e) {
-      try {
-        reading = JSON.parse(repairJSON(raw.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim()));
-        reading._repaired = true;
-      } catch(e2) {
-        reading = { synthesis: raw, raw: true };
-      }
+      try { p1 = JSON.parse(repairJSON(rawP1.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim())); }
+      catch(e2) { p1 = { synthesis: rawP1, raw: true }; }
     }
 
+    // Send phase 1 immediately, including the jobKey so client can poll phase 2
     res.json({
-      reading,
+      reading: p1,
+      phase: 1,
+      jobKey,
+      sectionsReady: Object.keys(p1).filter(k => k !== 'sources' && p1[k]).length,
       natalA: natalA ? natalA.slice(0, 7) : null,
       natalB: natalB ? natalB.slice(0, 7) : null,
       kinA, kinB, numA, numB,
@@ -3465,10 +3472,95 @@ app.post('/api/compatibility', async (req, res) => {
       nameA, nameB, topic
     });
 
+    // Phase 2 fires in background and caches result for /api/compatibility/depth
+    // Client polls this endpoint after receiving phase 1.
+    const jobKey = nameA + '|' + nameB + '|' + topic + '|' + Date.now();
+    const userP2 = user + '\n\nPHASE 2 ONLY. Return ONLY these fields as valid JSON:\n'
+      + '{ "chinese_connection", "key_aspects", "numerology_connection", "dreamspell_connection", "natal_moon_connection", "biorhythm_today", "for_them" }\n'
+      + 'for_them must be { "for_a": "4 sentences for ' + nameA + '", "for_b": "4 sentences for ' + nameB + '" }\n'
+      + 'key_aspects: array of { "aspect": "Planet X sign aspect Planet Y sign (orb)", "strength": 1-5, "interpretation": "2-3 paragraphs" }\n'
+      + 'Valid JSON only.';
+
+    // Store phase 2 promise in a global map so the depth endpoint can resolve it
+    if (!global._compatJobs) global._compatJobs = new Map();
+    global._compatJobs.set(jobKey, {
+      status: 'pending',
+      p1,
+      nameA, nameB, topic,
+      natalA: natalA ? natalA.slice(0, 7) : null,
+      natalB: natalB ? natalB.slice(0, 7) : null,
+      kinA, kinB, numA, numB, moonPhaseA, moonPhaseB,
+      chineseA, chineseB, chineseCompat,
+      bioA: bioA ? { physical: bioA.physical, emotional: bioA.emotional, intellectual: bioA.intellectual, composite: bioA.composite } : null,
+      bioB: bioB ? { physical: bioB.physical, emotional: bioB.emotional, intellectual: bioB.intellectual, composite: bioB.composite } : null,
+      bioSynastry, numCross, dreamspellCross, moonPhaseCross, synAspects,
+      jobKey,
+      started: Date.now(),
+    });
+
+    // Fire phase 2 async - Railway timeout does not apply since response already sent
+    (async () => {
+      const job = global._compatJobs.get(jobKey);
+      if (!job) return;
+      try {
+        const rawP2 = await callAPI('claude-sonnet-4-6', 6000, sysP1, userP2, 120000);
+        let p2;
+        try {
+          const c2 = rawP2.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+          p2 = JSON.parse(c2);
+        } catch(e) {
+          try { p2 = JSON.parse(repairJSON(rawP2.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim())); }
+          catch(e2) { p2 = {}; }
+        }
+        job.status = 'complete';
+        job.p2 = p2;
+        job.reading = Object.assign({}, p1, p2);
+        job.sectionsReady = Object.keys(job.reading).filter(k => k !== 'sources' && job.reading[k]).length;
+        console.log('[compatibility] phase 2 complete for', nameA, '/', nameB, '- sections:', job.sectionsReady);
+      } catch(e2) {
+        console.error('[compatibility] phase 2 error:', e2.message);
+        if (job) { job.status = 'error'; job.error = e2.message; }
+      }
+    })();
+
   } catch(e) {
     console.error('Compatibility error:', e.message);
     res.status(500).json({ error: e.message });
   }
+});
+
+// Polling endpoint: client calls this after receiving phase 1 to get phase 2 depth sections.
+// Returns { status: 'pending'|'complete'|'error', sectionsReady, reading } 
+app.post('/api/compatibility/depth', (req, res) => {
+  const { jobKey } = req.body;
+  if (!jobKey || !global._compatJobs) return res.status(404).json({ status: 'not_found' });
+  const job = global._compatJobs.get(jobKey);
+  if (!job) return res.status(404).json({ status: 'not_found' });
+  const elapsed = Math.round((Date.now() - job.started) / 1000);
+  if (job.status === 'complete') {
+    // Clean up after delivery
+    global._compatJobs.delete(jobKey);
+    return res.json({
+      status: 'complete',
+      reading: job.reading,
+      sectionsReady: job.sectionsReady,
+      elapsed,
+      natalA: job.natalA, natalB: job.natalB,
+      kinA: job.kinA, kinB: job.kinB,
+      numA: job.numA, numB: job.numB,
+      moonPhaseA: job.moonPhaseA, moonPhaseB: job.moonPhaseB,
+      chineseA: job.chineseA, chineseB: job.chineseB, chineseCompat: job.chineseCompat,
+      bioA: job.bioA, bioB: job.bioB, bioSynastry: job.bioSynastry,
+      numCross: job.numCross, dreamspellCross: job.dreamspellCross,
+      moonPhaseCross: job.moonPhaseCross, synAspects: job.synAspects,
+      nameA: job.nameA, nameB: job.nameB, topic: job.topic,
+    });
+  }
+  if (job.status === 'error') {
+    return res.json({ status: 'error', error: job.error, elapsed, reading: job.p1, sectionsReady: job.sectionsReady });
+  }
+  // Still pending
+  return res.json({ status: 'pending', sectionsReady: Object.keys(job.p1 || {}).filter(k => k !== 'sources' && job.p1[k]).length, elapsed });
 });
 
 // ── HEALTH ENDPOINT, used by frontend wake check and Railway monitors ──
