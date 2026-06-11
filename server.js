@@ -3436,47 +3436,18 @@ app.post('/api/compatibility', async (req, res) => {
       + '  "sources": "Astrology: approximate natal positions Meeus (1998) Astronomical Algorithms. Synastry: Greene (1976); Arroyo (1978); Sasportas (1989); Tarnas (2006). Numerology: Drayer (2002); Millman (1993). Dreamspell: Arguelles (1987) modern system. Biorhythms: Teltscher, Fliess, Swoboda (classical three-cycle theory). Natal moon phase archetypes."\n'
       + '}';
 
-    // ── 7-CALL PROGRESSIVE COMPATIBILITY ARCHITECTURE ──────────────────
-    // Each call is 2500-3500 tokens and fires sequentially in the background.
-    // Call 1 result is returned immediately to the client (within Railway timeout).
-    // Calls 2-7 stream into the job store; client polls /api/compatibility/depth.
-    // The client renders each section the moment it arrives.
-
+    // ── JOB-FIRST ARCHITECTURE: return jobId immediately, all work async ──
+    // Railway has a ~30s gateway timeout. We return the jobId in <1ms and
+    // run all 7 Oracle calls in the background. Client polls /api/compatibility/depth.
     if (!global._compatJobs) global._compatJobs = new Map();
     const jobKey = nameA + '|' + nameB + '|' + topic + '|' + Date.now();
 
-    // Helper: parse a raw API response into a plain object
-    function parseJSON(raw) {
-      const cleaned = raw.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-      try { return JSON.parse(cleaned); }
-      catch(e) {
-        try { return JSON.parse(repairJSON(cleaned)); }
-        catch(e2) { return null; }
-      }
-    }
-
-    // Shared data blob passed to every call so each one has full framework context
-    const sharedData = '\n\nFRAMEWORK DATA ALREADY COMPUTED (use verbatim in your section):\n'
-      + numCrossText + '\n\n' + dreamspellCrossText + '\n\n'
-      + moonPhaseCrossText + '\n\n' + (bioText || '') + '\n\n' + chineseText;
-
-    // CALL 1: Headline + synthesis + framework convergence (~15s, returned immediately)
-    const u1 = user + '\n\nRETURN ONLY this JSON object, no other text:\n'
-      + '{\n'
-      + '  "headline": "<One sentence: the essential truth of this connection, specific and grounded in the data>",\n'
-      + '  "synthesis": "<5-6 sentences synthesising ALL SIX frameworks. Name every convergence explicitly. Address ' + nameA + ' directly.>",\n'
-      + '  "framework_convergence": "<3 paragraphs. Para 1: where ALL SIX frameworks agree and why that convergence matters. Para 2: where they diverge and what the paradox means. Para 3: the single most important signal across all frameworks for this relationship.>"\n'
-      + '}';
-
-    const raw1 = await callAPI('claude-sonnet-4-6', 2000, sys, u1, 38000);
-    const s1 = parseJSON(raw1) || { synthesis: raw1, raw: true };
-
-    // Return call 1 immediately - client renders before Railway can time out
+    // Respond immediately with the jobKey so client can start polling
     res.json({
-      reading: s1,
-      phase: 1,
       jobKey,
-      sectionsReady: Object.keys(s1).filter(k => s1[k]).length,
+      status: 'pending',
+      sectionsReady: 0,
+      nameA, nameB, topic,
       natalA: natalA ? natalA.slice(0, 7) : null,
       natalB: natalB ? natalB.slice(0, 7) : null,
       kinA, kinB, numA, numB,
@@ -3485,14 +3456,13 @@ app.post('/api/compatibility', async (req, res) => {
       bioA: bioA ? { physical: bioA.physical, emotional: bioA.emotional, intellectual: bioA.intellectual, composite: bioA.composite } : null,
       bioB: bioB ? { physical: bioB.physical, emotional: bioB.emotional, intellectual: bioB.intellectual, composite: bioB.composite } : null,
       bioSynastry, numCross, dreamspellCross, moonPhaseCross, synAspects,
-      nameA, nameB, topic
     });
 
     // Initialise job store
     global._compatJobs.set(jobKey, {
       status: 'composing',
-      sections: Object.assign({}, s1),
-      sectionNames: Object.keys(s1).filter(k => s1[k]),
+      sections: {},
+      sectionNames: [],
       nameA, nameB, topic,
       natalA: natalA ? natalA.slice(0, 7) : null,
       natalB: natalB ? natalB.slice(0, 7) : null,
@@ -3504,7 +3474,22 @@ app.post('/api/compatibility', async (req, res) => {
       jobKey, started: Date.now(),
     });
 
-    // ── BACKGROUND: calls 2-7 fire sequentially, each section drops as it lands ──
+    // Helper: parse a raw API response into a plain object
+    function parseJSON(raw) {
+      const cleaned = raw.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+      try { return JSON.parse(cleaned); }
+      catch(e) {
+        try { return JSON.parse(repairJSON(cleaned)); }
+        catch(e2) { return null; }
+      }
+    }
+
+    // Shared data blob passed to every call
+    const sharedData = '\n\nFRAMEWORK DATA (use verbatim):\n'
+      + numCrossText + '\n\n' + dreamspellCrossText + '\n\n'
+      + moonPhaseCrossText + '\n\n' + (bioText || '') + '\n\n' + chineseText;
+
+    // ── ALL 7 CALLS RUN IN BACKGROUND ────────────────────────────────────
     (async () => {
       const job = global._compatJobs.get(jobKey);
       if (!job) return;
@@ -3515,47 +3500,40 @@ app.post('/api/compatibility', async (req, res) => {
         for (const k of Object.keys(obj)) {
           if (!job.sectionNames.includes(k)) job.sectionNames.push(k);
         }
-        console.log('[compat] section landed:', Object.keys(obj).join(', '), '| total:', job.sectionNames.length);
+        console.log('[compat] landed:', Object.keys(obj).join(', '), '| total:', job.sectionNames.length);
       }
 
       try {
-        // CALL 2: Gifts + tensions - the core relational truth
+        // CALL 1: Headline + synthesis + framework convergence
+        const u1 = user + '\n\nRETURN ONLY this JSON object, no other text:\n'
+          + '{"headline":"<One sentence: the essential truth of this connection>","synthesis":"<5-6 sentences synthesising ALL SIX frameworks. Name every convergence. Address ' + nameA + ' directly.>","framework_convergence":"<3 paragraphs. Where the six frameworks agree, where they diverge, and the single most important signal.>"}';
+        const r1 = parseJSON(await callAPI('claude-sonnet-4-6', 2000, sys, u1, 90000));
+        if (r1) merge(r1);
+
+        // CALL 2: Gifts + tensions
         const u2 = user + sharedData + '\n\nRETURN ONLY this JSON object:\n'
-          + '{\n'
-          + '  "gifts": {\n'
-          + '    "headline": "<One sentence: the genuine strength of this connection>",\n'
-          + '    "body": "<3 substantial paragraphs. Each names a specific gift, grounds it in at least two frameworks by name, and says what it means in their actual lived situation. Be specific to ' + nameA + ' and ' + nameB + '.>"\n'
-          + '  },\n'
-          + '  "tensions": {\n'
-          + '    "headline": "<One sentence: the core growth edge, honest not harsh>",\n'
-          + '    "body": "<3 substantial paragraphs. Each names a specific tension, grounds it in at least two frameworks, says what it is trying to build. Do not bypass difficulty.>"\n'
-          + '  }\n'
-          + '}';
+          + '{"gifts":{"headline":"<The genuine strength of this connection>","body":"<3 substantial paragraphs. Each names a specific gift grounded in at least two frameworks.>"},"tensions":{"headline":"<The core growth edge, honest not harsh>","body":"<3 paragraphs naming where frameworks signal friction and what it is trying to build.>"}}';
         const r2 = parseJSON(await callAPI('claude-sonnet-4-6', 3000, sys, u2, 90000));
         if (r2) merge(r2);
 
         // CALL 3: Six synastry aspects in full depth
         const u3 = user + '\n\nRETURN ONLY this JSON object:\n'
-          + '{\n'
-          + '  "key_aspects": [\n'
+          + '{"key_aspects":['
           + synAspects.slice(0, 6).map(a =>
-              '    { "aspect": "' + a.desc.replace(/"/g, "'") + '", "strength": ' + a.str + ', '
-              + '"interpretation": "<3 full paragraphs: what this aspect means specifically for ' + nameA + ' and ' + nameB + ', how it manifests in daily life, and what working with it well looks like>" }'
-            ).join(',\n')
-          + '\n  ]\n'
-          + '}';
+              '{"aspect":"' + a.desc.replace(/"/g, "'") + '","strength":' + a.str
+              + ',"interpretation":"<3 paragraphs: what this aspect means for ' + nameA + ' and ' + nameB + ', how it manifests in daily life, and what working with it looks like>"}'
+            ).join(',')
+          + ']}';
         const r3 = parseJSON(await callAPI('claude-sonnet-4-6', 3500, sys, u3, 90000));
         if (r3) merge(r3);
 
         // CALL 4: Six framework deep dives
         const u4 = user + sharedData + '\n\nRETURN ONLY this JSON object:\n'
-          + '{\n'
-          + '  "numerology_connection": "<3 paragraphs: LP ' + lpAStr + ' and LP ' + lpBStr + ' in depth. Personal Year dynamic. Combined frequency ' + (numCross ? numCross.combined : '?') + '. What this numerological pairing asks of them this year specifically.>",\n'
-          + '  "dreamspell_connection": "<3 paragraphs: ' + kinAStr + ' and ' + kinBStr + '. Chromatic family relationship. Tonal dynamic. Combined Kin meaning. What their galactic signatures ask of this connection.>",\n'
-          + '  "natal_moon_connection": "<3 paragraphs: how their birth moon phase archetypes interact emotionally, day to day and in pressure moments. What each needs from the other to feel emotionally met.>",\n'
-          + '  "biorhythm_today": "<2 paragraphs: the specific biorhythm picture on ' + today + '. What is in phase, what is out of phase, and the practical wisdom for navigating today together.>",\n'
-          + '  "chinese_connection": "<2 paragraphs: ' + chineseAStr + ' and ' + chineseBStr + '. The ' + (chineseCompat ? chineseCompat.t : 'neutral') + ' dynamic. What this layer reveals about loyalty, trust, and long-term endurance that the other frameworks approach differently.>"\n'
-          + '}';
+          + '{"numerology_connection":"<3 paragraphs: LP ' + lpAStr + ' and LP ' + lpBStr + '. Personal Year dynamic. Combined frequency. What this asks of them this year.>",'
+          + '"dreamspell_connection":"<3 paragraphs: ' + kinAStr + ' and ' + kinBStr + '. Chromatic, tonal, combined Kin meaning.>",'
+          + '"natal_moon_connection":"<3 paragraphs: birth moon phase archetypes interacting, day to day and under pressure.>",'
+          + '"biorhythm_today":"<2 paragraphs: biorhythm picture on ' + today + ', what is in phase, what to navigate together.>",'
+          + '"chinese_connection":"<2 paragraphs: ' + chineseAStr + ' and ' + chineseBStr + '. The ' + (chineseCompat ? chineseCompat.t : 'neutral') + ' dynamic. What loyalty, trust and endurance look like here.>"}';
         const r4 = parseJSON(await callAPI('claude-sonnet-4-6', 3500, sys, u4, 90000));
         if (r4) merge(r4);
 
@@ -3563,44 +3541,33 @@ app.post('/api/compatibility', async (req, res) => {
         const u5 = user + sharedData
           + '\n\nPrevious synthesis: ' + (job.sections.synthesis || '')
           + '\n\nRETURN ONLY this JSON object:\n'
-          + '{\n'
-          + '  "topic_specific": {\n'
-          + '    "headline": "<One sentence capturing the essence of ' + nameA + ' and ' + nameB + ' on the topic: ' + topicDesc + '>",\n'
-          + '    "body": "<4 substantial paragraphs specifically about ' + topicDesc + '. Draw on all six frameworks. Be concrete, practical, and name specific dynamics between ' + nameA + ' and ' + nameB + '. Reference their actual context where relevant.>"\n'
-          + '  }\n'
-          + '}';
+          + '{"topic_specific":{"headline":"<One sentence on ' + nameA + ' and ' + nameB + ' specifically around: ' + topicDesc + '>","body":"<4 paragraphs on ' + topicDesc + '. Cross-framework. Concrete. Reference their actual context.>"}}';
         const r5 = parseJSON(await callAPI('claude-sonnet-4-6', 3000, sys, u5, 90000));
         if (r5) merge(r5);
 
         // CALL 6: Personal guidance for each person
+        const tensionBody = job.sections.tensions && typeof job.sections.tensions === 'object' ? job.sections.tensions.body || '' : '';
         const u6 = user + sharedData
-          + '\n\nKey tensions identified: ' + (job.sections.tensions && typeof job.sections.tensions === 'object' ? job.sections.tensions.body || '' : '')
+          + '\n\nKey tensions: ' + tensionBody
           + '\n\nRETURN ONLY this JSON object:\n'
-          + '{\n'
-          + '  "for_them": {\n'
-          + '    "for_a": "<6 sentences addressed directly to ' + nameA + '. Name the specific gift they bring to this connection that only they can provide. Name the specific blind spot the frameworks reveal. Give them one concrete thing to try. Warm, precise, honest. Not advice. Recognition.>",\n'
-          + '    "for_b": "<6 sentences addressed directly to ' + nameB + '. Same structure: their unique gift, their specific blind spot, one concrete thing to try.>"\n'
-          + '  }\n'
-          + '}';
+          + '{"for_them":{"for_a":"<6 sentences to ' + nameA + ': their unique gift in this connection, their specific blind spot, one concrete thing to try. Warm, precise, honest.>","for_b":"<6 sentences to ' + nameB + ': same structure.>"}}';
         const r6 = parseJSON(await callAPI('claude-sonnet-4-6', 2500, sys, u6, 90000));
         if (r6) merge(r6);
 
-        // CALL 7: Year arc, the question, and the closing
+        // CALL 7: Year arc, question, closing
         const currentYear = new Date().getFullYear();
         const u7 = user + sharedData
-          + '\n\nEverything established above is context. Now write the closing sections.\n'
+          + '\n\nEverything above is context. Write the closing sections.\n'
           + 'RETURN ONLY this JSON object:\n'
-          + '{\n'
-          + '  "year_arc": "<3 paragraphs: what ' + currentYear + ' specifically asks of this connection. Use both Personal Years (' + (numA ? numA.py : '?') + ' for ' + nameA + ', ' + (numB ? numB.py : '?') + ' for ' + nameB + '), the current planetary context (Saturn-Neptune Aries conjunction, Tarnas), and the Dreamspell year energies. What is being built, what is being released, and what this year is asking them to decide about their connection.>",\n'
-          + '  "a_question_to_sit_with": "<One question for them both. Not rhetorical. Genuinely open. The question that if they sat with it honestly together would unlock something important. It should feel slightly uncomfortable to ask. Ground it in the most significant convergence across the six frameworks.>",\n'
-          + '  "closing": "<One final sentence. The deepest truth of this connection. Warm, precise, honest. The thing you would say to them both if you could only say one thing.>",\n'
-          + '  "sources": "Astrology: approximate natal positions (Meeus 1998, Astronomical Algorithms). Synastry: Greene (1976); Arroyo (1978); Sasportas (1989); Tarnas (2006). Numerology: Drayer (2002); Millman (1993). Dreamspell: Arguelles (1987), modern system, distinct from K\'iche\' tradition. Biorhythms: Teltscher, Fliess, Swoboda (classical three-cycle theory). Natal moon phase archetypes: Brady (1999). Chinese astrology: solar year signs, CNY-corrected."\n'
-          + '}';
+          + '{"year_arc":"<3 paragraphs: what ' + currentYear + ' asks of this connection. Use Personal Years (' + (numA ? numA.py : '?') + ' for ' + nameA + ', ' + (numB ? numB.py : '?') + ' for ' + nameB + '), Saturn-Neptune Aries (Tarnas), and Dreamspell year energies.>",'
+          + '"a_question_to_sit_with":"<One genuinely open question for them both. Uncomfortable. Grounded in the most significant cross-framework convergence.>",'
+          + '"closing":"<One final sentence. The deepest truth of this connection. Warm, precise, honest.>",'
+          + '"sources":"Astrology: approximate natal positions (Meeus 1998). Synastry: Greene (1976); Arroyo (1978); Sasportas (1989); Tarnas (2006). Numerology: Drayer (2002); Millman (1993). Dreamspell: Arguelles (1987). Biorhythms: Teltscher, Fliess, Swoboda. Natal moon archetypes: Brady (1999). Chinese astrology: solar year signs, CNY-corrected."}';
         const r7 = parseJSON(await callAPI('claude-sonnet-4-6', 3000, sys, u7, 90000));
         if (r7) merge(r7);
 
         job.status = 'complete';
-        console.log('[compat] all 7 sections complete for', nameA, '/', nameB, '| total sections:', job.sectionNames.length);
+        console.log('[compat] all 7 calls complete for', nameA, '/', nameB, '| sections:', job.sectionNames.length);
 
       } catch(bgErr) {
         console.error('[compat] background error:', bgErr.message);
@@ -3614,6 +3581,7 @@ app.post('/api/compatibility', async (req, res) => {
     res.status(500).json({ error: e.message });
   }
 });
+
 
 // Polling endpoint: client calls this after receiving phase 1 to get phase 2 depth sections.
 // Returns { status: 'pending'|'complete'|'error', sectionsReady, reading } 
