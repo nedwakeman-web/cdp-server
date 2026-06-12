@@ -2661,7 +2661,7 @@ RULES:
 // only. It names the absence of a through-line as readily as the presence of one.
 app.post('/api/patterns', async (req, res) => {
   try {
-    const { lens, facts, items, readings } = req.body || {};
+    const { lens, facts, items, readings, prevObservation } = req.body || {};
     const safeItems = Array.isArray(items)
       ? items.filter((s) => typeof s === 'string' && s.trim()).slice(0, 24)
       : [];
@@ -2684,8 +2684,9 @@ app.post('/api/patterns', async (req, res) => {
       memory = [];
     }
 
-    // Honesty before eagerness: too little substance to find a real through-line.
-    if (safeItems.length < 2 && memory.length < 1 && landedCount < 3) {
+    // Honesty before eagerness: fire synthesis if ANY substance exists.
+    // The Supabase memory summaries count as substance even with no client-side taps.
+    if (safeItems.length < 1 && memory.length < 1 && landedCount < 1) {
       return res.json({ linked: false, observation: '' });
     }
 
@@ -2694,7 +2695,8 @@ app.post('/api/patterns', async (req, res) => {
     const material = [
       safeItems.length ? 'What this person has been bringing, most recent first, questions and passing comments and deliberate intentions all as equal material:\n' + safeItems.map((s, i) => (i + 1) + '. ' + s).join('\n') : '',
       memory.length ? 'Themes and insights that surfaced across their recent readings:\n' + memory.map((m, i) => (i + 1) + '. ' + (m.themes.length ? '[' + m.themes.join(', ') + '] ' : '') + m.insight).join('\n') : '',
-      (Array.isArray(readings) && readings.length) ? 'Recent reading coordinates, for provenance only, not the subject:\n' + readings.slice(0, 12).join('\n') : '',
+      (Array.isArray(readings) && readings.length) ? 'Recent reading coordinates, for provenance only, not the subject:\n' + readings.slice(0, 16).join('\n') : '',
+      (prevObservation && typeof prevObservation === 'string' && prevObservation.trim()) ? 'What was previously identified as emerging (may have developed since): ' + prevObservation.trim().slice(0, 280) : '',
     ].filter(Boolean).join('\n\n');
 
     const sys = `You are the reflective intelligence of Cosmic Daily Planner, writing one short observation for the Emerging patterns panel.
