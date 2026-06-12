@@ -3381,7 +3381,7 @@ app.post('/api/compatibility', async (req, res) => {
       + 'PLUS the lived personal context provided below. It is a primary input, not background colour.\n\n'
       + 'RULES:\n'
       + '- You have been told real things about ' + nameA + ' and ' + nameB + ': their roles, what they are carrying, who matters to them, how they relate, and what the user wrote about this connection. Treat this lived context as a primary input. Let it shape the reading as much as the six symbolic frameworks. Where a framework illuminates something in their actual situation, connect the two explicitly by name. Never give a generic reading when specific context is present.\n'
-      + '- Address ' + nameA + ' directly. Use both names. Never "Person A" or "Person B".\n'
+      + '- You are reading the relationship BETWEEN ' + nameA + ' and ' + nameB + '. The person reading this output may be an observer (e.g. a parent reading about two of their children). Write ABOUT the connection throughout, not TO either person individually, EXCEPT in the for_them section which addresses each person directly. Use both names throughout. Never "Person A" or "Person B".\n'
       + '- Synthesise ALL SIX frameworks. When multiple frameworks agree on a dynamic, name that convergence explicitly, it is the most reliable signal.\n'
       + '- When frameworks diverge, name the paradox and explain what it means for this specific relationship.\n'
       + '- Chinese astrology: these are solar year signs (corrected for Chinese New Year date). Note the affinity/clash type where relevant.\n'
@@ -3506,7 +3506,7 @@ app.post('/api/compatibility', async (req, res) => {
       try {
         // CALL 1: Headline + synthesis + framework convergence
         const u1 = user + '\n\nRETURN ONLY this JSON object, no other text:\n'
-          + '{"headline":"<One sentence: the essential truth of this connection>","synthesis":"<5-6 sentences synthesising ALL SIX frameworks. Name every convergence. Address ' + nameA + ' directly.>","framework_convergence":"<3 paragraphs. Where the six frameworks agree, where they diverge, and the single most important signal.>"}';
+          + '{"headline":"<One sentence: the essential truth of this connection>","synthesis":"<5-6 sentences synthesising ALL SIX frameworks. Name every convergence. Describe the connection between ' + nameA + ' and ' + nameB + '. Write about the relationship, not at either person.>","framework_convergence":"<3 paragraphs. Where the six frameworks agree, where they diverge, and the single most important signal.>"}';
         const r1 = parseJSON(await callAPI('claude-sonnet-4-6', 2000, sys, u1, 90000));
         if (r1) merge(r1);
 
@@ -4697,6 +4697,12 @@ app.post('/api/greeting', async (req, res) => {
     const ctxIsShivaMoon = !!ctx.is_shiva_moon;
     const ctxIsMaster = !!ctx.is_master_day;
     const ctxDeadline = String(ctx.deadline || '').slice(0, 160);
+    const ctxHour = (typeof ctx.hour === 'number' && ctx.hour >= 0 && ctx.hour < 24) ? ctx.hour : -1;
+    const ctxTimeOfDay = String(ctx.time_of_day || '').toLowerCase();
+    const ctxTimezone = String(ctx.timezone || '').slice(0, 60);
+    const timeLabel = ctxHour >= 0
+      ? (ctxHour < 5 ? 'night' : ctxHour < 12 ? 'morning' : ctxHour < 17 ? 'afternoon' : ctxHour < 21 ? 'evening' : 'night')
+      : (ctxTimeOfDay || '');
 
     const last = (req.body && typeof req.body.last === 'object' && req.body.last) ? req.body.last : null;
     const lastText = last && typeof last.text === 'string' ? last.text.trim().slice(0, 280) : '';
@@ -4731,6 +4737,7 @@ app.post('/api/greeting', async (req, res) => {
     // Shared day scaffold, used as light context, not content to recite.
     const dayLines = [
       ctxDateStr ? `Today: ${ctxDateStr}` : '',
+      timeLabel ? `Time of day: ${timeLabel}${ctxHour >= 0 ? ' (' + ctxHour + ':00 local)' : ''}` : '',
       ctxPersonalDay ? `Personal Day: ${ctxPersonalDay}${ctxIsMaster ? ' (a master number day)' : ''}` : '',
       ctxPersonalYear ? `Personal Year: ${ctxPersonalYear}` : '',
       ctxUniversalYear ? `Universal Year: ${ctxUniversalYear}` : '',
@@ -4747,15 +4754,16 @@ app.post('/api/greeting', async (req, res) => {
 
     let system;
     let userMessage;
+    const timeNote = timeLabel ? `It is currently ${timeLabel} for this person.` : '';
     if (isCold) {
-      system = `You are the opening line of Cosmic Daily Planner, met by someone arriving for the first time. Say plainly what CDP is and what it is for: a quiet place to find the signal in a noisy day and decide how to meet it, read through two lenses, one ancient and one modern, that point at the same thing. Invite, do not instruct. ${voiceNote}
+      system = `You are the opening line of Cosmic Daily Planner, met by someone arriving for the first time. Say plainly what CDP is and what it is for: a quiet place to find the signal in a noisy day and decide how to meet it, read through two lenses, one ancient and one modern, that point at the same thing. Invite, do not instruct. ${timeNote} ${voiceNote}
 
 Rules: two or three short sentences, 35 to 60 words. No exclamation marks. No em dashes. No en dashes. Use commas, periods, or colons. Do not ask the person a question. Do not use the word concerns; use what matters, what is alive, or intentions. Do not name frameworks or researchers. Return only the line.`;
       userMessage = dayLines
         ? `Compose the first time orientation line. Today's coordinates, as light background only, not to recite:\n${dayLines}`
         : 'Compose the first time orientation line for a new arrival.';
     } else {
-      system = `You are the home of Cosmic Daily Planner greeting a returning person. Compose one short, pragmatic opener: a brief nod to what last mattered to them, then a pivot to what is alive for them today, then a light, open door to start something new instead. Meet them, do not interrogate them. ${voiceNote}
+      system = `You are the home of Cosmic Daily Planner greeting a returning person. Compose one short, pragmatic opener: a brief nod to what last mattered to them, then a pivot to what is alive for them today, then a light, open door to start something new instead. Meet them, do not interrogate them. ${timeNote} ${voiceNote}
 
 Rules: two or three short sentences, 35 to 65 words. Address them by first name once if given. No exclamation marks. No em dashes. No en dashes. Use commas, periods, or colons. Do not ask a generic meta question, and never ask what they are holding. Do not use the word concerns; use what matters, what is alive, or intentions. Do not name frameworks or researchers. Return only the line.`;
       const broughtClause = lastBrought.length
