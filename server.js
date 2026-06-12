@@ -1082,7 +1082,7 @@ function getNumerology(dateStr,bDay,bMonth,bYear){
   let lp=null,py=null,pm=null,pd=null;
   if(bDay&&bMonth&&bYear){
     lp=reduce(bDay+bMonth+String(bYear).split('').reduce((a,b)=>a+parseInt(b),0));
-    py=reduce(bDay+bMonth+reduce(yRaw));
+    py=reduce(bDay+bMonth+yRaw);
     pm=reduce(py+m);
     pd=reduce(pm+d);
   }
@@ -1473,7 +1473,7 @@ async function generateReading(dateStr, profile = {}, tier = 'oracle', recentHis
   const planets = _planets || buildPlanets(dateStr);
   const moon = _moon || getMoon(dateStr);
   const kin = _kin || getKin(dateStr);
-  const p = profile || {};
+  const p = normaliseProfileFields(profile) || {};
   const num = _num || getNumerology(dateStr, p.birthDay, p.birthMonth, p.birthYear);
   const aspects = _aspects || getAspects(planets);
   const weekAhead = getWeekAhead(dateStr);
@@ -1700,6 +1700,7 @@ CRITICAL RULES:
 - HORMONAL PHASE: If HORMONAL PHASE is present, treat it as a legitimate biological rhythm equal in weight to moon phase. Reference it in time windows, priorities, and shadow work, speak to how this phase shapes energy, decision-making, and relational sensitivity today.
 - NATAL vs TRANSIT: Always distinguish clearly. Say "today's Moon is in X" or "the Moon transits X today" for current sky positions. Say "your natal Moon in X" for birth chart placements. Never conflate the two, this confusion destroys credibility with experienced users.
 - RESPOND ONLY WITH VALID JSON. No markdown fences. No preamble. No text outside the JSON object.
+- PROSE FORMATTING: All string values must be plain prose. No asterisks, no bold (no **text**), no en dashes, no em dashes, no markdown headings (no ##). If you want to emphasise a word, choose a stronger word. If you want a separator, use a full stop. Dashes within a sentence must use a hyphen with a space either side.
 - CRITICAL: The JSON MUST be syntactically complete and valid. Every opened brace and bracket must be closed. If approaching length limit, shorten EARLIER sections first, but always close the JSON properly.
 - SCHOLARLY SOURCES AND FRAMEWORKS:
 
@@ -2099,7 +2100,8 @@ function isJobStillValid(jobId) {
 
 // ── START BACKGROUND READING ──
 app.post('/api/reading/start', async (req, res) => {
-  const {date, profile, tier, user_id, recentHistory, threads} = req.body;
+  const profile = normaliseProfileFields(req.body.profile);
+  const {date, tier, user_id, recentHistory, threads} = req.body;
   const ds = date || new Date().toISOString().slice(0, 10);
   const jobId = newJobId();
   const activeTier = tier || 'oracle';
@@ -2598,7 +2600,7 @@ app.post('/api/ask', async (req, res) => {
   const {question, context, profile, readingData, systemPrompt} = req.body;
   if (!question) return res.status(400).json({error: 'No question'});
   try {
-    const p = profile || {};
+    const p = normaliseProfileFields(profile) || {};
     const firstName = p.nickname || (p.name ? p.name.split(' ')[0] : 'the reader');
 
     // Beta 2: enriched profile context for ask endpoint
@@ -2741,7 +2743,7 @@ app.post('/api/calendar', (req, res) => {
   const y = year || new Date().getFullYear();
   const m = month || new Date().getMonth() + 1;
   const days = new Date(y, m, 0).getDate();
-  const p = profile || {};
+  const p = normaliseProfileFields(profile) || {};
   const result = [];
   for (let d = 1; d <= days; d++) {
     const ds = `${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
@@ -2786,7 +2788,7 @@ app.post('/api/calendar', (req, res) => {
 app.post('/api/daydetail', (req, res) => {
   const {date, profile} = req.body;
   if (!date) return res.status(400).json({error:'date required'});
-  const p = profile || {};
+  const p = normaliseProfileFields(profile) || {};
   try {
     const planets = buildPlanets(date);
     const moon = getMoon(date);
@@ -3638,7 +3640,7 @@ app.get('/api/debug/:jobId', (req, res) => {
 app.post('/api/quickread', async (req, res) => {
   const {date, profile} = req.body;
   const ds = date || new Date().toISOString().slice(0,10);
-  const p = profile || {};
+  const p = normaliseProfileFields(profile) || {};
   const fn = p.nickname || (p.name ? p.name.split(' ')[0] : 'you');
   const planets = buildPlanets(ds);
   const moon = getMoon(ds);
@@ -4897,7 +4899,7 @@ const CDP_DRAWER_CACHE_TTL_MS = 60 * 60 * 1000;
 
 function cdpDrawerCacheKey(chip, voice, coords, profile) {
   const c = coords || {};
-  const p = profile || {};
+  const p = normaliseProfileFields(profile) || {};
   return [
     chip, voice,
     c.pd || '', c.moonPhase || '', c.kinTone || '', c.kinSeal || '',
@@ -4952,7 +4954,7 @@ function cdpBuildDrawerPrompt(chip, voice, coords, profile, refIds) {
   if (c.isMasterDay) coordsLines.push('Master number day (carries amplified quality)');
   if (c.cyclePhase) coordsLines.push('Hormonal phase: ' + c.cyclePhase);
   
-  const p = profile || {};
+  const p = normaliseProfileFields(profile) || {};
   const profileLines = [];
   if (p.firstName) profileLines.push("Reader's name: " + p.firstName);
   if (p.lifePath) profileLines.push("Reader's Life Path: " + p.lifePath);
